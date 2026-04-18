@@ -44,6 +44,12 @@ namespace BasketballLegends2020
         public const float BallPickupDistanceY = PlayersHandsHeight * 0.5f + BallRadius;
         public const float StealDistance = 55f;
         public const float IndentGeneralX = 50f;
+        public const float BlockWidth = 20f;
+        public const float BlockHeight = 70f;
+        public const float BlockStartDuration = 3f / 30f;
+        public const float BlockEndDuration = 5f / 30f;
+        public const float PumpStartDuration = 4f / 30f;
+        public const float PumpEndDuration = 4f / 30f;
 
         public const float PaintStartX = 100f;
         public const float PaintMiddleX = 200f;
@@ -51,6 +57,10 @@ namespace BasketballLegends2020
         public const float DunkZone2Y = 300f;
         public const float DunkX = 100f;
         public const float DunkY = 180f;
+        public const float DunkChanceToComplete = 0.9f;
+        public const float Dunk1Duration = 520f / 1.3333f / 1000f;
+        public const float Dunk2Duration = 350f / 1.3333f / 1000f;
+        public const float Dunk3Duration = 480f / 1.3333f / 1000f;
         public const float AlleyOopX = 160f;
         public const float AlleyOopY = 150f;
         public const float SuperDashX1 = 150f;
@@ -71,8 +81,11 @@ namespace BasketballLegends2020
         public const float StunDuration = 22f / 30f;
         public const float ThreePointsDistance = 500f;
         public const float DashDelay = 1f;
+        public const float DashDoubleTapWindow = 0.46f;
+        public const float DashInputBuffer = 0.12f;
         public const float DigTime = 3f;
         public const float EnergyTime = 3f;
+        public const float DunkPickupLock = 0.22f;
 
         public const float FloorY = 420f;
         public const float BallFloorY = FloorY - BallRadius;
