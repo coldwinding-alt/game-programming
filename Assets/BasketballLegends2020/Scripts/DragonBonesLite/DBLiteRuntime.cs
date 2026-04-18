@@ -77,9 +77,12 @@ namespace BasketballLegends2020
         private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>();
         private DBLiteAnimationData currentAnimation;
         private float elapsedFrames;
+        private bool animationCompleteSent;
         private bool playing = true;
 
         public string ArmatureName => data != null ? data.Name : string.Empty;
+        public event Action<string> AnimationComplete;
+        public event Action<string, string> FrameEvent;
 
         public void Init(DBLiteFactory factory, DBLiteArmatureData data)
         {
@@ -118,6 +121,7 @@ namespace BasketballLegends2020
             {
                 currentAnimation = animation;
                 elapsedFrames = 0f;
+                animationCompleteSent = false;
             }
 
             playing = true;
@@ -129,6 +133,7 @@ namespace BasketballLegends2020
             Play(animationName);
             playing = false;
             elapsedFrames = 0f;
+            animationCompleteSent = false;
             ApplyPose(0f);
         }
 
@@ -141,10 +146,84 @@ namespace BasketballLegends2020
 
             if (playing)
             {
+                var previousFrame = elapsedFrames;
                 elapsedFrames += Time.deltaTime * data.FrameRate;
+                DispatchFrameEvents(previousFrame, elapsedFrames);
+                TryDispatchAnimationComplete(previousFrame, elapsedFrames);
             }
 
             ApplyPose(elapsedFrames);
+        }
+
+        private void DispatchFrameEvents(float previousFrame, float currentFrame)
+        {
+            if (currentAnimation == null || currentAnimation.FrameEvents.Count == 0)
+            {
+                return;
+            }
+
+            var duration = Mathf.Max(1f, currentAnimation.Duration);
+            if (currentAnimation.Loops)
+            {
+                var previousLoop = Mathf.FloorToInt(previousFrame / duration);
+                var currentLoop = Mathf.FloorToInt(currentFrame / duration);
+                if (currentLoop == previousLoop)
+                {
+                    EmitFrameEventsInRange(Mod(previousFrame, duration), Mod(currentFrame, duration), duration);
+                    return;
+                }
+
+                EmitFrameEventsInRange(Mod(previousFrame, duration), duration, duration);
+                for (var loop = previousLoop + 1; loop < currentLoop; loop++)
+                {
+                    EmitFrameEventsInRange(0f, duration, duration);
+                }
+
+                EmitFrameEventsInRange(0f, Mod(currentFrame, duration), duration);
+                return;
+            }
+
+            var start = Mathf.Clamp(previousFrame, 0f, duration);
+            var end = Mathf.Clamp(currentFrame, 0f, duration);
+            EmitFrameEventsInRange(start, end, duration);
+        }
+
+        private void TryDispatchAnimationComplete(float previousFrame, float currentFrame)
+        {
+            if (currentAnimation == null || currentAnimation.Loops || animationCompleteSent)
+            {
+                return;
+            }
+
+            var duration = Mathf.Max(1f, currentAnimation.Duration);
+            if (previousFrame < duration && currentFrame >= duration)
+            {
+                animationCompleteSent = true;
+                AnimationComplete?.Invoke(currentAnimation.Name);
+            }
+        }
+
+        private void EmitFrameEventsInRange(float start, float end, float duration)
+        {
+            if (end <= start)
+            {
+                return;
+            }
+
+            for (var i = 0; i < currentAnimation.FrameEvents.Count; i++)
+            {
+                var frameEvent = currentAnimation.FrameEvents[i];
+                var frame = Mathf.Clamp(frameEvent.Frame, 0f, duration);
+                if (frame > start && frame <= end)
+                {
+                    FrameEvent?.Invoke(currentAnimation.Name, frameEvent.EventName);
+                }
+            }
+        }
+
+        private static float Mod(float value, float divisor)
+        {
+            return (value % divisor + divisor) % divisor;
         }
 
         private void BuildBonesAndSlots()
@@ -475,6 +554,7 @@ namespace BasketballLegends2020
         public bool Loops;
         public readonly Dictionary<string, DBLiteBoneTrack> BoneTracks = new Dictionary<string, DBLiteBoneTrack>();
         public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>();
+        public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>();
 
         public static DBLiteAnimationData Parse(Dictionary<string, object> dict)
         {
@@ -515,8 +595,40 @@ namespace BasketballLegends2020
                 }
             }
 
+            var frames = BLJson.List(dict, "frame");
+            if (frames != null)
+            {
+                var start = 0f;
+                foreach (var item in frames)
+                {
+                    var frame = BLJson.AsDict(item);
+                    if (frame == null)
+                    {
+                        continue;
+                    }
+
+                    var eventName = BLJson.String(frame, "event");
+                    if (!string.IsNullOrEmpty(eventName))
+                    {
+                        animation.FrameEvents.Add(new DBLiteAnimationFrameEvent
+                        {
+                            Frame = start,
+                            EventName = eventName
+                        });
+                    }
+
+                    start += Mathf.Max(1, BLJson.Int(frame, "duration", 1));
+                }
+            }
+
             return animation;
         }
+    }
+
+    public struct DBLiteAnimationFrameEvent
+    {
+        public float Frame;
+        public string EventName;
     }
 
     public sealed class DBLiteBoneTrack

@@ -26,7 +26,11 @@ namespace BasketballLegends2020
 
         public BLBallObject Ball { get; private set; }
         public BLMatchData MatchData => BLInventory.Instance.MatchData;
+        public BLPlayerSignalBus PlayerSignals { get; } = new BLPlayerSignalBus();
+        public BLMatchProcessor MatchProcessor { get; } = new BLMatchProcessor();
         public bool ReturnToMenuRequested { get; private set; }
+        public IReadOnlyList<BLPlayerObject> PlayersLeft => playersLeft;
+        public IReadOnlyList<BLPlayerObject> PlayersRight => playersRight;
 
         public BLGameCore(Transform root)
         {
@@ -85,6 +89,16 @@ namespace BasketballLegends2020
 
             if (preMatchCountdown)
             {
+                foreach (var player in playersLeft)
+                {
+                    player.TickPreMatch(dt);
+                }
+
+                foreach (var player in playersRight)
+                {
+                    player.TickPreMatch(dt);
+                }
+
                 preMatchCountdown = hud.UpdateCountdown(dt);
                 if (!preMatchCountdown)
                 {
@@ -121,6 +135,7 @@ namespace BasketballLegends2020
                 player.Update(dt);
             }
 
+            TryBlockBall();
             TryPickupLooseBall();
 
             if (!isTraining)
@@ -142,7 +157,8 @@ namespace BasketballLegends2020
             }
 
             var teamIndex = scoringSide == -1 ? 0 : 1;
-            var points = IsThreePointer(scoringSide) ? 3 : 2;
+            var fallbackPoints = IsThreePointer(scoringSide) ? 3 : 2;
+            var points = MatchProcessor.ResolvePointsForScore(scoringSide, fallbackPoints);
             MatchData.MatchScore[teamIndex] += points;
             hud.UpdateScore(MatchData.MatchScore[0], MatchData.MatchScore[1]);
             hud.HideCountdown();
@@ -233,7 +249,6 @@ namespace BasketballLegends2020
             var stoleBall = target.GetBeStolen(thief.Position.x);
             if (stoleBall)
             {
-                hud.ShowMessage("STEAL!", 0.7f);
                 BLAudio.Instance?.Play(BLAssets.Sounds.BSteel);
             }
 
@@ -300,6 +315,7 @@ namespace BasketballLegends2020
             postMatchWinner = 0;
             overtimePending = false;
             ReturnToMenuRequested = false;
+            MatchProcessor.Reset();
             Restart(0);
             preMatchCountdown = !isTraining;
             if (preMatchCountdown)
@@ -316,6 +332,7 @@ namespace BasketballLegends2020
         private void Restart(int side)
         {
             Ball.Restart();
+            MatchProcessor.Reset();
             foreach (var player in playersLeft)
             {
                 player.Restart(side);
@@ -341,6 +358,7 @@ namespace BasketballLegends2020
 
         private void RestartAfterScore()
         {
+            MatchProcessor.Reset();
             foreach (var player in playersLeft)
             {
                 player.NotifyBallLoose();
@@ -442,6 +460,30 @@ namespace BasketballLegends2020
 
             picker.TakeBallInHands();
             BLAudio.Instance?.Play(BLAssets.Sounds.BSteel);
+        }
+
+        private void TryBlockBall()
+        {
+            if (Ball == null || !Ball.IsBlockable)
+            {
+                return;
+            }
+
+            foreach (var player in playersLeft)
+            {
+                if (player.TryBlockBall(Ball))
+                {
+                    return;
+                }
+            }
+
+            foreach (var player in playersRight)
+            {
+                if (player.TryBlockBall(Ball))
+                {
+                    return;
+                }
+            }
         }
     }
 
