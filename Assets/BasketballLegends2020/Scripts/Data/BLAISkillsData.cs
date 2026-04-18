@@ -1,0 +1,232 @@
+using UnityEngine;
+
+namespace BasketballLegends2020
+{
+    public readonly struct BLAISkillProfile
+    {
+        public readonly float Accuracy;
+        public readonly float ChanceToCompleteDunk;
+        public readonly float JumpBall;
+        public readonly float ChanceToRebound;
+        public readonly float Attack;
+        public readonly float AvoidSteal;
+        public readonly float ReactOnOpponent;
+        public readonly float MakeDash;
+        public readonly float DelayDash;
+        public readonly float Defence;
+        public readonly float JumpThrow;
+        public readonly float MakeSteal;
+        public readonly float DelaySteal;
+        public readonly float JumpPump;
+        public readonly float MakeBlock;
+        public readonly float ReboundFixed;
+        public readonly float ReboundRange;
+        public readonly float MoveDelay;
+
+        public BLAISkillProfile(
+            float accuracy,
+            float chanceToCompleteDunk,
+            float jumpBall,
+            float chanceToRebound,
+            float attack,
+            float avoidSteal,
+            float reactOnOpponent,
+            float makeDash,
+            float delayDash,
+            float defence,
+            float jumpThrow,
+            float makeSteal,
+            float delaySteal,
+            float jumpPump,
+            float makeBlock,
+            float reboundFixed,
+            float reboundRange,
+            float moveDelay)
+        {
+            Accuracy = accuracy;
+            ChanceToCompleteDunk = chanceToCompleteDunk;
+            JumpBall = jumpBall;
+            ChanceToRebound = chanceToRebound;
+            Attack = attack;
+            AvoidSteal = avoidSteal;
+            ReactOnOpponent = reactOnOpponent;
+            MakeDash = makeDash;
+            DelayDash = delayDash;
+            Defence = defence;
+            JumpThrow = jumpThrow;
+            MakeSteal = makeSteal;
+            DelaySteal = delaySteal;
+            JumpPump = jumpPump;
+            MakeBlock = makeBlock;
+            ReboundFixed = reboundFixed;
+            ReboundRange = reboundRange;
+            MoveDelay = moveDelay;
+        }
+    }
+
+    public static class BLAISkillsData
+    {
+        // Directly mapped from the original AISkillsData table.
+        private static readonly BLAISkillProfile[] Profiles =
+        {
+            new BLAISkillProfile(
+                accuracy: 0.01f,
+                chanceToCompleteDunk: 0.9f,
+                jumpBall: 0.45f,
+                chanceToRebound: 0.3f,
+                attack: 0.4f,
+                avoidSteal: 0.2f,
+                reactOnOpponent: 0.3f,
+                makeDash: 1f,
+                delayDash: 5f,
+                defence: 0.5f,
+                jumpThrow: 0.3f,
+                makeSteal: 0.3f,
+                delaySteal: 3f,
+                jumpPump: 0.8f,
+                makeBlock: 0.2f,
+                reboundFixed: 0.35f,
+                reboundRange: 0.1f,
+                moveDelay: 0.1f),
+            new BLAISkillProfile(
+                accuracy: 0.12f,
+                chanceToCompleteDunk: 0.45f,
+                jumpBall: 0.45f,
+                chanceToRebound: 0.35f,
+                attack: 0.4f,
+                avoidSteal: 0.3f,
+                reactOnOpponent: 0.4f,
+                makeDash: 1f,
+                delayDash: 4.5f,
+                defence: 0.5f,
+                jumpThrow: 0.4f,
+                makeSteal: 0.4f,
+                delaySteal: 2.5f,
+                jumpPump: 0.7f,
+                makeBlock: 0.3f,
+                reboundFixed: 0.3f,
+                reboundRange: 0.1f,
+                moveDelay: 0.08f),
+            new BLAISkillProfile(
+                accuracy: 0.1f,
+                chanceToCompleteDunk: 0.5f,
+                jumpBall: 0.45f,
+                chanceToRebound: 0.4f,
+                attack: 0.35f,
+                avoidSteal: 0.4f,
+                reactOnOpponent: 0.5f,
+                makeDash: 1f,
+                delayDash: 4f,
+                defence: 0.45f,
+                jumpThrow: 0.6f,
+                makeSteal: 0.5f,
+                delaySteal: 2f,
+                jumpPump: 0.6f,
+                makeBlock: 0.4f,
+                reboundFixed: 0.25f,
+                reboundRange: 0.1f,
+                moveDelay: 0.06f),
+            new BLAISkillProfile(
+                accuracy: 0.08f,
+                chanceToCompleteDunk: 0.6f,
+                jumpBall: 0.4f,
+                chanceToRebound: 0.5f,
+                attack: 0.3f,
+                avoidSteal: 0.5f,
+                reactOnOpponent: 0.6f,
+                makeDash: 1f,
+                delayDash: 3f,
+                defence: 0.3f,
+                jumpThrow: 0.8f,
+                makeSteal: 0.6f,
+                delaySteal: 1f,
+                jumpPump: 0.5f,
+                makeBlock: 0.5f,
+                reboundFixed: 0.2f,
+                reboundRange: 0.1f,
+                moveDelay: 0.05f),
+            new BLAISkillProfile(
+                accuracy: 0.04f,
+                chanceToCompleteDunk: 0.7f,
+                jumpBall: 0.4f,
+                chanceToRebound: 0.7f,
+                attack: 0.3f,
+                avoidSteal: 0.6f,
+                reactOnOpponent: 0.6f,
+                makeDash: 1f,
+                delayDash: 3f,
+                defence: 0.3f,
+                jumpThrow: 1f,
+                makeSteal: 0.7f,
+                delaySteal: 1f,
+                jumpPump: 0.5f,
+                makeBlock: 0.5f,
+                reboundFixed: 0.2f,
+                reboundRange: 0.1f,
+                moveDelay: 0.05f),
+            new BLAISkillProfile(
+                accuracy: 0.03f,
+                chanceToCompleteDunk: 0.75f,
+                jumpBall: 0.3f,
+                chanceToRebound: 0.8f,
+                attack: 0.2f,
+                avoidSteal: 0.7f,
+                reactOnOpponent: 0.7f,
+                makeDash: 1f,
+                delayDash: 2.5f,
+                defence: 0.2f,
+                jumpThrow: 1f,
+                makeSteal: 0.8f,
+                delaySteal: 1f,
+                jumpPump: 0.4f,
+                makeBlock: 0.5f,
+                reboundFixed: 0.15f,
+                reboundRange: 0.1f,
+                moveDelay: 0.05f),
+            new BLAISkillProfile(
+                accuracy: 0.02f,
+                chanceToCompleteDunk: 0.8f,
+                jumpBall: 0.2f,
+                chanceToRebound: 0.9f,
+                attack: 0.1f,
+                avoidSteal: 0.8f,
+                reactOnOpponent: 0.8f,
+                makeDash: 1f,
+                delayDash: 2f,
+                defence: 0.1f,
+                jumpThrow: 1f,
+                makeSteal: 0.9f,
+                delaySteal: 1f,
+                jumpPump: 0.3f,
+                makeBlock: 0.8f,
+                reboundFixed: 0.1f,
+                reboundRange: 0.1f,
+                moveDelay: 0.05f),
+            new BLAISkillProfile(
+                accuracy: 0.01f,
+                chanceToCompleteDunk: 0.9f,
+                jumpBall: 0.1f,
+                chanceToRebound: 1f,
+                attack: 0.05f,
+                avoidSteal: 0.9f,
+                reactOnOpponent: 0.9f,
+                makeDash: 1f,
+                delayDash: 2f,
+                defence: 0.05f,
+                jumpThrow: 1f,
+                makeSteal: 0.9f,
+                delaySteal: 1f,
+                jumpPump: 0.2f,
+                makeBlock: 1f,
+                reboundFixed: 0f,
+                reboundRange: 0.1f,
+                moveDelay: 0.05f)
+        };
+
+        public static BLAISkillProfile Get(int skillIndex)
+        {
+            var index = Mathf.Clamp(skillIndex, 0, Profiles.Length - 1);
+            return Profiles[index];
+        }
+    }
+}

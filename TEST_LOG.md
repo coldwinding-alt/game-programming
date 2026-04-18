@@ -57,3 +57,15 @@ Completed checks:
 | Windows batch build (`BuildWindows`) | Pass | Unity batch build completed successfully and produced `Builds/Windows/BasketballLegends2020.exe` |
 | Build log capture | Pass | Log file: `Logs/unity-build-2026-04-18-round-core-parity.log` |
 | Build method trace | Pass | Log includes `BasketballLegends2020.EditorTools.BL2020BuildTools.BuildWindows` execution and `BL2020 Windows build passed` |
+
+## 2026-04-18 - Round 2 Match Core Parity (AI + Dunk Scoring)
+
+Completed checks:
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| AI skill profile mapping from reference table | Pass | Added per-skill profile data and wired it into player/AI creation (`BLAISkillsData`) |
+| AI strategy defence/attack parity pass | Pass | `strategyDefence`/`strategyAttack` now use profile-driven delays and decision probabilities closer to the reference structure |
+| Dunk score settlement reliability | Pass | Added completed-dunk score fallback and higher dunk substeps to remove intermittent “visual make but no points” cases |
+| Batch smoke (`BL2020SmokeTest.Run`) | Pass | Log: `Logs/smoke_round2.log` (`BL2020 smoke test passed.`) |
+| Batch Windows build (`BuildWindows`) | Blocked | Log: `Logs/build_windows_round2.log` indicates project lock: `It looks like another Unity instance is running with this project open.` |
