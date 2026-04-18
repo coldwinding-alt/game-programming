@@ -149,6 +149,7 @@ namespace BasketballLegends2020
         private const float RimRestitution = 0.78f;
         private const float BackboardRestitution = 0.82f;
         private const float CollisionSoundCooldownDuration = 0.04f;
+        private const float GuaranteedDunkScoreExtraX = 6f;
 
         private readonly GameObject graphic;
         private readonly GameObject shadow;
@@ -157,6 +158,7 @@ namespace BasketballLegends2020
         private bool visibleNextFrame;
         private bool canScore;
         private bool upperSensorPassed;
+        private bool guaranteedDunkScore;
         private int scoreArmedSide;
         private float pickupLockTimer;
         private float collisionSoundCooldown;
@@ -249,6 +251,7 @@ namespace BasketballLegends2020
             Velocity = completed ? new Vector2(-260f * side, 400f) : new Vector2(-550f * side, 400f);
             State = "dunk";
             ResetScoring(true);
+            guaranteedDunkScore = completed;
             if (completed)
             {
                 // Original dunk flow is intended to resolve as a make most of the time once released.
@@ -298,9 +301,19 @@ namespace BasketballLegends2020
 
             pickupLockTimer = Mathf.Max(0f, pickupLockTimer - dt);
             collisionSoundCooldown = Mathf.Max(0f, collisionSoundCooldown - dt);
+            var minSubsteps = 1;
+            if (State == "dunk")
+            {
+                minSubsteps = 5;
+            }
+            else if (State == "shooting" || State == "basket" || State == "block")
+            {
+                minSubsteps = 3;
+            }
+
             var steps = Mathf.Clamp(
-                Mathf.CeilToInt(Mathf.Max(Mathf.Abs(Velocity.x), Mathf.Abs(Velocity.y)) * dt / MaxSubstepTravel),
-                1,
+                Mathf.Max(minSubsteps, Mathf.CeilToInt(Mathf.Max(Mathf.Abs(Velocity.x), Mathf.Abs(Velocity.y)) * dt / MaxSubstepTravel)),
+                minSubsteps,
                 MaxSubsteps);
             var stepDt = dt / steps;
             for (var i = 0; i < steps; i++)
@@ -313,6 +326,7 @@ namespace BasketballLegends2020
                 ResolveWallBounce();
                 ResolveBasket(basketLeft, 1);
                 ResolveBasket(basketRight, -1);
+                TryResolveGuaranteedDunkScore(basketLeft, basketRight);
             }
 
             UpdateGraphic();
@@ -448,21 +462,55 @@ namespace BasketballLegends2020
             }
 
             var matchProcessorReady = gameCore.MatchProcessor.ProcessSensor(1);
-            if (upperSensorPassed && matchProcessorReady)
+            if (matchProcessorReady || (guaranteedDunkScore && scoringSide == scoreArmedSide))
             {
-                canScore = false;
-                upperSensorPassed = false;
-                scoreArmedSide = 0;
-                State = "score";
-                PlayBasketSound(0);
-                gameCore.OnBallScored(scoringSide);
+                CommitScore(scoringSide);
             }
             else
             {
-                canScore = false;
-                upperSensorPassed = false;
-                scoreArmedSide = 0;
+                CancelScoreAttempt();
             }
+        }
+
+        private void TryResolveGuaranteedDunkScore(BLBasketObject basketLeft, BLBasketObject basketRight)
+        {
+            if (!canScore || !guaranteedDunkScore || scoreArmedSide == 0)
+            {
+                return;
+            }
+
+            var armedBasket = scoreArmedSide == 1 ? basketLeft : basketRight;
+            if (armedBasket == null)
+            {
+                return;
+            }
+
+            var minX = armedBasket.Center - BLObjectsData.SensorHalf - BLObjectsData.BallRadius - GuaranteedDunkScoreExtraX;
+            var maxX = armedBasket.Center + BLObjectsData.SensorHalf + BLObjectsData.BallRadius + GuaranteedDunkScoreExtraX;
+            var crossedDown = previousPosition.y <= armedBasket.Height + BLObjectsData.SensorDown &&
+                              Position.y >= armedBasket.Height + BLObjectsData.SensorDown;
+            if ((crossedDown || Position.y >= armedBasket.Height + BLObjectsData.SensorDown + BLObjectsData.SensorHeight) &&
+                Position.x >= minX &&
+                Position.x <= maxX)
+            {
+                CommitScore(scoreArmedSide);
+            }
+        }
+
+        private void CommitScore(int scoringSide)
+        {
+            CancelScoreAttempt();
+            State = "score";
+            PlayBasketSound(0);
+            gameCore.OnBallScored(scoringSide);
+        }
+
+        private void CancelScoreAttempt()
+        {
+            canScore = false;
+            upperSensorPassed = false;
+            guaranteedDunkScore = false;
+            scoreArmedSide = 0;
         }
 
         private static bool TouchesSensor(Vector2 start, Vector2 end, float centerX, float topY)
@@ -569,6 +617,7 @@ namespace BasketballLegends2020
         {
             canScore = armed;
             upperSensorPassed = false;
+            guaranteedDunkScore = false;
             scoreArmedSide = 0;
             collisionSoundCooldown = 0f;
         }
@@ -705,6 +754,9 @@ namespace BasketballLegends2020
         private readonly IBLPlayerController controller;
         private readonly int teamIndex;
         private readonly int playerNo;
+        private readonly int skillLevel;
+        private readonly float accuracy;
+        private readonly float chanceToCompleteDunk;
         private readonly UseDelay dashDelay = new UseDelay(BLObjectsData.DashDelay);
         private float actionLatch;
         private string visualState = "";
@@ -748,15 +800,21 @@ namespace BasketballLegends2020
         public float FacingDirection => facingDirection;
         public bool CanTakeInHands => canTakeInHands && !WithBall;
         public bool CanAct => actionLatch <= 0f && stunTimer <= 0f && !isDunking;
+        public bool ReadyForDash => readyForDash && dashTimer <= 0f;
         public int PlayerNo => playerNo;
+        public int SkillLevel => skillLevel;
 
-        public BLPlayerObject(BLGameCore gameCore, int teamIndex, int team, int player, int form, int playerNo, string playerBrain, Transform parent)
+        public BLPlayerObject(BLGameCore gameCore, int teamIndex, int team, int player, int form, int playerNo, string playerBrain, int skillLevel, Transform parent)
         {
             GameCore = gameCore;
             this.teamIndex = teamIndex;
             this.playerNo = playerNo;
+            this.skillLevel = skillLevel;
             Side = teamIndex == 0 ? -1 : 1;
             IsHuman = !playerBrain.StartsWith("B");
+            var profile = BLAISkillsData.Get(skillLevel);
+            accuracy = profile.Accuracy;
+            chanceToCompleteDunk = profile.ChanceToCompleteDunk;
 
             graphic = new GameObject($"Player_{teamIndex}_{playerNo}");
             graphic.transform.SetParent(parent, false);
@@ -780,7 +838,7 @@ namespace BasketballLegends2020
 
             controller = IsHuman
                 ? new BLKeyboardController(playerBrain == "P2" ? 1 : 0)
-                : BLAIController.CreateForBrain(this, playerBrain);
+                : BLAIController.CreateForBrain(this, playerBrain, skillLevel);
 
             Restart(0);
         }
@@ -1117,7 +1175,7 @@ namespace BasketballLegends2020
             var releaseY = Position.y - 50f;
             var throwType = (releaseX - BLObjectsData.ThreePointsDistance) * Side >= 0f ? 0 : 6;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, throwType);
-            GameCore.Ball.Shoot(Side, releaseX, releaseY, Velocity.x, 0f);
+            GameCore.Ball.Shoot(Side, releaseX, releaseY, Velocity.x, accuracy);
             PlayState(IsGrounded ? "throw_land" : "fly1");
         }
 
@@ -1515,7 +1573,7 @@ namespace BasketballLegends2020
             }
 
             dunkReleased = true;
-            var completed = Random.value <= BLObjectsData.DunkChanceToComplete;
+            var completed = Random.value <= chanceToCompleteDunk;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, completed ? 1 : 9);
             GameCore.Ball.Dunk(Side, completed);
             if (!completed)

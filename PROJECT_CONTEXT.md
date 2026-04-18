@@ -100,6 +100,14 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - tightened scoring settlement so basket down-sensor scoring now requires both local sensor-order validity and `MatchProcessor` approval
   - added function-level parity checklist doc:
     - `Assets/BasketballLegends2020/Documentation/REFERENCE_FUNCTION_PARITY_MATRIX.md`
+- Latest match-core parity pass (round 2) completed:
+  - added `BLAISkillsData` and wired skill-index based profile loading into player/AI creation
+  - moved throw accuracy and dunk completion chance from fixed values to profile-driven values
+  - deepened `strategyDefence` / `strategyAttack` parity by applying profile-based delays and reaction probabilities
+  - fixed intermittent “visual dunk made but no score” by adding a completed-dunk score fallback path tied to armed basket side and down-line crossing
+  - increased dunk-state ball substeps to reduce sensor misses during fast rim/net transitions
+  - smoke test passed (`Logs/smoke_round2.log`)
+  - batch build attempt blocked by Unity single-project lock while editor instance was already open (`Logs/build_windows_round2.log`)
 
 ## Files Changed In Latest Pass
 
@@ -171,6 +179,14 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md`
   - `Assets/BasketballLegends2020/Documentation/REFERENCE_FUNCTION_PARITY_MATRIX.md`
   - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `PROJECT_CONTEXT.md`
+- latest match-core parity edits:
+  - `Assets/BasketballLegends2020/Scripts/Data/BLAISkillsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `TEST_LOG.md`
   - `PROJECT_CONTEXT.md`
 
 ## Next Steps
