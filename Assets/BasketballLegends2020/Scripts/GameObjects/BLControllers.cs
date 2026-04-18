@@ -253,10 +253,13 @@ namespace BasketballLegends2020
         public virtual void UpdateController(float dt)
         {
             EnsureRuntimeLinks();
-            ResetCurrents();
+            CurrentDash = 0;
 
             if (ball == null || opponents == null || opponents.Count == 0)
             {
+                CurrentMove = 0;
+                CurrentJump = false;
+                CurrentAction = false;
                 return;
             }
 
@@ -548,8 +551,6 @@ namespace BasketballLegends2020
                         attack.Activate();
                         directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                     }
-
-                    moveDelay.Activate();
                 }
             }
             else
@@ -814,9 +815,10 @@ namespace BasketballLegends2020
             strategy = 3;
             deltaDownTime = 0f;
             endPoint = baseEndPoint;
-            CurrentSuper = false;
             ResetAllDelays();
             ResetCurrents();
+            CurrentBlockOrPump = false;
+            CurrentSuper = false;
             isPumped = false;
             pumpCount = 0;
             ResetAvoidSteal();
@@ -828,8 +830,6 @@ namespace BasketballLegends2020
             CurrentJump = false;
             CurrentAction = false;
             CurrentDash = 0;
-            CurrentBlockOrPump = false;
-            CurrentSuper = false;
         }
 
         protected void ResetBaseDelays()
@@ -845,9 +845,6 @@ namespace BasketballLegends2020
         protected void ResetAllDelays()
         {
             dashDecisionDelay.Reset();
-            blockDelay.Reset();
-            reboundDelay.Reset();
-            megaDunkDelay.Reset();
             ResetBaseDelays();
         }
 
