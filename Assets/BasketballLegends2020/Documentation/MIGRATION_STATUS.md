@@ -145,6 +145,14 @@ Latest source-equivalent core pass:
 - added `REFERENCE_FUNCTION_PARITY_MATRIX.md` as the primary function-level parity checklist
 - added `PARITY_SIDE_BY_SIDE_CHECKLIST.md` as the side-by-side acceptance checklist for runtime behavior/timing/trigger validation
 
+Latest match-core parity pass (round 2):
+
+- added `BLAISkillsData` as a direct skill-profile mapping layer for reference-aligned AI/player parameters
+- player throw accuracy and dunk completion chance now come from the mapped skill profile instead of fixed constants
+- AI controller hierarchy now consumes skill-profile delays/chances across defence/attack reactions
+- completed dunk scoring now has a reference-safe fallback path to prevent intermittent “visual dunk made but no score” results when sensor checks are skipped by coarse substeps
+- increased dunk-state physics substeps to reduce sensor tunneling in high-speed rim contact moments
+
 ## Validation
 
 - Unity compile pass completed after the latest UI/gameplay changes
@@ -162,6 +170,10 @@ Latest source-equivalent core pass:
 - Latest source-equivalent core pass validation:
   - batch smoke/build attempts from CLI are currently blocked if the Unity editor is already open on this project (single-project lock)
   - code-level validation completed through reference cross-check and function parity matrix updates
+- Latest match-core parity pass (round 2) validation:
+  - smoke passed: `Logs/smoke_round2.log`
+  - batch build currently blocked when editor holds project lock:
+    - `Logs/build_windows_round2.log`
 
 ## Still Missing For Higher Fidelity
 

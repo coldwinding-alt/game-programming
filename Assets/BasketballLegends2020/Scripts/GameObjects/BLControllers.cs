@@ -118,15 +118,15 @@ namespace BasketballLegends2020
 
     public class BLAIController : BLBaseAIController
     {
-        public BLAIController(BLPlayerObject player)
-            : base(player)
+        public BLAIController(BLPlayerObject player, int skillLevel)
+            : base(player, skillLevel)
         {
         }
 
-        public static IBLPlayerController CreateForBrain(BLPlayerObject player, string brain)
+        public static IBLPlayerController CreateForBrain(BLPlayerObject player, string brain, int skillLevel)
         {
             var index = ParseBrainIndex(brain);
-            return index == 1 ? new BLAIController2(player) : new BLAIController(player);
+            return index == 1 ? new BLAIController2(player, skillLevel) : new BLAIController(player, skillLevel);
         }
 
         protected override bool UseDefence2(BLPlayerObject holder)
@@ -147,8 +147,8 @@ namespace BasketballLegends2020
 
     public sealed class BLAIController2 : BLBaseAIController
     {
-        public BLAIController2(BLPlayerObject player)
-            : base(player)
+        public BLAIController2(BLPlayerObject player, int skillLevel)
+            : base(player, skillLevel)
         {
         }
 
@@ -184,17 +184,18 @@ namespace BasketballLegends2020
         protected BLBallObject ball;
         protected List<BLPlayerObject> opponents;
         protected BLPlayerObject opponent;
+        protected readonly BLAISkillProfile profile;
 
-        protected readonly SimpleDelay jumpBall = new SimpleDelay(BLObjectsData.IdealJumpBallJump);
-        protected readonly FullDelay attack = new FullDelay(BLObjectsData.IdealAttackJump, 0.08f);
-        protected readonly SimpleDelay attackJumpDelay = new SimpleDelay(0.5f);
-        protected readonly AIUseDelay stealDelay = new AIUseDelay(0.1f, BLObjectsData.StealDuration + 0.12f);
-        protected readonly SimpleDelay defenceDelay = new SimpleDelay(0.65f);
-        protected readonly FullDelay blockDelay = new FullDelay(0f, 0.2f);
-        protected readonly FullDelay reboundDelay = new FullDelay(0.55f, 0.2f);
-        protected readonly FullDelay moveDelay = new FullDelay(0.18f, 0.05f);
-        protected readonly AIUseDelay dashDecisionDelay = new AIUseDelay(0.1f, 0.24f);
-        protected readonly FullDelay megaDunkDelay = new FullDelay(0.5f, 0.5f);
+        protected readonly SimpleDelay jumpBall;
+        protected readonly FullDelay attack;
+        protected readonly SimpleDelay attackJumpDelay;
+        protected readonly AIUseDelay stealDelay;
+        protected readonly SimpleDelay defenceDelay;
+        protected readonly FullDelay blockDelay;
+        protected readonly FullDelay reboundDelay;
+        protected readonly FullDelay moveDelay;
+        protected readonly AIUseDelay dashDecisionDelay;
+        protected readonly FullDelay megaDunkDelay;
 
         protected int strategy;
         protected float attackPoint;
@@ -228,10 +229,21 @@ namespace BasketballLegends2020
         public bool CurrentSuper { get; protected set; }
         public int CurrentDash { get; protected set; }
 
-        protected BLBaseAIController(BLPlayerObject player)
+        protected BLBaseAIController(BLPlayerObject player, int skillLevel)
         {
             this.player = player;
             difficulty = BLInventory.Instance.Difficulty;
+            profile = BLAISkillsData.Get(skillLevel);
+            jumpBall = new SimpleDelay(profile.JumpBall);
+            attack = new FullDelay(profile.Attack, 0.08f);
+            attackJumpDelay = new SimpleDelay(0.5f);
+            stealDelay = new AIUseDelay(0.1f, BLObjectsData.StealDuration + profile.DelaySteal);
+            defenceDelay = new SimpleDelay(profile.Defence);
+            blockDelay = new FullDelay(0f, 0.2f);
+            reboundDelay = new FullDelay(profile.ReboundRange, profile.ReboundFixed);
+            moveDelay = new FullDelay(profile.MoveDelay, 0.05f);
+            dashDecisionDelay = new AIUseDelay(0.1f, profile.DelayDash);
+            megaDunkDelay = new FullDelay(0.5f, 0.5f);
             playerNo = player.PlayerNo;
             player.GameCore.PlayerSignals.OnSignal += ProcessPlayerSignal;
             InitZones();
@@ -331,6 +343,7 @@ namespace BasketballLegends2020
         public virtual void PlayerOnGround()
         {
             isPumped = false;
+            pumpCount = 0;
         }
 
         public virtual void PlayerOnDashEnd()
@@ -396,7 +409,7 @@ namespace BasketballLegends2020
             CurrentAction = stealState == 1;
             if (!CurrentAction && !CurrentJump && CurrentMove == 0)
             {
-                deltaDownTime += BLConstants.Step;
+                deltaDownTime += dt;
                 if (deltaDownTime >= DownTime)
                 {
                     endPoint = player.Side == 1 ? 0f : BLConstants.Width;
@@ -432,7 +445,7 @@ namespace BasketballLegends2020
                     }
                     else
                     {
-                        CurrentJump = reboundState == 1 && IsBallInReboundZone();
+                        CurrentJump = reboundState == 1 && UnityEngine.Random.value < profile.ChanceToRebound && IsBallInReboundZone();
                     }
                 }
                 else
@@ -472,24 +485,68 @@ namespace BasketballLegends2020
                     {
                         CurrentJump = true;
                         CurrentMove = move;
-                        attack.Activate();
-                        directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
+                    }
+                    else if (IsAICloserForBasket())
+                    {
+                        if (move == -player.Side)
+                        {
+                            CurrentMove = -player.Side;
+                            CurrentJump = false;
+                        }
+                        else
+                        {
+                            CurrentMove = move;
+                            CurrentJump = true;
+                        }
                     }
                     else
                     {
-                        CurrentMove = move;
-                        if (IsOpponentCloseBehind(100f) && dashDecisionDelay.Update(dt) == -1)
+                        CurrentJump = false;
+                        CurrentDash = 0;
+                        if (IsOpponentCloseBehind())
                         {
-                            if (player.IsDashing || difficulty == BLAiDifficulty.Easy)
+                            if (IsUnderOwnBasket())
                             {
-                                dashDecisionDelay.SkipIt();
+                                if (player.ReadyForDash && difficulty != BLAiDifficulty.Easy)
+                                {
+                                    CurrentDash = -player.Side;
+                                    CurrentMove = 0;
+                                }
+                                else
+                                {
+                                    CurrentMove = UnityEngine.Random.value <= 0.5f ? -player.Side : 0;
+                                    moveDelay.Activate();
+                                }
+                            }
+                            else if (UnityEngine.Random.value <= profile.ReactOnOpponent)
+                            {
+                                CurrentJump = false;
+                                if (player.ReadyForDash && InDashingZone() && UnityEngine.Random.value <= profile.MakeDash && difficulty != BLAiDifficulty.Easy)
+                                {
+                                    CurrentDash = -player.Side;
+                                }
+                                else
+                                {
+                                    CurrentMove = UnityEngine.Random.value <= 0.5f ? 0 : player.Side;
+                                    moveDelay.Activate();
+                                }
                             }
                             else
                             {
-                                CurrentDash = -player.Side;
-                                dashDecisionDelay.Activate();
+                                CurrentMove = -player.Side;
+                                moveDelay.Activate();
                             }
                         }
+                        else
+                        {
+                            CurrentMove = -player.Side;
+                        }
+                    }
+
+                    if (attackJump)
+                    {
+                        attack.Activate();
+                        directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                     }
 
                     moveDelay.Activate();
@@ -525,7 +582,7 @@ namespace BasketballLegends2020
 
             if (IsOpponentCloseBehind(80f))
             {
-                if (UnityEngine.Random.value <= 0.34f)
+                if (UnityEngine.Random.value <= profile.MakeSteal)
                 {
                     stealDelay.Activate();
                 }
@@ -536,7 +593,7 @@ namespace BasketballLegends2020
             }
             else if (IsOpponentCloseToBasket(45f))
             {
-                if (UnityEngine.Random.value <= 0.5f)
+                if (UnityEngine.Random.value <= 1.5f * profile.MakeSteal)
                 {
                     stealDelay.Activate();
                 }
@@ -603,7 +660,7 @@ namespace BasketballLegends2020
                     attack.Activate();
                     directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                 }
-                else if (side == -player.Side && UnityEngine.Random.value <= 0.35f)
+                else if (side == -player.Side && UnityEngine.Random.value <= profile.JumpThrow)
                 {
                     defenceDelay.Activate();
                 }
@@ -615,7 +672,7 @@ namespace BasketballLegends2020
             {
                 if (side == -player.Side && player.CanAct && IsOpponentCloseBehind(90f))
                 {
-                    if (UnityEngine.Random.value <= 0.42f)
+                    if (++pumpCount <= 3 && UnityEngine.Random.value <= profile.JumpPump)
                     {
                         defenceDelay.Activate();
                         stealDelay.Reset();
@@ -635,7 +692,7 @@ namespace BasketballLegends2020
                 }
                 else if (strategy == 0 && player.CanAct && IsOpponentInRangeBehind())
                 {
-                    if (UnityEngine.Random.value <= 0.55f)
+                    if (UnityEngine.Random.value <= profile.MakeBlock)
                     {
                         ResetCurrents();
                         ResetAllDelays();
@@ -657,7 +714,7 @@ namespace BasketballLegends2020
         {
             if (side == -player.Side)
             {
-                if (player.WithBall && player.IsGrounded && (IsOpponentCloseBehind(80f) || IsOpponentCloseBehind(140f)))
+                if (player.WithBall && player.IsGrounded && (IsOpponentCloseBehind(80f) || (IsOpponentCloseBehind(140f) && opponent != null && opponent.IsMoving)))
                 {
                     TryToAvoid();
                 }
@@ -670,13 +727,13 @@ namespace BasketballLegends2020
 
         protected void TryToAvoid()
         {
-            if (UnityEngine.Random.value > 0.5f)
+            if (UnityEngine.Random.value > profile.AvoidSteal || player.Position.x > 600f)
             {
                 return;
             }
 
             var chance = UnityEngine.Random.value;
-            if (chance <= 0.1f && player.IsDashing == false)
+            if (chance <= 0.1f && player.ReadyForDash)
             {
                 CurrentDash = -player.Side;
                 return;
@@ -901,6 +958,26 @@ namespace BasketballLegends2020
 
             var delta = (player.Position.x - opponent.Position.x) * player.Side;
             return delta < 0f && delta + distance >= 0f;
+        }
+
+        protected bool IsAICloserForBasket()
+        {
+            if (opponent == null)
+            {
+                return false;
+            }
+
+            return (player.Position.x - opponent.Position.x) * player.Side < 0f;
+        }
+
+        protected bool IsUnderOwnBasket()
+        {
+            return player.Side == 1 ? player.Position.x > 700f : player.Position.x < 100f;
+        }
+
+        protected bool InDashingZone()
+        {
+            return player.Position.x >= dashZoneStart && player.Position.x <= dashZoneEnd;
         }
 
         protected bool IsOpponentCloseAbs(float distance = 100f)
