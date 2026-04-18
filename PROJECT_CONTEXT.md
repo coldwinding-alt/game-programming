@@ -1,0 +1,125 @@
+# Project Context
+
+## Current Goal
+
+Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unity 2022 project by migrating original code structure, data flow, assets, and gameplay behavior instead of rebuilding a merely similar game.
+
+## Important Decisions
+
+- Unity target version: `2022.3.62f3`.
+- Runtime uses copied original assets under `Assets/BasketballLegends2020/Resources/BL2020` and does not depend on `_reference_do_not_ship` at play time.
+- Original atlas keys, DragonBones data names, and gameplay constants stay aligned with the H5 source whenever practical.
+- Current UI and gameplay work is being improved in vertical slices: first a playable migrated baseline, then fidelity passes for HUD/menu, control feel, and gameplay interactions.
+
+## Completed Work
+
+- Created a working Unity project skeleton with playable menu and match loop.
+- Copied core original atlases, DragonBones data, logo, and sound assets into Unity resources.
+- Implemented lightweight atlas loading and lightweight DragonBones runtime support for current gameplay character usage.
+- Migrated first-pass `Constants`, `Assets`, `ObjectsData`, `PlayersData`, `MatchData`, `Inventory`, `GameBuilder`, `GameCore`, `Arena`, `Basket`, `Ball`, `Player`, `HUD`, and menu bootstrap flow.
+- Added smoke-test tooling and a dedicated Windows build entry point: `Assets/BasketballLegends2020/Scripts/Editor/BL2020BuildTools.cs`.
+- Latest fidelity pass completed:
+  - fixed text rendering scale so menu/HUD text is no longer tiny
+  - added font/style presets via dynamic OS font loading and layered outline/shadow text rendering
+  - improved main menu readability and control instructions
+  - reworked scoreboard, timer, center messages, and added pre-match countdown
+  - aligned keyboard dash timing closer to original double-tap behavior
+  - added real player-to-player steal flow instead of only grabbing loose balls
+  - updated AI to track the live ball holder instead of only chasing loose-ball states
+- Follow-up UI cleanup completed after playtest feedback:
+  - reduced fake outline layering that was causing dirty black artifacts behind text
+  - tightened menu/control text shadow and outline strength
+  - made countdown/message empty states actively disable mirrored text renderers
+  - adjusted pre-match countdown to start cleanly from `3` instead of overshooting
+  - rebuilt and relaunched the Windows player after the text fix
+- Latest gameplay fidelity pass completed:
+  - replaced the simplified direct-possession steal with an original-style steal path
+  - steal checks now use a forward steal lane like the H5 `checkToBeStolen` logic
+  - stolen players now enter `stun` and the ball is knocked loose with original steal velocity constants instead of teleporting into the thief's hands
+  - steal attempts now resolve off a short action window instead of instant overlap resolution
+  - AI defence was reworked toward original timing and spacing so defenders look for a steal lane instead of insta-stealing on overlap
+  - AI ball carriers now get a small avoidance layer so drives can beat defenders more naturally
+  - end-of-match flow now shows `TIME!!!`, supports delayed overtime restart, and uses a smaller post-match overlay instead of a giant winner label left on court
+- Latest usability pass completed:
+  - added two AI difficulty levels: `AI: EASY` and `AI: NORMAL`
+  - exposed difficulty as a clickable menu toggle in the main menu
+  - easy AI no longer attempts steals against a live ball handler and instead stays on spacing/jump-contest behavior
+  - confirmed again that the project is a standard Unity project (`Assets`, `Packages`, `ProjectSettings`, enabled `Assets/Scenes/Main.unity`) and can be opened in Unity 2022.3
+  - batch compile succeeded; later batch build/smoke were blocked because the same project was already open in another Unity editor instance
+- Latest steal/stun pass completed:
+  - confirmed from original H5 `checkToBeStolen` that grounded opponents can be stunned even when they are not holding the ball
+  - confirmed from original DragonBones data that `stun` is a 22-frame animation at 30 fps, about `0.73s`
+  - Unity steal targeting now allows empty-hand stun in the same forward steal lane used by the original
+  - Unity players now have a dedicated stun lock duration instead of reusing the shorter steal action duration
+  - stealing an empty-hand opponent no longer falsely shows the `STEAL!` center message
+- Latest countdown/pickup fidelity pass completed:
+  - re-checked original countdown flow and confirmed the H5 hides the `GO!!!` info object explicitly after the final tween step
+  - Unity HUD now has explicit `HideMessage` / `HideCountdown` cleanup plus a per-frame fallback so stale `GO!!!` text does not remain onscreen after transitions
+  - re-checked original ball pickup flow and confirmed loose-ball pickup comes from the `cbPlayersHands` sensor, not from the steal button
+  - original player hands sensor is a `30 x 80` box, so Unity loose-ball pickup now uses that same contact-style window plus the ball radius instead of a coarse action-button radius test
+  - loose-ball pickup now runs every frame for the closest eligible player, while still respecting original-style `canTakeInHands` gating during steal/stun windows
+- Latest hoop/scoring fidelity pass completed:
+  - re-checked original H5 basket construction and confirmed it uses a glass body, two physical rim circles, a non-colliding center ring body, and separate upper/down score sensors
+  - re-checked original `MatchProcessor` and confirmed real scoring is gated by `upper sensor -> down sensor`, while touching the down sensor first disables the score
+  - Unity ball updates now use that same upper/down sensor order, so the score event follows the same path as the visual swish instead of a single center-line guess
+  - Unity rim contact is no longer a single coarse near-hoop check; it now resolves against the two rim-circle contact points with substeps and reflected velocity
+  - Unity backboard contact now uses the original glass placement and dimensions, which makes visible makes/misses and actual scoring line up much better
+- Built and launched the latest Windows executable from `Builds/Windows/BasketballLegends2020.exe`.
+
+## Files Changed In Latest Pass
+
+- `Assets/BasketballLegends2020/Scripts/Rendering/BLAtlasCache.cs`
+- `Assets/BasketballLegends2020/Scripts/UI/BLHudView.cs`
+- `Assets/BasketballLegends2020/Scripts/States/BLGameBootstrap.cs`
+- `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+- `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+- `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+- `Assets/BasketballLegends2020/Scripts/Editor/BL2020BuildTools.cs`
+- latest follow-up edits:
+  - `Assets/BasketballLegends2020/Scripts/Rendering/BLAtlasCache.cs`
+  - `Assets/BasketballLegends2020/Scripts/UI/BLHudView.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+  - `Assets/BasketballLegends2020/Scripts/States/BLGameBootstrap.cs`
+- latest gameplay-fidelity edits:
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+  - `Assets/BasketballLegends2020/Scripts/UI/BLHudView.cs`
+  - `Assets/BasketballLegends2020/Scripts/States/BLGameBootstrap.cs`
+- latest difficulty/editor-validation edits:
+  - `Assets/BasketballLegends2020/Scripts/Core/BLMatchData.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Scripts/UI/BLHudView.cs`
+  - `Assets/BasketballLegends2020/Scripts/States/BLGameBootstrap.cs`
+- latest stun-fidelity edits:
+  - `Assets/BasketballLegends2020/Scripts/Data/BLObjectsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+- latest countdown/pickup-fidelity edits:
+  - `Assets/BasketballLegends2020/Scripts/UI/BLHudView.cs`
+  - `Assets/BasketballLegends2020/Scripts/Data/BLObjectsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+- latest hoop/scoring-fidelity edits:
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+- `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+
+## Next Steps
+
+- Continue replacing placeholder UI/HUD behavior with closer original screen flows.
+- Port more of original `PlayerObject` state behavior: block, pump fake, dunk logic, landing/action timing, and super-shot flow.
+- Continue tuning loose-ball pickup, rebound behavior, and collision/physics fidelity versus the original Nape implementation now that pickup is contact-based instead of action-button based.
+- Continue tightening rim/backboard/net feel versus the original Nape implementation now that score sensors and hoop geometry are closer to the original structure.
+- Expand AI delays/strategy logic further toward the original `BaseAIController / AIController / AIController2`, especially block, jump, and avoidance reactions.
+- Keep the project editor-friendly: menu options, scene boot flow, and build settings should remain usable directly from Unity Editor, not only via external builds.
+- Keep validating each pass with buildable Windows output, not just editor compile.
+
+## Risks / Known Gaps
+
+- Physics is still a Unity-side approximation, not a full Nape-equivalent migration yet.
+- DragonBonesLite is still a subset runtime and does not yet cover all original animation/event behavior.
+- Several original menus and flows remain unported or only lightly stubbed.
+- Current steal / AI / post-match / loose-ball pickup / hoop-scoring behavior is meaningfully closer to the original, but still not full parity with all original player states and full post-match screens.
+- Easy difficulty currently disables live-ball steals and favors jump contests, but full original block logic is still not completely ported.
+- Batch validation can be blocked whenever the project is already open in another Unity Editor instance on this machine; the latest hoop/scoring pass hit that guard again, so the active editor session is currently the place to watch Unity's live recompile result.
