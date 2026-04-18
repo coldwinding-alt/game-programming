@@ -47,3 +47,13 @@ Completed checks:
 - Continue tuning block, pump fake, dunk, and rebound behavior.
 - Continue tightening menu flow and post-match screen parity.
 - Replace temporary reference resource files in a later cleanup pass.
+
+## 2026-04-18 - Build Verification (Round: Match Core Parity)
+
+Completed checks:
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| Windows batch build (`BuildWindows`) | Pass | Unity batch build completed successfully and produced `Builds/Windows/BasketballLegends2020.exe` |
+| Build log capture | Pass | Log file: `Logs/unity-build-2026-04-18-round-core-parity.log` |
+| Build method trace | Pass | Log includes `BasketballLegends2020.EditorTools.BL2020BuildTools.BuildWindows` execution and `BL2020 Windows build passed` |
