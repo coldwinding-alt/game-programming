@@ -276,6 +276,7 @@ namespace BasketballLegends2020
                 for (var playerNo = 0; playerNo < playersPerTeam; playerNo++)
                 {
                     var brain = match.Pb[teamIndex].Length > playerNo ? match.Pb[teamIndex][playerNo] : (teamIndex == 0 ? "P0" : "B0");
+                    var skill = match.Skills[teamIndex].Length > playerNo ? match.Skills[teamIndex][playerNo] : 0;
                     var player = new BLPlayerObject(
                         this,
                         teamIndex,
@@ -284,6 +285,7 @@ namespace BasketballLegends2020
                         match.Forms[teamIndex],
                         playerNo,
                         brain,
+                        skill,
                         root);
 
                     if (teamIndex == 0)
