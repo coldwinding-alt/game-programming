@@ -65,6 +65,41 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - Unity rim contact is no longer a single coarse near-hoop check; it now resolves against the two rim-circle contact points with substeps and reflected velocity
   - Unity backboard contact now uses the original glass placement and dimensions, which makes visible makes/misses and actual scoring line up much better
 - Built and launched the latest Windows executable from `Builds/Windows/BasketballLegends2020.exe`.
+- Latest reference-parity pass completed:
+  - added `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md` as the working source-to-Unity module map
+  - re-checked original `PlayerObject.makeThrow`, `makeDunk`, `endDunk`, and `BallObject.dunk`
+  - added airborne dunk zone detection using the original dunk constants and timing values
+  - added completed/missed dunk ball release using the original ball positions and velocities
+  - adjusted AI attack behavior so computer ball carriers can jump into the dunk lane and trigger the dunk path
+- Latest block/pump/AI strategy pass completed:
+  - re-checked original `PlayerObject.makeBlockOrPump`, `setBlock`, `releaseBlockOrPump`, `unBlock`, `onBallBlock`, `strategyDefence`, and `strategyAttack`
+  - added block/pump start-hold-end state handling using original `sk2.json` frame durations
+  - action key now maps like the original: with ball enters pump fake, without ball enters block, release exits the state
+  - block now temporarily disables loose-ball hand pickup, restores it on release, and can deflect blockable shots using the original front-of-block direction check
+  - AI defence now keeps original-style spacing, reacts to pump fake, contests airborne shots, blocks in range, and avoids instant overlap steals
+  - AI attack now chooses attack/jump points, drives into the lane, can pump against close defenders, and decides dunk/shot from the air
+  - Windows build and smoke test passed for this pass
+- Latest dunk-scoring/dash-input pass completed:
+  - fixed intermittent dunk no-score cases where the visual finish could occur but score sensors were not resolving before pickup
+  - added a short post-dunk pickup lock so the ball cannot be taken into hands before dunk scoring settles
+  - completed dunk scoring is now armed to the correct side to prevent false down-first misses from substep ordering
+  - keyboard dash input now follows original-style double tap behavior (`key up -> key down` within ~460 ms)
+  - added a short dash input buffer so valid dash input is not dropped between close state transitions
+- Latest source-equivalent core pass completed:
+  - added delay-family classes (`FullDelay/UseDelay/AIUseDelay/SimpleDelay/NegativeDelay`) and started routing match logic through them
+  - added player signal bus (`StartSteal/Steal/JumpA/Pump/Dash/Stun`) and connected AI strategy transitions to explicit events
+  - added `BLMatchProcessor` score context chain and connected shot/block/sensor flows
+  - upgraded DragonBonesLite runtime with animation frame-event + complete callbacks, and connected gameplay triggers:
+    - `throw_land -> throw`
+    - `steal -> action`
+    - `dunk1/2/3 -> dunk`
+  - restructured AI to `BLBaseAIController + BLAIController + BLAIController2` with named strategy functions aligned to the reference
+  - wired player lifecycle callbacks into AI (`PlayerOnGround/PlayerOnDashEnd/PlayerOnBlock`) for closer state transition parity
+  - fixed first-dash reliability by warming dash delay during pre-match countdown
+  - fixed a steal-delay double-sampling issue in defence logic that could drop steal action windows
+  - tightened scoring settlement so basket down-sensor scoring now requires both local sensor-order validity and `MatchProcessor` approval
+  - added function-level parity checklist doc:
+    - `Assets/BasketballLegends2020/Documentation/REFERENCE_FUNCTION_PARITY_MATRIX.md`
 
 ## Files Changed In Latest Pass
 
@@ -104,14 +139,48 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
   - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
 - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+- latest reference-parity edits:
+  - `Assets/BasketballLegends2020/Scripts/Data/BLObjectsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md`
+  - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `PROJECT_CONTEXT.md`
+- latest block/pump/AI strategy edits:
+  - `Assets/BasketballLegends2020/Scripts/Data/BLObjectsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md`
+  - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `PROJECT_CONTEXT.md`
+- latest dunk-scoring/dash-input edits:
+  - `Assets/BasketballLegends2020/Scripts/Data/BLObjectsData.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `PROJECT_CONTEXT.md`
+- latest source-equivalent core edits:
+  - `Assets/BasketballLegends2020/Scripts/Core/BLDelays.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLPlayerSignals.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLMatchProcessor.cs`
+  - `Assets/BasketballLegends2020/Scripts/Core/BLGameCore.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs`
+  - `Assets/BasketballLegends2020/Scripts/GameObjects/BLControllers.cs`
+  - `Assets/BasketballLegends2020/Scripts/DragonBonesLite/DBLiteRuntime.cs`
+  - `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md`
+  - `Assets/BasketballLegends2020/Documentation/REFERENCE_FUNCTION_PARITY_MATRIX.md`
+  - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
+  - `PROJECT_CONTEXT.md`
 
 ## Next Steps
 
 - Continue replacing placeholder UI/HUD behavior with closer original screen flows.
-- Port more of original `PlayerObject` state behavior: block, pump fake, dunk logic, landing/action timing, and super-shot flow.
+- Port more of original `PlayerObject` state behavior: exact block/pump frame events, frame-event throw timing, landing/action timing, alley-oop, and super-shot flow.
 - Continue tuning loose-ball pickup, rebound behavior, and collision/physics fidelity versus the original Nape implementation now that pickup is contact-based instead of action-button based.
-- Continue tightening rim/backboard/net feel versus the original Nape implementation now that score sensors and hoop geometry are closer to the original structure.
-- Expand AI delays/strategy logic further toward the original `BaseAIController / AIController / AIController2`, especially block, jump, and avoidance reactions.
+- Continue tightening rim/backboard/net/block feel versus the original Nape implementation now that score sensors and hoop geometry are closer to the original structure.
+- Expand AI delays/strategy logic further toward the original `BaseAIController / AIController / AIController2`, especially `Delay` / `FullDelay`, ball fight, rebound, jump ball, and defence2.
+- Use `Assets/BasketballLegends2020/Documentation/REFERENCE_PARITY_MAP.md` as the source-to-Unity checklist for future fidelity passes.
 - Keep the project editor-friendly: menu options, scene boot flow, and build settings should remain usable directly from Unity Editor, not only via external builds.
 - Keep validating each pass with buildable Windows output, not just editor compile.
 
@@ -120,6 +189,8 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
 - Physics is still a Unity-side approximation, not a full Nape-equivalent migration yet.
 - DragonBonesLite is still a subset runtime and does not yet cover all original animation/event behavior.
 - Several original menus and flows remain unported or only lightly stubbed.
-- Current steal / AI / post-match / loose-ball pickup / hoop-scoring behavior is meaningfully closer to the original, but still not full parity with all original player states and full post-match screens.
-- Easy difficulty currently disables live-ball steals and favors jump contests, but full original block logic is still not completely ported.
-- Batch validation can be blocked whenever the project is already open in another Unity Editor instance on this machine; the latest hoop/scoring pass hit that guard again, so the active editor session is currently the place to watch Unity's live recompile result.
+- Current steal / block / pump / AI / post-match / loose-ball pickup / hoop-scoring behavior is meaningfully closer to the original, but still not full parity with all original player states and full post-match screens.
+- Current steal / block / pump / AI / dunk / dash / post-match / loose-ball pickup / hoop-scoring behavior is meaningfully closer to the original, but still not full parity with all original player states and full post-match screens.
+- Easy difficulty currently disables live-ball steals and favors jump contests; normal difficulty is closer to the original but still uses Unity-side cooldowns instead of the original delay classes.
+- DragonBonesLite now supports core frame/complete callbacks used by gameplay, but still does not cover full DragonBones runtime features (full color-frame, advanced blending, full draw-order behavior).
+- Batch validation can be blocked whenever the project is already open in another Unity Editor instance on this machine; close the editor before running batch build/smoke commands.
