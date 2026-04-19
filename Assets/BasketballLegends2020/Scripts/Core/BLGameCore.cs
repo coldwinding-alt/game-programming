@@ -30,6 +30,7 @@ namespace BasketballLegends2020
         public BLPlayerSignalBus PlayerSignals { get; } = new BLPlayerSignalBus();
         public BLMatchProcessor MatchProcessor { get; } = new BLMatchProcessor();
         public bool ReturnToMenuRequested { get; private set; }
+        public bool AdvanceFlowRequested { get; private set; }
         public bool IsSuperShot { get; set; }
         public bool IsAlleyOop { get; set; }
         public IReadOnlyList<BLPlayerObject> PlayersLeft => playersLeft;
@@ -87,7 +88,14 @@ namespace BasketballLegends2020
             {
                 if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
                 {
-                    ReturnToMenuRequested = true;
+                    if (BLInventory.Instance.IsTournamentActive)
+                    {
+                        AdvanceFlowRequested = true;
+                    }
+                    else
+                    {
+                        ReturnToMenuRequested = true;
+                    }
                 }
                 return;
             }
@@ -400,6 +408,7 @@ namespace BasketballLegends2020
             IsSuperShot = false;
             IsAlleyOop = false;
             ReturnToMenuRequested = false;
+            AdvanceFlowRequested = false;
             MatchProcessor.Reset();
             Restart(0);
             preMatchCountdown = !isTraining;
@@ -637,7 +646,11 @@ namespace BasketballLegends2020
         public BLGameCore Build(Transform root)
         {
             var inventory = BLInventory.Instance;
-            if (inventory.GameMode == 3)
+            if (inventory.MatchPrepared)
+            {
+                inventory.MatchPrepared = false;
+            }
+            else if (inventory.GameMode == 3)
             {
                 inventory.MatchData.StartTraining();
             }
