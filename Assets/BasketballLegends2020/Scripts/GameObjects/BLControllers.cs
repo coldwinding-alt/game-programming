@@ -13,8 +13,11 @@ namespace BasketballLegends2020
         bool CurrentSuper { get; }
         int CurrentDash { get; }
         void UpdateController(float dt);
+        void BallInOwnHands(int holderPlayerNo);
+        void BallInOpponentsHands(int holderPlayerNo);
         void BallOwnShoot(int shooterPlayerNo);
         void BallOpponentShoot(int shooterPlayerNo);
+        void BallOthers();
         bool ReadyForAction();
         bool ReleaseBlockOrPump(float dt);
         void Restart(int startSide);
@@ -26,6 +29,7 @@ namespace BasketballLegends2020
     public sealed class BLKeyboardController : IBLPlayerController
     {
         private readonly int playerIndex;
+        private readonly string brain;
         private float lastLeftUp = -10f;
         private float lastRightUp = -10f;
 
@@ -36,9 +40,10 @@ namespace BasketballLegends2020
         public bool CurrentSuper { get; private set; }
         public int CurrentDash { get; private set; }
 
-        public BLKeyboardController(int playerIndex)
+        public BLKeyboardController(int playerIndex, string brain)
         {
             this.playerIndex = playerIndex;
+            this.brain = brain ?? "P1";
         }
 
         public void UpdateController(float dt)
@@ -89,11 +94,23 @@ namespace BasketballLegends2020
             return !Input.GetKey(KeyAction());
         }
 
+        public void BallInOwnHands(int holderPlayerNo)
+        {
+        }
+
+        public void BallInOpponentsHands(int holderPlayerNo)
+        {
+        }
+
         public void BallOwnShoot(int shooterPlayerNo)
         {
         }
 
         public void BallOpponentShoot(int shooterPlayerNo)
+        {
+        }
+
+        public void BallOthers()
         {
         }
 
@@ -123,7 +140,15 @@ namespace BasketballLegends2020
         private KeyCode KeyJump() => playerIndex == 0 ? KeyCode.W : KeyCode.UpArrow;
         private KeyCode KeyBlock() => playerIndex == 0 ? KeyCode.S : KeyCode.DownArrow;
         private KeyCode KeyAction() => playerIndex == 0 ? KeyCode.B : KeyCode.L;
-        private KeyCode KeySuper() => playerIndex == 0 ? KeyCode.V : KeyCode.K;
+        private KeyCode KeySuper()
+        {
+            if (string.Equals(brain, "P0", StringComparison.OrdinalIgnoreCase))
+            {
+                return KeyCode.Z;
+            }
+
+            return playerIndex == 0 ? KeyCode.V : KeyCode.K;
+        }
     }
 
     public class BLAIController : BLBaseAIController
@@ -196,7 +221,7 @@ namespace BasketballLegends2020
         protected BLPlayerObject opponent;
         protected readonly BLAISkillProfile profile;
 
-        protected readonly SimpleDelay jumpBall;
+        protected readonly NegativeDelay jumpBall;
         protected readonly FullDelay attack;
         protected readonly SimpleDelay attackJumpDelay;
         protected readonly AIUseDelay stealDelay;
@@ -230,6 +255,8 @@ namespace BasketballLegends2020
         protected float attackZoneEnd;
         protected float dashZoneStart;
         protected float dashZoneEnd;
+        protected bool willAttackAtOnce;
+        protected bool queuedSuperInput;
         protected const float DeltaDistance = 20f;
         protected const float DownTime = 5f;
 
@@ -245,9 +272,9 @@ namespace BasketballLegends2020
             this.player = player;
             difficulty = BLInventory.Instance.Difficulty;
             profile = BLAISkillsData.Get(skillLevel);
-            jumpBall = new SimpleDelay(profile.JumpBall);
-            attack = new FullDelay(profile.Attack, 0.08f);
-            attackJumpDelay = new SimpleDelay(0.5f);
+            jumpBall = new NegativeDelay(BLObjectsData.IdealJumpBallJump, profile.JumpBall);
+            attack = new FullDelay(BLObjectsData.IdealAttackJump, profile.Attack);
+            attackJumpDelay = new SimpleDelay(profile.AttackAtOnce);
             stealDelay = new AIUseDelay(0.1f, BLObjectsData.StealDuration + profile.DelaySteal);
             defenceDelay = new SimpleDelay(profile.Defence);
             blockDelay = new FullDelay(0f, 0.2f);
@@ -265,12 +292,15 @@ namespace BasketballLegends2020
         {
             EnsureRuntimeLinks();
             CurrentDash = 0;
+            CurrentSuper = queuedSuperInput;
+            queuedSuperInput = false;
 
             if (ball == null || opponents == null || opponents.Count == 0)
             {
                 CurrentMove = 0;
                 CurrentJump = false;
                 CurrentAction = false;
+                CurrentSuper = false;
                 return;
             }
 
@@ -297,7 +327,7 @@ namespace BasketballLegends2020
             {
                 if (strategy != 2)
                 {
-                    BallInOwnHands();
+                    HandleBallInOwnHands();
                 }
 
                 StrategyAttack(dt);
@@ -314,7 +344,7 @@ namespace BasketballLegends2020
                 {
                     if (strategy != 0)
                     {
-                        BallInOpponentsHands();
+                        HandleBallInOpponentsHands();
                     }
 
                     StrategyDefence(dt);
@@ -343,12 +373,30 @@ namespace BasketballLegends2020
                 {
                     if (strategy != 1)
                     {
-                        BallOthers();
+                        HandleBallOthers();
                     }
 
                     StrategyBallFight(dt);
                 }
             }
+        }
+
+        public virtual void BallInOwnHands(int holderPlayerNo)
+        {
+            EnsureRuntimeLinks();
+            if (player.SuperId == 0 && player.ReadyForSuper)
+            {
+                megaDunkDelay.Activate();
+            }
+
+            HandleBallInOwnHands();
+        }
+
+        public virtual void BallInOpponentsHands(int holderPlayerNo)
+        {
+            EnsureRuntimeLinks();
+            opponent = FindOpponentByPlayerNo(holderPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
+            HandleBallInOpponentsHands();
         }
 
         public virtual void BallOwnShoot(int shooterPlayerNo)
@@ -363,6 +411,11 @@ namespace BasketballLegends2020
         public virtual void BallOpponentShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
+            if (player.SuperId == 1 && player.ReadyForSuper)
+            {
+                player.SuperShot();
+            }
+
             ResetCurrents();
             strategy = 4;
             reboundPoint = reboundPointInDefence;
@@ -371,6 +424,12 @@ namespace BasketballLegends2020
                                 opponent.IsGrounded &&
                                 IsOpponentCloseBehind(120f) &&
                                 UnityEngine.Random.value <= profile.JumpThrow;
+        }
+
+        public virtual void BallOthers()
+        {
+            EnsureRuntimeLinks();
+            HandleBallOthers();
         }
 
         public virtual bool ReadyForAction()
@@ -392,6 +451,11 @@ namespace BasketballLegends2020
         {
             isPumped = false;
             pumpCount = 0;
+            if (player.WithBall && willAttackAtOnce)
+            {
+                ResetCurrents();
+                attackJumpDelay.Activate();
+            }
         }
 
         public virtual void PlayerOnDashEnd()
@@ -657,33 +721,44 @@ namespace BasketballLegends2020
             }
         }
 
-        protected void BallInOwnHands()
+        protected void HandleBallInOwnHands()
         {
-            strategy = 2;
             ResetBaseDelays();
             ResetCurrents();
             queuedReboundJump = false;
-            if (UnityEngine.Random.value <= BLObjectsData.ChanceForThree)
+            strategy = 2;
+
+            var reboundZone = IsReboundInAttackZone();
+            if (reboundZone == -1)
             {
-                SetAttackPoint(510f, 510f);
+                willAttackAtOnce = !player.IsGrounded;
+                SetAttackPoint(150f, player.Position.x);
+            }
+            else if (reboundZone == 0)
+            {
+                willAttackAtOnce = !player.IsGrounded;
+                var currentX = player.Position.x;
+                SetAttackPoint(currentX, currentX);
             }
             else
             {
                 SetAttackPoint(0f, 0f);
+                willAttackAtOnce = !player.IsGrounded && Mathf.Abs(player.Position.x - attackPoint) < 50f;
             }
         }
 
-        protected void BallInOpponentsHands()
+        protected void HandleBallInOpponentsHands()
         {
             strategy = 0;
             ResetBaseDelays();
             ResetCurrents();
             queuedReboundJump = false;
+            willAttackAtOnce = false;
             isPumped = false;
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
 
-        protected void BallOthers()
+        protected void HandleBallOthers()
         {
             strategy = 1;
             ResetCurrents();
@@ -874,9 +949,11 @@ namespace BasketballLegends2020
             ResetCurrents();
             CurrentBlockOrPump = false;
             CurrentSuper = false;
+            queuedSuperInput = false;
             isPumped = false;
             pumpCount = 0;
             queuedReboundJump = false;
+            willAttackAtOnce = false;
             reboundPoint = reboundPointInDefence;
             ResetAvoidSteal();
         }
@@ -959,6 +1036,22 @@ namespace BasketballLegends2020
                 attackPoint = BLConstants.Width - attackPoint;
                 jumpPoint = BLConstants.Width - jumpPoint;
             }
+        }
+
+        protected int IsReboundInAttackZone()
+        {
+            var playerX = player.Position.x;
+            var zone = 0;
+            if ((playerX - attackZoneStart) * player.Side <= 0f)
+            {
+                zone = -1;
+            }
+            else if ((playerX - attackZoneEnd) * player.Side >= 0f)
+            {
+                zone = 1;
+            }
+
+            return zone;
         }
 
         protected int MoveTo(float x)

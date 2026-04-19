@@ -68,7 +68,7 @@ namespace BasketballLegends2020
 
             BLRender.Text(
                 "Controls",
-                "P1  A/D MOVE  W JUMP  S BLOCK  B SHOOT  V SUPER\nP2  LEFT/RIGHT MOVE  UP JUMP  DOWN BLOCK  L SHOOT  K SUPER",
+                "1P/TRAINING  A/D MOVE  W JUMP  S BLOCK  B SHOOT  Z SUPER\n2P  P1 A/D MOVE  W JUMP  S BLOCK  B SHOOT  V SUPER\n2P  P2 LEFT/RIGHT MOVE  UP JUMP  DOWN BLOCK  L SHOOT  K SUPER",
                 BLConstants.Width2,
                 436f,
                 16,
