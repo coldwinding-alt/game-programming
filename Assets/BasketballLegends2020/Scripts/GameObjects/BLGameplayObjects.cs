@@ -168,8 +168,9 @@ namespace BasketballLegends2020
         public int Side;
         public string State = "up";
         public float LastShotX;
+        public Vector2 PreviousPosition => previousPosition;
         public bool IsInGame => State != "inHands";
-        public bool IsBlockable => State == "shooting" || State == "basket" || State == "dunk" || State == "block";
+        public bool IsBlockable => State == "shooting";
         public bool CanBeTakenInHands =>
             pickupLockTimer <= 0f &&
             State != "shooting" &&
@@ -199,6 +200,7 @@ namespace BasketballLegends2020
         public void TakeInHands(int side)
         {
             Side = side;
+            previousPosition = Position;
             State = "inHands";
             ResetScoring(false);
             graphic.SetActive(false);
@@ -208,6 +210,7 @@ namespace BasketballLegends2020
         public void FromHands(Vector2 playerPosition, float direction)
         {
             Position = playerPosition;
+            previousPosition = Position;
             Velocity = new Vector2(150f * direction, -100f);
             State = "down";
             ResetScoring(false);
@@ -218,6 +221,7 @@ namespace BasketballLegends2020
         {
             Side = side;
             Position = new Vector2(x, y);
+            previousPosition = Position;
             LastShotX = x;
             var baseVelocity = CalcThrowVel(x, y, 0f);
             var distanceToBasket = side == 1 ? x : BLConstants.Width - x;
@@ -247,6 +251,7 @@ namespace BasketballLegends2020
             Side = side;
             var basketX = side == 1 ? BLObjectsData.BasketCenter : BLObjectsData.BasketCenter2;
             Position = new Vector2(completed ? basketX + 17f * side : basketX, 170f);
+            previousPosition = Position;
             LastShotX = Position.x;
             Velocity = completed ? new Vector2(-260f * side, 400f) : new Vector2(-550f * side, 400f);
             State = "dunk";
@@ -268,6 +273,7 @@ namespace BasketballLegends2020
         public void ApplySteal(Vector2 playerPosition, float distanceFactor, int direction)
         {
             Position = playerPosition;
+            previousPosition = Position;
             Velocity = new Vector2(
                 direction * (BLObjectsData.BallStealVelocityXBase + distanceFactor * BLObjectsData.BallStealVelocityXAdd),
                 BLObjectsData.BallStealVelocityY);
@@ -281,6 +287,7 @@ namespace BasketballLegends2020
         {
             var direction = Position.x >= blocker.Position.x ? 1f : -1f;
             Side = blocker.Side;
+            previousPosition = Position;
             Velocity = new Vector2(
                 direction * (280f + 100f * Random.value),
                 -250f - 150f * Random.value);
@@ -322,6 +329,7 @@ namespace BasketballLegends2020
                 Velocity.y += BLObjectsData.Gravity.y * BLObjectsData.BallGravMass * stepDt;
                 Position += Velocity * stepDt;
 
+                gameCore.TryBlockBall();
                 ResolveFloorBounce();
                 ResolveWallBounce();
                 ResolveBasket(basketLeft, 1);
@@ -784,6 +792,7 @@ namespace BasketballLegends2020
         private float facingDirection;
         private float stealFacingDirection;
         private bool canTakeInHands;
+        private bool jumpBlockActive;
 
         public BLGameCore GameCore { get; }
         public Vector2 Position;
@@ -871,6 +880,7 @@ namespace BasketballLegends2020
             facingDirection = -Side;
             stealFacingDirection = facingDirection;
             canTakeInHands = true;
+            jumpBlockActive = false;
             var x = BLConstants.Width2 + Side * (playerNo == 0 ? BLObjectsData.PlayerIndentX : 200f);
             if (startSide == Side)
             {
@@ -915,6 +925,7 @@ namespace BasketballLegends2020
                 pendingStealAction = false;
                 blockPumpPhase = BlockPumpPhase.None;
                 blockPumpTimer = 0f;
+                jumpBlockActive = false;
                 canTakeInHands = false;
                 Velocity = Vector2.zero;
                 if (stunTimer <= 0f)
@@ -931,6 +942,7 @@ namespace BasketballLegends2020
             controller.UpdateController(dt);
             UpdateDashBuffer(dt);
             UpdateFacing();
+            UpdateJumpBlockThreat();
 
             if (blockPumpPhase != BlockPumpPhase.None)
             {
@@ -977,6 +989,11 @@ namespace BasketballLegends2020
 
             if (dashTimer <= 0f && controller.CurrentJump && IsGrounded)
             {
+                if (!WithBall && ShouldPrimeJumpBlock())
+                {
+                    ActivateJumpBlock();
+                }
+
                 Velocity.y = BLObjectsData.PlayerJump;
                 IsGrounded = false;
                 PlayState(WithBall ? "jump_wb" : "jump");
@@ -1024,6 +1041,7 @@ namespace BasketballLegends2020
                 if (!IsGrounded)
                 {
                     IsGrounded = true;
+                    jumpBlockActive = false;
                     controller.PlayerOnGround();
                     if (!WithBall)
                     {
@@ -1078,6 +1096,7 @@ namespace BasketballLegends2020
         public void TakeBallInHands()
         {
             WithBall = true;
+            jumpBlockActive = false;
             canTakeInHands = false;
             stealAttemptTimer = -1f;
             stunTimer = 0f;
@@ -1093,6 +1112,7 @@ namespace BasketballLegends2020
             }
 
             WithBall = false;
+            jumpBlockActive = false;
             canTakeInHands = actionLatch <= 0f && stunTimer <= 0f;
             GameCore.Ball.FromHands(Position + new Vector2(0f, -45f), Mathf.Sign(graphic.transform.localScale.x));
         }
@@ -1103,6 +1123,19 @@ namespace BasketballLegends2020
             stealAttemptTimer = -1f;
             stunTimer = 0f;
             canTakeInHands = true;
+            jumpBlockActive = false;
+        }
+
+        public void NotifyBallShot(int shotSide, int shooterPlayerNo)
+        {
+            if (shotSide == Side)
+            {
+                controller.BallOwnShoot(shooterPlayerNo);
+            }
+            else
+            {
+                controller.BallOpponentShoot(shooterPlayerNo);
+            }
         }
 
         public void OnStolen()
@@ -1140,6 +1173,7 @@ namespace BasketballLegends2020
             pendingGroundThrow = false;
             stunTimer = Mathf.Max(stunTimer, BLObjectsData.StunDuration);
             canDoAction = false;
+            jumpBlockActive = false;
             canTakeInHands = false;
             Velocity.x = 0f;
             actionLatch = Mathf.Max(actionLatch, stunTimer);
@@ -1175,6 +1209,7 @@ namespace BasketballLegends2020
             var releaseY = Position.y - 50f;
             var throwType = (releaseX - BLObjectsData.ThreePointsDistance) * Side >= 0f ? 0 : 6;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, throwType);
+            GameCore.NotifyPlayersBallShot(Side, playerNo);
             GameCore.Ball.Shoot(Side, releaseX, releaseY, Velocity.x, accuracy);
             PlayState(IsGrounded ? "throw_land" : "fly1");
         }
@@ -1234,26 +1269,86 @@ namespace BasketballLegends2020
 
         public bool TryBlockBall(BLBallObject ball)
         {
-            if (!IsBlocking || ball == null || !ball.IsBlockable || ball.Side == Side)
+            if (!jumpBlockActive || ball == null || !ball.IsBlockable || ball.Side == Side)
             {
                 return false;
             }
 
-            if ((ball.Position.x - Position.x) * ball.Side <= 0f)
+            var start = ball.PreviousPosition;
+            var end = ball.Position;
+            if ((start.x - Position.x) * ball.Side <= 0f &&
+                (end.x - Position.x) * ball.Side <= 0f)
             {
                 return false;
             }
 
-            var minX = Position.x - BLObjectsData.BlockWidth * 0.5f - BLObjectsData.BallRadius;
-            var maxX = Position.x + BLObjectsData.BlockWidth * 0.5f + BLObjectsData.BallRadius;
-            var minY = Position.y - BLObjectsData.BlockHeight - BLObjectsData.BallRadius;
+            var minX = Position.x - BLObjectsData.JumpBlockWidth * 0.5f - BLObjectsData.BallRadius;
+            var maxX = Position.x + BLObjectsData.JumpBlockWidth * 0.5f + BLObjectsData.BallRadius;
+            var minY = Position.y - BLObjectsData.JumpBlockHeight - BLObjectsData.BallRadius;
             var maxY = Position.y + BLObjectsData.BallRadius;
-            if (ball.Position.x < minX || ball.Position.x > maxX || ball.Position.y < minY || ball.Position.y > maxY)
+            if (!SweptPointIntersectsRect(start, end, minX, maxX, minY, maxY))
             {
                 return false;
             }
 
             ball.ApplyBlock(this);
+            return true;
+        }
+
+        private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
+        {
+            if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
+            {
+                return true;
+            }
+
+            var direction = end - start;
+            var tMin = 0f;
+            var tMax = 1f;
+            return ClipSegment(-direction.x, start.x - minX, ref tMin, ref tMax) &&
+                   ClipSegment(direction.x, maxX - start.x, ref tMin, ref tMax) &&
+                   ClipSegment(-direction.y, start.y - minY, ref tMin, ref tMax) &&
+                   ClipSegment(direction.y, maxY - start.y, ref tMin, ref tMax);
+        }
+
+        private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
+        {
+            return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+        }
+
+        private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
+        {
+            if (Mathf.Approximately(p, 0f))
+            {
+                return q >= 0f;
+            }
+
+            var ratio = q / p;
+            if (p < 0f)
+            {
+                if (ratio > tMax)
+                {
+                    return false;
+                }
+
+                if (ratio > tMin)
+                {
+                    tMin = ratio;
+                }
+            }
+            else
+            {
+                if (ratio < tMin)
+                {
+                    return false;
+                }
+
+                if (ratio < tMax)
+                {
+                    tMax = ratio;
+                }
+            }
+
             return true;
         }
 
@@ -1294,6 +1389,7 @@ namespace BasketballLegends2020
 
         private void OnAnimationFrameEvent(string animationName, string eventName)
         {
+            armature?.RefreshPose();
             if (eventName == "throw" && pendingGroundThrow && WithBall)
             {
                 pendingGroundThrow = false;
@@ -1424,6 +1520,32 @@ namespace BasketballLegends2020
             }
 
             PlayState(blockPumpIsPump ? "pumpStart" : "blockStart");
+        }
+
+        private void ActivateJumpBlock()
+        {
+            jumpBlockActive = true;
+            canTakeInHands = false;
+        }
+
+        private bool ShouldPrimeJumpBlock()
+        {
+            var holder = GameCore.FindBallHolder();
+            if (holder != null)
+            {
+                return holder.Side != Side;
+            }
+
+            var ball = GameCore.Ball;
+            return ball != null && ball.State == "shooting" && ball.Side != Side;
+        }
+
+        private void UpdateJumpBlockThreat()
+        {
+            if (jumpBlockActive && !ShouldPrimeJumpBlock())
+            {
+                jumpBlockActive = false;
+            }
         }
 
         private void UpdateBlockOrPump(float dt)

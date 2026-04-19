@@ -18,7 +18,7 @@ namespace BasketballLegends2020
         public const float VerticalDispersion = 0.1f;
         public const float Dispersion = 0.01f;
 
-        public const float BasketIndent = 25f;
+        public const float BasketIndent = 20f;
         public const float BasketRadius = 30f;
         public const float BasketCenter = BasketIndent + BasketRadius;
         public const float BasketCenter2 = BLConstants.Width - BasketCenter;
@@ -46,6 +46,8 @@ namespace BasketballLegends2020
         public const float IndentGeneralX = 50f;
         public const float BlockWidth = 20f;
         public const float BlockHeight = 70f;
+        public const float JumpBlockWidth = 10f;
+        public const float JumpBlockHeight = 70f;
         public const float BlockStartDuration = 3f / 30f;
         public const float BlockEndDuration = 5f / 30f;
         public const float PumpStartDuration = 4f / 30f;
@@ -79,7 +81,7 @@ namespace BasketballLegends2020
         public const float DefensePoint = 250f;
         public const float StealDuration = 0.3f;
         public const float StunDuration = 22f / 30f;
-        public const float ThreePointsDistance = 500f;
+        public const float ThreePointsDistance = BLConstants.Width2;
         public const float DashDelay = 1f;
         public const float DashDoubleTapWindow = 0.46f;
         public const float DashInputBuffer = 0.12f;
