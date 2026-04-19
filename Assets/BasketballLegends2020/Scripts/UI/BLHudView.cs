@@ -231,9 +231,22 @@ namespace BasketballLegends2020
 
         public void ShowPostMatch(int winner, int leftScore, int rightScore)
         {
-            postMatchTitleText.text = winner == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+            var inventory = BLInventory.Instance;
+            if (inventory.IsTournamentActive || inventory.GameMode == 1 || inventory.GameMode == 2)
+            {
+                postMatchTitleText.text = winner == -1 ? "YOU WIN!" : "YOU LOSE";
+            }
+            else if (inventory.GameMode == 4 && inventory.MatchData.MatchMode == 2)
+            {
+                postMatchTitleText.text = winner == -1 ? "TEAM WINS!" : "TEAM LOSES";
+            }
+            else
+            {
+                postMatchTitleText.text = winner == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+            }
+
             postMatchScoreText.text = $"{leftScore} - {rightScore}";
-            postMatchPromptText.text = "CLICK OR PRESS ENTER";
+            postMatchPromptText.text = inventory.IsTournamentActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER";
             HideMessage();
             HideCountdown();
         }
@@ -338,17 +351,15 @@ namespace BasketballLegends2020
 
         public BLEnergyBarView(Transform parent, int controllerSlot, int superId, float fullTime)
         {
+            var profile = BLControlsData.ProfileForSlot(controllerSlot);
             var x = 45f;
-            var hint = "Z";
             if (controllerSlot == 1)
             {
                 x = 185f;
-                hint = "V";
             }
             else if (controllerSlot == 2)
             {
                 x = 614f;
-                hint = "K";
             }
 
             var y = 45f;
@@ -360,7 +371,7 @@ namespace BasketballLegends2020
             BLRender.Sprite($"EnergyHintBg_{controllerSlot}", BLAtlasCache.Instance.Gameplay, "key_hint0000", x - 30f, y + 30f, 0.5f, 0.5f, 86, parent);
             BLRender.Text(
                 $"EnergyHint_{controllerSlot}",
-                hint,
+                profile.SuperHint,
                 x - 30f,
                 y + 32f,
                 16,
