@@ -29,6 +29,17 @@ namespace BasketballLegends2020.EditorTools
                     errors.Add("Gameplay atlas did not expose expected original frame keys.");
                 }
 
+                if (!gameplay.HasFrame("ShieldMC20000") || !gameplay.HasFrame("teleport30000"))
+                {
+                    errors.Add("Gameplay atlas did not expose expected skill FX frame keys.");
+                }
+
+                var ui = BLAtlasCache.Instance.Interface;
+                if (!ui.HasFrame("icon_ball0000") || !ui.HasFrame("icon_ball20000"))
+                {
+                    errors.Add("Interface atlas did not expose expected skill UI frame keys.");
+                }
+
                 DBLiteFactory.Instance.EnsureLoaded();
                 var armature = BLPlayersData.BuildGameplayArmature("SmokePlayerSmall");
                 if (armature == null)
@@ -39,6 +50,12 @@ namespace BasketballLegends2020.EditorTools
                 {
                     BLPlayersData.SwitchPlayer(armature, 0, 0);
                     UnityEngine.Object.DestroyImmediate(armature.gameObject);
+                }
+
+                var dragonBones = Resources.Load<TextAsset>("BL2020/DragonBones/sk2");
+                if (dragonBones == null || !dragonBones.text.Contains("\"mega\""))
+                {
+                    errors.Add("DragonBones data did not expose the expected mega frame event.");
                 }
 
                 root = new GameObject("SmokeRuntimeRoot");

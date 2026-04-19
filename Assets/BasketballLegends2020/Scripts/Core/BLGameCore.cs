@@ -30,8 +30,12 @@ namespace BasketballLegends2020
         public BLPlayerSignalBus PlayerSignals { get; } = new BLPlayerSignalBus();
         public BLMatchProcessor MatchProcessor { get; } = new BLMatchProcessor();
         public bool ReturnToMenuRequested { get; private set; }
+        public bool IsSuperShot { get; set; }
+        public bool IsAlleyOop { get; set; }
         public IReadOnlyList<BLPlayerObject> PlayersLeft => playersLeft;
         public IReadOnlyList<BLPlayerObject> PlayersRight => playersRight;
+        public BLBasketObject BasketLeft => basketLeft;
+        public BLBasketObject BasketRight => basketRight;
 
         public BLGameCore(Transform root)
         {
@@ -151,7 +155,7 @@ namespace BasketballLegends2020
             TryBlockBall();
             TryPickupLooseBall();
 
-            if (!isTraining)
+            if (!isTraining && !IsSuperShot)
             {
                 matchTime += dt;
                 hud.UpdateTimer(Mathf.Max(0f, endTime - matchTime));
@@ -244,7 +248,20 @@ namespace BasketballLegends2020
             return closest;
         }
 
-        internal void NotifyPlayersBallShot(int shotSide, int shooterPlayerNo)
+        public void NotifyBallInHands(int holderSide, int holderPlayerNo)
+        {
+            foreach (var player in playersLeft)
+            {
+                player.NotifyBallInHands(holderSide, holderPlayerNo);
+            }
+
+            foreach (var player in playersRight)
+            {
+                player.NotifyBallInHands(holderSide, holderPlayerNo);
+            }
+        }
+
+        public void NotifyPlayersBallShot(int shotSide, int shooterPlayerNo)
         {
             foreach (var player in playersLeft)
             {
@@ -257,9 +274,36 @@ namespace BasketballLegends2020
             }
         }
 
+        public void NotifyBallOthers()
+        {
+            foreach (var player in playersLeft)
+            {
+                player.NotifyBallOthers();
+            }
+
+            foreach (var player in playersRight)
+            {
+                player.NotifyBallOthers();
+            }
+        }
+
+        public BLPlayerObject GetTeamMate(int side, int playerNo)
+        {
+            var team = side == -1 ? playersLeft : playersRight;
+            for (var i = 0; i < team.Count; i++)
+            {
+                if (team[i].PlayerNo != playerNo)
+                {
+                    return team[i];
+                }
+            }
+
+            return null;
+        }
+
         public bool TryStealBall(BLPlayerObject thief, float facingDirection)
         {
-            if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying)
+            if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying || IsSuperShot)
             {
                 return false;
             }
@@ -353,6 +397,8 @@ namespace BasketballLegends2020
             postMatchWinner = 0;
             overtimePending = false;
             waitingForBallAfterBuzzer = false;
+            IsSuperShot = false;
+            IsAlleyOop = false;
             ReturnToMenuRequested = false;
             MatchProcessor.Reset();
             Restart(0);
@@ -371,6 +417,8 @@ namespace BasketballLegends2020
         private void Restart(int side)
         {
             Ball.Restart();
+            IsSuperShot = false;
+            IsAlleyOop = false;
             MatchProcessor.Reset();
             foreach (var player in playersLeft)
             {
@@ -549,6 +597,32 @@ namespace BasketballLegends2020
             foreach (var player in playersRight)
             {
                 if (player.TryBlockBall(Ball))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal bool TryShieldBall()
+        {
+            if (Ball == null)
+            {
+                return false;
+            }
+
+            foreach (var player in playersLeft)
+            {
+                if (player.TryShieldBall(Ball))
+                {
+                    return true;
+                }
+            }
+
+            foreach (var player in playersRight)
+            {
+                if (player.TryShieldBall(Ball))
                 {
                     return true;
                 }

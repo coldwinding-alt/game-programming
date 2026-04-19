@@ -331,4 +331,142 @@ namespace BasketballLegends2020
             label.text = text;
         }
     }
+
+    public sealed class BLEnergyBarView
+    {
+        private readonly BLRadialIconMesh overlay;
+
+        public BLEnergyBarView(Transform parent, int controllerSlot, int superId, float fullTime)
+        {
+            var x = 45f;
+            var hint = "Z";
+            if (controllerSlot == 1)
+            {
+                x = 185f;
+                hint = "V";
+            }
+            else if (controllerSlot == 2)
+            {
+                x = 614f;
+                hint = "K";
+            }
+
+            var y = 45f;
+            var bg = BLRender.Sprite($"EnergyBg_{controllerSlot}", BLAtlasCache.Instance.Gameplay, "btn_bg20000", x, y + 1f, 0.5f, 0.5f, 83, parent);
+            bg.transform.localScale *= 1.1f;
+            BLRender.Sprite($"EnergyBase_{controllerSlot}", BLAtlasCache.Instance.Interface, $"icon_ball000{superId}", x, y, 0.5f, 0.5f, 84, parent);
+            overlay = new BLRadialIconMesh($"EnergyFill_{controllerSlot}", BLAtlasCache.Instance.Interface, $"icon_ball2000{superId}", x, y, 85, parent);
+
+            BLRender.Sprite($"EnergyHintBg_{controllerSlot}", BLAtlasCache.Instance.Gameplay, "key_hint0000", x - 30f, y + 30f, 0.5f, 0.5f, 86, parent);
+            BLRender.Text(
+                $"EnergyHint_{controllerSlot}",
+                hint,
+                x - 30f,
+                y + 32f,
+                16,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                87,
+                parent,
+                BLFontKind.Impact2,
+                outlineColor: new Color(0f, 0f, 0f, 0.8f),
+                outlinePixels: 1f);
+
+            SetCharge(fullTime <= 0f ? 1f : 0f);
+        }
+
+        public void SetCharge(float progress)
+        {
+            overlay.SetProgress(progress);
+        }
+    }
+
+    public sealed class BLRadialIconMesh
+    {
+        private readonly GameObject graphic;
+        private readonly Mesh mesh;
+        private readonly float width;
+        private readonly float height;
+        private readonly Vector2 uvMin;
+        private readonly Vector2 uvMax;
+
+        public BLRadialIconMesh(string name, BLAtlas atlas, string frameName, float x, float y, int sortingOrder, Transform parent)
+        {
+            graphic = new GameObject(name);
+            graphic.transform.SetParent(parent, false);
+
+            var filter = graphic.AddComponent<MeshFilter>();
+            var renderer = graphic.AddComponent<MeshRenderer>();
+            var sprite = atlas.Sprite(frameName, 0.5f, 0.5f);
+            var frame = atlas.Frame(frameName);
+            mesh = new Mesh { name = $"{name}_Mesh" };
+            mesh.MarkDynamic();
+            filter.sharedMesh = mesh;
+
+            var material = new Material(Shader.Find("Sprites/Default"));
+            material.mainTexture = sprite.texture;
+            renderer.sharedMaterial = material;
+            renderer.sortingOrder = sortingOrder;
+
+            width = frame.W;
+            height = frame.H;
+            var rect = sprite.rect;
+            uvMin = new Vector2(rect.xMin / sprite.texture.width, rect.yMin / sprite.texture.height);
+            uvMax = new Vector2(rect.xMax / sprite.texture.width, rect.yMax / sprite.texture.height);
+
+            BLRender.ApplyPixelTransform(graphic.transform, x, y, 0.13f, 1f);
+            SetProgress(0f);
+        }
+
+        public void SetProgress(float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            if (progress >= 0.999f)
+            {
+                graphic.SetActive(false);
+                return;
+            }
+
+            graphic.SetActive(true);
+            BuildSector(360f * (1f - progress));
+        }
+
+        private void BuildSector(float degrees)
+        {
+            const int maxSegments = 36;
+            var segmentCount = Mathf.Max(3, Mathf.CeilToInt(maxSegments * Mathf.Clamp01(degrees / 360f)));
+            var radius = Mathf.Min(width, height) * 0.5f;
+            var vertices = new Vector3[segmentCount + 2];
+            var uvs = new Vector2[segmentCount + 2];
+            var triangles = new int[segmentCount * 3];
+            vertices[0] = Vector3.zero;
+            uvs[0] = new Vector2((uvMin.x + uvMax.x) * 0.5f, (uvMin.y + uvMax.y) * 0.5f);
+
+            for (var i = 0; i <= segmentCount; i++)
+            {
+                var t = segmentCount == 0 ? 0f : i / (float)segmentCount;
+                var angle = (90f - degrees * t) * Mathf.Deg2Rad;
+                var point = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                vertices[i + 1] = new Vector3(point.x, point.y, 0f);
+                var uvX = Mathf.Lerp(uvMin.x, uvMax.x, point.x / width + 0.5f);
+                var uvY = Mathf.Lerp(uvMin.y, uvMax.y, point.y / height + 0.5f);
+                uvs[i + 1] = new Vector2(uvX, uvY);
+                if (i == segmentCount)
+                {
+                    continue;
+                }
+
+                var tri = i * 3;
+                triangles[tri] = 0;
+                triangles[tri + 1] = i + 1;
+                triangles[tri + 2] = i + 2;
+            }
+
+            mesh.Clear();
+            mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.triangles = triangles;
+            mesh.RecalculateBounds();
+        }
+    }
 }
