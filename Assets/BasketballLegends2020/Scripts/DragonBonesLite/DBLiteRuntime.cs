@@ -137,6 +137,11 @@ namespace BasketballLegends2020
             ApplyPose(0f);
         }
 
+        public void RefreshPose()
+        {
+            ApplyPose(elapsedFrames);
+        }
+
         private void Update()
         {
             if (currentAnimation == null)
@@ -291,6 +296,7 @@ namespace BasketballLegends2020
 
             foreach (var pair in slots)
             {
+                pair.Value.ResetToSetupPose();
                 if (currentAnimation != null && currentAnimation.SlotTracks.TryGetValue(pair.Key, out var slotTrack))
                 {
                     var displayIndex = slotTrack.SampleDisplay(animFrame);
@@ -300,10 +306,6 @@ namespace BasketballLegends2020
                     }
 
                     pair.Value.SetAlpha(slotTrack.SampleAlpha(animFrame));
-                }
-                else
-                {
-                    pair.Value.SetAlpha(1f);
                 }
             }
         }
@@ -929,6 +931,12 @@ namespace BasketballLegends2020
 
             currentAlpha = alpha;
             ApplyAlphaToCurrentDisplay(currentAlpha);
+        }
+
+        public void ResetToSetupPose()
+        {
+            SetDisplay(slotData.DisplayIndex);
+            SetAlpha(1f);
         }
 
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
