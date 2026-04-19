@@ -28,8 +28,7 @@ namespace BasketballLegends2020
 
     public sealed class BLKeyboardController : IBLPlayerController
     {
-        private readonly int playerIndex;
-        private readonly string brain;
+        private readonly BLControlProfile controls;
         private float lastLeftUp = -10f;
         private float lastRightUp = -10f;
 
@@ -40,18 +39,17 @@ namespace BasketballLegends2020
         public bool CurrentSuper { get; private set; }
         public int CurrentDash { get; private set; }
 
-        public BLKeyboardController(int playerIndex, string brain)
+        public BLKeyboardController(string brain)
         {
-            this.playerIndex = playerIndex;
-            this.brain = brain ?? "P1";
+            controls = BLControlsData.ProfileForBrain(brain);
         }
 
         public void UpdateController(float dt)
         {
             CurrentMove = 0;
             CurrentDash = 0;
-            var leftDown = KeyDownLeft();
-            var rightDown = KeyDownRight();
+            var leftDown = controls.MoveLeftKey;
+            var rightDown = controls.MoveRightKey;
 
             if (Input.GetKeyUp(leftDown))
             {
@@ -83,15 +81,15 @@ namespace BasketballLegends2020
                 CurrentMove++;
             }
 
-            CurrentJump = Input.GetKey(KeyJump());
-            CurrentAction = Input.GetKey(KeyAction());
-            CurrentBlockOrPump = Input.GetKey(KeyBlock());
-            CurrentSuper = Input.GetKey(KeySuper());
+            CurrentJump = Input.GetKey(controls.JumpKey);
+            CurrentAction = Input.GetKey(controls.ActionKey);
+            CurrentBlockOrPump = Input.GetKey(controls.BlockKey);
+            CurrentSuper = Input.GetKey(controls.SuperKey);
         }
 
         public bool ReadyForAction()
         {
-            return !Input.GetKey(KeyAction());
+            return !Input.GetKey(controls.ActionKey);
         }
 
         public void BallInOwnHands(int holderPlayerNo)
@@ -116,7 +114,7 @@ namespace BasketballLegends2020
 
         public bool ReleaseBlockOrPump(float dt)
         {
-            return !Input.GetKey(KeyBlock());
+            return !Input.GetKey(controls.BlockKey);
         }
 
         public void Restart(int startSide)
@@ -133,21 +131,6 @@ namespace BasketballLegends2020
 
         public void PlayerOnBlock()
         {
-        }
-
-        private KeyCode KeyDownLeft() => playerIndex == 0 ? KeyCode.A : KeyCode.LeftArrow;
-        private KeyCode KeyDownRight() => playerIndex == 0 ? KeyCode.D : KeyCode.RightArrow;
-        private KeyCode KeyJump() => playerIndex == 0 ? KeyCode.W : KeyCode.UpArrow;
-        private KeyCode KeyBlock() => playerIndex == 0 ? KeyCode.S : KeyCode.DownArrow;
-        private KeyCode KeyAction() => playerIndex == 0 ? KeyCode.B : KeyCode.L;
-        private KeyCode KeySuper()
-        {
-            if (string.Equals(brain, "P0", StringComparison.OrdinalIgnoreCase))
-            {
-                return KeyCode.Z;
-            }
-
-            return playerIndex == 0 ? KeyCode.V : KeyCode.K;
         }
     }
 
@@ -231,6 +214,7 @@ namespace BasketballLegends2020
         protected readonly FullDelay moveDelay;
         protected readonly AIUseDelay dashDecisionDelay;
         protected readonly FullDelay megaDunkDelay;
+        protected readonly FullDelay superDashDelay;
 
         protected int strategy;
         protected float attackPoint;
@@ -282,6 +266,7 @@ namespace BasketballLegends2020
             moveDelay = new FullDelay(profile.MoveDelay, 0.05f);
             dashDecisionDelay = new AIUseDelay(0.1f, profile.DelayDash);
             megaDunkDelay = new FullDelay(0.5f, 0.5f);
+            superDashDelay = new FullDelay(0.5f, 0.5f);
             playerNo = player.PlayerNo;
             player.GameCore.PlayerSignals.OnSignal += ProcessPlayerSignal;
             InitZones();
@@ -384,7 +369,7 @@ namespace BasketballLegends2020
         public virtual void BallInOwnHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
-            if (player.SuperId == 0 && player.ReadyForSuper)
+            if ((player.SuperId == 0 || player.SuperId == 2) && player.ReadyForSuper)
             {
                 megaDunkDelay.Activate();
             }
@@ -406,6 +391,7 @@ namespace BasketballLegends2020
             queuedReboundJump = false;
             strategy = 4;
             reboundPoint = reboundPointInAttack;
+            superDashDelay.Reset();
         }
 
         public virtual void BallOpponentShoot(int shooterPlayerNo)
@@ -419,6 +405,7 @@ namespace BasketballLegends2020
             ResetCurrents();
             strategy = 4;
             reboundPoint = reboundPointInDefence;
+            superDashDelay.Reset();
             opponent = FindOpponentByPlayerNo(shooterPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
             queuedReboundJump = opponent != null &&
                                 opponent.IsGrounded &&
@@ -480,6 +467,11 @@ namespace BasketballLegends2020
         protected virtual void StrategyDefence(float dt)
         {
             if (opponent == null)
+            {
+                return;
+            }
+
+            if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashAgainstHolder()))
             {
                 return;
             }
@@ -546,6 +538,11 @@ namespace BasketballLegends2020
             CurrentMove = MoveTo(ballX + offset);
             CurrentJump = false;
 
+            if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashForBall()))
+            {
+                return;
+            }
+
             if (ball.State != "bounce" && ball.State != "shooting")
             {
                 if (ball.State == "basket")
@@ -576,9 +573,15 @@ namespace BasketballLegends2020
                 return;
             }
 
-            if (megaDunkDelay.Update(dt) == 1)
+            if ((player.SuperId == 0 || player.SuperId == 2) && megaDunkDelay.Update(dt) == 1)
             {
-                CurrentSuper = true;
+                TriggerSuperInput();
+                return;
+            }
+
+            if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashInAttack()))
+            {
+                return;
             }
 
             if (avoidStealJump || avoidStealMove != 0)
@@ -679,6 +682,11 @@ namespace BasketballLegends2020
 
         protected virtual void StrategyRebound(float dt)
         {
+            if (TryUseDelayedSuperDash(dt, ball != null && ball.State == "basket" && ShouldUseSuperDashForBall()))
+            {
+                return;
+            }
+
             var contestJump = queuedReboundJump && player.IsGrounded;
             if (contestJump)
             {
@@ -721,12 +729,88 @@ namespace BasketballLegends2020
             }
         }
 
+        protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
+        {
+            if (player.SuperId != 3 || !player.ReadyForSuper || !shouldUse)
+            {
+                superDashDelay.Reset();
+                return false;
+            }
+
+            var state = superDashDelay.Update(dt);
+            if (state == -1)
+            {
+                superDashDelay.Activate();
+                return false;
+            }
+
+            if (state != 1)
+            {
+                return false;
+            }
+
+            TriggerSuperInput();
+            superDashDelay.Reset();
+            return true;
+        }
+
+        protected void TriggerSuperInput()
+        {
+            ResetCurrents();
+            CurrentSuper = true;
+            CurrentBlockOrPump = false;
+        }
+
+        protected bool ShouldUseSuperDashAgainstHolder()
+        {
+            if (opponent == null || !opponent.WithBall || !player.IsGrounded)
+            {
+                return false;
+            }
+
+            var distance = Mathf.Abs(player.Position.x - opponent.Position.x);
+            return distance >= 90f && distance <= 460f;
+        }
+
+        protected bool ShouldUseSuperDashForBall()
+        {
+            if (ball == null || !ball.IsInGame || !player.IsGrounded)
+            {
+                return false;
+            }
+
+            if (ball.State == "shooting" || ball.State == "score" || ball.State == "alleyOop")
+            {
+                return false;
+            }
+
+            return ball.Position.y > BLObjectsData.BasketHeight &&
+                   Mathf.Abs(DeltaBallX()) >= 120f;
+        }
+
+        protected bool ShouldUseSuperDashInAttack()
+        {
+            if (!player.WithBall || !player.IsGrounded)
+            {
+                return false;
+            }
+
+            if (opponent != null && IsOpponentCloseBehind(140f))
+            {
+                return true;
+            }
+
+            return Mathf.Abs(player.Position.x - player.AttackTargetX) >= 260f &&
+                   InDashingZone();
+        }
+
         protected void HandleBallInOwnHands()
         {
             ResetBaseDelays();
             ResetCurrents();
             queuedReboundJump = false;
             strategy = 2;
+            superDashDelay.Reset();
 
             var reboundZone = IsReboundInAttackZone();
             if (reboundZone == -1)
@@ -755,6 +839,7 @@ namespace BasketballLegends2020
             queuedReboundJump = false;
             willAttackAtOnce = false;
             isPumped = false;
+            superDashDelay.Reset();
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
 
@@ -763,6 +848,7 @@ namespace BasketballLegends2020
             strategy = 1;
             ResetCurrents();
             queuedReboundJump = false;
+            superDashDelay.Reset();
         }
 
         protected void ProcessPlayerSignal(BLPlayerSignalType signal, int side, int signalPlayerNo)
@@ -979,6 +1065,7 @@ namespace BasketballLegends2020
         protected void ResetAllDelays()
         {
             dashDecisionDelay.Reset();
+            superDashDelay.Reset();
             ResetBaseDelays();
         }
 

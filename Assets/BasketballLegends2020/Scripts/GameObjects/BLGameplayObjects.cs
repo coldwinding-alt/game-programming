@@ -273,6 +273,7 @@ namespace BasketballLegends2020
             physicsRemoved = false;
             alleyOopPlayer = null;
             ResetScoring(true);
+            scoreArmedSide = side;
             Show();
             BLAudio.Instance?.Play(BLAssets.Sounds.PSwoosh);
         }
@@ -1125,6 +1126,7 @@ namespace BasketballLegends2020
         private bool canDoAction;
         private bool pendingGroundThrow;
         private bool pendingStealAction;
+        private bool stealAnimationActive;
         private bool alleyOopPendingThrow;
         private bool isDunking;
         private bool dunkReleased;
@@ -1138,11 +1140,14 @@ namespace BasketballLegends2020
         private bool blockPumpStartReady;
         private bool blockPumpEndReady;
         private float stealAttemptTimer = -1f;
+        private float stealAnimationTimer = -1f;
         private float stunTimer;
         private float facingDirection;
         private float stealFacingDirection;
         private bool canTakeInHands;
         private bool canThrow;
+        private bool attackJump;
+        private float pointOfThrow;
         private bool jumpBlockActive;
         private bool needBlock;
         private bool readyForSuper;
@@ -1174,7 +1179,7 @@ namespace BasketballLegends2020
         public bool IsDunking => isDunking;
         public float FacingDirection => facingDirection;
         public bool CanTakeInHands => canTakeInHands && !WithBall && !removedFromPlay;
-        public bool CanAct => actionLatch <= 0f && stunTimer <= 0f && !isDunking && !isSuperShot;
+        public bool CanAct => actionLatch <= 0f && stunTimer <= 0f && !stealAnimationActive && !isDunking && !isSuperShot;
         public bool ReadyForDash => readyForDash && dashTimer <= 0f && !isSuperShot;
         public int PlayerNo => playerNo;
         public int SkillLevel => skillLevel;
@@ -1192,7 +1197,7 @@ namespace BasketballLegends2020
             this.skillLevel = skillLevel;
             Side = teamIndex == 0 ? -1 : 1;
             IsHuman = !playerBrain.StartsWith("B");
-            brainSlot = ParseControllerSlot(playerBrain);
+            brainSlot = BLControlsData.ParseControllerSlot(playerBrain);
             superId = MapSuperId(player);
 
             var profile = BLAISkillsData.Get(skillLevel);
@@ -1246,7 +1251,7 @@ namespace BasketballLegends2020
             }
 
             controller = IsHuman
-                ? new BLKeyboardController(playerBrain == "P2" ? 1 : 0, playerBrain)
+                ? new BLKeyboardController(playerBrain)
                 : BLAIController.CreateForBrain(this, playerBrain, skillLevel);
 
             energyBar = IsHuman ? new BLEnergyBarView(parent, brainSlot, superId, superCoolDown) : null;
@@ -1269,6 +1274,7 @@ namespace BasketballLegends2020
             canDoAction = true;
             pendingGroundThrow = false;
             pendingStealAction = false;
+            stealAnimationActive = false;
             alleyOopPendingThrow = false;
             isDunking = false;
             dunkReleased = false;
@@ -1280,12 +1286,14 @@ namespace BasketballLegends2020
             blockPumpStartReady = false;
             blockPumpEndReady = false;
             stealAttemptTimer = -1f;
+            stealAnimationTimer = -1f;
             stunTimer = 0f;
             actionLatch = 0f;
             facingDirection = -Side;
             stealFacingDirection = facingDirection;
             canTakeInHands = true;
             canThrow = true;
+            attackJump = false;
             jumpBlockActive = false;
             needBlock = false;
             removedFromPlay = false;
@@ -1309,6 +1317,7 @@ namespace BasketballLegends2020
             }
 
             Position = new Vector2(x, BLObjectsData.PlayerIndentY);
+            pointOfThrow = Position.x;
             IsGrounded = true;
             PlayState("idle");
             controller.Restart(startSide);
@@ -1336,7 +1345,7 @@ namespace BasketballLegends2020
             }
 
             actionLatch -= dt;
-            if (!canDoAction && controller.ReadyForAction())
+            if (!canDoAction && !stealAnimationActive && controller.ReadyForAction())
             {
                 canDoAction = true;
             }
@@ -1368,6 +1377,8 @@ namespace BasketballLegends2020
                 dashBufferTimer = 0f;
                 pendingGroundThrow = false;
                 pendingStealAction = false;
+                stealAnimationActive = false;
+                stealAnimationTimer = -1f;
                 blockPumpPhase = BlockPumpPhase.None;
                 blockPumpTimer = 0f;
                 jumpBlockActive = false;
@@ -1381,6 +1392,12 @@ namespace BasketballLegends2020
                 }
 
                 UpdateGraphic();
+                return;
+            }
+
+            if (stealAnimationActive)
+            {
+                UpdateStealAnimation(dt);
                 return;
             }
 
@@ -1439,6 +1456,12 @@ namespace BasketballLegends2020
                     ActivateJumpBlock();
                 }
 
+                attackJump = WithBall;
+                if (WithBall)
+                {
+                    pointOfThrow = Position.x;
+                }
+
                 Velocity.y = BLObjectsData.PlayerJump;
                 IsGrounded = false;
                 canThrow = WithBall;
@@ -1453,18 +1476,21 @@ namespace BasketballLegends2020
             {
                 if (WithBall)
                 {
-                    if (IsGrounded)
+                    if (canThrow && IsGrounded)
                     {
                         BeginFloorThrow();
                     }
-                    else
+                    else if (canThrow)
                     {
                         MakeThrow();
                     }
                 }
                 else
                 {
-                    BeginSteal();
+                    if (IsGrounded)
+                    {
+                        BeginSteal();
+                    }
                 }
             }
 
@@ -1492,20 +1518,28 @@ namespace BasketballLegends2020
                 Velocity.y = 0f;
                 if (!IsGrounded)
                 {
-                    IsGrounded = true;
                     jumpBlockActive = false;
-                    canThrow = true;
-                    controller.PlayerOnGround();
-                    if (!WithBall)
+                    if (WithBall && attackJump)
                     {
+                        MakeThrow();
                         canTakeInHands = true;
                     }
+                    else
+                    {
+                        canThrow = true;
+                        controller.PlayerOnGround();
+                        if (!WithBall)
+                        {
+                            canTakeInHands = true;
+                        }
+                    }
 
+                    IsGrounded = true;
                     PlayState(WithBall ? "landing_wb" : "landing");
                 }
             }
 
-            if (IsGrounded && dashTimer <= 0f && actionLatch <= 0f)
+            if (IsGrounded && dashTimer <= 0f && actionLatch <= 0f && !stealAnimationActive)
             {
                 if (Mathf.Abs(Velocity.x) > 5f)
                 {
@@ -1539,7 +1573,7 @@ namespace BasketballLegends2020
                 actionLatch -= dt;
             }
 
-            if (!canDoAction && controller.ReadyForAction())
+            if (!canDoAction && !stealAnimationActive && controller.ReadyForAction())
             {
                 canDoAction = true;
             }
@@ -1556,7 +1590,13 @@ namespace BasketballLegends2020
             jumpBlockActive = false;
             canTakeInHands = false;
             canThrow = IsGrounded || IsUnderGlass();
-            stealAttemptTimer = -1f;
+            attackJump = false;
+            if (IsUnderGlass())
+            {
+                pointOfThrow = Position.x;
+            }
+
+            CancelStealAnimation(false);
             stunTimer = 0f;
             if (!removedFromPlay)
             {
@@ -1577,6 +1617,8 @@ namespace BasketballLegends2020
             WithBall = false;
             jumpBlockActive = false;
             canThrow = false;
+            attackJump = false;
+            CancelStealAnimation(false);
             if (IsGrounded)
             {
                 PlayState("idle");
@@ -1591,9 +1633,10 @@ namespace BasketballLegends2020
         public void NotifyBallLoose()
         {
             WithBall = false;
-            stealAttemptTimer = -1f;
+            CancelStealAnimation(false);
             stunTimer = 0f;
             canThrow = false;
+            attackJump = false;
             canTakeInHands = true;
             jumpBlockActive = false;
             needBlock = false;
@@ -1695,10 +1738,10 @@ namespace BasketballLegends2020
             WithBall = false;
             dashTimer = 0f;
             dashDirection = 0;
-            stealAttemptTimer = -1f;
-            pendingStealAction = false;
+            CancelStealAnimation(false);
             pendingGroundThrow = false;
             canThrow = false;
+            attackJump = false;
             stunTimer = Mathf.Max(stunTimer, BLObjectsData.StunDuration);
             canDoAction = false;
             jumpBlockActive = false;
@@ -1822,7 +1865,7 @@ namespace BasketballLegends2020
             energyBar?.SetCharge(0f);
             GameCore.IsSuperShot = true;
             pendingGroundThrow = false;
-            pendingStealAction = false;
+            CancelStealAnimation(false);
             jumpBlockActive = false;
             blockPumpPhase = BlockPumpPhase.None;
             dashTimer = 0f;
@@ -2110,6 +2153,7 @@ namespace BasketballLegends2020
 
             WithBall = true;
             canTakeInHands = false;
+            attackJump = false;
             GameCore.Ball.TakeInHands(Side);
             GameCore.NotifyBallInHands(Side, playerNo);
         }
@@ -2119,6 +2163,7 @@ namespace BasketballLegends2020
             canDoAction = false;
             actionLatch = Mathf.Max(actionLatch, 0.35f);
             canThrow = false;
+            attackJump = false;
             WithBall = false;
 
             if (TryStartDunk())
@@ -2128,9 +2173,14 @@ namespace BasketballLegends2020
 
             canTakeInHands = IsGrounded;
             var releaseOffset = IsGrounded ? 20f : 35f;
+            if (IsGrounded)
+            {
+                pointOfThrow = Position.x;
+            }
+
             var releaseX = Position.x - Side * releaseOffset;
             var releaseY = Position.y - 50f;
-            var throwType = (releaseX - BLObjectsData.ThreePointsDistance) * Side >= 0f ? 0 : 6;
+            var throwType = (pointOfThrow - BLObjectsData.ThreePointsDistance) * Side >= 0f ? 0 : 6;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, throwType);
             GameCore.NotifyPlayersBallShot(Side, playerNo);
             GameCore.Ball.Shoot(Side, releaseX, releaseY, Velocity.x, accuracy);
@@ -2150,12 +2200,21 @@ namespace BasketballLegends2020
 
         private void BeginSteal()
         {
+            if (stealAnimationActive)
+            {
+                return;
+            }
+
             canDoAction = false;
             pendingStealAction = true;
-            stealAttemptTimer = 0.25f;
+            stealAnimationActive = true;
+            stealAttemptTimer = BLObjectsData.StealFrameEventTime;
+            stealAnimationTimer = BLObjectsData.StealAnimationDuration;
             stealFacingDirection = facingDirection;
-            actionLatch = Mathf.Max(actionLatch, BLObjectsData.StealDuration);
+            facingDirection = stealFacingDirection;
+            actionLatch = Mathf.Max(actionLatch, BLObjectsData.StealAnimationDuration);
             canTakeInHands = false;
+            Velocity.x = 0f;
             PlayState("steal");
             GameCore.PlayerSignals.Dispatch(BLPlayerSignalType.StartSteal, Side, playerNo);
             BLAudio.Instance?.Play(BLAssets.Sounds.PSwoosh, 0.7f);
@@ -2163,12 +2222,75 @@ namespace BasketballLegends2020
 
         private void ResolveStealAttempt()
         {
+            if (!pendingStealAction)
+            {
+                stealAttemptTimer = -1f;
+                return;
+            }
+
             stealAttemptTimer = -1f;
             pendingStealAction = false;
             GameCore.PlayerSignals.Dispatch(BLPlayerSignalType.Steal, Side, playerNo);
             if (GameCore.TryStealBall(this, stealFacingDirection))
             {
                 actionLatch = Mathf.Max(actionLatch, 0.18f);
+            }
+        }
+
+        private void UpdateStealAnimation(float dt)
+        {
+            facingDirection = stealFacingDirection;
+            Velocity.x = 0f;
+
+            if (stealAttemptTimer >= 0f)
+            {
+                stealAttemptTimer -= dt;
+                if (stealAttemptTimer <= 0f)
+                {
+                    ResolveStealAttempt();
+                }
+            }
+
+            stealAnimationTimer -= dt;
+            if ((armature == null && stealAnimationTimer <= 0f) || stealAnimationTimer <= -0.2f)
+            {
+                FinishStealAnimation();
+                return;
+            }
+
+            UpdateGraphic();
+        }
+
+        private void FinishStealAnimation()
+        {
+            if (!stealAnimationActive)
+            {
+                return;
+            }
+
+            if (pendingStealAction)
+            {
+                ResolveStealAttempt();
+            }
+
+            stealAnimationActive = false;
+            stealAnimationTimer = -1f;
+            stealAttemptTimer = -1f;
+            canTakeInHands = !WithBall && stunTimer <= 0f && !removedFromPlay;
+            canDoAction = controller.ReadyForAction();
+            actionLatch = Mathf.Max(actionLatch, 0f);
+            PlayState(WithBall ? "idle_wb" : "idle");
+        }
+
+        private void CancelStealAnimation(bool restorePickup)
+        {
+            stealAnimationActive = false;
+            pendingStealAction = false;
+            stealAttemptTimer = -1f;
+            stealAnimationTimer = -1f;
+            if (restorePickup && !WithBall && stunTimer <= 0f && !removedFromPlay)
+            {
+                canTakeInHands = true;
             }
         }
 
@@ -2270,10 +2392,7 @@ namespace BasketballLegends2020
                     }
                     break;
                 case "steal":
-                    if (pendingStealAction)
-                    {
-                        ResolveStealAttempt();
-                    }
+                    FinishStealAnimation();
                     break;
                 case "dunk1":
                 case "dunk2":
@@ -2568,7 +2687,7 @@ namespace BasketballLegends2020
 
         private void RestoreBallPickupIfReady()
         {
-            if (canTakeInHands || stunTimer > 0f || stealAttemptTimer >= 0f || actionLatch > 0f)
+            if (canTakeInHands || stunTimer > 0f || stealAnimationActive || stealAttemptTimer >= 0f || actionLatch > 0f)
             {
                 return;
             }
@@ -2581,16 +2700,6 @@ namespace BasketballLegends2020
             return Side == -1
                 ? Position.x > BLConstants.Width - 200f && Position.x < BLConstants.Width - 100f
                 : Position.x > 100f && Position.x < 200f;
-        }
-
-        private static int ParseControllerSlot(string brain)
-        {
-            if (string.IsNullOrEmpty(brain) || brain.Length < 2)
-            {
-                return 1;
-            }
-
-            return int.TryParse(brain.Substring(1, 1), out var value) ? value : 1;
         }
 
         private static int MapSuperId(int selectedPlayer)

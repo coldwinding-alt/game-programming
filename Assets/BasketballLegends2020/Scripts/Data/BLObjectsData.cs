@@ -80,6 +80,8 @@ namespace BasketballLegends2020
         public const float DashZoneEnd = 700f;
         public const float DefensePoint = 250f;
         public const float StealDuration = 0.3f;
+        public const float StealFrameEventTime = 8f / 30f;
+        public const float StealAnimationDuration = 13f / 30f;
         public const float StunDuration = 22f / 30f;
         public const float ThreePointsDistance = BLConstants.Width2;
         public const float DashDelay = 1f;
