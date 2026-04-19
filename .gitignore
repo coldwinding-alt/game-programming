@@ -6,10 +6,8 @@
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
 [Mm]emoryCaptures/
-
 .vs/
 .vscode/
-
 *.csproj
 *.sln
 *.user
@@ -22,13 +20,13 @@
 *.opendb
 *.VC.db
 sysinfo.txt
-
 *.apk
 *.aab
 *.unitypackage
-
 _reference_do_not_ship/
 微信截图_*.png
 *.mp4
 *.mkv
 unity-*.log
+_asset_backup_*/
+新图/
