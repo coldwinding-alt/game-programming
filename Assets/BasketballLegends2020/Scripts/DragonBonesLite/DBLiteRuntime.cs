@@ -291,13 +291,20 @@ namespace BasketballLegends2020
 
             foreach (var pair in slots)
             {
-                var displayIndex = 0;
                 if (currentAnimation != null && currentAnimation.SlotTracks.TryGetValue(pair.Key, out var slotTrack))
                 {
-                    displayIndex = slotTrack.SampleDisplay(animFrame);
-                }
+                    var displayIndex = slotTrack.SampleDisplay(animFrame);
+                    if (displayIndex != int.MinValue)
+                    {
+                        pair.Value.SetDisplay(displayIndex);
+                    }
 
-                pair.Value.SetDisplay(displayIndex);
+                    pair.Value.SetAlpha(slotTrack.SampleAlpha(animFrame));
+                }
+                else
+                {
+                    pair.Value.SetAlpha(1f);
+                }
             }
         }
     }
@@ -462,6 +469,7 @@ namespace BasketballLegends2020
                     {
                         Name = BLJson.String(slot, "name"),
                         Parent = BLJson.String(slot, "parent"),
+                        DisplayIndex = BLJson.Int(slot, "displayIndex", 0),
                         Order = i
                     });
                 }
@@ -747,32 +755,57 @@ namespace BasketballLegends2020
     public sealed class DBLiteSlotTrack
     {
         private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>();
+        private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>();
 
         public static DBLiteSlotTrack Parse(Dictionary<string, object> dict)
         {
             var track = new DBLiteSlotTrack();
             var list = BLJson.List(dict, "displayFrame");
-            if (list == null)
+            if (list != null)
             {
-                return track;
+                var start = 0f;
+                foreach (var item in list)
+                {
+                    var frame = BLJson.AsDict(item);
+                    if (frame == null)
+                    {
+                        continue;
+                    }
+
+                    var duration = Mathf.Max(1, BLJson.Int(frame, "duration", 1));
+                    track.displayFrames.Add(new DBLiteDisplayFrame
+                    {
+                        Start = start,
+                        Duration = duration,
+                        Value = BLJson.Int(frame, "value", 0)
+                    });
+                    start += duration;
+                }
             }
 
-            var start = 0f;
-            foreach (var item in list)
+            var colorList = BLJson.List(dict, "colorFrame");
+            if (colorList != null)
             {
-                var frame = BLJson.AsDict(item);
-                if (frame == null)
+                var start = 0f;
+                foreach (var item in colorList)
                 {
-                    continue;
-                }
+                    var frame = BLJson.AsDict(item);
+                    if (frame == null)
+                    {
+                        continue;
+                    }
 
-                track.displayFrames.Add(new DBLiteDisplayFrame
-                {
-                    Start = start,
-                    Duration = Mathf.Max(1, BLJson.Int(frame, "duration", 1)),
-                    Value = BLJson.Int(frame, "value", 0)
-                });
-                start += Mathf.Max(1, BLJson.Int(frame, "duration", 1));
+                    var duration = Mathf.Max(1, BLJson.Int(frame, "duration", 1));
+                    var value = BLJson.Dict(frame, "value");
+                    var alphaMultiplier = Mathf.Clamp01(BLJson.Int(value, "aM", 100) / 100f);
+                    track.colorFrames.Add(new DBLiteColorFrame
+                    {
+                        Start = start,
+                        Duration = duration,
+                        Alpha = alphaMultiplier
+                    });
+                    start += duration;
+                }
             }
 
             return track;
@@ -782,7 +815,7 @@ namespace BasketballLegends2020
         {
             if (displayFrames.Count == 0)
             {
-                return 0;
+                return int.MinValue;
             }
 
             var current = displayFrames[0];
@@ -796,6 +829,25 @@ namespace BasketballLegends2020
 
             return current.Value;
         }
+
+        public float SampleAlpha(float frame)
+        {
+            if (colorFrames.Count == 0)
+            {
+                return 1f;
+            }
+
+            var current = colorFrames[0];
+            for (var i = 0; i < colorFrames.Count; i++)
+            {
+                if (frame >= colorFrames[i].Start)
+                {
+                    current = colorFrames[i];
+                }
+            }
+
+            return current.Alpha;
+        }
     }
 
     public sealed class DBLiteSlotInstance
@@ -806,6 +858,7 @@ namespace BasketballLegends2020
         private readonly DBLiteFactory factory;
         private GameObject currentDisplayObject;
         private int currentDisplay = int.MinValue;
+        private float currentAlpha = 1f;
 
         public DBLiteArmature ChildArmature { get; private set; }
 
@@ -815,7 +868,7 @@ namespace BasketballLegends2020
             this.displays = displays ?? new List<DBLiteDisplayData>();
             this.slotTransform = slotTransform;
             this.factory = factory;
-            SetDisplay(0);
+            SetDisplay(slotData.DisplayIndex);
         }
 
         public void SetDisplay(int index)
@@ -862,6 +915,20 @@ namespace BasketballLegends2020
                 currentDisplayObject = go;
                 ApplyDisplayTransform(go.transform, display.Transform);
             }
+
+            ApplyAlphaToCurrentDisplay(currentAlpha);
+        }
+
+        public void SetAlpha(float alpha)
+        {
+            alpha = Mathf.Clamp01(alpha);
+            if (Mathf.Abs(currentAlpha - alpha) <= 0.0001f && currentDisplayObject != null)
+            {
+                return;
+            }
+
+            currentAlpha = alpha;
+            ApplyAlphaToCurrentDisplay(currentAlpha);
         }
 
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
@@ -878,6 +945,35 @@ namespace BasketballLegends2020
             transform.localRotation = Quaternion.Euler(0f, 0f, -displayTransform.Rotation);
             transform.localScale = new Vector3(displayTransform.ScaleX, displayTransform.ScaleY, 1f);
         }
+
+        private void ApplyAlphaToCurrentDisplay(float alpha)
+        {
+            if (currentDisplayObject == null)
+            {
+                return;
+            }
+
+            if (ChildArmature != null)
+            {
+                currentDisplayObject.SetActive(alpha > 0.001f);
+                return;
+            }
+
+            var renderers = currentDisplayObject.GetComponentsInChildren<SpriteRenderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                var color = renderer.color;
+                color.a = alpha;
+                renderer.color = color;
+                renderer.enabled = alpha > 0.001f;
+            }
+        }
     }
 
     public sealed class DBLiteBoneData
@@ -891,6 +987,7 @@ namespace BasketballLegends2020
     {
         public string Name;
         public string Parent;
+        public int DisplayIndex;
         public int Order;
     }
 
@@ -981,6 +1078,13 @@ namespace BasketballLegends2020
         public float Start;
         public float Duration;
         public int Value;
+    }
+
+    public struct DBLiteColorFrame
+    {
+        public float Start;
+        public float Duration;
+        public float Alpha;
     }
 
     public struct DBLiteSubTexture
