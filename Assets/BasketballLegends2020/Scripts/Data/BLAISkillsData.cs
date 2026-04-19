@@ -6,10 +6,13 @@ namespace BasketballLegends2020
     {
         public readonly float Accuracy;
         public readonly float ChanceToCompleteDunk;
+        public readonly float CoolDown;
         public readonly float JumpBall;
         public readonly float ChanceToRebound;
         public readonly float Attack;
+        public readonly float AttackAtOnce;
         public readonly float AvoidSteal;
+        public readonly float MakePump;
         public readonly float ReactOnOpponent;
         public readonly float MakeDash;
         public readonly float DelayDash;
@@ -26,10 +29,13 @@ namespace BasketballLegends2020
         public BLAISkillProfile(
             float accuracy,
             float chanceToCompleteDunk,
+            float coolDown,
             float jumpBall,
             float chanceToRebound,
             float attack,
+            float attackAtOnce,
             float avoidSteal,
+            float makePump,
             float reactOnOpponent,
             float makeDash,
             float delayDash,
@@ -45,10 +51,13 @@ namespace BasketballLegends2020
         {
             Accuracy = accuracy;
             ChanceToCompleteDunk = chanceToCompleteDunk;
+            CoolDown = coolDown;
             JumpBall = jumpBall;
             ChanceToRebound = chanceToRebound;
             Attack = attack;
+            AttackAtOnce = attackAtOnce;
             AvoidSteal = avoidSteal;
+            MakePump = makePump;
             ReactOnOpponent = reactOnOpponent;
             MakeDash = makeDash;
             DelayDash = delayDash;
@@ -66,16 +75,41 @@ namespace BasketballLegends2020
 
     public static class BLAISkillsData
     {
-        // Directly mapped from the original AISkillsData table.
+        // Direct mapping of the original AISkillsData.botsSkills table.
         private static readonly BLAISkillProfile[] Profiles =
         {
             new BLAISkillProfile(
                 accuracy: 0.01f,
                 chanceToCompleteDunk: 0.9f,
+                coolDown: 18f,
+                jumpBall: 0f,
+                chanceToRebound: 0f,
+                attack: 0f,
+                attackAtOnce: 0f,
+                avoidSteal: 0f,
+                makePump: 0.5f,
+                reactOnOpponent: 0f,
+                makeDash: 0f,
+                delayDash: 0f,
+                defence: 0f,
+                jumpThrow: 0f,
+                makeSteal: 0f,
+                delaySteal: 0f,
+                jumpPump: 0f,
+                makeBlock: 0f,
+                reboundFixed: 0f,
+                reboundRange: 0f,
+                moveDelay: 0f),
+            new BLAISkillProfile(
+                accuracy: 0.14f,
+                chanceToCompleteDunk: 0.4f,
+                coolDown: 48f,
                 jumpBall: 0.45f,
                 chanceToRebound: 0.3f,
                 attack: 0.4f,
+                attackAtOnce: 0.2f,
                 avoidSteal: 0.2f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.3f,
                 makeDash: 1f,
                 delayDash: 5f,
@@ -91,10 +125,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.12f,
                 chanceToCompleteDunk: 0.45f,
+                coolDown: 48f,
                 jumpBall: 0.45f,
                 chanceToRebound: 0.35f,
                 attack: 0.4f,
+                attackAtOnce: 0.3f,
                 avoidSteal: 0.3f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.4f,
                 makeDash: 1f,
                 delayDash: 4.5f,
@@ -110,10 +147,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.1f,
                 chanceToCompleteDunk: 0.5f,
+                coolDown: 35f,
                 jumpBall: 0.45f,
                 chanceToRebound: 0.4f,
                 attack: 0.35f,
+                attackAtOnce: 0.4f,
                 avoidSteal: 0.4f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.5f,
                 makeDash: 1f,
                 delayDash: 4f,
@@ -129,10 +169,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.08f,
                 chanceToCompleteDunk: 0.6f,
+                coolDown: 35f,
                 jumpBall: 0.4f,
                 chanceToRebound: 0.5f,
                 attack: 0.3f,
+                attackAtOnce: 0.5f,
                 avoidSteal: 0.5f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.6f,
                 makeDash: 1f,
                 delayDash: 3f,
@@ -148,10 +191,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.04f,
                 chanceToCompleteDunk: 0.7f,
+                coolDown: 28f,
                 jumpBall: 0.4f,
                 chanceToRebound: 0.7f,
                 attack: 0.3f,
+                attackAtOnce: 0.6f,
                 avoidSteal: 0.6f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.6f,
                 makeDash: 1f,
                 delayDash: 3f,
@@ -167,10 +213,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.03f,
                 chanceToCompleteDunk: 0.75f,
+                coolDown: 28f,
                 jumpBall: 0.3f,
                 chanceToRebound: 0.8f,
                 attack: 0.2f,
+                attackAtOnce: 0.7f,
                 avoidSteal: 0.7f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.7f,
                 makeDash: 1f,
                 delayDash: 2.5f,
@@ -186,10 +235,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.02f,
                 chanceToCompleteDunk: 0.8f,
+                coolDown: 28f,
                 jumpBall: 0.2f,
                 chanceToRebound: 0.9f,
                 attack: 0.1f,
+                attackAtOnce: 0.8f,
                 avoidSteal: 0.8f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.8f,
                 makeDash: 1f,
                 delayDash: 2f,
@@ -205,10 +257,13 @@ namespace BasketballLegends2020
             new BLAISkillProfile(
                 accuracy: 0.01f,
                 chanceToCompleteDunk: 0.9f,
+                coolDown: 28f,
                 jumpBall: 0.1f,
                 chanceToRebound: 1f,
                 attack: 0.05f,
+                attackAtOnce: 0.9f,
                 avoidSteal: 0.9f,
+                makePump: 0.5f,
                 reactOnOpponent: 0.9f,
                 makeDash: 1f,
                 delayDash: 2f,
