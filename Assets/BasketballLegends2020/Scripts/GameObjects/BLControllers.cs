@@ -13,6 +13,8 @@ namespace BasketballLegends2020
         bool CurrentSuper { get; }
         int CurrentDash { get; }
         void UpdateController(float dt);
+        void BallOwnShoot(int shooterPlayerNo);
+        void BallOpponentShoot(int shooterPlayerNo);
         bool ReadyForAction();
         bool ReleaseBlockOrPump(float dt);
         void Restart(int startSide);
@@ -85,6 +87,14 @@ namespace BasketballLegends2020
         public bool ReadyForAction()
         {
             return !Input.GetKey(KeyAction());
+        }
+
+        public void BallOwnShoot(int shooterPlayerNo)
+        {
+        }
+
+        public void BallOpponentShoot(int shooterPlayerNo)
+        {
         }
 
         public bool ReleaseBlockOrPump(float dt)
@@ -213,6 +223,7 @@ namespace BasketballLegends2020
         protected int avoidStealMove;
         protected bool isPumped;
         protected int pumpCount;
+        protected bool queuedReboundJump;
         protected int playerNo;
         protected bool initialized;
         protected float attackZoneStart;
@@ -311,21 +322,55 @@ namespace BasketballLegends2020
             }
             else
             {
-                if (strategy != 1)
+                var shotInFlight = ball.State == "shooting" || ball.State == "basket";
+                if (shotInFlight)
                 {
-                    BallOthers();
-                }
+                    if (strategy != 4)
+                    {
+                        if (ball.Side == player.Side)
+                        {
+                            BallOwnShoot(0);
+                        }
+                        else
+                        {
+                            BallOpponentShoot(0);
+                        }
+                    }
 
-                if (ball.State == "shooting" || ball.State == "basket")
-                {
-                    strategy = 4;
                     StrategyRebound(dt);
                 }
                 else
                 {
+                    if (strategy != 1)
+                    {
+                        BallOthers();
+                    }
+
                     StrategyBallFight(dt);
                 }
             }
+        }
+
+        public virtual void BallOwnShoot(int shooterPlayerNo)
+        {
+            EnsureRuntimeLinks();
+            ResetCurrents();
+            queuedReboundJump = false;
+            strategy = 4;
+            reboundPoint = reboundPointInAttack;
+        }
+
+        public virtual void BallOpponentShoot(int shooterPlayerNo)
+        {
+            EnsureRuntimeLinks();
+            ResetCurrents();
+            strategy = 4;
+            reboundPoint = reboundPointInDefence;
+            opponent = FindOpponentByPlayerNo(shooterPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
+            queuedReboundJump = opponent != null &&
+                                opponent.IsGrounded &&
+                                IsOpponentCloseBehind(120f) &&
+                                UnityEngine.Random.value <= profile.JumpThrow;
         }
 
         public virtual bool ReadyForAction()
@@ -570,8 +615,15 @@ namespace BasketballLegends2020
 
         protected virtual void StrategyRebound(float dt)
         {
-            CurrentJump = Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f;
+            var contestJump = queuedReboundJump && player.IsGrounded;
+            if (contestJump)
+            {
+                queuedReboundJump = false;
+            }
+
+            CurrentJump = contestJump || (Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f);
             CurrentMove = CurrentJump ? 0 : player.IsGrounded ? MoveTo(reboundPoint) : 0;
+            CurrentAction = false;
         }
 
         protected void TryToSteal()
@@ -610,6 +662,7 @@ namespace BasketballLegends2020
             strategy = 2;
             ResetBaseDelays();
             ResetCurrents();
+            queuedReboundJump = false;
             if (UnityEngine.Random.value <= BLObjectsData.ChanceForThree)
             {
                 SetAttackPoint(510f, 510f);
@@ -625,6 +678,7 @@ namespace BasketballLegends2020
             strategy = 0;
             ResetBaseDelays();
             ResetCurrents();
+            queuedReboundJump = false;
             isPumped = false;
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
@@ -633,6 +687,7 @@ namespace BasketballLegends2020
         {
             strategy = 1;
             ResetCurrents();
+            queuedReboundJump = false;
         }
 
         protected void ProcessPlayerSignal(BLPlayerSignalType signal, int side, int signalPlayerNo)
@@ -821,6 +876,8 @@ namespace BasketballLegends2020
             CurrentSuper = false;
             isPumped = false;
             pumpCount = 0;
+            queuedReboundJump = false;
+            reboundPoint = reboundPointInDefence;
             ResetAvoidSteal();
         }
 
@@ -852,6 +909,24 @@ namespace BasketballLegends2020
         {
             avoidStealJump = false;
             avoidStealMove = 0;
+        }
+
+        protected BLPlayerObject FindOpponentByPlayerNo(int targetPlayerNo)
+        {
+            if (opponents == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < opponents.Count; i++)
+            {
+                if (opponents[i] != null && opponents[i].PlayerNo == targetPlayerNo)
+                {
+                    return opponents[i];
+                }
+            }
+
+            return null;
         }
 
         protected void SetAttackPoint(float point, float jump)
