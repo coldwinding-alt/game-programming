@@ -8,6 +8,7 @@ namespace BasketballLegends2020
         {
             PlayerCount,
             MatchType,
+            TwoPlayerSetup,
             TournamentSetup,
             TournamentStandings,
             TournamentComplete
@@ -21,7 +22,10 @@ namespace BasketballLegends2020
         private BLParticipantMode pendingParticipantMode = BLParticipantMode.OnePlayer;
         private int tournamentTeamId = 1;
         private int tournamentPlayerIndex;
-        private int tournamentMatchMode;
+        private int versusLeftTeamId = 1;
+        private int versusLeftPlayerIndex;
+        private int versusRightTeamId = 2;
+        private int versusRightPlayerIndex;
 
         private void Awake()
         {
@@ -42,7 +46,7 @@ namespace BasketballLegends2020
             BLAudio.Create(transform);
             tournamentTeamId = Mathf.Clamp(BLInventory.Instance.SelectedTournamentTeamId, 1, BLPlayersData.TeamsCount);
             tournamentPlayerIndex = Mathf.Clamp(BLInventory.Instance.SelectedTournamentPlayerIndex, 0, BLPlayersData.TeamSize - 1);
-            tournamentMatchMode = Mathf.Clamp(BLInventory.Instance.SelectedTournamentMatchMode, 0, 1);
+            SeedTwoPlayerSelection();
             ShowPlayerCountMenu();
         }
 
@@ -92,6 +96,9 @@ namespace BasketballLegends2020
                 case BLBootstrapScreen.MatchType:
                     ShowPlayerCountMenu();
                     break;
+                case BLBootstrapScreen.TwoPlayerSetup:
+                    ShowPlayerCountMenu();
+                    break;
                 case BLBootstrapScreen.TournamentSetup:
                     ShowMatchTypeMenu();
                     break;
@@ -106,26 +113,26 @@ namespace BasketballLegends2020
         private void ShowPlayerCountMenu()
         {
             currentScreen = BLBootstrapScreen.PlayerCount;
-            BeginMenuScreen(true, true, "bg2blue0000");
-            AddTitle("SELECT PLAYERS", 118f, 52, new Color32(0xCD, 0xF0, 0x0F, 0xFF));
-            AddSubtitle("Start with the player count, then pick tournament or quick match.", 160f);
+            BeginMenuScreen(true, false, "bg2blue0000");
+            AddTitle("SELECT PLAYERS", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            CreatePanel("PlayersPanel", BLConstants.Width2, 330f, 304f, 230f, 8, new Color(0.05f, 0.08f, 0.1f, 0.72f));
 
             var inventory = BLInventory.Instance;
-            menuButtons.Add(new BLMenuButton("1 PLAYER", BLConstants.Width2, 270f, 250f, 58f, () =>
+            menuButtons.Add(new BLMenuButton("1 PLAYER", BLConstants.Width2, 274f, 228f, 52f, () =>
             {
                 pendingParticipantMode = BLParticipantMode.OnePlayer;
                 inventory.SetParticipantMode(pendingParticipantMode);
                 ShowMatchTypeMenu();
             }, runtimeRoot));
 
-            menuButtons.Add(new BLMenuButton("2 PLAYER", BLConstants.Width2, 335f, 250f, 58f, () =>
+            menuButtons.Add(new BLMenuButton("2 PLAYER", BLConstants.Width2, 334f, 228f, 52f, () =>
             {
                 pendingParticipantMode = BLParticipantMode.TwoPlayers;
                 inventory.SetParticipantMode(pendingParticipantMode);
-                ShowMatchTypeMenu();
+                ShowTwoPlayerSetup();
             }, runtimeRoot));
 
-            menuButtons.Add(new BLMenuButton("TRAINING", BLConstants.Width2, 400f, 250f, 58f, () =>
+            menuButtons.Add(new BLMenuButton("TRAINING", BLConstants.Width2, 394f, 228f, 52f, () =>
             {
                 inventory.StartTraining();
                 StartGameplay();
@@ -135,58 +142,123 @@ namespace BasketballLegends2020
         private void ShowMatchTypeMenu()
         {
             currentScreen = BLBootstrapScreen.MatchType;
-            BeginMenuScreen(false, false, "bg10000");
-            AddTitle("MATCH TYPE", 78f, 58, new Color32(0xCD, 0xF0, 0x0F, 0xFF));
-            AddSubtitle(pendingParticipantMode == BLParticipantMode.TwoPlayers ? "2 PLAYERS" : "1 PLAYER", 126f, 24);
+            pendingParticipantMode = BLParticipantMode.OnePlayer;
+            BeginMenuScreen(true, false, "bg10000");
+            AddTitle("MATCH TYPE", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
-            CreatePanel("ModePanel", BLConstants.Width2, 256f, 360f, 240f, 8, new Color(0.05f, 0.08f, 0.1f, 0.82f));
-            BLRender.Text(
-                "ModeHint",
-                pendingParticipantMode == BLParticipantMode.TwoPlayers
-                    ? "Tournament runs as co-op 2v2.\nQuick match starts a random head-to-head game."
-                    : "Tournament adds character select and standings.\nQuick match jumps straight into a random game.",
-                BLConstants.Width2,
-                205f,
-                18,
-                Color.white,
-                TextAnchor.MiddleCenter,
-                20,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: new Color(0f, 0f, 0f, 0.85f),
-                outlinePixels: 1f);
+            CreatePanel("ModePanel", BLConstants.Width2, 326f, 320f, 254f, 8, new Color(0.05f, 0.08f, 0.1f, 0.74f));
 
-            menuButtons.Add(new BLMenuButton("TOURNAMENT", BLConstants.Width2, 270f, 250f, 58f, ShowTournamentSetup, runtimeRoot));
-            menuButtons.Add(new BLMenuButton("QUICK MATCH", BLConstants.Width2, 335f, 250f, 58f, () =>
+            menuButtons.Add(new BLMenuButton("TOURNAMENT", BLConstants.Width2, 312f, 246f, 52f, ShowTournamentSetup, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("QUICK MATCH", BLConstants.Width2, 372f, 246f, 52f, () =>
             {
                 var inventory = BLInventory.Instance;
                 inventory.SetParticipantMode(pendingParticipantMode);
                 inventory.StartQuickGame();
                 StartGameplay();
             }, runtimeRoot));
-            menuButtons.Add(new BLMenuButton("BACK", BLConstants.Width2, 400f, 220f, 50f, ShowPlayerCountMenu, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("BACK", BLConstants.Width2, 432f, 200f, 46f, ShowPlayerCountMenu, runtimeRoot));
+        }
+
+        private void ShowTwoPlayerSetup()
+        {
+            currentScreen = BLBootstrapScreen.TwoPlayerSetup;
+            pendingParticipantMode = BLParticipantMode.TwoPlayers;
+            BLInventory.Instance.SetParticipantMode(pendingParticipantMode);
+            BeginMenuScreen(false, false, "bg10000");
+            AddTitle("2 PLAYERS MATCH", 58f, 30, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+
+            CreatePanel("P1Panel", 214f, 286f, 250f, 308f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+            CreatePanel("P2Panel", 586f, 286f, 250f, 308f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+
+            CreateVersusSelector(
+                "P1",
+                214f,
+                versusLeftTeamId,
+                versusLeftPlayerIndex,
+                () =>
+                {
+                    versusLeftTeamId = WrapValue(versusLeftTeamId - 1, 1, BLPlayersData.TeamsCount);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusLeftTeamId = WrapValue(versusLeftTeamId + 1, 1, BLPlayersData.TeamsCount);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusLeftPlayerIndex = WrapValue(versusLeftPlayerIndex - 1, 0, BLPlayersData.TeamSize - 1);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusLeftPlayerIndex = WrapValue(versusLeftPlayerIndex + 1, 0, BLPlayersData.TeamSize - 1);
+                    ShowTwoPlayerSetup();
+                });
+
+            BLRender.Text(
+                "VersusLabel",
+                "VS",
+                BLConstants.Width2,
+                284f,
+                34,
+                new Color32(0xFF, 0xA3, 0x00, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                runtimeRoot,
+                BLFontKind.CfCrackBold,
+                outlineColor: Color.white,
+                outlinePixels: 1.8f);
+
+            CreateVersusSelector(
+                "P2",
+                586f,
+                versusRightTeamId,
+                versusRightPlayerIndex,
+                () =>
+                {
+                    versusRightTeamId = WrapValue(versusRightTeamId - 1, 1, BLPlayersData.TeamsCount);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusRightTeamId = WrapValue(versusRightTeamId + 1, 1, BLPlayersData.TeamsCount);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusRightPlayerIndex = WrapValue(versusRightPlayerIndex - 1, 0, BLPlayersData.TeamSize - 1);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusRightPlayerIndex = WrapValue(versusRightPlayerIndex + 1, 0, BLPlayersData.TeamSize - 1);
+                    ShowTwoPlayerSetup();
+                });
+
+            menuButtons.Add(new BLMenuButton("BACK", 212f, 452f, 150f, 42f, ShowPlayerCountMenu, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("PLAY", 588f, 452f, 150f, 42f, StartTwoPlayerMatch, runtimeRoot));
         }
 
         private void ShowTournamentSetup()
         {
             currentScreen = BLBootstrapScreen.TournamentSetup;
             BeginMenuScreen(false, false, "bg2blue0000");
-            AddTitle("TOURNAMENT", 72f, 62, new Color32(0xCD, 0xF0, 0x0F, 0xFF));
-            AddSubtitle(pendingParticipantMode == BLParticipantMode.TwoPlayers ? "2 PLAYERS CO-OP" : "1 PLAYER", 120f, 22);
+            AddTitle("TOURNAMENT", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
+            pendingParticipantMode = BLParticipantMode.OnePlayer;
             BLInventory.Instance.SetParticipantMode(pendingParticipantMode);
-            var resolvedMode = pendingParticipantMode == BLParticipantMode.TwoPlayers ? 2 : tournamentMatchMode;
-            BLInventory.Instance.SetTournamentSelection(tournamentTeamId, tournamentPlayerIndex, resolvedMode);
+            BLInventory.Instance.SetTournamentSelection(tournamentTeamId, tournamentPlayerIndex, 0);
 
-            CreatePanel("SelectPanel", 220f, 262f, 260f, 250f, 8, new Color(0.05f, 0.08f, 0.1f, 0.82f));
-            CreatePanel("OptionsPanel", 575f, 246f, 210f, 190f, 8, new Color(0.05f, 0.08f, 0.1f, 0.82f));
+            CreatePanel("SelectPanel", 220f, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+            CreatePanel("OptionsPanel", 575f, 278f, 228f, 214f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
 
             BLRender.Text(
                 "TeamLabel",
                 "TEAM",
                 220f,
-                150f,
-                22,
+                130f,
+                18,
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
@@ -194,13 +266,13 @@ namespace BasketballLegends2020
                 BLFontKind.Impact2,
                 outlineColor: Color.black,
                 outlinePixels: 1f);
-            CreateEmblem(tournamentTeamId, 220f, 185f, 0.36f, 22);
+            CreateEmblem(tournamentTeamId, 220f, 164f, 0.32f, 22);
             BLRender.Text(
                 "TeamName",
                 BLPlayersData.GetTeamName(tournamentTeamId),
                 220f,
-                214f,
-                20,
+                190f,
+                18,
                 Color.white,
                 TextAnchor.MiddleCenter,
                 21,
@@ -209,55 +281,35 @@ namespace BasketballLegends2020
                 outlineColor: Color.black,
                 outlinePixels: 1f);
 
-            menuButtons.Add(new BLMenuButton("<", 130f, 184f, 42f, 42f, () =>
+            menuButtons.Add(new BLMenuButton("<", 132f, 164f, 42f, 42f, () =>
             {
                 tournamentTeamId = WrapValue(tournamentTeamId - 1, 1, BLPlayersData.TeamsCount);
                 ShowTournamentSetup();
             }, runtimeRoot));
-            menuButtons.Add(new BLMenuButton(">", 310f, 184f, 42f, 42f, () =>
+            menuButtons.Add(new BLMenuButton(">", 308f, 164f, 42f, 42f, () =>
             {
                 tournamentTeamId = WrapValue(tournamentTeamId + 1, 1, BLPlayersData.TeamsCount);
                 ShowTournamentSetup();
             }, runtimeRoot));
-            menuButtons.Add(new BLMenuButton("<", 130f, 278f, 42f, 42f, () =>
+            menuButtons.Add(new BLMenuButton("<", 132f, 252f, 42f, 42f, () =>
             {
                 tournamentPlayerIndex = WrapValue(tournamentPlayerIndex - 1, 0, BLPlayersData.TeamSize - 1);
                 ShowTournamentSetup();
             }, runtimeRoot));
-            menuButtons.Add(new BLMenuButton(">", 310f, 278f, 42f, 42f, () =>
+            menuButtons.Add(new BLMenuButton(">", 308f, 252f, 42f, 42f, () =>
             {
                 tournamentPlayerIndex = WrapValue(tournamentPlayerIndex + 1, 0, BLPlayersData.TeamSize - 1);
                 ShowTournamentSetup();
             }, runtimeRoot));
 
-            CreatePreviewPlayer(tournamentTeamId, tournamentPlayerIndex, 220f, 303f, 4.4f);
+            CreatePreviewPlayer(tournamentTeamId, tournamentPlayerIndex, 220f, 306f, 3.85f);
             BLRender.Text(
                 "PlayerName",
                 BLPlayersData.GetPlayerName(tournamentTeamId, tournamentPlayerIndex),
                 220f,
-                392f,
-                22,
+                398f,
+                18,
                 Color.white,
-                TextAnchor.MiddleCenter,
-                21,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
-
-            var teammateIndex = (tournamentPlayerIndex + 1) % BLPlayersData.TeamSize;
-            var supportLine = pendingParticipantMode == BLParticipantMode.TwoPlayers
-                ? $"TEAMMATE: {BLPlayersData.GetPlayerName(tournamentTeamId, teammateIndex)}"
-                : resolvedMode == 1
-                    ? $"AI TEAMMATE: {BLPlayersData.GetPlayerName(tournamentTeamId, teammateIndex)}"
-                    : "SOLO MATCHUP";
-            BLRender.Text(
-                "SupportName",
-                supportLine,
-                220f,
-                421f,
-                16,
-                new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 21,
                 runtimeRoot,
@@ -269,8 +321,8 @@ namespace BasketballLegends2020
                 "OptionTitle",
                 "SETTINGS",
                 575f,
-                175f,
-                26,
+                160f,
+                20,
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
@@ -279,71 +331,47 @@ namespace BasketballLegends2020
                 outlineColor: Color.black,
                 outlinePixels: 1f);
             BLRender.Text(
-                "OptionHint",
-                "Four teams play three rounds.\nTop two finish as champion and runner-up.",
+                "ModeFixed",
+                "MODE: 1V1",
                 575f,
-                320f,
-                16,
+                216f,
+                18,
                 Color.white,
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
                 BLFontKind.Impact2,
-                outlineColor: new Color(0f, 0f, 0f, 0.85f),
+                outlineColor: Color.black,
                 outlinePixels: 1f);
 
-            if (pendingParticipantMode == BLParticipantMode.OnePlayer)
-            {
-                menuButtons.Add(new BLMenuButton(
-                    tournamentMatchMode == 0 ? "MODE: 1V1" : "MODE: 2V2",
-                    575f,
-                    220f,
-                    180f,
-                    48f,
-                    () =>
-                    {
-                        tournamentMatchMode = tournamentMatchMode == 0 ? 1 : 0;
-                        ShowTournamentSetup();
-                    },
-                    runtimeRoot));
-            }
-            else
-            {
-                BLRender.Text(
-                    "ModeFixed",
-                    "MODE: 2V2 CO-OP",
-                    575f,
-                    220f,
-                    22,
-                    Color.white,
-                    TextAnchor.MiddleCenter,
-                    20,
-                    runtimeRoot,
-                    BLFontKind.Impact2,
-                    outlineColor: Color.black,
-                    outlinePixels: 1f);
-            }
-
-            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 270f, 180f, 48f, () =>
+            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 270f, 188f, 46f, () =>
             {
                 BLInventory.Instance.ToggleDifficulty();
                 ShowTournamentSetup();
             }, runtimeRoot));
 
-            menuButtons.Add(new BLMenuButton("BACK", 500f, 418f, 160f, 52f, ShowMatchTypeMenu, runtimeRoot));
-            menuButtons.Add(new BLMenuButton("NEXT", 650f, 418f, 160f, 52f, StartTournamentFlow, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("BACK", 488f, 452f, 150f, 42f, ShowMatchTypeMenu, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("NEXT", 660f, 452f, 150f, 42f, StartTournamentFlow, runtimeRoot));
         }
 
         private void StartTournamentFlow()
         {
             var inventory = BLInventory.Instance;
+            pendingParticipantMode = BLParticipantMode.OnePlayer;
             inventory.SetParticipantMode(pendingParticipantMode);
-            inventory.SetTournamentSelection(
-                tournamentTeamId,
-                tournamentPlayerIndex,
-                pendingParticipantMode == BLParticipantMode.TwoPlayers ? 2 : tournamentMatchMode);
+            inventory.SetTournamentSelection(tournamentTeamId, tournamentPlayerIndex, 0);
             inventory.BeginTournament();
             ShowTournamentStandings();
+        }
+
+        private void StartTwoPlayerMatch()
+        {
+            BLInventory.Instance.StartTwoPlayerVersus(
+                versusLeftTeamId,
+                versusLeftPlayerIndex,
+                versusRightTeamId,
+                versusRightPlayerIndex);
+            StartGameplay();
         }
 
         private void ShowTournamentStandings()
@@ -353,34 +381,19 @@ namespace BasketballLegends2020
             currentScreen = tournament.Completed ? BLBootstrapScreen.TournamentComplete : BLBootstrapScreen.TournamentStandings;
 
             BeginMenuScreen(false, false, tournament.Completed ? "bg10000" : "bg2blue0000");
-            AddTitle("STANDINGS", 68f, 60, new Color32(0xCD, 0xF0, 0x0F, 0xFF));
+            AddTitle("STANDINGS", 52f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
-            if (tournament.Completed)
-            {
-                AddSubtitle(
-                    $"CHAMPION: {BLPlayersData.GetTeamName(tournament.GetChampionTeamId())}    RUNNER-UP: {BLPlayersData.GetTeamName(tournament.GetRunnerUpTeamId())}",
-                    116f,
-                    17);
-            }
-            else
-            {
-                AddSubtitle(
-                    $"ROUND {tournament.CurrentRound + 1}/{tournament.TotalRounds}    NEXT: {BLPlayersData.GetTeamName(tournament.CurrentOpponentTeamId)}",
-                    116f,
-                    18);
-            }
-
-            CreatePanel("HeaderPanel", BLConstants.Width2, 155f, 530f, 34f, 10, new Color(0.08f, 0.14f, 0.18f, 0.92f));
-            BLRender.Text("TeamHeader", "TEAM", 230f, 156f, 18, Color.white, TextAnchor.MiddleLeft, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
-            BLRender.Text("WinsHeader", "W", 545f, 156f, 18, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
-            BLRender.Text("LossHeader", "L", 605f, 156f, 18, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
-            BLRender.Text("PctHeader", "%", 670f, 156f, 18, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
+            CreatePanel("HeaderPanel", BLConstants.Width2, 126f, 530f, 34f, 10, new Color(0.08f, 0.14f, 0.18f, 0.92f));
+            BLRender.Text("TeamHeader", "TEAM", 230f, 127f, 16, Color.white, TextAnchor.MiddleLeft, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
+            BLRender.Text("WinsHeader", "W", 545f, 127f, 16, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
+            BLRender.Text("LossHeader", "L", 605f, 127f, 16, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
+            BLRender.Text("PctHeader", "%", 670f, 127f, 16, Color.white, TextAnchor.MiddleCenter, 21, runtimeRoot, BLFontKind.Impact2, outlineColor: Color.black, outlinePixels: 1f);
 
             var sortedRecords = tournament.GetSortedRecords();
             for (var i = 0; i < sortedRecords.Count; i++)
             {
                 var row = sortedRecords[i];
-                var y = 205f + i * 58f;
+                var y = 171f + i * 55f;
                 var tint = row.TeamId == tournament.PlayerTeamId
                     ? new Color(0.95f, 0.56f, 0.12f, 0.92f)
                     : new Color(0.2f, 0.18f, 0.45f, 0.88f);
@@ -400,8 +413,8 @@ namespace BasketballLegends2020
                     "PlacementSummary",
                     $"YOU FINISHED #{placement}",
                     BLConstants.Width2,
-                    448f,
-                    26,
+                    410f,
+                    24,
                     new Color32(0xFF, 0xA3, 0x00, 0xFF),
                     TextAnchor.MiddleCenter,
                     22,
@@ -410,7 +423,7 @@ namespace BasketballLegends2020
                     outlineColor: Color.white,
                     outlinePixels: 2f);
 
-                menuButtons.Add(new BLMenuButton("MAIN MENU", BLConstants.Width2, 508f, 200f, 54f, () =>
+                menuButtons.Add(new BLMenuButton("MAIN MENU", BLConstants.Width2, 452f, 200f, 42f, () =>
                 {
                     BLInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
@@ -418,12 +431,12 @@ namespace BasketballLegends2020
             }
             else
             {
-                menuButtons.Add(new BLMenuButton("BACK", 215f, 508f, 170f, 54f, () =>
+                menuButtons.Add(new BLMenuButton("BACK", 172f, 452f, 150f, 42f, () =>
                 {
                     BLInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
-                menuButtons.Add(new BLMenuButton("PLAY", 585f, 508f, 170f, 54f, StartGameplay, runtimeRoot));
+                menuButtons.Add(new BLMenuButton("PLAY", 628f, 452f, 150f, 42f, StartGameplay, runtimeRoot));
             }
         }
 
@@ -458,7 +471,8 @@ namespace BasketballLegends2020
                 var logoTexture = Resources.Load<Texture2D>("BL2020/Images/logo");
                 if (logoTexture != null)
                 {
-                    BLRender.Image("Logo", logoTexture, BLConstants.Width2, 72f, 0.5f, 0.5f, 20, runtimeRoot);
+                    var logo = BLRender.Image("Logo", logoTexture, BLConstants.Width2, 68f, 0.5f, 0.5f, 20, runtimeRoot);
+                    logo.transform.localScale *= 0.78f;
                 }
             }
 
@@ -468,8 +482,8 @@ namespace BasketballLegends2020
                     "Controls",
                     BLControlsData.MainMenuControlsText,
                     BLConstants.Width2,
-                    448f,
-                    15,
+                    492f,
+                    11,
                     Color.white,
                     TextAnchor.MiddleCenter,
                     30,
@@ -496,11 +510,11 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
-                BLFontKind.Impact,
-                outlineColor: Color.white,
-                outlinePixels: 2f,
-                shadowColor: new Color(0f, 0f, 0f, 0.35f),
-                shadowOffset: new Vector2(2f, 2f));
+                BLFontKind.CfCrackBold,
+                outlineColor: new Color(0f, 0f, 0f, 0.92f),
+                outlinePixels: 1.6f,
+                shadowColor: new Color(0f, 0f, 0f, 0.28f),
+                shadowOffset: new Vector2(1.5f, 1.5f));
         }
 
         private void AddSubtitle(string subtitle, float y, int fontSize = 18)
@@ -540,13 +554,14 @@ namespace BasketballLegends2020
 
         private void CreatePreviewPlayer(int teamId, int playerIndex, float x, float y, float scale)
         {
+            var previewScale = scale * 0.7f;
             var shadow = BLRender.Sprite("PreviewShadow", BLAtlasCache.Instance.Interface, "loginSelect0000", x, y + 30f, 0.5f, 0.5f, 18, runtimeRoot);
-            shadow.transform.localScale *= 0.6f;
+            shadow.transform.localScale *= 0.5f;
             shadow.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.55f);
 
             var previewRoot = new GameObject($"Preview_{teamId}_{playerIndex}");
             previewRoot.transform.SetParent(runtimeRoot, false);
-            BLRender.ApplyPixelTransform(previewRoot.transform, x, y, 0f, scale);
+            BLRender.ApplyPixelTransform(previewRoot.transform, x, y, 0f, previewScale);
 
             var armature = BLPlayersData.BuildGameplayArmature($"PreviewArmature_{teamId}_{playerIndex}");
             if (armature == null)
@@ -561,6 +576,81 @@ namespace BasketballLegends2020
                 armature,
                 BLPlayersData.SkinIndex(teamId, playerIndex),
                 2 * (teamId - 1));
+        }
+
+        private void CreateVersusSelector(
+            string label,
+            float centerX,
+            int teamId,
+            int playerIndex,
+            System.Action previousTeamAction,
+            System.Action nextTeamAction,
+            System.Action previousPlayerAction,
+            System.Action nextPlayerAction)
+        {
+            BLRender.Text(
+                $"{label}_Header",
+                label,
+                centerX,
+                126f,
+                26,
+                new Color32(0xCD, 0xF0, 0x0F, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                runtimeRoot,
+                BLFontKind.Impact2,
+                outlineColor: Color.black,
+                outlinePixels: 1f);
+            CreateEmblem(teamId, centerX, 164f, 0.28f, 22);
+            BLRender.Text(
+                $"{label}_TeamName",
+                BLPlayersData.GetTeamName(teamId),
+                centerX,
+                192f,
+                18,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                21,
+                runtimeRoot,
+                BLFontKind.Impact2,
+                outlineColor: Color.black,
+                outlinePixels: 1f);
+
+            menuButtons.Add(new BLMenuButton("<", centerX - 88f, 164f, 42f, 42f, previousTeamAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton(">", centerX + 88f, 164f, 42f, 42f, nextTeamAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("<", centerX - 88f, 252f, 42f, 42f, previousPlayerAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton(">", centerX + 88f, 252f, 42f, 42f, nextPlayerAction, runtimeRoot));
+
+            CreatePreviewPlayer(teamId, playerIndex, centerX, 308f, 3.8f);
+            BLRender.Text(
+                $"{label}_PlayerName",
+                BLPlayersData.GetPlayerName(teamId, playerIndex),
+                centerX,
+                420f,
+                17,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                21,
+                runtimeRoot,
+                BLFontKind.Impact2,
+                outlineColor: Color.black,
+                outlinePixels: 1f);
+        }
+
+        private void SeedTwoPlayerSelection()
+        {
+            var match = BLInventory.Instance.MatchData;
+            versusLeftTeamId = Mathf.Clamp(match.Teams[0] > 0 ? match.Teams[0] : tournamentTeamId, 1, BLPlayersData.TeamsCount);
+            versusRightTeamId = Mathf.Clamp(match.Teams[1] > 0 ? match.Teams[1] : WrapValue(versusLeftTeamId + 1, 1, BLPlayersData.TeamsCount), 1, BLPlayersData.TeamsCount);
+            versusLeftPlayerIndex = ReadPlayerIndex(match.Players[0]);
+            versusRightPlayerIndex = ReadPlayerIndex(match.Players[1]);
+        }
+
+        private static int ReadPlayerIndex(int[] players)
+        {
+            return players != null && players.Length > 0
+                ? Mathf.Clamp(players[0], 0, BLPlayersData.TeamSize - 1)
+                : 0;
         }
 
         private void ClearRuntime()
