@@ -58,21 +58,25 @@ namespace BasketballLegends2020
 
         public void Update(float dt)
         {
-            if (Input.GetKeyDown(KeyCode.P))
+            if (Input.GetKeyDown(KeyCode.P) && postMatchDelay <= 0f && !hud.IsPostMatchVisible)
             {
-                isPaused = !isPaused;
-                hud.ShowMessage(isPaused ? "PAUSE" : "GO!!!", 0.8f);
+                HandlePauseCommand(BLPauseCommand.Toggle);
+            }
+
+            hud.Update(dt);
+            HandlePauseCommand(hud.ConsumePauseCommand());
+            if (ReturnToMenuRequested)
+            {
+                return;
             }
 
             if (isPaused)
             {
-                hud.Update(dt);
                 return;
             }
 
             basketLeft.Update(dt);
             basketRight.Update(dt);
-            hud.Update(dt);
 
             if (postMatchDelay > 0f)
             {
@@ -356,7 +360,7 @@ namespace BasketballLegends2020
         private void BuildPlayers()
         {
             var match = MatchData;
-            var playersPerTeam = match.MatchMode == 1 || match.MatchMode == 2 ? 2 : 1;
+            const int playersPerTeam = 1;
             var teamCount = BLInventory.Instance.GameMode == 3 ? 1 : 2;
 
             for (var teamIndex = 0; teamIndex < teamCount; teamIndex++)
@@ -397,10 +401,12 @@ namespace BasketballLegends2020
             endTime = isTraining ? 99999f : (regularTime ? BLConstants.MatchTime : BLConstants.OvertimeTime);
             MatchData.ResetScore();
             hud.UpdateScore(0, 0);
+            hud.SetTimerVisible(!isTraining);
             hud.UpdateTimer(endTime);
             hud.HideCountdown();
             hud.HideMessage();
             hud.HidePostMatch();
+            hud.HidePauseOverlay();
             postMatchDelay = 0f;
             postMatchWinner = 0;
             overtimePending = false;
@@ -420,6 +426,56 @@ namespace BasketballLegends2020
             {
                 hud.ShowMessage("TRAINING", 0.85f);
                 BLAudio.Instance?.Play(BLAssets.Sounds.MWhistle);
+            }
+        }
+
+        private void HandlePauseCommand(BLPauseCommand command)
+        {
+            if (command == BLPauseCommand.None || postMatchDelay > 0f || hud.IsPostMatchVisible)
+            {
+                return;
+            }
+
+            switch (command)
+            {
+                case BLPauseCommand.Toggle:
+                    SetPaused(!isPaused);
+                    break;
+                case BLPauseCommand.Resume:
+                    SetPaused(false);
+                    break;
+                case BLPauseCommand.Menu:
+                    SetPaused(false);
+                    ReturnToMenuRequested = true;
+                    break;
+            }
+        }
+
+        private void SetPaused(bool paused)
+        {
+            if (isPaused == paused)
+            {
+                if (paused)
+                {
+                    hud.ShowPauseOverlay();
+                }
+                else
+                {
+                    hud.HidePauseOverlay();
+                }
+
+                return;
+            }
+
+            isPaused = paused;
+            if (paused)
+            {
+                hud.ShowPauseOverlay();
+            }
+            else
+            {
+                hud.HidePauseOverlay();
+                hud.ShowMessage("GO!!!", 0.8f);
             }
         }
 

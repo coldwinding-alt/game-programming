@@ -10,6 +10,8 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
 - Runtime uses copied original assets under `Assets/BasketballLegends2020/Resources/BL2020` and does not depend on `_reference_do_not_ship` at play time.
 - Original atlas keys, DragonBones data names, and gameplay constants stay aligned with the H5 source whenever practical.
 - Current UI and gameplay work is being improved in vertical slices: first a playable migrated baseline, then fidelity passes for HUD/menu, control feel, and gameplay interactions.
+- Character replacement should preserve the current DragonBones-based rig, animation names, and slot structure, then swap only the character skin parts for source-faithful gameplay behavior.
+- Current practical art target is a Halloween-themed four-character set; the playable match scope is effectively `1` player per side right now, so `4` teams with `1` player each is the safest next integration target.
 
 ## Completed Work
 
@@ -38,6 +40,10 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - stolen players now enter `stun` and the ball is knocked loose with original steal velocity constants instead of teleporting into the thief's hands
   - steal attempts now resolve off a short action window instead of instant overlap resolution
   - AI defence was reworked toward original timing and spacing so defenders look for a steal lane instead of insta-stealing on overlap
+- Created `DOCS/HALLOWEEN_CHARACTER_REPLACEMENT_HANDOFF.md` as the current handoff guide for Halloween character replacement.
+- Documented the rig-safe part split and art-generation workflow for this task: `head`, `body`, `hand_left`, `hand_right`, `leg`, plus optional `body_alt`.
+- Added direct-copy Gemini prompt sets for four premium Halloween basketball character concepts, their parts sheets, single-part repair passes, and cleanup prompts.
+- Marked `DOCS/HALLOWEEN_ASSET_PROMPTS.md` as superseded for the current character-replacement workflow because that older file is garbled and should not be the working source of truth.
   - AI ball carriers now get a small avoidance layer so drives can beat defenders more naturally
   - end-of-match flow now shows `TIME!!!`, supports delayed overtime restart, and uses a smaller post-match overlay instead of a giant winner label left on court
 - Latest usability pass completed:
@@ -188,9 +194,14 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
   - `Assets/BasketballLegends2020/Documentation/MIGRATION_STATUS.md`
   - `TEST_LOG.md`
   - `PROJECT_CONTEXT.md`
+- latest Halloween character-replacement planning edits:
+  - `DOCS/HALLOWEEN_CHARACTER_REPLACEMENT_HANDOFF.md`
+  - `PROJECT_CONTEXT.md`
 
 ## Next Steps
 
+- Use `DOCS/HALLOWEEN_CHARACTER_REPLACEMENT_HANDOFF.md` to generate and approve `4` Halloween-themed character concepts plus matching part sheets before changing runtime assets.
+- After art approval, reduce the player-data mapping toward `4` characters / `4` teams and wire the new parts into the current DragonBones atlas and skin-selection flow.
 - Continue replacing placeholder UI/HUD behavior with closer original screen flows.
 - Port more of original `PlayerObject` state behavior: exact block/pump frame events, frame-event throw timing, landing/action timing, alley-oop, and super-shot flow.
 - Continue tuning loose-ball pickup, rebound behavior, and collision/physics fidelity versus the original Nape implementation now that pickup is contact-based instead of action-button based.
@@ -209,4 +220,5 @@ Faithfully port `_reference_do_not_ship/basketball-legends-2020-ovo` into a Unit
 - Current steal / block / pump / AI / dunk / dash / post-match / loose-ball pickup / hoop-scoring behavior is meaningfully closer to the original, but still not full parity with all original player states and full post-match screens.
 - Easy difficulty currently disables live-ball steals and favors jump contests; normal difficulty is closer to the original but still uses Unity-side cooldowns instead of the original delay classes.
 - DragonBonesLite now supports core frame/complete callbacks used by gameplay, but still does not cover full DragonBones runtime features (full color-frame, advanced blending, full draw-order behavior).
+- AI image generation is viable for this character task, but the safe production path is rig-friendly skin-part art; long cloth, giant props, extreme silhouettes, and messy effects will likely break readability or slot fitting.
 - Batch validation can be blocked whenever the project is already open in another Unity Editor instance on this machine; close the editor before running batch build/smoke commands.
