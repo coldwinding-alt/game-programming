@@ -125,43 +125,21 @@ namespace BasketballLegends2020
 
         public void StartRandomMatch()
         {
-            if (MatchMode == 0)
-            {
-                Pb = new[] { new[] { "P0" }, new[] { "B0" } };
-                Skills = new[] { new[] { 0 }, new[] { 3 } };
-            }
-            else
-            {
-                FillSecondPlayers();
-                Pb = new[] { new[] { "P0", "B2" }, new[] { "B1", "B2" } };
-                Skills = new[] { new[] { 0, 3 }, new[] { 3, 3 } };
-            }
+            MatchMode = 0;
+            Pb = new[] { new[] { "P0" }, new[] { "B0" } };
+            Skills = new[] { new[] { 0 }, new[] { 3 } };
 
             RndForms();
         }
 
         public void StartPlayers2Match()
         {
-            if (MatchMode == 0)
-            {
-                var left = Players[0].Length > 0 ? Players[0][0] : 0;
-                var right = Players[1].Length > 0 ? Players[1][0] : 0;
-                Players = new[] { new[] { left }, new[] { right } };
-                Pb = new[] { new[] { "P1" }, new[] { "P2" } };
-                Skills = new[] { new[] { 0 }, new[] { 0 } };
-            }
-            else if (MatchMode == 1)
-            {
-                FillSecondPlayers();
-                Pb = new[] { new[] { "P1", "B2" }, new[] { "P2", "B2" } };
-                Skills = new[] { new[] { 0, 4 }, new[] { 0, 4 } };
-            }
-            else
-            {
-                FillSecondPlayers();
-                Pb = new[] { new[] { "P1", "P2" }, new[] { "B1", "B2" } };
-                Skills = new[] { new[] { 0, 0 }, new[] { 4, 4 } };
-            }
+            MatchMode = 0;
+            var left = Players[0].Length > 0 ? Players[0][0] : 0;
+            var right = Players[1].Length > 0 ? Players[1][0] : 0;
+            Players = new[] { new[] { left }, new[] { right } };
+            Pb = new[] { new[] { "P1" }, new[] { "P2" } };
+            Skills = new[] { new[] { 0 }, new[] { 0 } };
 
             RndForms();
         }
@@ -174,37 +152,37 @@ namespace BasketballLegends2020
                 return;
             }
 
-            MatchMode = tournament.MatchMode;
+            MatchMode = 0;
             Teams = new[] { tournament.PlayerTeamId, tournament.CurrentOpponentTeamId };
             var opponentSkill = Mathf.Clamp(
                 2 + tournament.CurrentRound + (tournament.Difficulty == BLAiDifficulty.Normal ? 1 : 0),
                 0,
                 8);
-            var supportSkill = Mathf.Clamp(opponentSkill - 1, 2, 4);
             var playerOne = Mathf.Clamp(tournament.SelectedPlayer, 0, BLPlayersData.TeamSize - 1);
-            var playerTwo = Mathf.Clamp(tournament.SelectedTeammate, 0, BLPlayersData.TeamSize - 1);
             var opponentOne = Random.Range(0, BLPlayersData.TeamSize);
-            var opponentTwo = (opponentOne + 1 + Random.Range(0, BLPlayersData.TeamSize - 1)) % BLPlayersData.TeamSize;
+            Players = new[] { new[] { playerOne }, new[] { opponentOne } };
+            Pb = new[] { new[] { "P0" }, new[] { "B0" } };
+            Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
 
-            if (MatchMode == 0)
-            {
-                Players = new[] { new[] { playerOne }, new[] { opponentOne } };
-                Pb = new[] { new[] { "P0" }, new[] { "B0" } };
-                Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
-            }
-            else if (MatchMode == 1)
-            {
-                Players = new[] { new[] { playerOne, playerTwo }, new[] { opponentOne, opponentTwo } };
-                Pb = new[] { new[] { "P0", "B2" }, new[] { "B1", "B2" } };
-                Skills = new[] { new[] { 0, supportSkill }, new[] { opponentSkill, opponentSkill } };
-            }
-            else
-            {
-                Players = new[] { new[] { playerOne, playerTwo }, new[] { opponentOne, opponentTwo } };
-                Pb = new[] { new[] { "P1", "P2" }, new[] { "B1", "B2" } };
-                Skills = new[] { new[] { 0, 0 }, new[] { opponentSkill, opponentSkill } };
-            }
+            RndForms();
+        }
 
+        public void StartSelectedTwoPlayerMatch(int leftTeamId, int leftPlayerIndex, int rightTeamId, int rightPlayerIndex)
+        {
+            ResetAll();
+            MatchMode = 0;
+            Teams = new[]
+            {
+                Mathf.Clamp(leftTeamId, 1, BLPlayersData.TeamsCount),
+                Mathf.Clamp(rightTeamId, 1, BLPlayersData.TeamsCount)
+            };
+            Players = new[]
+            {
+                new[] { Mathf.Clamp(leftPlayerIndex, 0, BLPlayersData.TeamSize - 1) },
+                new[] { Mathf.Clamp(rightPlayerIndex, 0, BLPlayersData.TeamSize - 1) }
+            };
+            Pb = new[] { new[] { "P1" }, new[] { "P2" } };
+            Skills = new[] { new[] { 0 }, new[] { 0 } };
             RndForms();
         }
 
@@ -287,7 +265,7 @@ namespace BasketballLegends2020
         {
             SelectedTournamentTeamId = Mathf.Clamp(teamId, 1, BLPlayersData.TeamsCount);
             SelectedTournamentPlayerIndex = Mathf.Clamp(playerIndex, 0, BLPlayersData.TeamSize - 1);
-            SelectedTournamentMatchMode = matchMode;
+            SelectedTournamentMatchMode = Mathf.Clamp(matchMode, 0, 0);
         }
 
         public void StartQuickGame()
@@ -336,6 +314,16 @@ namespace BasketballLegends2020
             MatchPrepared = true;
         }
 
+        public void StartTwoPlayerVersus(int leftTeamId, int leftPlayerIndex, int rightTeamId, int rightPlayerIndex)
+        {
+            ParticipantMode = BLParticipantMode.TwoPlayers;
+            Tournament.Reset();
+            SessionMode = BLSessionMode.QuickMatch;
+            GameMode = 4;
+            MatchData.StartSelectedTwoPlayerMatch(leftTeamId, leftPlayerIndex, rightTeamId, rightPlayerIndex);
+            MatchPrepared = true;
+        }
+
         public void StartTraining()
         {
             ParticipantMode = BLParticipantMode.Training;
@@ -348,14 +336,10 @@ namespace BasketballLegends2020
 
         public void BeginTournament()
         {
-            ParticipantMode = ParticipantMode == BLParticipantMode.TwoPlayers
-                ? BLParticipantMode.TwoPlayers
-                : BLParticipantMode.OnePlayer;
+            ParticipantMode = BLParticipantMode.OnePlayer;
             SessionMode = BLSessionMode.Tournament;
-            GameMode = ParticipantMode == BLParticipantMode.TwoPlayers ? 4 : 1;
-            var resolvedMatchMode = ParticipantMode == BLParticipantMode.TwoPlayers
-                ? 2
-                : Mathf.Clamp(SelectedTournamentMatchMode, 0, 1);
+            GameMode = 1;
+            var resolvedMatchMode = 0;
             Tournament.Create(
                 SelectedTournamentTeamId,
                 SelectedTournamentPlayerIndex,
