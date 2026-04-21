@@ -14,18 +14,27 @@ namespace BasketballLegends2020
             public int FormIndex;
             public int SuperId;
             public bool Enabled;
+            public string PortraitSpriteName;
+            public float HeadOffsetY;
+            public float HeadScale = 1f;
+            public float PreviewScaleMultiplier = 1f;
+            public float PreviewOffsetY;
+            public float PortraitScaleMultiplier = 1f;
+            public float PortraitOffsetY;
         }
+
+        private static DBLiteTextureAtlas portraitAtlas;
 
         private static readonly BLCharacterDefinition[] CharacterDefinitions =
         {
-            new BLCharacterDefinition { DisplayName = "PUMPKIN", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 5, FormIndex = 2, SuperId = 0, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 8, FormIndex = 4, SuperId = 1, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 11, FormIndex = 6, SuperId = 2, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 13, FormIndex = 8, SuperId = 3, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 14, FormIndex = 9, SuperId = 0, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 15, FormIndex = 10, SuperId = 2, Enabled = true },
-            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 16, FormIndex = 11, SuperId = 1, Enabled = true }
+            new BLCharacterDefinition { DisplayName = "PUMPKIN", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "LeBron James0", HeadOffsetY = 0f, HeadScale = 1f, PreviewScaleMultiplier = 0.98f, PortraitScaleMultiplier = 1.02f },
+            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 5, FormIndex = 2, SuperId = 0, Enabled = true, PortraitSpriteName = "Draymond Green0", HeadOffsetY = -4.75f, HeadScale = 0.94f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 0.92f, PortraitOffsetY = 8f },
+            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 8, FormIndex = 4, SuperId = 1, Enabled = true, PortraitSpriteName = "Brook Lopez", HeadOffsetY = -7f, HeadScale = 0.97f, PreviewScaleMultiplier = 0.94f, PreviewOffsetY = -3f, PortraitScaleMultiplier = 1.02f, PortraitOffsetY = 10f },
+            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 11, FormIndex = 6, SuperId = 2, Enabled = true, PortraitSpriteName = "Marcus Smart0", HeadOffsetY = -6f, HeadScale = 0.98f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 9f },
+            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 13, FormIndex = 8, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetY = 2.75f, HeadScale = 0.92f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f },
+            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 14, FormIndex = 9, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 4.25f, HeadScale = 1.03f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -6f },
+            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 15, FormIndex = 10, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_witch", HeadOffsetY = 4.25f, HeadScale = 1.08f, PreviewScaleMultiplier = 0.98f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.12f, PortraitOffsetY = -8f },
+            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 16, FormIndex = 11, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetY = 4.25f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -4f }
         };
 
         private static readonly int[] Hands =
@@ -143,10 +152,38 @@ namespace BasketballLegends2020
             return GetCharacterDefinition(characterId).SuperId;
         }
 
+        public static float GetCharacterPreviewScaleMultiplier(int characterId)
+        {
+            return GetCharacterDefinition(characterId).PreviewScaleMultiplier;
+        }
+
+        public static float GetCharacterPreviewOffsetY(int characterId)
+        {
+            return GetCharacterDefinition(characterId).PreviewOffsetY;
+        }
+
+        public static Sprite GetCharacterPortraitSprite(int characterId)
+        {
+            var definition = GetCharacterDefinition(characterId);
+            var atlas = GetPortraitAtlas();
+            return atlas?.Sprite(definition.PortraitSpriteName);
+        }
+
+        public static float GetCharacterPortraitScaleMultiplier(int characterId)
+        {
+            return GetCharacterDefinition(characterId).PortraitScaleMultiplier;
+        }
+
+        public static float GetCharacterPortraitOffsetY(int characterId)
+        {
+            return GetCharacterDefinition(characterId).PortraitOffsetY;
+        }
+
         public static void ApplyCharacter(DBLiteArmature armature, int characterId)
         {
             var definition = GetCharacterDefinition(characterId);
             SwitchPlayer(armature, definition.SkinIndex, definition.FormIndex);
+            ApplyCharacterTuning(armature, definition);
         }
 
         public static int GetRandomCharacterId(IList<int> excludedCharacterIds = null)
@@ -207,6 +244,53 @@ namespace BasketballLegends2020
         private static BLCharacterDefinition GetCharacterDefinition(int characterId)
         {
             return CharacterDefinitions[SanitizeCharacterId(characterId)];
+        }
+
+        private static DBLiteTextureAtlas GetPortraitAtlas()
+        {
+            if (portraitAtlas != null)
+            {
+                return portraitAtlas;
+            }
+
+            var textureJsonAsset = Resources.Load<TextAsset>("BL2020/DragonBones/texture2");
+            var texture = Resources.Load<Texture2D>("BL2020/DragonBones/texture2");
+            if (textureJsonAsset == null || texture == null)
+            {
+                Debug.LogWarning("Missing DragonBones portrait atlas resources.");
+                return null;
+            }
+
+            portraitAtlas = DBLiteTextureAtlas.Parse("texture2_portraits", texture, textureJsonAsset.text);
+            return portraitAtlas;
+        }
+
+        private static void ApplyCharacterTuning(DBLiteArmature armature, BLCharacterDefinition definition)
+        {
+            if (armature == null)
+            {
+                return;
+            }
+
+            var head = armature.GetChildArmature("head");
+            if (head != null)
+            {
+                var headPosition = head.transform.localPosition;
+                headPosition.y = definition.HeadOffsetY;
+                headPosition.z = 0f;
+                head.transform.localPosition = headPosition;
+                head.transform.localScale = new Vector3(definition.HeadScale, definition.HeadScale, 1f);
+            }
+
+            var body = armature.GetChildArmature("body");
+            if (body != null)
+            {
+                var bodyPosition = body.transform.localPosition;
+                bodyPosition.y = 0f;
+                bodyPosition.z = 0f;
+                body.transform.localPosition = bodyPosition;
+                body.transform.localScale = Vector3.one;
+            }
         }
 
         private static bool IsCharacterEnabled(int characterId)

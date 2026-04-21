@@ -53,9 +53,10 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 ## Repository Guide
 
 - `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
-- `TEST_LOG.md` - editor checks, playtest checks, and current follow-up items
+- `TEST_LOG.md` - current verification log, smoke-test baseline, and known follow-up items
 - `ASSET_CREDITS.md` - source notes for migrated resource files
-- `Assets/BasketballLegends2020/Documentation/` - migration plan and migration status notes inside the Unity project
+- `DOCS/HALLOWEEN_ASSET_PROMPTS.md` - prompt references for future visual asset replacement work
+- `DOCS/lecturer_asset_resources_guide.pdf` and `DOCS/评分标准.txt` - coursework delivery references
 
 ## Current Limitations
 
@@ -66,5 +67,5 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 
 ## Notes
 
-- `Builds/`, `Library/`, `Logs/`, and other generated Unity folders are intentionally excluded from version control.
+- `Builds/`, `Library/`, `Logs/`, `UserSettings/`, and other generated Unity folders are intentionally excluded from version control and can be regenerated when needed.
 - The authoritative editor entry scene is `Assets/Scenes/Main.unity`.
