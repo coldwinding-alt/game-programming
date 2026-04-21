@@ -30,3 +30,4 @@ _reference_do_not_ship/
 unity-*.log
 _asset_backup_*/
 新图/
+tmp_*

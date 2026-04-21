@@ -1,93 +1,227 @@
-# Sprint Plan
+# 开发看板
 
-This coursework project is organized as a documented vertical-slice port. The aim is to keep the repository readable, the Unity project runnable, and each major pass visible through focused delivery steps.
+更新时间：2026-04-22
 
-## Product Goal
+## 项目定位
 
-Build a Unity 2022 vertical slice that faithfully ports the core structure, assets, and gameplay loop of the 2020 browser release into a maintainable Unity project.
+- 项目类型：万圣节主题 1v1 街机篮球游戏
+- 交付目标：完成一版可稳定游玩、视觉统一、玩法闭环完整的课程作业版本
+- 当前核心循环：选角色 -> 进入比赛 -> 结算 -> 返回菜单 / 继续锦标赛
 
-## Sprint 1 - Repository And Documentation Setup
+## 当前版本基线
 
-Status: completed.
+- 已接入 8 个可选角色：
+  - `PUMPKIN`
+  - `FRANKENSTEIN`
+  - `MUMMY`
+  - `VAMPIRE`
+  - `CANDLEMAN`
+  - `SCARECROW`
+  - `WITCH`
+  - `BLACK CAT`
+- 已支持模式：
+  - `QUICK MATCH`
+  - `2 PLAYERS`
+  - `TRAINING`
+  - `TOURNAMENT`
+- 已完成主要系统：
+  - 角色制选人
+  - 4 人淘汰赛流程
+  - 比赛内 HUD 与暂停界面
+  - AI `EASY / NORMAL`
+  - DragonBones 角色换装链路
+- 当前版本状态：可运行、可游玩、可继续迭代
 
-Definition of done:
+## 看板规则
 
-- The project is in a clean repository branch.
-- Unity-generated folders and local reference folders are excluded from version control.
-- The repository includes a README, sprint plan, test log, asset credits, and handoff notes.
+- 任务按 `0.5-2 天` 可完成的粒度拆分
+- `In Progress` 同时不超过 `3` 张卡
+- `Review / Verify` 同时不超过 `2` 张卡
+- 没有明确验收标准的事项，不进入 `In Progress`
+- 新增需求先进入 `Backlog`，确认优先级后再进入 `Ready`
 
-Delivered:
+## 完成定义
 
-- Repository branch setup for the current Unity port.
-- Unity-safe `.gitignore`.
-- Root documentation for running, testing, and tracking the project.
+一张卡片进入 `Done` 前，至少满足以下条件：
 
-Remaining risks:
+- 需求范围明确，没有遗留关键歧义
+- 已完成对应代码 / 资源 / 界面改动
+- 已做一轮本地验证，结果可复现
+- 不存在阻断主流程的已知问题
+- 若影响玩法或流程，任务板状态已同步
 
-- Documentation must stay in sync as the gameplay port continues to change.
+## 当前迭代目标
 
-## Sprint 2 - Unity Baseline And Asset Migration
+- 优先把 8 角色版本跑通并稳定下来
+- 把课程展示时最容易被看到的问题先收口
+- 把后续新增角色的接入成本继续压低
 
-Status: completed.
+## Backlog
 
-Definition of done:
+### K-21 音效与反馈强化
 
-- The project opens in Unity `2022.3.62f3c1`.
-- `Assets/Scenes/Main.unity` is available as the editor entry scene.
-- Core migrated atlases, animation data, logo, and sound files are accessible through Unity `Resources`.
-- Project settings and package files are committed.
+- 目标：补足角色切换、得分、犯规感、胜负结算等反馈层次
+- 验收标准：
+  - 关键节点都有清晰反馈
+  - 不影响当前比赛节奏
+  - 试听后没有明显吵杂或过载
 
-Delivered:
+### K-22 训练模式提示收口
 
-- Unity project skeleton and boot scene.
-- Migrated resource package under `Assets/BasketballLegends2020/Resources/BL2020`.
-- Atlas loading, JSON loading, and lightweight animation runtime support.
+- 目标：让训练模式入口和在场提示更清楚
+- 验收标准：
+  - 玩家能快速看懂训练模式用途
+  - 不增加多余操作步骤
 
-Remaining risks:
+### K-23 课程提交包整理
 
-- Current resource files are temporary for coursework delivery and still need later cleanup/replacement.
-- Animation support is still a subset of the full original runtime behavior.
+- 目标：整理最终展示所需的说明、截图、运行入口和版本说明
+- 验收标准：
+  - 提交内容完整
+  - 打开项目和展示流程足够顺畅
 
-## Sprint 3 - Gameplay Fidelity Migration
+## Ready
 
-Status: active and playable.
+### K-24 八角色平衡首轮
 
-Definition of done:
+- 目标：检查 8 个角色在视觉体感上是否存在明显强弱错觉
+- 验收标准：
+  - 没有角色因为头身比例或动作观感显得异常吃亏 / 占优
+  - 形成第一轮平衡调整记录
 
-- Menu, HUD, player, ball, basket, and match flow are playable from the editor.
-- Movement, jump, dash, steal, loose-ball pickup, scoring, and overtime behave close to the reference release.
-- The computer opponent is functional on both `EASY` and `NORMAL`.
+### K-25 菜单与文案统一
 
-Delivered:
+- 目标：统一菜单、模式入口、比赛 HUD、结算页的命名和视觉语气
+- 验收标准：
+  - 同类界面命名一致
+  - 没有旧概念残留
+  - 课程展示时不容易产生理解偏差
 
-- Game bootstrap, match loop, HUD, controllers, and gameplay objects.
-- Text readability improvements and countdown cleanup.
-- Steal/stun rework, contact-style loose-ball pickup, and hoop scoring sensor logic.
-- Rim and backboard contact improvements to better align visible makes with actual scoring.
+### K-26 锦标赛展示强化
 
-Remaining risks:
+- 目标：让 4 人淘汰赛的过程更容易被看懂
+- 验收标准：
+  - 对阵关系清晰
+  - 当前轮次清晰
+  - 冠军 / 亚军 / 四强结果清晰
 
-- Block, pump fake, dunk, and fuller defensive timing still need more parity work.
-- Physics remains an approximation rather than a full one-to-one port of the original browser implementation.
+## In Progress
 
-## Sprint 4 - Testing And Final Polish
+### K-27 八角色实机回归
 
-Status: in progress.
+- 目标：确认 8 个角色在选人、比赛、暂停、结算、锦标赛里都能正常出现
+- 验收标准：
+  - 角色都能被选到
+  - 比赛中没有缺图、错图、黑块、透明边异常
+  - 锦标赛对阵中角色名正常显示
 
-Definition of done:
+### K-28 新角色比例与遮挡微调
 
-- The repository clearly explains how to open and run the project.
-- Core play checks are documented.
-- The project remains buildable and editable in Unity 2022.
-- Remaining gaps are documented for the next cleanup pass.
+- 目标：收口 `CANDLEMAN / SCARECROW / WITCH / BLACK CAT` 的头身比例、肩部重叠和动画遮挡
+- 验收标准：
+  - 头部不被裁切
+  - 身体不被压扁
+  - 跑动、跳跃、出手、偷球时无遮挡关键部位
 
-Delivered:
+### K-29 角色扩展管线固化
 
-- Current test log with editor, match loop, and gameplay checks.
-- Build entry point and migration status notes inside the Unity project.
-- Known-limitations list for future cleanup and replacement work.
+- 目标：把“新增角色 -> 切部件 -> 写入 atlas -> 更新角色目录 -> 回归验证”这条链路固化下来
+- 验收标准：
+  - 下一次新增角色时不需要重做结构层
+  - 只需要补素材和少量映射即可接入
 
-Remaining risks:
+## Review / Verify
 
-- More playtesting is still needed on longer matches and the unfinished screen flows.
-- Final resource replacement is still pending.
+### K-30 8 角色资源接入验证
+
+- 当前结果：
+  - 4 个新角色已追加到 atlas
+  - 没有覆盖原有 4 个角色
+  - 角色目录已扩到 8 个
+- 待确认项：
+  - Unity 编辑器内逐个切换角色的实机表现
+  - 锦标赛随机抽取时的角色覆盖情况
+
+### K-31 角色切换烟测
+
+- 当前结果：
+  - 批处理烟测已覆盖全部启用角色的换装调用
+  - 当前仅保留一个旧 warning，不影响主流程
+- 待确认项：
+  - 长时间游玩后的资源稳定性
+  - 编辑器内重复进入退出比赛是否稳定
+
+## Done
+
+### K-01 项目骨架搭建
+
+- 已完成：
+  - Unity 2022 项目可打开
+  - 运行入口已建立
+  - 文档结构已建立
+
+### K-02 核心比赛循环
+
+- 已完成：
+  - 角色、篮球、篮筐、计时、得分、结算已形成闭环
+
+### K-03 玩法主路径打通
+
+- 已完成：
+  - `QUICK MATCH`
+  - `2 PLAYERS`
+  - `TRAINING`
+
+### K-04 角色制选人改造
+
+- 已完成：
+  - 去掉球队概念
+  - 一名角色即一个可选单位
+  - 菜单改为按角色切换
+
+### K-05 锦标赛结构改造
+
+- 已完成：
+  - 4 人单败淘汰流程
+  - 半决赛 / 决赛推进
+  - 结果结算展示
+
+### K-06 比赛内信息改造
+
+- 已完成：
+  - 顶部 HUD 改为角色名
+  - 暂停面板去除队徽逻辑
+
+### K-07 首批 4 角色接入
+
+- 已完成：
+  - `PUMPKIN`
+  - `FRANKENSTEIN`
+  - `MUMMY`
+  - `VAMPIRE`
+
+### K-08 第二批 4 角色接入
+
+- 已完成：
+  - `CANDLEMAN`
+  - `SCARECROW`
+  - `WITCH`
+  - `BLACK CAT`
+
+## 当前主要风险
+
+- 新增角色已经扩到 8 个，实机视觉一致性还需要继续压
+- 角色头部偏大时，在投篮、偷球、跳跃等动作里最容易出现遮挡感
+- 菜单流程已经重构完成，但还需要一次完整展示路径回归
+- 临近课程交付时，最容易暴露的问题会集中在：
+  - 角色比例
+  - 文案一致性
+  - 锦标赛解释性
+  - 展示时的稳定性
+
+## 下一次更新看板时优先同步
+
+- `K-27` 是否通过完整实机回归
+- `K-28` 四个新角色是否还需要继续缩放或上移
+- `K-30` 和 `K-31` 是否可以从验证区移动到 `Done`
+- 是否要开启第三批角色接入

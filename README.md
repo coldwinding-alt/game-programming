@@ -42,7 +42,7 @@ Unity 2022 coursework project focused on a faithful vertical-slice port of the 2
 
 ## Repository Guide
 
-- `DOCS/SPRINT_PLAN.md` - sprint goals, delivered work, and remaining risks
+- `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
 - `TEST_LOG.md` - editor checks, playtest checks, and current follow-up items
 - `ASSET_CREDITS.md` - source notes for migrated resource files
 - `PROJECT_CONTEXT.md` - ongoing handoff summary for the current Unity port
