@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BasketballLegends2020
@@ -26,26 +27,23 @@ namespace BasketballLegends2020
     public sealed class BLMatchData
     {
         public bool Restarted;
-        public int FirstTeam;
+        public int FirstCharacterId;
         public int MatchMode;
-        public int[] Teams = new int[2];
-        public int[][] Players = { new int[0], new int[0] };
+        public int[] CharacterIds = new int[2];
         public string[][] Pb = { new string[0], new string[0] };
         public int[][] Skills = { new int[0], new int[0] };
-        public int[] Forms = { 0, 1 };
         public int[] MatchScore = { 0, 0 };
 
         public BLMatchData(bool local)
         {
-            FirstTeam = local ? 1 : 17;
+            FirstCharacterId = BLPlayersData.SanitizeCharacterId(local ? 0 : 1);
             BaseInit();
             ResetPartly();
         }
 
         public void ResetData()
         {
-            Teams = new int[2];
-            Players = new[] { new int[0], new int[0] };
+            CharacterIds = new[] { BLPlayersData.SanitizeCharacterId(0), BLPlayersData.SanitizeCharacterId(1, 0) };
         }
 
         public void ResetPartly()
@@ -53,7 +51,6 @@ namespace BasketballLegends2020
             MatchMode = 0;
             Pb = new[] { new string[0], new string[0] };
             Skills = new[] { new int[0], new int[0] };
-            Forms = new[] { 0, 1 };
             MatchScore = new[] { 0, 0 };
         }
 
@@ -66,8 +63,13 @@ namespace BasketballLegends2020
         public void BaseInit()
         {
             MatchMode = 0;
-            Teams = new[] { FirstTeam, 2 };
-            Players = new[] { new[] { 0 }, new[] { 0 } };
+            CharacterIds = new[]
+            {
+                BLPlayersData.SanitizeCharacterId(FirstCharacterId),
+                BLPlayersData.StepCharacterId(FirstCharacterId, 1)
+            };
+            Pb = new[] { new[] { "P0" }, new[] { "B0" } };
+            Skills = new[] { new[] { 0 }, new[] { 2 } };
         }
 
         public void ResetScore()
@@ -75,138 +77,97 @@ namespace BasketballLegends2020
             MatchScore = new[] { 0, 0 };
         }
 
-        public void StartQuickMatch()
+        public void StartQuickMatch(int playerCharacterId, BLAiDifficulty difficulty)
         {
             ResetAll();
-            var left = 1 + Random.Range(0, BLPlayersData.TeamsCount);
-            var right = 1 + Random.Range(0, BLPlayersData.TeamsCount);
-            if (left == right)
-            {
-                right = right == BLPlayersData.TeamsCount ? right - 1 : right + 1;
-            }
+            var playerId = BLPlayersData.SanitizeCharacterId(playerCharacterId);
+            var excluded = new List<int> { playerId };
+            var opponentId = BLPlayersData.GetRandomCharacterId(excluded);
+            var opponentSkill = difficulty == BLAiDifficulty.Easy ? 1 : 2;
 
-            Teams = new[] { left, right };
-            Players[0] = new[] { Random.Range(0, BLPlayersData.TeamSize) };
-            Players[1] = new[] { Random.Range(0, BLPlayersData.TeamSize) };
+            CharacterIds = new[] { playerId, opponentId };
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
-            Skills = new[] { new[] { 0 }, new[] { 2 } };
-            RndForms();
+            Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
         public void StartQuickLocalVersusMatch()
         {
             ResetAll();
-            var left = 1 + Random.Range(0, BLPlayersData.TeamsCount);
-            var right = 1 + Random.Range(0, BLPlayersData.TeamsCount);
-            if (left == right)
-            {
-                right = right == BLPlayersData.TeamsCount ? right - 1 : right + 1;
-            }
+            var left = BLPlayersData.SanitizeCharacterId(0);
+            var right = BLPlayersData.StepCharacterId(left, 1);
 
-            Teams = new[] { left, right };
-            Players[0] = new[] { Random.Range(0, BLPlayersData.TeamSize) };
-            Players[1] = new[] { Random.Range(0, BLPlayersData.TeamSize) };
+            CharacterIds = new[] { left, right };
             Pb = new[] { new[] { "P1" }, new[] { "P2" } };
             Skills = new[] { new[] { 0 }, new[] { 0 } };
-            RndForms();
         }
 
-        public void StartTraining()
+        public void StartTraining(int characterId)
         {
             ResetAll();
-            Teams[0] = 1 + Random.Range(0, BLPlayersData.TeamsCount);
-            Teams[1] = Teams[0];
-            Players[0] = new[] { Random.Range(0, BLPlayersData.TeamSize) };
-            Players[1] = new int[0];
+            var resolvedCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
+
+            CharacterIds = new[] { resolvedCharacterId, resolvedCharacterId };
             Pb = new[] { new[] { "P0" }, new string[0] };
             Skills = new[] { new[] { 0 }, new int[0] };
-            RndForms();
         }
 
-        public void StartRandomMatch()
+        public void StartRandomMatch(int playerCharacterId, BLAiDifficulty difficulty)
         {
-            MatchMode = 0;
-            Pb = new[] { new[] { "P0" }, new[] { "B0" } };
-            Skills = new[] { new[] { 0 }, new[] { 3 } };
-
-            RndForms();
+            StartQuickMatch(playerCharacterId, difficulty);
         }
 
         public void StartPlayers2Match()
         {
             MatchMode = 0;
-            var left = Players[0].Length > 0 ? Players[0][0] : 0;
-            var right = Players[1].Length > 0 ? Players[1][0] : 0;
-            Players = new[] { new[] { left }, new[] { right } };
+            var left = BLPlayersData.SanitizeCharacterId(CharacterIds[0]);
+            var right = BLPlayersData.SanitizeCharacterId(CharacterIds[1], BLPlayersData.StepCharacterId(left, 1));
+
+            CharacterIds = new[] { left, right };
             Pb = new[] { new[] { "P1" }, new[] { "P2" } };
             Skills = new[] { new[] { 0 }, new[] { 0 } };
-
-            RndForms();
         }
 
         public void StartTournamentMatch(BLTournamentData tournament)
         {
             ResetAll();
-            if (tournament == null || !tournament.Active)
+            if (tournament == null || !tournament.Active || tournament.Completed)
             {
                 return;
             }
 
             MatchMode = 0;
-            Teams = new[] { tournament.PlayerTeamId, tournament.CurrentOpponentTeamId };
+            CharacterIds = new[]
+            {
+                BLPlayersData.SanitizeCharacterId(tournament.PlayerCharacterId),
+                BLPlayersData.SanitizeCharacterId(tournament.CurrentOpponentCharacterId)
+            };
+
+            var opponentSkillBase = tournament.CurrentStage == BLTournamentStage.Final ? 3 : 2;
             var opponentSkill = Mathf.Clamp(
-                2 + tournament.CurrentRound + (tournament.Difficulty == BLAiDifficulty.Normal ? 1 : 0),
+                opponentSkillBase + (tournament.Difficulty == BLAiDifficulty.Normal ? 1 : 0),
                 0,
                 8);
-            var playerOne = Mathf.Clamp(tournament.SelectedPlayer, 0, BLPlayersData.TeamSize - 1);
-            var opponentOne = Random.Range(0, BLPlayersData.TeamSize);
-            Players = new[] { new[] { playerOne }, new[] { opponentOne } };
+
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
-
-            RndForms();
         }
 
-        public void StartSelectedTwoPlayerMatch(int leftTeamId, int leftPlayerIndex, int rightTeamId, int rightPlayerIndex)
+        public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId)
         {
             ResetAll();
             MatchMode = 0;
-            Teams = new[]
+            CharacterIds = new[]
             {
-                Mathf.Clamp(leftTeamId, 1, BLPlayersData.TeamsCount),
-                Mathf.Clamp(rightTeamId, 1, BLPlayersData.TeamsCount)
-            };
-            Players = new[]
-            {
-                new[] { Mathf.Clamp(leftPlayerIndex, 0, BLPlayersData.TeamSize - 1) },
-                new[] { Mathf.Clamp(rightPlayerIndex, 0, BLPlayersData.TeamSize - 1) }
+                BLPlayersData.SanitizeCharacterId(leftCharacterId),
+                BLPlayersData.SanitizeCharacterId(rightCharacterId, leftCharacterId)
             };
             Pb = new[] { new[] { "P1" }, new[] { "P2" } };
             Skills = new[] { new[] { 0 }, new[] { 0 } };
-            RndForms();
-        }
-
-        public void FillSecondPlayers()
-        {
-            if (Players[0].Length != 2)
-            {
-                Players[0] = new[] { Players[0][0], Players[0][0] == 0 ? 1 : 0 };
-            }
-
-            if (Players[1].Length != 2)
-            {
-                Players[1] = new[] { Players[1][0], Players[1][0] == 0 ? 1 : 0 };
-            }
         }
 
         public int WhoWins()
         {
             return MatchScore[0] > MatchScore[1] ? -1 : MatchScore[0] < MatchScore[1] ? 1 : 0;
-        }
-
-        private void RndForms()
-        {
-            Forms = new[] { 0, 1 };
         }
     }
 
@@ -225,9 +186,9 @@ namespace BasketballLegends2020
         public BLAiDifficulty Difficulty;
         public BLParticipantMode ParticipantMode;
         public BLSessionMode SessionMode;
-        public int SelectedTournamentTeamId;
-        public int SelectedTournamentPlayerIndex;
-        public int SelectedTournamentMatchMode;
+        public int SelectedQuickCharacterId;
+        public int SelectedTournamentCharacterId;
+        public int SelectedTrainingCharacterId;
 
         private BLInventory()
         {
@@ -238,9 +199,9 @@ namespace BasketballLegends2020
             Tournament = new BLTournamentData();
             MatchData.MatchMode = 0;
             Difficulty = BLAiDifficulty.Normal;
-            SelectedTournamentTeamId = MatchData.FirstTeam;
-            SelectedTournamentPlayerIndex = 0;
-            SelectedTournamentMatchMode = 0;
+            SelectedQuickCharacterId = MatchData.FirstCharacterId;
+            SelectedTournamentCharacterId = MatchData.FirstCharacterId;
+            SelectedTrainingCharacterId = MatchData.FirstCharacterId;
         }
 
         public string DifficultyLabel => Difficulty == BLAiDifficulty.Easy ? "AI: EASY" : "AI: NORMAL";
@@ -261,11 +222,19 @@ namespace BasketballLegends2020
             }
         }
 
-        public void SetTournamentSelection(int teamId, int playerIndex, int matchMode)
+        public void SetQuickSelection(int characterId)
         {
-            SelectedTournamentTeamId = Mathf.Clamp(teamId, 1, BLPlayersData.TeamsCount);
-            SelectedTournamentPlayerIndex = Mathf.Clamp(playerIndex, 0, BLPlayersData.TeamSize - 1);
-            SelectedTournamentMatchMode = Mathf.Clamp(matchMode, 0, 0);
+            SelectedQuickCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
+        }
+
+        public void SetTournamentSelection(int characterId)
+        {
+            SelectedTournamentCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
+        }
+
+        public void SetTrainingSelection(int characterId)
+        {
+            SelectedTrainingCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
         }
 
         public void StartQuickGame()
@@ -273,18 +242,10 @@ namespace BasketballLegends2020
             Tournament.Reset();
             SessionMode = BLSessionMode.QuickMatch;
             MatchPrepared = true;
-            if (ParticipantMode == BLParticipantMode.TwoPlayers)
-            {
-                GameMode = 4;
-                MatchData.MatchMode = 0;
-                MatchData.StartQuickLocalVersusMatch();
-                return;
-            }
-
             ParticipantMode = BLParticipantMode.OnePlayer;
             GameMode = 2;
             MatchData.MatchMode = 0;
-            MatchData.StartQuickMatch();
+            MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty);
         }
 
         public void StartOnePlayer()
@@ -294,7 +255,7 @@ namespace BasketballLegends2020
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 1;
             MatchData.MatchMode = 0;
-            MatchData.StartRandomMatch();
+            MatchData.StartRandomMatch(SelectedQuickCharacterId, Difficulty);
             MatchPrepared = true;
         }
 
@@ -305,22 +266,17 @@ namespace BasketballLegends2020
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 4;
             MatchData.MatchMode = 0;
-            if (MatchData.Teams[0] == 0)
-            {
-                MatchData.BaseInit();
-            }
-
             MatchData.StartPlayers2Match();
             MatchPrepared = true;
         }
 
-        public void StartTwoPlayerVersus(int leftTeamId, int leftPlayerIndex, int rightTeamId, int rightPlayerIndex)
+        public void StartTwoPlayerVersus(int leftCharacterId, int rightCharacterId)
         {
             ParticipantMode = BLParticipantMode.TwoPlayers;
             Tournament.Reset();
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 4;
-            MatchData.StartSelectedTwoPlayerMatch(leftTeamId, leftPlayerIndex, rightTeamId, rightPlayerIndex);
+            MatchData.StartSelectedTwoPlayerMatch(leftCharacterId, rightCharacterId);
             MatchPrepared = true;
         }
 
@@ -330,24 +286,24 @@ namespace BasketballLegends2020
             Tournament.Reset();
             SessionMode = BLSessionMode.Training;
             GameMode = 3;
-            MatchData.StartTraining();
+            MatchData.StartTraining(SelectedTrainingCharacterId);
             MatchPrepared = true;
         }
 
-        public void BeginTournament()
+        public bool BeginTournament()
         {
             ParticipantMode = BLParticipantMode.OnePlayer;
             SessionMode = BLSessionMode.Tournament;
             GameMode = 1;
-            var resolvedMatchMode = 0;
-            Tournament.Create(
-                SelectedTournamentTeamId,
-                SelectedTournamentPlayerIndex,
-                GameMode,
-                resolvedMatchMode,
-                Difficulty);
+            if (!Tournament.Create(SelectedTournamentCharacterId, Difficulty))
+            {
+                MatchPrepared = false;
+                return false;
+            }
+
             MatchData.StartTournamentMatch(Tournament);
             MatchPrepared = true;
+            return true;
         }
 
         public bool AdvanceTournament()
@@ -357,7 +313,7 @@ namespace BasketballLegends2020
                 return false;
             }
 
-            Tournament.ApplyRoundResult(MatchData.MatchScore[0], MatchData.MatchScore[1]);
+            Tournament.ApplyCurrentMatchResult(MatchData.MatchScore[0], MatchData.MatchScore[1]);
             MatchPrepared = false;
             if (!Tournament.Completed)
             {
