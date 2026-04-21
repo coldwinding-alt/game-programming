@@ -17,6 +17,15 @@ namespace BasketballLegends2020
         }
 
         private readonly System.Collections.Generic.List<BLMenuButton> menuButtons = new System.Collections.Generic.List<BLMenuButton>();
+        private const float SelectorHeaderY = 126f;
+        private const float SelectorArrowY = 258f;
+        private const float SelectorArrowOffsetX = 74f;
+        private const float SelectorArrowSize = 36f;
+        private const float PreviewScaleFactor = 0.56f;
+        private const float PreviewShadowYOffset = 24f;
+        private const float PreviewShadowScale = 0.42f;
+        private const float PreviewArmatureYOffset = -24f;
+        private const float PreviewArmatureScale = 0.82f;
         private Transform runtimeRoot;
         private BLGameCore gameCore;
         private Camera mainCamera;
@@ -595,7 +604,7 @@ namespace BasketballLegends2020
                 $"{key}_Header",
                 header,
                 centerX,
-                126f,
+                SelectorHeaderY,
                 header.Length <= 2 ? 26 : 18,
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
@@ -605,8 +614,8 @@ namespace BasketballLegends2020
                 outlineColor: Color.black,
                 outlinePixels: 1f);
 
-            menuButtons.Add(new BLMenuButton("<", centerX - 88f, 252f, 42f, 42f, previousCharacterAction, runtimeRoot));
-            menuButtons.Add(new BLMenuButton(">", centerX + 88f, 252f, 42f, 42f, nextCharacterAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("<", centerX - SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, previousCharacterAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
 
             CreatePreviewPlayer(characterId, centerX, previewY, previewScale);
             BLRender.Text(
@@ -626,9 +635,9 @@ namespace BasketballLegends2020
 
         private void CreatePreviewPlayer(int characterId, float x, float y, float scale)
         {
-            var previewScale = scale * 0.7f;
-            var shadow = BLRender.Sprite("PreviewShadow", BLAtlasCache.Instance.Interface, "loginSelect0000", x, y + 30f, 0.5f, 0.5f, 18, runtimeRoot);
-            shadow.transform.localScale *= 0.5f;
+            var previewScale = scale * PreviewScaleFactor * BLPlayersData.GetCharacterPreviewScaleMultiplier(characterId);
+            var shadow = BLRender.Sprite("PreviewShadow", BLAtlasCache.Instance.Interface, "loginSelect0000", x, y + PreviewShadowYOffset, 0.5f, 0.5f, 18, runtimeRoot);
+            shadow.transform.localScale *= PreviewShadowScale;
             shadow.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.55f);
 
             var previewRoot = new GameObject($"Preview_{characterId}");
@@ -642,8 +651,8 @@ namespace BasketballLegends2020
             }
 
             armature.transform.SetParent(previewRoot.transform, false);
-            armature.transform.localPosition = new Vector3(0f, -18f, 0f);
-            armature.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            armature.transform.localPosition = new Vector3(0f, PreviewArmatureYOffset + BLPlayersData.GetCharacterPreviewOffsetY(characterId), 0f);
+            armature.transform.localScale = new Vector3(PreviewArmatureScale, PreviewArmatureScale, 1f);
             BLPlayersData.ApplyCharacter(armature, characterId);
         }
 

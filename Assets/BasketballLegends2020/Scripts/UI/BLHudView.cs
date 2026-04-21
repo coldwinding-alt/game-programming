@@ -13,6 +13,11 @@ namespace BasketballLegends2020
     public sealed class BLHudView
     {
         private const float ScreenCenterY = 240f;
+        private const float LeftPortraitX = 311f;
+        private const float RightPortraitX = 492f;
+        private const float PortraitY = 103f;
+        private const float PortraitTargetPixels = 74f;
+        private const int PortraitSortingOrder = 79;
         private readonly TextMesh leftScore;
         private readonly TextMesh rightScore;
         private readonly TextMesh leftNameText;
@@ -45,6 +50,8 @@ namespace BasketballLegends2020
             isTraining = BLInventory.Instance.GameMode == 3;
             var leftCharacterName = BLPlayersData.GetCharacterName(matchData.CharacterIds[0]);
             var rightCharacterName = BLPlayersData.GetCharacterName(matchData.CharacterIds[1]);
+            CreateCharacterPortrait("LeftPortrait", matchData.CharacterIds[0], LeftPortraitX, parent);
+            CreateCharacterPortrait("RightPortrait", matchData.CharacterIds[1], RightPortraitX, parent);
             BLRender.Sprite("InfoPanel", BLAtlasCache.Instance.Gameplay, "infoPanel0000", BLConstants.Width2, 60f, 0.5f, 0.5f, 80, parent);
             leftNameText = BLRender.Text(
                 "LeftName",
@@ -462,6 +469,28 @@ namespace BasketballLegends2020
             }
 
             return icon;
+        }
+
+        private static GameObject CreateCharacterPortrait(string name, int characterId, float x, Transform parent)
+        {
+            var sprite = BLPlayersData.GetCharacterPortraitSprite(characterId);
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            var portrait = new GameObject(name);
+            portrait.transform.SetParent(parent, false);
+            var renderer = portrait.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = PortraitSortingOrder;
+
+            var targetSize = PortraitTargetPixels * BLPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
+            var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
+            var scale = targetSize / Mathf.Max(1f, spritePixels);
+            var y = PortraitY + BLPlayersData.GetCharacterPortraitOffsetY(characterId);
+            BLRender.ApplyPixelTransform(portrait.transform, x, y, 0f, scale);
+            return portrait;
         }
 
         private static string FormatTime(float secondsLeft)

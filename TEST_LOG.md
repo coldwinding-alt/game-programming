@@ -1,71 +1,31 @@
 # Test Log
 
-## 2026-04-18 - Repository Setup And Unity Baseline
+Updated: `2026-04-22`
 
-Environment:
+## Current Baseline
 
-- Unity `2022.3.62f3c1`
-- Windows desktop workflow
-- Branch: `feature/bl2020-faithful-port`
+- Unity Editor: `2022.3.62f3c1`
+- Entry scene: `Assets/Scenes/Main.unity`
+- Runtime boot: `BL2020AutoBoot`
+- Playable roster: `8` custom Halloween characters
+- Supported modes: `QUICK MATCH`, `2 PLAYERS`, `TRAINING`, `TOURNAMENT`
 
-Completed checks:
+## Recent Verification
 
-| Check | Result | Notes |
-| --- | --- | --- |
-| Repository import layout | Pass | Added `Assets`, `Packages`, `ProjectSettings`, `.gitignore`, and project documentation without Unity cache or build folders |
-| Unity project structure | Pass | Project opens as a standard Unity 2022 project with `Assets/Scenes/Main.unity` enabled in build settings |
-| Editor boot scene | Pass | `Main.unity` is the active editor entry scene for the current project |
-| Runtime bootstrap | Pass | `BL2020AutoBoot` starts the menu flow directly from Play Mode |
-| Documentation coverage | Pass | README, sprint plan, test log, asset credits, migration notes, and project context are included in the repository |
+| Date | Check | Result | Notes |
+| --- | --- | --- | --- |
+| 2026-04-22 | Batch smoke (`BL2020SmokeTest.Run`) | Pass | Project compiled and the current playable flow booted successfully after the latest roster/UI adjustments |
+| 2026-04-22 | Character-based selection flow | Pass | All player setup flows now read from the custom character roster instead of team/player combinations |
+| 2026-04-22 | Tournament bracket flow | Pass | Tournament remains a `4`-character single-elimination structure in the current build |
+| 2026-04-22 | Character preview consistency | Pass | Preview scale and head/body offsets were tuned to reduce large height differences across the roster |
+| 2026-04-22 | Match HUD portrait slots | Pass | Scoreboard portrait windows now render active character head sprites instead of staying empty |
 
-## 2026-04-18 - Match Loop And Playability Checks
+## Current Follow-Up Items
 
-Completed checks:
+- Do a full in-editor visual pass on the `8` playable characters and tighten any remaining head/body overlap issues.
+- Continue polishing menu spacing and tournament presentation so the overall UI reads as one cohesive game.
+- Run one longer manual playtest loop before final submission packaging.
 
-| Check | Result | Notes |
-| --- | --- | --- |
-| Main menu flow | Pass | Menu exposes `1 PLAYER`, `2 PLAYERS`, `QUICK MATCH`, `TRAINING`, and difficulty toggle |
-| Match start sequence | Pass | Countdown and center text enter the match correctly from the current boot flow |
-| Scoreboard and timer | Pass | HUD shows score and timer during play and handles overtime state |
-| Difficulty toggle | Pass | `AI: EASY / AI: NORMAL` changes the computer opponent behavior from the menu |
-| Match end flow | Pass | Match reaches time-out and shows a post-match overlay rather than leaving the match in an unusable state |
+## Known Non-Blocking Issue
 
-## 2026-04-18 - Gameplay Fidelity Checks
-
-Completed checks:
-
-| Check | Result | Notes |
-| --- | --- | --- |
-| Steal lane and stun timing | Pass | Steal interaction follows a forward-lane check and applies a longer stun window closer to the reference behavior |
-| Loose-ball pickup | Pass | Pickup uses a contact-style hand window instead of depending on the steal button |
-| Countdown cleanup | Pass | `GO!!!` is explicitly hidden after the intro sequence so stale text does not remain onscreen |
-| Rim and backboard contact | Pass | Hoop contact now resolves against left/right rim circles and a backboard collision region |
-| Score confirmation | Pass | Points are awarded through upper/down score sensor ordering rather than a single coarse hoop check |
-
-## Follow-Up Items
-
-- Continue tuning block, pump fake, dunk, and rebound behavior.
-- Continue tightening menu flow and post-match screen parity.
-- Replace temporary reference resource files in a later cleanup pass.
-
-## 2026-04-18 - Build Verification (Round: Match Core Parity)
-
-Completed checks:
-
-| Check | Result | Notes |
-| --- | --- | --- |
-| Windows batch build (`BuildWindows`) | Pass | Unity batch build completed successfully and produced `Builds/Windows/BasketballLegends2020.exe` |
-| Build log capture | Pass | Log file: `Logs/unity-build-2026-04-18-round-core-parity.log` |
-| Build method trace | Pass | Log includes `BasketballLegends2020.EditorTools.BL2020BuildTools.BuildWindows` execution and `BL2020 Windows build passed` |
-
-## 2026-04-18 - Round 2 Match Core Parity (AI + Dunk Scoring)
-
-Completed checks:
-
-| Check | Result | Notes |
-| --- | --- | --- |
-| AI skill profile mapping from reference table | Pass | Added per-skill profile data and wired it into player/AI creation (`BLAISkillsData`) |
-| AI strategy defence/attack parity pass | Pass | `strategyDefence`/`strategyAttack` now use profile-driven delays and decision probabilities closer to the reference structure |
-| Dunk score settlement reliability | Pass | Added completed-dunk score fallback and higher dunk substeps to remove intermittent “visual make but no points” cases |
-| Batch smoke (`BL2020SmokeTest.Run`) | Pass | Log: `Logs/smoke_round2.log` (`BL2020 smoke test passed.`) |
-| Batch Windows build (`BuildWindows`) | Blocked | Log: `Logs/build_windows_round2.log` indicates project lock: `It looks like another Unity instance is running with this project open.` |
+- Existing warning: `Assets/BasketballLegends2020/Scripts/GameObjects/BLGameplayObjects.cs(176,22)` - `BLBallObject.upperSensorPassed` is assigned but currently unused.
