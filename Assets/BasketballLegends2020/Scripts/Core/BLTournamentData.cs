@@ -1,268 +1,193 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace BasketballLegends2020
 {
-    public sealed class BLTournamentRecord
+    public enum BLTournamentStage
     {
-        public int TeamId;
-        public int Wins;
-        public int Losses;
-        public int PointsFor;
-        public int PointsAgainst;
+        None,
+        SemiFinal,
+        Final,
+        Complete
+    }
 
-        public int GamesPlayed => Wins + Losses;
+    public sealed class BLTournamentMatchResult
+    {
+        public int LeftCharacterId { get; private set; } = -1;
+        public int RightCharacterId { get; private set; } = -1;
+        public int LeftScore { get; private set; }
+        public int RightScore { get; private set; }
+        public int WinnerCharacterId { get; private set; } = -1;
+        public bool Completed { get; private set; }
 
-        public int PointDifferential => PointsFor - PointsAgainst;
-
-        public float WinPercent => GamesPlayed <= 0 ? 0f : Wins / (float)GamesPlayed;
-
-        public void Reset(int teamId)
+        public void Reset(int leftCharacterId = -1, int rightCharacterId = -1)
         {
-            TeamId = teamId;
-            Wins = 0;
-            Losses = 0;
-            PointsFor = 0;
-            PointsAgainst = 0;
+            LeftCharacterId = leftCharacterId;
+            RightCharacterId = rightCharacterId;
+            LeftScore = 0;
+            RightScore = 0;
+            WinnerCharacterId = -1;
+            Completed = false;
+        }
+
+        public void Complete(int leftScore, int rightScore)
+        {
+            if (LeftCharacterId < 0 || RightCharacterId < 0)
+            {
+                return;
+            }
+
+            if (leftScore == rightScore)
+            {
+                leftScore++;
+            }
+
+            LeftScore = leftScore;
+            RightScore = rightScore;
+            WinnerCharacterId = leftScore > rightScore ? LeftCharacterId : RightCharacterId;
+            Completed = true;
         }
     }
 
     public sealed class BLTournamentData
     {
-        private static readonly int[,] RoundFixtures =
-        {
-            { 0, 1, 2, 3 },
-            { 0, 2, 1, 3 },
-            { 0, 3, 1, 2 }
-        };
-
-        private readonly BLTournamentRecord[] records =
-        {
-            new BLTournamentRecord(),
-            new BLTournamentRecord(),
-            new BLTournamentRecord(),
-            new BLTournamentRecord()
-        };
-
         public bool Active { get; private set; }
         public bool Completed { get; private set; }
-        public int GameMode { get; private set; }
-        public int MatchMode { get; private set; }
-        public int SelectedPlayer { get; private set; }
-        public int SelectedTeammate { get; private set; }
         public BLAiDifficulty Difficulty { get; private set; }
-        public int CurrentRound { get; private set; }
-        public int[] TeamIds { get; } = new int[4];
-        public IReadOnlyList<BLTournamentRecord> Records => records;
-
-        public int TotalRounds => RoundFixtures.GetLength(0);
-
-        public int PlayerTeamId => TeamIds[0];
-
-        public int CurrentOpponentTeamId
+        public BLTournamentStage CurrentStage { get; private set; }
+        public int CurrentOpponentCharacterId { get; private set; } = -1;
+        public int PlayerCharacterId { get; private set; } = -1;
+        public int ChampionCharacterId { get; private set; } = -1;
+        public int PlayerPlacement { get; private set; }
+        public int[] EntrantCharacterIds { get; } = { -1, -1, -1, -1 };
+        public BLTournamentMatchResult[] SemiFinalResults { get; } =
         {
-            get
-            {
-                var opponentIndex = GetOpponentIndexForRound(CurrentRound);
-                return opponentIndex >= 0 ? TeamIds[opponentIndex] : 0;
-            }
-        }
+            new BLTournamentMatchResult(),
+            new BLTournamentMatchResult()
+        };
+        public BLTournamentMatchResult FinalResult { get; } = new BLTournamentMatchResult();
 
         public void Reset()
         {
             Active = false;
             Completed = false;
-            GameMode = 1;
-            MatchMode = 0;
-            SelectedPlayer = 0;
-            SelectedTeammate = 1;
             Difficulty = BLAiDifficulty.Normal;
-            CurrentRound = 0;
-            Array.Clear(TeamIds, 0, TeamIds.Length);
-            for (var i = 0; i < records.Length; i++)
+            CurrentStage = BLTournamentStage.None;
+            CurrentOpponentCharacterId = -1;
+            PlayerCharacterId = -1;
+            ChampionCharacterId = -1;
+            PlayerPlacement = 0;
+            for (var i = 0; i < EntrantCharacterIds.Length; i++)
             {
-                records[i].Reset(0);
+                EntrantCharacterIds[i] = -1;
             }
+
+            SemiFinalResults[0].Reset();
+            SemiFinalResults[1].Reset();
+            FinalResult.Reset();
         }
 
-        public void Create(int playerTeamId, int selectedPlayer, int gameMode, int matchMode, BLAiDifficulty difficulty)
+        public bool Create(int playerCharacterId, BLAiDifficulty difficulty)
         {
             Reset();
+            var activeCharacters = BLPlayersData.GetActiveCharacterIds();
+            if (activeCharacters.Length < 4)
+            {
+                return false;
+            }
+
             Active = true;
-            GameMode = gameMode;
-            MatchMode = matchMode;
             Difficulty = difficulty;
-            SelectedPlayer = Mathf.Clamp(selectedPlayer, 0, BLPlayersData.TeamSize - 1);
-            SelectedTeammate = (SelectedPlayer + 1) % BLPlayersData.TeamSize;
-            TeamIds[0] = Mathf.Clamp(playerTeamId, 1, BLPlayersData.TeamsCount);
+            PlayerCharacterId = BLPlayersData.SanitizeCharacterId(playerCharacterId);
 
-            var usedTeams = new HashSet<int> { TeamIds[0] };
-            for (var i = 1; i < TeamIds.Length; i++)
+            var availableOpponents = new List<int>(activeCharacters.Length - 1);
+            for (var i = 0; i < activeCharacters.Length; i++)
             {
-                var teamId = 1 + UnityEngine.Random.Range(0, BLPlayersData.TeamsCount);
-                while (!usedTeams.Add(teamId))
+                if (activeCharacters[i] != PlayerCharacterId)
                 {
-                    teamId = 1 + UnityEngine.Random.Range(0, BLPlayersData.TeamsCount);
+                    availableOpponents.Add(activeCharacters[i]);
                 }
-
-                TeamIds[i] = teamId;
             }
 
-            for (var i = 0; i < records.Length; i++)
+            Shuffle(availableOpponents);
+
+            EntrantCharacterIds[0] = PlayerCharacterId;
+            for (var i = 0; i < 3; i++)
             {
-                records[i].Reset(TeamIds[i]);
+                EntrantCharacterIds[i + 1] = availableOpponents[i];
             }
+
+            SemiFinalResults[0].Reset(EntrantCharacterIds[0], EntrantCharacterIds[1]);
+            SemiFinalResults[1].Reset(EntrantCharacterIds[2], EntrantCharacterIds[3]);
+            FinalResult.Reset();
+
+            CurrentStage = BLTournamentStage.SemiFinal;
+            CurrentOpponentCharacterId = EntrantCharacterIds[1];
+            return true;
         }
 
-        public void ApplyRoundResult(int playerScore, int opponentScore)
+        public void ApplyCurrentMatchResult(int playerScore, int opponentScore)
         {
-            if (!Active || Completed || CurrentRound >= TotalRounds)
+            if (!Active || Completed)
             {
                 return;
             }
 
-            ApplyPlayerFixture(playerScore, opponentScore);
-            SimulateCpuFixture(CurrentRound);
-
-            CurrentRound++;
-            if (CurrentRound >= TotalRounds)
+            if (CurrentStage == BLTournamentStage.SemiFinal)
             {
+                SemiFinalResults[0].Complete(playerScore, opponentScore);
+                SimulateMatch(SemiFinalResults[1]);
+
+                if (SemiFinalResults[0].WinnerCharacterId != PlayerCharacterId)
+                {
+                    FinalResult.Reset(SemiFinalResults[0].WinnerCharacterId, SemiFinalResults[1].WinnerCharacterId);
+                    SimulateMatch(FinalResult);
+                    ChampionCharacterId = FinalResult.WinnerCharacterId;
+                    PlayerPlacement = 3;
+                    CurrentOpponentCharacterId = -1;
+                    CurrentStage = BLTournamentStage.Complete;
+                    Completed = true;
+                    return;
+                }
+
+                FinalResult.Reset(PlayerCharacterId, SemiFinalResults[1].WinnerCharacterId);
+                CurrentOpponentCharacterId = FinalResult.RightCharacterId;
+                CurrentStage = BLTournamentStage.Final;
+                return;
+            }
+
+            if (CurrentStage == BLTournamentStage.Final)
+            {
+                FinalResult.Complete(playerScore, opponentScore);
+                ChampionCharacterId = FinalResult.WinnerCharacterId;
+                PlayerPlacement = ChampionCharacterId == PlayerCharacterId ? 1 : 2;
+                CurrentOpponentCharacterId = -1;
+                CurrentStage = BLTournamentStage.Complete;
                 Completed = true;
             }
         }
 
-        public IReadOnlyList<BLTournamentRecord> GetSortedRecords()
+        private static void SimulateMatch(BLTournamentMatchResult match)
         {
-            var copy = new List<BLTournamentRecord>(records.Length);
-            for (var i = 0; i < records.Length; i++)
-            {
-                copy.Add(new BLTournamentRecord
-                {
-                    TeamId = records[i].TeamId,
-                    Wins = records[i].Wins,
-                    Losses = records[i].Losses,
-                    PointsFor = records[i].PointsFor,
-                    PointsAgainst = records[i].PointsAgainst
-                });
-            }
-
-            copy.Sort((left, right) =>
-            {
-                var winCompare = right.Wins.CompareTo(left.Wins);
-                if (winCompare != 0)
-                {
-                    return winCompare;
-                }
-
-                var diffCompare = right.PointDifferential.CompareTo(left.PointDifferential);
-                if (diffCompare != 0)
-                {
-                    return diffCompare;
-                }
-
-                var pointsCompare = right.PointsFor.CompareTo(left.PointsFor);
-                if (pointsCompare != 0)
-                {
-                    return pointsCompare;
-                }
-
-                return left.TeamId.CompareTo(right.TeamId);
-            });
-
-            return copy;
-        }
-
-        public int GetPlayerPlacement()
-        {
-            var sorted = GetSortedRecords();
-            for (var i = 0; i < sorted.Count; i++)
-            {
-                if (sorted[i].TeamId == PlayerTeamId)
-                {
-                    return i + 1;
-                }
-            }
-
-            return sorted.Count;
-        }
-
-        public int GetChampionTeamId()
-        {
-            var sorted = GetSortedRecords();
-            return sorted.Count > 0 ? sorted[0].TeamId : 0;
-        }
-
-        public int GetRunnerUpTeamId()
-        {
-            var sorted = GetSortedRecords();
-            return sorted.Count > 1 ? sorted[1].TeamId : 0;
-        }
-
-        private void ApplyPlayerFixture(int playerScore, int opponentScore)
-        {
-            var opponentIndex = GetOpponentIndexForRound(CurrentRound);
-            if (opponentIndex < 0)
+            if (match == null || match.Completed)
             {
                 return;
             }
 
-            ApplyMatchResult(0, playerScore, opponentIndex, opponentScore);
+            var leftScore = 16 + Random.Range(0, 15);
+            var rightScore = 14 + Random.Range(0, 15);
+            match.Complete(leftScore, rightScore);
         }
 
-        private void SimulateCpuFixture(int roundIndex)
+        private static void Shuffle(List<int> values)
         {
-            var teamA = RoundFixtures[roundIndex, 2];
-            var teamB = RoundFixtures[roundIndex, 3];
-            var scoreA = 16 + UnityEngine.Random.Range(0, 15);
-            var scoreB = 14 + UnityEngine.Random.Range(0, 15);
-            if (scoreA == scoreB)
+            for (var i = values.Count - 1; i > 0; i--)
             {
-                scoreA++;
+                var swapIndex = Random.Range(0, i + 1);
+                var temp = values[i];
+                values[i] = values[swapIndex];
+                values[swapIndex] = temp;
             }
-
-            ApplyMatchResult(teamA, scoreA, teamB, scoreB);
-        }
-
-        private void ApplyMatchResult(int teamAIndex, int scoreA, int teamBIndex, int scoreB)
-        {
-            if (teamAIndex < 0 || teamAIndex >= records.Length || teamBIndex < 0 || teamBIndex >= records.Length)
-            {
-                return;
-            }
-
-            if (scoreA == scoreB)
-            {
-                scoreA++;
-            }
-
-            var recordA = records[teamAIndex];
-            var recordB = records[teamBIndex];
-            recordA.PointsFor += scoreA;
-            recordA.PointsAgainst += scoreB;
-            recordB.PointsFor += scoreB;
-            recordB.PointsAgainst += scoreA;
-
-            if (scoreA > scoreB)
-            {
-                recordA.Wins++;
-                recordB.Losses++;
-            }
-            else
-            {
-                recordB.Wins++;
-                recordA.Losses++;
-            }
-        }
-
-        private static int GetOpponentIndexForRound(int roundIndex)
-        {
-            if (roundIndex < 0 || roundIndex >= RoundFixtures.GetLength(0))
-            {
-                return -1;
-            }
-
-            return RoundFixtures[roundIndex, 1];
         }
     }
 }

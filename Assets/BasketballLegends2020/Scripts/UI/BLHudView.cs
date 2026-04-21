@@ -15,17 +15,16 @@ namespace BasketballLegends2020
         private const float ScreenCenterY = 240f;
         private readonly TextMesh leftScore;
         private readonly TextMesh rightScore;
+        private readonly TextMesh leftNameText;
+        private readonly TextMesh rightNameText;
         private readonly TextMesh timerText;
         private readonly BLMenuButton pauseButton;
         private readonly GameObject pauseButtonIcon;
         private readonly GameObject pauseShade;
         private readonly GameObject pausePanel;
         private readonly TextMesh pauseTitleText;
+        private readonly TextMesh pauseMatchupText;
         private readonly TextMesh pauseScoreText;
-        private readonly GameObject pauseLeftEmblemBg;
-        private readonly GameObject pauseRightEmblemBg;
-        private readonly GameObject pauseLeftEmblem;
-        private readonly GameObject pauseRightEmblem;
         private readonly BLMenuButton pauseMenuButton;
         private readonly BLMenuButton pauseResumeButton;
         private readonly bool isTraining;
@@ -44,13 +43,35 @@ namespace BasketballLegends2020
         public BLHudView(Transform parent, BLMatchData matchData)
         {
             isTraining = BLInventory.Instance.GameMode == 3;
+            var leftCharacterName = BLPlayersData.GetCharacterName(matchData.CharacterIds[0]);
+            var rightCharacterName = BLPlayersData.GetCharacterName(matchData.CharacterIds[1]);
             BLRender.Sprite("InfoPanel", BLAtlasCache.Instance.Gameplay, "infoPanel0000", BLConstants.Width2, 60f, 0.5f, 0.5f, 80, parent);
-            BLRender.Sprite("HudEmblemBgLeft", BLAtlasCache.Instance.Interface, "EmblemsBg0000", BLConstants.Width2 - 103f, 42f, 0.5f, 0.5f, 81, parent).transform.localScale *= 0.31f;
-            BLRender.Sprite("HudEmblemBgRight", BLAtlasCache.Instance.Interface, "EmblemsBg0000", BLConstants.Width2 + 103f, 42f, 0.5f, 0.5f, 81, parent).transform.localScale *= 0.31f;
-            var emblemLeftFrame = "Emblems00" + (matchData.Teams[0] - 1 < 10 ? "0" : "") + (matchData.Teams[0] - 1);
-            var emblemRightFrame = "Emblems00" + (matchData.Teams[1] - 1 < 10 ? "0" : "") + (matchData.Teams[1] - 1);
-            BLRender.Sprite("HudEmblemLeft", BLAtlasCache.Instance.Interface, emblemLeftFrame, BLConstants.Width2 - 101f, 42f, 0.5f, 0.5f, 82, parent).transform.localScale *= 0.3f;
-            BLRender.Sprite("HudEmblemRight", BLAtlasCache.Instance.Interface, emblemRightFrame, BLConstants.Width2 + 103f, 42f, 0.5f, 0.5f, 82, parent).transform.localScale *= 0.3f;
+            leftNameText = BLRender.Text(
+                "LeftName",
+                leftCharacterName,
+                BLConstants.Width2 - 128f,
+                42f,
+                15,
+                Color.white,
+                TextAnchor.MiddleRight,
+                83,
+                parent,
+                BLFontKind.Impact2,
+                outlineColor: Color.black,
+                outlinePixels: 1f);
+            rightNameText = BLRender.Text(
+                "RightName",
+                rightCharacterName,
+                BLConstants.Width2 + 128f,
+                42f,
+                15,
+                Color.white,
+                TextAnchor.MiddleLeft,
+                83,
+                parent,
+                BLFontKind.Impact2,
+                outlineColor: Color.black,
+                outlinePixels: 1f);
 
             var scoreColor = new Color(1f, 0.6f, 0f);
             leftScore = BLRender.Text(
@@ -179,11 +200,24 @@ namespace BasketballLegends2020
                 BLFontKind.CfCrackBold,
                 outlineColor: Color.white,
                 outlinePixels: 1.8f);
+            pauseMatchupText = BLRender.Text(
+                "PauseMatchup",
+                $"{leftCharacterName}  VS  {rightCharacterName}",
+                BLConstants.Width2,
+                200f,
+                18,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                145,
+                parent,
+                BLFontKind.Impact2,
+                outlineColor: new Color(0f, 0f, 0f, 0.85f),
+                outlinePixels: 1f);
             pauseScoreText = BLRender.Text(
                 "PauseScore",
                 "0 : 0",
                 BLConstants.Width2,
-                226f,
+                236f,
                 28,
                 Color.white,
                 TextAnchor.MiddleCenter,
@@ -192,24 +226,15 @@ namespace BasketballLegends2020
                 BLFontKind.CfCrackBold,
                 outlineColor: new Color(0f, 0f, 0f, 0.85f),
                 outlinePixels: 2f);
-            pauseLeftEmblemBg = BLRender.Sprite("PauseLeftEmblemBg", BLAtlasCache.Instance.Interface, "EmblemsBg0000", 288f, 224f, 0.5f, 0.5f, 143, parent);
-            pauseRightEmblemBg = BLRender.Sprite("PauseRightEmblemBg", BLAtlasCache.Instance.Interface, "EmblemsBg0000", 512f, 224f, 0.5f, 0.5f, 143, parent);
-            pauseLeftEmblemBg.transform.localScale *= 0.43f;
-            pauseRightEmblemBg.transform.localScale *= 0.43f;
-            pauseLeftEmblem = BLRender.Sprite("PauseLeftEmblem", BLAtlasCache.Instance.Interface, emblemLeftFrame, 288f, 224f, 0.5f, 0.5f, 144, parent);
-            pauseRightEmblem = BLRender.Sprite("PauseRightEmblem", BLAtlasCache.Instance.Interface, emblemRightFrame, 512f, 224f, 0.5f, 0.5f, 144, parent);
-            pauseLeftEmblem.transform.localScale *= 0.39f;
-            pauseRightEmblem.transform.localScale *= 0.39f;
             pauseMenuButton = new BLMenuButton("MENU", 314f, 322f, 154f, 44f, () => pendingPauseCommand = BLPauseCommand.Menu, parent);
             pauseResumeButton = new BLMenuButton("RESUME", 486f, 322f, 174f, 44f, () => pendingPauseCommand = BLPauseCommand.Resume, parent);
             SetPauseOverlayVisible(false);
             if (isTraining)
             {
+                SetGameObjectVisible(leftNameText.gameObject, false);
+                SetGameObjectVisible(rightNameText.gameObject, false);
+                SetGameObjectVisible(pauseMatchupText.gameObject, false);
                 SetGameObjectVisible(pauseScoreText.gameObject, false);
-                SetGameObjectVisible(pauseLeftEmblemBg, false);
-                SetGameObjectVisible(pauseRightEmblemBg, false);
-                SetGameObjectVisible(pauseLeftEmblem, false);
-                SetGameObjectVisible(pauseRightEmblem, false);
             }
 
             UpdateScore(matchData.MatchScore[0], matchData.MatchScore[1]);
@@ -412,11 +437,8 @@ namespace BasketballLegends2020
             pauseResumeButton.SetVisible(visible);
             if (!isTraining)
             {
+                SetGameObjectVisible(pauseMatchupText.gameObject, visible);
                 SetGameObjectVisible(pauseScoreText.gameObject, visible);
-                SetGameObjectVisible(pauseLeftEmblemBg, visible);
-                SetGameObjectVisible(pauseRightEmblemBg, visible);
-                SetGameObjectVisible(pauseLeftEmblem, visible);
-                SetGameObjectVisible(pauseRightEmblem, visible);
             }
         }
 

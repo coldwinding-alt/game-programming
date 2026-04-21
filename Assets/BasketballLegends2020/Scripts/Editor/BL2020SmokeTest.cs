@@ -48,7 +48,11 @@ namespace BasketballLegends2020.EditorTools
                 }
                 else
                 {
-                    BLPlayersData.SwitchPlayer(armature, 0, 0);
+                    foreach (var characterId in BLPlayersData.GetActiveCharacterIds())
+                    {
+                        BLPlayersData.ApplyCharacter(armature, characterId);
+                    }
+
                     UnityEngine.Object.DestroyImmediate(armature.gameObject);
                 }
 
@@ -60,6 +64,7 @@ namespace BasketballLegends2020.EditorTools
 
                 root = new GameObject("SmokeRuntimeRoot");
                 BLAudio.Create(root.transform);
+                BLInventory.Instance.SetQuickSelection(0);
                 BLInventory.Instance.StartQuickGame();
                 var core = new BLGameBuilder().Build(root.transform);
                 core.Update(0.016f);
