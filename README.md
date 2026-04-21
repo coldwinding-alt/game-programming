@@ -1,13 +1,23 @@
-# Basketball Legends 2020 Unity Port
+# Halloween Arcade Basketball
 
-Unity 2022 coursework project focused on a faithful vertical-slice port of the 2020 browser game into an editor-friendly Unity project. The current deliverable keeps the migrated resource structure, data flow, and match feel close to the original reference package instead of rebuilding a loosely similar game from scratch.
+Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game. The current build focuses on a stable playable loop, a growing custom character roster, and a workflow that keeps future content additions and submission prep manageable.
 
 ## Current Playable Scope
 
+- Character-based roster with `8` playable characters:
+  - `PUMPKIN`
+  - `FRANKENSTEIN`
+  - `MUMMY`
+  - `VAMPIRE`
+  - `CANDLEMAN`
+  - `SCARECROW`
+  - `WITCH`
+  - `BLACK CAT`
 - Main menu with `1 PLAYER`, `2 PLAYERS`, `QUICK MATCH`, `TRAINING`, and `AI: EASY / AI: NORMAL`.
+- Character-based match setup and a `4`-character single-elimination `TOURNAMENT` flow.
 - Direct boot into a playable match loop from the Unity editor.
 - Player movement, jump, dash, shoot, steal, stun, loose-ball pickup, score reset, timer, overtime, and post-match overlay.
-- Migrated atlases, logo, DragonBones data subset, and sound effects placed under Unity `Resources`.
+- DragonBones-driven character pipeline, gameplay atlases, logo, and sound effects placed under Unity `Resources`.
 - Hoop interaction rebuilt around rim contact, backboard contact, and upper/down score sensors.
 - Local Windows build entry point included for continued testing outside the editor.
 
@@ -45,16 +55,14 @@ Unity 2022 coursework project focused on a faithful vertical-slice port of the 2
 - `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
 - `TEST_LOG.md` - editor checks, playtest checks, and current follow-up items
 - `ASSET_CREDITS.md` - source notes for migrated resource files
-- `PROJECT_CONTEXT.md` - ongoing handoff summary for the current Unity port
 - `Assets/BasketballLegends2020/Documentation/` - migration plan and migration status notes inside the Unity project
 
 ## Current Limitations
 
-- Physics is still an approximation of the original browser-game physics model.
-- DragonBones runtime support currently covers the gameplay subset needed for the current build, not the full original animation feature set.
-- Some original screen flows are still simplified or unported.
-- Block, pump fake, dunk, and fuller post-match behavior still need more parity work.
-- Current reference assets are temporary for coursework delivery and are planned for later replacement/cleanup.
+- Physics and collision feel still need more tuning for consistency across the full roster.
+- DragonBones runtime support currently covers the gameplay subset needed for the current build, not every animation/runtime feature.
+- Newer characters still need proportion and overlap polish in live gameplay.
+- Tournament presentation, audio feedback, and delivery materials still need another pass before final submission.
 
 ## Notes
 
