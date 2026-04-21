@@ -848,17 +848,60 @@ namespace BasketballLegends2020
 
     public sealed class BLTeleportFx
     {
+        private enum TeleportPhase
+        {
+            Hidden,
+            BlackExpand,
+            BlackCollapse,
+            WhiteFlash
+        }
+
+        private const float BlackExpandDuration = 0.06f;
+        private const float BlackCollapseDuration = 0.07f;
+        private const float BlackCollapseScaleDuration = 0.08f;
+        private const float WhiteFlashDuration1 = 0.03f;
+        private const float WhiteFlashDuration2 = 0.03f;
+        private const float WhiteFlashDuration3 = 0.024f;
+        private const float AnimationFps = 30f;
+
         private readonly GameObject graphic;
-        private readonly SpriteRenderer renderer;
+        private readonly Transform blackNode;
+        private readonly SpriteRenderer blackRenderer;
+        private readonly SpriteRenderer centerRenderer;
+        private readonly SpriteRenderer whiteRenderer;
+        private readonly SpriteRenderer animRenderer;
         private readonly Sprite[] frames;
-        private float elapsed = -1f;
+        private TeleportPhase phase = TeleportPhase.Hidden;
+        private float phaseTime;
 
         public BLTeleportFx(Transform parent)
         {
             graphic = new GameObject("TeleportFx");
             graphic.transform.SetParent(parent, false);
-            renderer = graphic.AddComponent<SpriteRenderer>();
-            renderer.sortingOrder = 74;
+
+            blackNode = new GameObject("TeleportBlack").transform;
+            blackNode.SetParent(graphic.transform, false);
+            blackRenderer = blackNode.gameObject.AddComponent<SpriteRenderer>();
+            blackRenderer.sortingOrder = 74;
+            blackRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport10000");
+
+            var centerNode = new GameObject("TeleportCenter");
+            centerNode.transform.SetParent(blackNode, false);
+            centerRenderer = centerNode.AddComponent<SpriteRenderer>();
+            centerRenderer.sortingOrder = 75;
+            centerRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport20000");
+
+            var animNode = new GameObject("TeleportAnim");
+            animNode.transform.SetParent(graphic.transform, false);
+            animRenderer = animNode.AddComponent<SpriteRenderer>();
+            animRenderer.sortingOrder = 76;
+
+            var whiteNode = new GameObject("TeleportWhite");
+            whiteNode.transform.SetParent(graphic.transform, false);
+            whiteRenderer = whiteNode.AddComponent<SpriteRenderer>();
+            whiteRenderer.sortingOrder = 77;
+            whiteRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport40000");
+
             frames = new[]
             {
                 BLAtlasCache.Instance.Gameplay.Sprite("teleport30000"),
@@ -866,117 +909,266 @@ namespace BasketballLegends2020
                 BLAtlasCache.Instance.Gameplay.Sprite("teleport30002"),
                 BLAtlasCache.Instance.Gameplay.Sprite("teleport30003")
             };
-            graphic.SetActive(false);
+
+            Hide();
         }
 
         public void StartPlay(float x, float y)
         {
-            elapsed = 0f;
+            phase = TeleportPhase.BlackExpand;
+            phaseTime = 0f;
             graphic.SetActive(true);
             BLRender.ApplyPixelTransform(graphic.transform, x, y, 0.16f, 1f);
-            renderer.color = Color.white;
-            renderer.sprite = frames[0];
+            blackRenderer.enabled = true;
+            centerRenderer.enabled = true;
+            whiteRenderer.enabled = false;
+            animRenderer.enabled = false;
+            animRenderer.sprite = null;
+            blackNode.localScale = new Vector3(0.12f, 0.12f, 1f);
+            blackNode.localRotation = Quaternion.identity;
+            whiteRenderer.transform.localScale = new Vector3(0.086f, 0.027f, 1f);
+            whiteRenderer.transform.localRotation = Quaternion.identity;
         }
 
         public void Update(float dt)
         {
-            if (elapsed < 0f)
+            if (phase == TeleportPhase.Hidden)
             {
                 return;
             }
 
-            elapsed += dt;
-            var frameIndex = Mathf.Clamp(Mathf.FloorToInt(elapsed * 30f), 0, frames.Length - 1);
-            renderer.sprite = frames[frameIndex];
-            var pulse = 1f + 0.45f * Mathf.Sin(Mathf.Clamp01(elapsed / 0.18f) * Mathf.PI);
-            graphic.transform.localScale = new Vector3(BLConstants.UnitsPerPixel * pulse, BLConstants.UnitsPerPixel * pulse, 1f);
-            renderer.color = new Color(1f, 1f, 1f, Mathf.Clamp01(1f - elapsed / 0.18f));
-            if (elapsed >= 0.18f)
+            phaseTime += dt;
+            switch (phase)
             {
-                Hide();
+                case TeleportPhase.BlackExpand:
+                    UpdateBlackExpand();
+                    if (phaseTime >= BlackExpandDuration)
+                    {
+                        phase = TeleportPhase.BlackCollapse;
+                        phaseTime = 0f;
+                        animRenderer.enabled = true;
+                    }
+                    break;
+                case TeleportPhase.BlackCollapse:
+                    UpdateBlackCollapse();
+                    if (phaseTime >= BlackCollapseDuration)
+                    {
+                        phase = TeleportPhase.WhiteFlash;
+                        phaseTime = 0f;
+                        blackRenderer.enabled = false;
+                        centerRenderer.enabled = false;
+                        animRenderer.enabled = false;
+                        whiteRenderer.enabled = true;
+                    }
+                    break;
+                case TeleportPhase.WhiteFlash:
+                    UpdateWhiteFlash();
+                    if (phaseTime >= WhiteFlashDuration1 + WhiteFlashDuration2 + WhiteFlashDuration3)
+                    {
+                        Hide();
+                    }
+                    break;
             }
         }
 
         public void Hide()
         {
-            elapsed = -1f;
+            phase = TeleportPhase.Hidden;
+            phaseTime = 0f;
+            blackRenderer.enabled = false;
+            centerRenderer.enabled = false;
+            whiteRenderer.enabled = false;
+            animRenderer.enabled = false;
+            animRenderer.sprite = null;
             graphic.SetActive(false);
+        }
+
+        private void UpdateBlackExpand()
+        {
+            var t = Mathf.Clamp01(phaseTime / BlackExpandDuration);
+            var scale = Mathf.Lerp(0.12f, 1f, t);
+            blackNode.localScale = new Vector3(scale, scale, 1f);
+            blackNode.localRotation = Quaternion.Euler(0f, 0f, -180f * t);
+        }
+
+        private void UpdateBlackCollapse()
+        {
+            var scaleT = Mathf.Clamp01(phaseTime / BlackCollapseScaleDuration);
+            var scale = Mathf.Lerp(1f, 0f, EaseInBack(scaleT));
+            blackNode.localScale = new Vector3(scale, scale, 1f);
+
+            var rotateT = Mathf.Clamp01(phaseTime / BlackCollapseDuration);
+            blackNode.localRotation = Quaternion.Euler(0f, 0f, -Mathf.Lerp(180f, 360f, rotateT));
+
+            var frameIndex = Mathf.Clamp(Mathf.FloorToInt(phaseTime * AnimationFps), 0, frames.Length - 1);
+            animRenderer.sprite = frames[frameIndex];
+        }
+
+        private void UpdateWhiteFlash()
+        {
+            var time1 = WhiteFlashDuration1;
+            var time2 = WhiteFlashDuration2;
+            var total12 = time1 + time2;
+            Vector2 scale;
+            if (phaseTime <= time1)
+            {
+                scale = Vector2.Lerp(new Vector2(0.086f, 0.027f), new Vector2(0.658f, 0.596f), phaseTime / time1);
+            }
+            else if (phaseTime <= total12)
+            {
+                scale = Vector2.Lerp(new Vector2(0.658f, 0.596f), new Vector2(0.084f, 1.258f), (phaseTime - time1) / time2);
+            }
+            else
+            {
+                scale = Vector2.Lerp(new Vector2(0.084f, 1.258f), new Vector2(0.028f, 0.072f), (phaseTime - total12) / WhiteFlashDuration3);
+            }
+
+            whiteRenderer.transform.localScale = new Vector3(scale.x, scale.y, 1f);
+        }
+
+        private static float EaseInBack(float t)
+        {
+            const float overshoot = 1.70158f;
+            return (overshoot + 1f) * t * t * t - overshoot * t * t;
         }
     }
 
     public sealed class BLShieldObject
     {
+        private enum ShieldPhase
+        {
+            Hidden,
+            Intro,
+            Active,
+            Fading
+        }
+
         private const float IntroTime = 0.14f;
+        private const float IntroDropTime = 0.12f;
+        private const float IntroDropOffsetY = -600f;
         private const float ShowTime = 3f;
         private const float FadeTime = 0.5f;
-        private const float Width = 70f;
-        private const float Height = 10f;
-        private const float CenterYOffset = -32f;
+        private const float AnimationFps = 30f;
+        private const float GraphicXOffset = 23f;
+        private const float GraphicYOffset = -62f;
+        private const float CollisionRectTop = 30f;
+        private const float CollisionRectWidth = 70f;
+        private const float CollisionRectHeight = 10f;
+        private const float CollisionRectLeftLeftSide = -23f;
+        private const float CollisionRectLeftRightSide = -49f;
+        private const float StartSpriteLocalX = 1f;
 
         private readonly int side;
         private readonly BLBasketObject basket;
         private readonly GameObject graphic;
-        private readonly SpriteRenderer renderer;
+        private readonly SpriteRenderer blurRenderer;
+        private readonly SpriteRenderer startRenderer;
+        private readonly SpriteRenderer animRenderer;
         private readonly Sprite[] frames;
-        private float elapsed = -1f;
+
+        private ShieldPhase phase = ShieldPhase.Hidden;
+        private float phaseTime;
         private float alpha = 1f;
 
         public BLShieldObject(int side, BLBasketObject basket, Transform parent)
         {
             this.side = side;
             this.basket = basket;
+
             graphic = new GameObject(side == -1 ? "ShieldLeft" : "ShieldRight");
             graphic.transform.SetParent(parent, false);
-            renderer = graphic.AddComponent<SpriteRenderer>();
-            renderer.sortingOrder = 63;
+
+            var shieldStartSprite = BLAtlasCache.Instance.Gameplay.Sprite("ShieldMC0000");
+            startRenderer = CreateRenderer("ShieldStart", 63, shieldStartSprite);
+            blurRenderer = CreateRenderer("ShieldBlur", 64, shieldStartSprite);
+            animRenderer = CreateRenderer("ShieldAnim", 65, null);
+
             frames = new Sprite[21];
             for (var i = 0; i < frames.Length; i++)
             {
-                frames[i] = BLAtlasCache.Instance.Gameplay.Sprite($"ShieldMC2{i:0000}");
+                var frameName = $"ShieldMC2{i:0000}";
+                var frame = BLAtlasCache.Instance.Gameplay.Frame(frameName);
+                if (frame != null && frame.W > 0f && frame.H > 0f)
+                {
+                    frames[i] = BLAtlasCache.Instance.Gameplay.Sprite(frameName);
+                }
             }
 
             graphic.SetActive(false);
         }
 
-        public bool IsBlocking => elapsed >= IntroTime && elapsed < IntroTime + ShowTime;
+        public bool IsBlocking => phase == ShieldPhase.Active && phaseTime < AnimationDuration + ShowTime;
 
         public void Activate()
         {
-            elapsed = 0f;
+            phase = ShieldPhase.Intro;
+            phaseTime = 0f;
             alpha = 1f;
             basket?.HideEar();
             graphic.SetActive(true);
-            renderer.color = Color.white;
-            renderer.sprite = frames[0];
+            startRenderer.enabled = false;
+            blurRenderer.enabled = true;
+            animRenderer.enabled = false;
+            blurRenderer.transform.localPosition = new Vector3(StartSpriteLocalX, IntroDropOffsetY, 0f);
+            ApplyAlpha();
             UpdateGraphic();
             BLAudio.Instance?.Play(BLAssets.Sounds.PShield);
         }
 
         public void Update(float dt)
         {
-            if (elapsed < 0f)
+            if (phase == ShieldPhase.Hidden)
             {
                 return;
             }
 
-            elapsed += dt;
-            UpdateGraphic();
-            if (elapsed >= IntroTime + ShowTime)
+            phaseTime += dt;
+            switch (phase)
             {
-                var fadeT = Mathf.Clamp01((elapsed - IntroTime - ShowTime) / FadeTime);
-                alpha = 1f - fadeT;
-                renderer.color = new Color(1f, 1f, 1f, alpha);
-                if (fadeT >= 1f)
-                {
-                    Reset();
-                }
+                case ShieldPhase.Intro:
+                    UpdateIntro();
+                    if (phaseTime >= IntroTime)
+                    {
+                        phase = ShieldPhase.Active;
+                        phaseTime = 0f;
+                        blurRenderer.enabled = false;
+                        startRenderer.enabled = true;
+                        animRenderer.enabled = true;
+                    }
+                    break;
+                case ShieldPhase.Active:
+                    UpdateActive();
+                    if (phaseTime >= AnimationDuration + ShowTime)
+                    {
+                        phase = ShieldPhase.Fading;
+                        phaseTime = 0f;
+                        animRenderer.enabled = false;
+                        basket?.ShowEar();
+                    }
+                    break;
+                case ShieldPhase.Fading:
+                    alpha = 1f - Mathf.Clamp01(phaseTime / FadeTime);
+                    ApplyAlpha();
+                    if (phaseTime >= FadeTime)
+                    {
+                        Reset();
+                        return;
+                    }
+                    break;
             }
+
+            UpdateGraphic();
         }
 
         public void Reset()
         {
-            elapsed = -1f;
+            phase = ShieldPhase.Hidden;
+            phaseTime = 0f;
             alpha = 1f;
+            startRenderer.enabled = false;
+            blurRenderer.enabled = false;
+            animRenderer.enabled = false;
+            animRenderer.sprite = null;
             graphic.SetActive(false);
             basket?.ShowEar();
         }
@@ -988,11 +1180,12 @@ namespace BasketballLegends2020
                 return false;
             }
 
-            var minX = basket.Center - Width * 0.5f - BLObjectsData.BallRadius;
-            var maxX = basket.Center + Width * 0.5f + BLObjectsData.BallRadius;
-            var centerY = basket.Height + CenterYOffset;
-            var minY = centerY - Height * 0.5f - BLObjectsData.BallRadius;
-            var maxY = centerY + Height * 0.5f + BLObjectsData.BallRadius;
+            var origin = ShieldOrigin;
+            var rectLeft = side == -1 ? CollisionRectLeftLeftSide : CollisionRectLeftRightSide;
+            var minX = origin.x + rectLeft - BLObjectsData.BallRadius;
+            var maxX = minX + CollisionRectWidth + BLObjectsData.BallRadius * 2f;
+            var minY = origin.y + CollisionRectTop - BLObjectsData.BallRadius;
+            var maxY = minY + CollisionRectHeight + BLObjectsData.BallRadius * 2f;
             if (!SweptPointIntersectsRect(ball.PreviousPosition, ball.Position, minX, maxX, minY, maxY))
             {
                 return false;
@@ -1009,12 +1202,69 @@ namespace BasketballLegends2020
                 return;
             }
 
-            var frame = Mathf.Clamp(Mathf.FloorToInt(Mathf.Max(0f, elapsed - IntroTime) * 30f), 0, frames.Length - 1);
-            renderer.sprite = frames[frame];
-            BLRender.ApplyPixelTransform(graphic.transform, basket.Center, basket.Height - 62f, 0.15f, 1f);
+            var origin = ShieldOrigin;
+            BLRender.ApplyPixelTransform(graphic.transform, origin.x, origin.y, 0.15f, 1f);
             var localScale = graphic.transform.localScale;
-            localScale.x *= side == 1 ? -1f : 1f;
+            localScale.x = side == 1 ? -Mathf.Abs(localScale.x) : Mathf.Abs(localScale.x);
             graphic.transform.localScale = localScale;
+        }
+
+        private Vector2 ShieldOrigin => new Vector2(
+            basket.Center + side * GraphicXOffset,
+            basket.Height + GraphicYOffset);
+
+        private float AnimationDuration => frames.Length / AnimationFps;
+
+        private void UpdateIntro()
+        {
+            var t = Mathf.Clamp01(phaseTime / IntroDropTime);
+            blurRenderer.transform.localPosition = new Vector3(
+                StartSpriteLocalX,
+                Mathf.Lerp(IntroDropOffsetY, 0f, EaseOutBack(t)),
+                0f);
+        }
+
+        private void UpdateActive()
+        {
+            startRenderer.enabled = true;
+            startRenderer.transform.localPosition = new Vector3(StartSpriteLocalX, 0f, 0f);
+
+            var frameIndex = Mathf.FloorToInt(phaseTime * AnimationFps);
+            if (frameIndex >= 0 && frameIndex < frames.Length && frames[frameIndex] != null)
+            {
+                animRenderer.enabled = true;
+                animRenderer.sprite = frames[frameIndex];
+            }
+            else
+            {
+                animRenderer.enabled = false;
+                animRenderer.sprite = null;
+            }
+        }
+
+        private void ApplyAlpha()
+        {
+            startRenderer.color = new Color(1f, 1f, 1f, alpha);
+            blurRenderer.color = new Color(1f, 1f, 1f, alpha * 0.85f);
+            animRenderer.color = new Color(1f, 1f, 1f, alpha);
+        }
+
+        private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
+        {
+            var child = new GameObject(name);
+            child.transform.SetParent(graphic.transform, false);
+            var renderer = child.AddComponent<SpriteRenderer>();
+            renderer.sortingOrder = sortingOrder;
+            renderer.sprite = sprite;
+            renderer.enabled = false;
+            return renderer;
+        }
+
+        private static float EaseOutBack(float t)
+        {
+            const float overshoot = 1.70158f;
+            var x = t - 1f;
+            return 1f + (overshoot + 1f) * x * x * x + overshoot * x * x;
         }
 
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
@@ -1189,7 +1439,7 @@ namespace BasketballLegends2020
         public bool NeedBlock => needBlock;
         public bool CanThrow => canThrow;
 
-        public BLPlayerObject(BLGameCore gameCore, int teamIndex, int team, int player, int form, int playerNo, string playerBrain, int skillLevel, Transform parent)
+        public BLPlayerObject(BLGameCore gameCore, int teamIndex, int characterId, int playerNo, string playerBrain, int skillLevel, Transform parent)
         {
             GameCore = gameCore;
             this.teamIndex = teamIndex;
@@ -1198,7 +1448,7 @@ namespace BasketballLegends2020
             Side = teamIndex == 0 ? -1 : 1;
             IsHuman = !playerBrain.StartsWith("B");
             brainSlot = BLControlsData.ParseControllerSlot(playerBrain);
-            superId = MapSuperId(player);
+            superId = BLPlayersData.GetCharacterSuperId(characterId);
 
             var profile = BLAISkillsData.Get(skillLevel);
             accuracy = profile.Accuracy;
@@ -1241,7 +1491,7 @@ namespace BasketballLegends2020
                 armature.transform.SetParent(graphic.transform, false);
                 armature.transform.localPosition = new Vector3(0f, -35f, 0f);
                 armature.transform.localScale = new Vector3(0.73f, 0.73f, 1f);
-                BLPlayersData.SwitchPlayer(armature, BLPlayersData.TeamSize * (team - 1) + player, 2 * (team - 1) + form);
+                BLPlayersData.ApplyCharacter(armature, characterId);
                 armature.AnimationComplete += OnAnimationComplete;
                 armature.FrameEvent += OnAnimationFrameEvent;
             }
@@ -2700,26 +2950,6 @@ namespace BasketballLegends2020
             return Side == -1
                 ? Position.x > BLConstants.Width - 200f && Position.x < BLConstants.Width - 100f
                 : Position.x > 100f && Position.x < 200f;
-        }
-
-        private static int MapSuperId(int selectedPlayer)
-        {
-            if (selectedPlayer == 0)
-            {
-                return 3;
-            }
-
-            if (selectedPlayer == 1)
-            {
-                return 0;
-            }
-
-            if (selectedPlayer == 2)
-            {
-                return 1;
-            }
-
-            return 2;
         }
 
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)

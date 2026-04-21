@@ -372,9 +372,7 @@ namespace BasketballLegends2020
                     var player = new BLPlayerObject(
                         this,
                         teamIndex,
-                        match.Teams[teamIndex],
-                        match.Players[teamIndex][Mathf.Min(playerNo, match.Players[teamIndex].Length - 1)],
-                        match.Forms[teamIndex],
+                        match.CharacterIds[teamIndex],
                         playerNo,
                         brain,
                         skill,
@@ -708,20 +706,24 @@ namespace BasketballLegends2020
             }
             else if (inventory.GameMode == 3)
             {
-                inventory.MatchData.StartTraining();
+                inventory.MatchData.StartTraining(inventory.SelectedTrainingCharacterId);
             }
             else if (inventory.MatchData.Restarted)
             {
                 inventory.MatchData.Restarted = false;
                 inventory.MatchData.ResetScore();
             }
-            else if (inventory.GameMode == 1)
+            else if (inventory.IsTournamentActive)
             {
-                inventory.MatchData.StartRandomMatch();
+                inventory.MatchData.StartTournamentMatch(inventory.Tournament);
             }
             else if (inventory.GameMode == 2)
             {
-                inventory.MatchData.StartQuickMatch();
+                inventory.MatchData.StartQuickMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty);
+            }
+            else if (inventory.GameMode == 1)
+            {
+                inventory.MatchData.StartRandomMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty);
             }
             else if (inventory.GameMode == 4)
             {
