@@ -35,7 +35,7 @@ namespace BasketballLegends2020.EditorTools
                 CheckResource<TextAsset>("BL2020/DragonBones/sk2", errors);
                 CheckResource<TextAsset>("BL2020/DragonBones/texture2", errors);
                 CheckResource<Texture2D>("BL2020/DragonBones/texture2", errors);
-                CheckResource<AudioClip>("BL2020/Sound/24_TrackSnd", errors);
+                CheckAudioResources(errors);
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_ghoul_green", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_ghoul_green.png", errors);
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_pumpkin_ember", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_pumpkin_ember.png", errors);
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_moonlit_violet", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_moonlit_violet.png", errors);
@@ -129,6 +129,37 @@ namespace BasketballLegends2020.EditorTools
             if (Resources.Load<T>(path) == null)
             {
                 errors.Add($"Missing resource: {path}");
+            }
+        }
+
+        private static void CheckAudioResources(List<string> errors)
+        {
+            var audioPaths = new[]
+            {
+                "BL2020/Sound/2_M_Whistle",
+                "BL2020/Sound/4_P_Teleport",
+                "BL2020/Sound/5_P_Swoosh",
+                "BL2020/Sound/6_P_Energy",
+                "BL2020/Sound/7_P_Stunned",
+                "BL2020/Sound/8_B_Steel",
+                "BL2020/Sound/9_M_Buzzer",
+                "BL2020/Sound/10_B_Ring",
+                "BL2020/Sound/11_P_MegaStart",
+                "BL2020/Sound/13_P_Shield",
+                "BL2020/Sound/16_B_Bounce",
+                "BL2020/Sound/17_P_Dash",
+                "BL2020/Sound/18_P_SuperDash",
+                "BL2020/Sound/19_M_Countdown",
+                "BL2020/Sound/20_ButtonSnd",
+                "BL2020/Sound/21_B_NET",
+                "BL2020/Sound/22_B_Brick",
+                "BL2020/Sound/23_B_Basket",
+                "BL2020/Sound/24_TrackSnd",
+            };
+
+            for (var i = 0; i < audioPaths.Length; i++)
+            {
+                CheckResource<AudioClip>(audioPaths[i], errors);
             }
         }
 
