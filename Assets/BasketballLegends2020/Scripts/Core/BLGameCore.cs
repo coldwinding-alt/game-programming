@@ -764,7 +764,7 @@ namespace BasketballLegends2020
             }
             else if (inventory.GameMode == 3)
             {
-                inventory.MatchData.StartTraining(inventory.SelectedTrainingCharacterId);
+                inventory.MatchData.StartTraining(inventory.SelectedTrainingCharacterId, inventory.SelectedTrainingBallSelection);
             }
             else if (inventory.MatchData.Restarted)
             {
@@ -773,19 +773,19 @@ namespace BasketballLegends2020
             }
             else if (inventory.IsTournamentActive)
             {
-                inventory.MatchData.StartTournamentMatch(inventory.Tournament);
+                inventory.MatchData.StartTournamentMatch(inventory.Tournament, inventory.SelectedTournamentBallSelection);
             }
             else if (inventory.GameMode == 2)
             {
-                inventory.MatchData.StartQuickMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty);
+                inventory.MatchData.StartQuickMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
             else if (inventory.GameMode == 1)
             {
-                inventory.MatchData.StartRandomMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty);
+                inventory.MatchData.StartRandomMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
             else if (inventory.GameMode == 4)
             {
-                inventory.MatchData.StartPlayers2Match();
+                inventory.MatchData.StartPlayers2Match(inventory.SelectedVersusBallSelection);
             }
 
             var core = new BLGameCore(root);

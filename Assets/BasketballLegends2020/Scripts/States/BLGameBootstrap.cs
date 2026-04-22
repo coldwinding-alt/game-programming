@@ -152,6 +152,18 @@ namespace BasketballLegends2020
         private const float TournamentAwardsArmatureYOffset = -18f;
         private const float TournamentAwardsPodiumScale = 0.98f;
         private const float TournamentAwardsCelebrationDelay = 0.66f;
+        private const float OptionBallHeaderY = 208f;
+        private const float OptionBallPreviewY = 232f;
+        private const float OptionBallLabelY = 260f;
+        private const float BallSelectorArrowOffsetX = 68f;
+        private const float BallSelectorArrowSize = 34f;
+        private const float BallPreviewPixels = 50f;
+        private const float TwoPlayerBallPanelY = 360f;
+        private const float TwoPlayerBallHeaderY = 320f;
+        private const float TwoPlayerBallPreviewY = 356f;
+        private const float TwoPlayerBallLabelY = 394f;
+        private const float TwoPlayerBallPanelWidth = 168f;
+        private const float TwoPlayerBallPanelHeight = 148f;
         private Transform runtimeRoot;
         private BLGameCore gameCore;
         private Camera mainCamera;
@@ -162,6 +174,10 @@ namespace BasketballLegends2020
         private int tournamentCharacterId;
         private int versusLeftCharacterId;
         private int versusRightCharacterId;
+        private BLBallSelection quickBallSelection;
+        private BLBallSelection trainingBallSelection;
+        private BLBallSelection tournamentBallSelection;
+        private BLBallSelection versusBallSelection;
         private float awardsElapsed;
         private bool awardsCelebrationTriggered;
         private DBLiteArmature awardsCelebrationPlayer;
@@ -189,6 +205,10 @@ namespace BasketballLegends2020
             quickCharacterId = BLPlayersData.SanitizeCharacterId(inventory.SelectedQuickCharacterId);
             trainingCharacterId = BLPlayersData.SanitizeCharacterId(inventory.SelectedTrainingCharacterId, quickCharacterId);
             tournamentCharacterId = BLPlayersData.SanitizeCharacterId(inventory.SelectedTournamentCharacterId, quickCharacterId);
+            quickBallSelection = inventory.SelectedQuickBallSelection;
+            trainingBallSelection = inventory.SelectedTrainingBallSelection;
+            tournamentBallSelection = inventory.SelectedTournamentBallSelection;
+            versusBallSelection = inventory.SelectedVersusBallSelection;
             SeedTwoPlayerSelection();
             ShowPlayerCountMenu();
         }
@@ -329,7 +349,24 @@ namespace BasketballLegends2020
                 398f);
 
             CreateOptionsPanel("Quick", 575f);
-            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 270f, 188f, 46f, () =>
+            CreateBallSelector(
+                "QuickBall",
+                575f,
+                quickBallSelection,
+                () =>
+                {
+                    quickBallSelection = BLBallCatalog.StepSelection(quickBallSelection, -1);
+                    ShowSinglePlayerSetup();
+                },
+                () =>
+                {
+                    quickBallSelection = BLBallCatalog.StepSelection(quickBallSelection, 1);
+                    ShowSinglePlayerSetup();
+                },
+                OptionBallHeaderY,
+                OptionBallPreviewY,
+                OptionBallLabelY);
+            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 304f, 188f, 46f, () =>
             {
                 BLInventory.Instance.ToggleDifficulty();
                 ShowSinglePlayerSetup();
@@ -347,11 +384,12 @@ namespace BasketballLegends2020
             BeginMenuScreen(false, false, "bg2blue0000");
             AddTitle("TRAINING", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
-            CreatePanel("TrainingPanel", BLConstants.Width2, 280f, 280f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+            CreatePanel("TrainingCharacterPanel", 220f, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+            CreatePanel("TrainingOptionsPanel", 575f, 278f, 228f, 214f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreateCharacterSelector(
                 "Training",
                 "CHARACTER",
-                BLConstants.Width2,
+                220f,
                 trainingCharacterId,
                 () =>
                 {
@@ -364,11 +402,30 @@ namespace BasketballLegends2020
                     ShowTrainingSetup();
                 },
                 306f,
-                3.9f,
+                3.85f,
                 398f);
 
-            menuButtons.Add(new BLMenuButton("BACK", 312f, 452f, 150f, 42f, ShowPlayerCountMenu, runtimeRoot));
-            menuButtons.Add(new BLMenuButton("PLAY", 488f, 452f, 150f, 42f, StartTrainingFlow, runtimeRoot));
+            CreateOptionsPanel("Training", 575f);
+            CreateBallSelector(
+                "TrainingBall",
+                575f,
+                trainingBallSelection,
+                () =>
+                {
+                    trainingBallSelection = BLBallCatalog.StepSelection(trainingBallSelection, -1);
+                    ShowTrainingSetup();
+                },
+                () =>
+                {
+                    trainingBallSelection = BLBallCatalog.StepSelection(trainingBallSelection, 1);
+                    ShowTrainingSetup();
+                },
+                OptionBallHeaderY,
+                OptionBallPreviewY,
+                OptionBallLabelY);
+
+            menuButtons.Add(new BLMenuButton("BACK", 488f, 452f, 150f, 42f, ShowPlayerCountMenu, runtimeRoot));
+            menuButtons.Add(new BLMenuButton("PLAY", 660f, 452f, 150f, 42f, StartTrainingFlow, runtimeRoot));
         }
 
         private void ShowTwoPlayerSetup()
@@ -414,6 +471,25 @@ namespace BasketballLegends2020
                 BLFontKind.CfCrackBold,
                 outlineColor: Color.white,
                 outlinePixels: 1.4f);
+
+            CreatePanel("VersusBallPanel", BLConstants.Width2, TwoPlayerBallPanelY, TwoPlayerBallPanelWidth, TwoPlayerBallPanelHeight, 8, new Color(0.05f, 0.08f, 0.1f, 0.82f));
+            CreateBallSelector(
+                "VersusBall",
+                BLConstants.Width2,
+                versusBallSelection,
+                () =>
+                {
+                    versusBallSelection = BLBallCatalog.StepSelection(versusBallSelection, -1);
+                    ShowTwoPlayerSetup();
+                },
+                () =>
+                {
+                    versusBallSelection = BLBallCatalog.StepSelection(versusBallSelection, 1);
+                    ShowTwoPlayerSetup();
+                },
+                TwoPlayerBallHeaderY,
+                TwoPlayerBallPreviewY,
+                TwoPlayerBallLabelY);
 
             CreateCharacterSelector(
                 "P2",
@@ -474,15 +550,33 @@ namespace BasketballLegends2020
                 "ModeFixed",
                 "FORMAT: 8 PLAYER / 2 DIVISIONS",
                 575f,
-                216f,
-                16,
+                186f,
+                12,
                 Color.white,
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
                 BLTextStyle.TournamentBody);
 
-            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 270f, 188f, 46f, () =>
+            CreateBallSelector(
+                "TournamentBall",
+                575f,
+                tournamentBallSelection,
+                () =>
+                {
+                    tournamentBallSelection = BLBallCatalog.StepSelection(tournamentBallSelection, -1);
+                    ShowTournamentSetup();
+                },
+                () =>
+                {
+                    tournamentBallSelection = BLBallCatalog.StepSelection(tournamentBallSelection, 1);
+                    ShowTournamentSetup();
+                },
+                OptionBallHeaderY,
+                OptionBallPreviewY,
+                OptionBallLabelY);
+
+            menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 304f, 188f, 46f, () =>
             {
                 BLInventory.Instance.ToggleDifficulty();
                 ShowTournamentSetup();
@@ -506,6 +600,7 @@ namespace BasketballLegends2020
             var inventory = BLInventory.Instance;
             inventory.SetParticipantMode(BLParticipantMode.OnePlayer);
             inventory.SetQuickSelection(quickCharacterId);
+            inventory.SetQuickBallSelection(quickBallSelection);
             inventory.StartQuickGame();
             StartGameplay();
         }
@@ -515,6 +610,7 @@ namespace BasketballLegends2020
             var inventory = BLInventory.Instance;
             inventory.SetParticipantMode(BLParticipantMode.Training);
             inventory.SetTrainingSelection(trainingCharacterId);
+            inventory.SetTrainingBallSelection(trainingBallSelection);
             inventory.StartTraining();
             StartGameplay();
         }
@@ -524,6 +620,7 @@ namespace BasketballLegends2020
             var inventory = BLInventory.Instance;
             inventory.SetParticipantMode(BLParticipantMode.OnePlayer);
             inventory.SetTournamentSelection(tournamentCharacterId);
+            inventory.SetTournamentBallSelection(tournamentBallSelection);
             if (!inventory.BeginTournament())
             {
                 ShowTournamentSetup();
@@ -541,6 +638,7 @@ namespace BasketballLegends2020
 
         private void StartTwoPlayerMatch()
         {
+            BLInventory.Instance.SetVersusBallSelection(versusBallSelection);
             BLInventory.Instance.StartTwoPlayerVersus(versusLeftCharacterId, versusRightCharacterId);
             StartGameplay();
         }
@@ -745,6 +843,52 @@ namespace BasketballLegends2020
                 BLTextStyle.TournamentAccent);
         }
 
+        private void CreateBallSelector(
+            string key,
+            float centerX,
+            BLBallSelection selection,
+            System.Action previousBallAction,
+            System.Action nextBallAction,
+            float headerY,
+            float previewY,
+            float labelY)
+        {
+            BLRender.Text(
+                $"{key}_Header",
+                "BALL",
+                centerX,
+                headerY,
+                16,
+                new Color32(0xCD, 0xF0, 0x0F, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                runtimeRoot,
+                BLTextStyle.TournamentAccent);
+
+            menuButtons.Add(new BLMenuButton("<", centerX - BallSelectorArrowOffsetX, previewY, BallSelectorArrowSize, BallSelectorArrowSize, previousBallAction, runtimeRoot));
+            menuButtons.Add(new BLMenuButton(">", centerX + BallSelectorArrowOffsetX, previewY, BallSelectorArrowSize, BallSelectorArrowSize, nextBallAction, runtimeRoot));
+
+            CreateBallPreview(
+                $"{key}_Preview",
+                BLBallCatalog.PreviewTheme(selection),
+                centerX,
+                previewY + 1f,
+                BallPreviewPixels,
+                19);
+
+            BLRender.Text(
+                $"{key}_Label",
+                BLBallCatalog.Label(selection),
+                centerX,
+                labelY,
+                16,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                runtimeRoot,
+                BLTextStyle.TournamentBody);
+        }
+
         private void CreateCharacterSelector(
             string key,
             string header,
@@ -783,6 +927,27 @@ namespace BasketballLegends2020
                 21,
                 runtimeRoot,
                 BLTextStyle.TournamentBody);
+        }
+
+        private void CreateBallPreview(string name, BLBallTheme theme, float x, float y, float targetPixels, int sortingOrder)
+        {
+            var sprite = BLGameplaySpriteLoader.LoadBallThemeSprite(theme, 0.5f, 0.5f) ??
+                         BLAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
+
+            if (sprite == null)
+            {
+                return;
+            }
+
+            var preview = new GameObject(name);
+            preview.transform.SetParent(runtimeRoot, false);
+            var renderer = preview.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = sortingOrder;
+
+            var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
+            var scale = targetPixels / Mathf.Max(1f, spritePixels);
+            BLRender.ApplyPixelTransform(preview.transform, x, y, 0f, scale);
         }
 
         private void CreatePreviewPlayer(int characterId, float x, float y, float scale)

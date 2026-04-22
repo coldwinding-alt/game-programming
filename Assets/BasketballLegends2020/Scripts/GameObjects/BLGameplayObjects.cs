@@ -3,9 +3,14 @@ using UnityEngine;
 
 namespace BasketballLegends2020
 {
-    internal static class BLGameplaySpriteLoader
+    public static class BLGameplaySpriteLoader
     {
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
+
+        public static Sprite LoadBallThemeSprite(BLBallTheme theme, float anchorX, float anchorY)
+        {
+            return LoadImageSprite(BLAssets.Images.BallTheme(theme), anchorX, anchorY);
+        }
 
         public static Sprite LoadImageSprite(string resourcePath, float anchorX, float anchorY)
         {
@@ -27,7 +32,8 @@ namespace BasketballLegends2020
             }
 
             var rect = new Rect(0f, 0f, texture.width, texture.height);
-            var sprite = Sprite.Create(texture, rect, new Vector2(anchorX, 1f - anchorY), 1f, 0, SpriteMeshType.Tight);
+            // Keep the themed ball aligned to the original atlas ball bounds when it rotates in gameplay.
+            var sprite = Sprite.Create(texture, rect, new Vector2(anchorX, 1f - anchorY), 1f, 0, SpriteMeshType.FullRect);
             sprite.name = texture.name;
             SpriteCache[cacheKey] = sprite;
             return sprite;
@@ -865,10 +871,7 @@ namespace BasketballLegends2020
 
         private Sprite ResolveBallSprite()
         {
-            var themedSprite = BLGameplaySpriteLoader.LoadImageSprite(
-                BLAssets.Images.BallTheme(gameCore.MatchData.BallTheme),
-                0.5f,
-                0.5f);
+            var themedSprite = BLGameplaySpriteLoader.LoadBallThemeSprite(gameCore.MatchData.BallTheme, 0.5f, 0.5f);
             return themedSprite ?? BLAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
         }
 

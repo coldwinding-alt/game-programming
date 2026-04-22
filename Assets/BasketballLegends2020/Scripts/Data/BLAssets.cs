@@ -17,24 +17,31 @@ namespace BasketballLegends2020
 
             public static class GameplayImages
             {
+                public const string BallClassicOriginal = null;
                 public const string BallGhoulGreen = "Gameplay/ball_halloween_ghoul_green";
                 public const string BallPumpkinEmber = "Gameplay/ball_halloween_pumpkin_ember";
                 public const string BallMoonlitViolet = "Gameplay/ball_halloween_moonlit_violet";
+                public const string BallJackOLantern = "Gameplay/ball_halloween_jack_o_lantern";
+                public const string BallEvilEye = "Gameplay/ball_halloween_evil_eye";
+                public const string BallCursed8Ball = "Gameplay/ball_halloween_cursed_8ball";
+                public const string BallCandySwirl = "Gameplay/ball_halloween_candy_swirl";
                 public const string BasketHalloweenMain = "Gameplay/basket_halloween_main";
                 public const string BasketHalloweenFrontRim = "Gameplay/basket_halloween_front_rim";
             }
 
             public static string BallTheme(BLBallTheme theme)
             {
-                switch (theme)
+                return theme switch
                 {
-                    case BLBallTheme.PumpkinEmber:
-                        return GameplayImages.BallPumpkinEmber;
-                    case BLBallTheme.MoonlitViolet:
-                        return GameplayImages.BallMoonlitViolet;
-                    default:
-                        return GameplayImages.BallGhoulGreen;
-                }
+                    BLBallTheme.GhoulGreen => GameplayImages.BallGhoulGreen,
+                    BLBallTheme.PumpkinEmber => GameplayImages.BallPumpkinEmber,
+                    BLBallTheme.MoonlitViolet => GameplayImages.BallMoonlitViolet,
+                    BLBallTheme.JackOLantern => GameplayImages.BallJackOLantern,
+                    BLBallTheme.EvilEye => GameplayImages.BallEvilEye,
+                    BLBallTheme.Cursed8Ball => GameplayImages.BallCursed8Ball,
+                    BLBallTheme.CandySwirl => GameplayImages.BallCandySwirl,
+                    _ => GameplayImages.BallClassicOriginal
+                };
             }
         }
 

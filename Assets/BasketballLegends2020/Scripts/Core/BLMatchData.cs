@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,9 +28,121 @@ namespace BasketballLegends2020
 
     public enum BLBallTheme
     {
+        ClassicOriginal,
         GhoulGreen,
         PumpkinEmber,
-        MoonlitViolet
+        MoonlitViolet,
+        JackOLantern,
+        EvilEye,
+        Cursed8Ball,
+        CandySwirl
+    }
+
+    public enum BLBallSelection
+    {
+        Random,
+        ClassicOriginal,
+        GhoulGreen,
+        PumpkinEmber,
+        MoonlitViolet,
+        JackOLantern,
+        EvilEye,
+        Cursed8Ball,
+        CandySwirl
+    }
+
+    public static class BLBallCatalog
+    {
+        private static readonly BLBallSelection[] OrderedSelections =
+        {
+            BLBallSelection.Random,
+            BLBallSelection.ClassicOriginal,
+            BLBallSelection.GhoulGreen,
+            BLBallSelection.PumpkinEmber,
+            BLBallSelection.MoonlitViolet,
+            BLBallSelection.JackOLantern,
+            BLBallSelection.EvilEye,
+            BLBallSelection.Cursed8Ball,
+            BLBallSelection.CandySwirl
+        };
+
+        private static readonly BLBallTheme[] ConcreteThemes =
+        {
+            BLBallTheme.ClassicOriginal,
+            BLBallTheme.GhoulGreen,
+            BLBallTheme.PumpkinEmber,
+            BLBallTheme.MoonlitViolet,
+            BLBallTheme.JackOLantern,
+            BLBallTheme.EvilEye,
+            BLBallTheme.Cursed8Ball,
+            BLBallTheme.CandySwirl
+        };
+
+        public static BLBallSelection StepSelection(BLBallSelection current, int direction)
+        {
+            var index = Array.IndexOf(OrderedSelections, current);
+            if (index < 0)
+            {
+                index = 0;
+            }
+
+            index += direction >= 0 ? 1 : -1;
+            if (index < 0)
+            {
+                index = OrderedSelections.Length - 1;
+            }
+            else if (index >= OrderedSelections.Length)
+            {
+                index = 0;
+            }
+
+            return OrderedSelections[index];
+        }
+
+        public static BLBallTheme ResolveTheme(BLBallSelection selection)
+        {
+            return selection == BLBallSelection.Random
+                ? ConcreteThemes[UnityEngine.Random.Range(0, ConcreteThemes.Length)]
+                : ToTheme(selection);
+        }
+
+        public static BLBallTheme PreviewTheme(BLBallSelection selection)
+        {
+            return selection == BLBallSelection.Random
+                ? BLBallTheme.ClassicOriginal
+                : ToTheme(selection);
+        }
+
+        public static BLBallTheme ToTheme(BLBallSelection selection)
+        {
+            return selection switch
+            {
+                BLBallSelection.GhoulGreen => BLBallTheme.GhoulGreen,
+                BLBallSelection.PumpkinEmber => BLBallTheme.PumpkinEmber,
+                BLBallSelection.MoonlitViolet => BLBallTheme.MoonlitViolet,
+                BLBallSelection.JackOLantern => BLBallTheme.JackOLantern,
+                BLBallSelection.EvilEye => BLBallTheme.EvilEye,
+                BLBallSelection.Cursed8Ball => BLBallTheme.Cursed8Ball,
+                BLBallSelection.CandySwirl => BLBallTheme.CandySwirl,
+                _ => BLBallTheme.ClassicOriginal
+            };
+        }
+
+        public static string Label(BLBallSelection selection)
+        {
+            return selection switch
+            {
+                BLBallSelection.Random => "RANDOM",
+                BLBallSelection.GhoulGreen => "GHOUL",
+                BLBallSelection.PumpkinEmber => "EMBER",
+                BLBallSelection.MoonlitViolet => "VIOLET",
+                BLBallSelection.JackOLantern => "JACK",
+                BLBallSelection.EvilEye => "EYE",
+                BLBallSelection.Cursed8Ball => "8-BALL",
+                BLBallSelection.CandySwirl => "SWIRL",
+                _ => "CLASSIC"
+            };
+        }
     }
 
     public sealed class BLMatchData
@@ -87,10 +200,10 @@ namespace BasketballLegends2020
             MatchScore = new[] { 0, 0 };
         }
 
-        public void StartQuickMatch(int playerCharacterId, BLAiDifficulty difficulty)
+        public void StartQuickMatch(int playerCharacterId, BLAiDifficulty difficulty, BLBallSelection ballSelection = BLBallSelection.Random)
         {
             ResetAll();
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             var playerId = BLPlayersData.SanitizeCharacterId(playerCharacterId);
             var excluded = new List<int> { playerId };
             var opponentId = BLPlayersData.GetRandomCharacterId(excluded);
@@ -101,10 +214,10 @@ namespace BasketballLegends2020
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
-        public void StartQuickLocalVersusMatch()
+        public void StartQuickLocalVersusMatch(BLBallSelection ballSelection = BLBallSelection.Random)
         {
             ResetAll();
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             var left = BLPlayersData.SanitizeCharacterId(0);
             var right = BLPlayersData.StepCharacterId(left, 1);
 
@@ -113,10 +226,10 @@ namespace BasketballLegends2020
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
 
-        public void StartTraining(int characterId)
+        public void StartTraining(int characterId, BLBallSelection ballSelection = BLBallSelection.Random)
         {
             ResetAll();
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             var resolvedCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
 
             CharacterIds = new[] { resolvedCharacterId, resolvedCharacterId };
@@ -124,15 +237,15 @@ namespace BasketballLegends2020
             Skills = new[] { new[] { 0 }, new int[0] };
         }
 
-        public void StartRandomMatch(int playerCharacterId, BLAiDifficulty difficulty)
+        public void StartRandomMatch(int playerCharacterId, BLAiDifficulty difficulty, BLBallSelection ballSelection = BLBallSelection.Random)
         {
-            StartQuickMatch(playerCharacterId, difficulty);
+            StartQuickMatch(playerCharacterId, difficulty, ballSelection);
         }
 
-        public void StartPlayers2Match()
+        public void StartPlayers2Match(BLBallSelection ballSelection = BLBallSelection.Random)
         {
             MatchMode = 0;
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             var left = BLPlayersData.SanitizeCharacterId(CharacterIds[0]);
             var right = BLPlayersData.SanitizeCharacterId(CharacterIds[1], BLPlayersData.StepCharacterId(left, 1));
 
@@ -141,7 +254,7 @@ namespace BasketballLegends2020
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
 
-        public void StartTournamentMatch(BLTournamentData tournament)
+        public void StartTournamentMatch(BLTournamentData tournament, BLBallSelection ballSelection = BLBallSelection.Random)
         {
             ResetAll();
             if (tournament == null || !tournament.Active || tournament.Completed || !tournament.HasPendingPlayerMatch)
@@ -150,7 +263,7 @@ namespace BasketballLegends2020
             }
 
             MatchMode = 0;
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             CharacterIds = new[]
             {
                 BLPlayersData.SanitizeCharacterId(tournament.PlayerCharacterId),
@@ -163,11 +276,11 @@ namespace BasketballLegends2020
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
-        public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId)
+        public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId, BLBallSelection ballSelection = BLBallSelection.Random)
         {
             ResetAll();
             MatchMode = 0;
-            RollBallTheme();
+            ResolveBallSelection(ballSelection);
             CharacterIds = new[]
             {
                 BLPlayersData.SanitizeCharacterId(leftCharacterId),
@@ -240,7 +353,12 @@ namespace BasketballLegends2020
 
         public void RollBallTheme()
         {
-            BallTheme = (BLBallTheme)Random.Range(0, 3);
+            BallTheme = BLBallCatalog.ResolveTheme(BLBallSelection.Random);
+        }
+
+        private void ResolveBallSelection(BLBallSelection ballSelection)
+        {
+            BallTheme = BLBallCatalog.ResolveTheme(ballSelection);
         }
     }
 
@@ -262,6 +380,10 @@ namespace BasketballLegends2020
         public int SelectedQuickCharacterId;
         public int SelectedTournamentCharacterId;
         public int SelectedTrainingCharacterId;
+        public BLBallSelection SelectedQuickBallSelection;
+        public BLBallSelection SelectedTournamentBallSelection;
+        public BLBallSelection SelectedTrainingBallSelection;
+        public BLBallSelection SelectedVersusBallSelection;
 
         private BLInventory()
         {
@@ -275,6 +397,10 @@ namespace BasketballLegends2020
             SelectedQuickCharacterId = MatchData.FirstCharacterId;
             SelectedTournamentCharacterId = MatchData.FirstCharacterId;
             SelectedTrainingCharacterId = MatchData.FirstCharacterId;
+            SelectedQuickBallSelection = BLBallSelection.ClassicOriginal;
+            SelectedTournamentBallSelection = BLBallSelection.ClassicOriginal;
+            SelectedTrainingBallSelection = BLBallSelection.ClassicOriginal;
+            SelectedVersusBallSelection = BLBallSelection.ClassicOriginal;
         }
 
         public string DifficultyLabel => Difficulty switch
@@ -320,6 +446,26 @@ namespace BasketballLegends2020
             SelectedTrainingCharacterId = BLPlayersData.SanitizeCharacterId(characterId);
         }
 
+        public void SetQuickBallSelection(BLBallSelection selection)
+        {
+            SelectedQuickBallSelection = selection;
+        }
+
+        public void SetTournamentBallSelection(BLBallSelection selection)
+        {
+            SelectedTournamentBallSelection = selection;
+        }
+
+        public void SetTrainingBallSelection(BLBallSelection selection)
+        {
+            SelectedTrainingBallSelection = selection;
+        }
+
+        public void SetVersusBallSelection(BLBallSelection selection)
+        {
+            SelectedVersusBallSelection = selection;
+        }
+
         public void StartQuickGame()
         {
             Tournament.Reset();
@@ -328,7 +474,7 @@ namespace BasketballLegends2020
             ParticipantMode = BLParticipantMode.OnePlayer;
             GameMode = 2;
             MatchData.MatchMode = 0;
-            MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty);
+            MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
         }
 
         public void StartOnePlayer()
@@ -338,7 +484,7 @@ namespace BasketballLegends2020
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 1;
             MatchData.MatchMode = 0;
-            MatchData.StartRandomMatch(SelectedQuickCharacterId, Difficulty);
+            MatchData.StartRandomMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
             MatchPrepared = true;
         }
 
@@ -349,7 +495,7 @@ namespace BasketballLegends2020
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 4;
             MatchData.MatchMode = 0;
-            MatchData.StartPlayers2Match();
+            MatchData.StartPlayers2Match(SelectedVersusBallSelection);
             MatchPrepared = true;
         }
 
@@ -359,7 +505,7 @@ namespace BasketballLegends2020
             Tournament.Reset();
             SessionMode = BLSessionMode.QuickMatch;
             GameMode = 4;
-            MatchData.StartSelectedTwoPlayerMatch(leftCharacterId, rightCharacterId);
+            MatchData.StartSelectedTwoPlayerMatch(leftCharacterId, rightCharacterId, SelectedVersusBallSelection);
             MatchPrepared = true;
         }
 
@@ -369,7 +515,7 @@ namespace BasketballLegends2020
             Tournament.Reset();
             SessionMode = BLSessionMode.Training;
             GameMode = 3;
-            MatchData.StartTraining(SelectedTrainingCharacterId);
+            MatchData.StartTraining(SelectedTrainingCharacterId, SelectedTrainingBallSelection);
             MatchPrepared = true;
         }
 
@@ -387,7 +533,7 @@ namespace BasketballLegends2020
             MatchPrepared = false;
             if (Tournament.HasPendingPlayerMatch)
             {
-                MatchData.StartTournamentMatch(Tournament);
+                MatchData.StartTournamentMatch(Tournament, SelectedTournamentBallSelection);
                 MatchPrepared = true;
             }
 
@@ -405,7 +551,7 @@ namespace BasketballLegends2020
             MatchPrepared = false;
             if (Tournament.HasPendingPlayerMatch)
             {
-                MatchData.StartTournamentMatch(Tournament);
+                MatchData.StartTournamentMatch(Tournament, SelectedTournamentBallSelection);
                 MatchPrepared = true;
             }
 
@@ -423,7 +569,7 @@ namespace BasketballLegends2020
             MatchPrepared = false;
             if (!Tournament.Completed && Tournament.HasPendingPlayerMatch)
             {
-                MatchData.StartTournamentMatch(Tournament);
+                MatchData.StartTournamentMatch(Tournament, SelectedTournamentBallSelection);
                 MatchPrepared = true;
             }
 
