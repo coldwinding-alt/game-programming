@@ -947,8 +947,8 @@ namespace BasketballLegends2020
         {
             if (display != null && display.Name == ".Game/ball/BallClip")
             {
-                var themedBall = BLGameplaySpriteLoader.LoadImageSprite(
-                    BLAssets.Images.BallTheme(BLInventory.Instance.MatchData.BallTheme),
+                var themedBall = BLGameplaySpriteLoader.LoadBallThemeSprite(
+                    BLInventory.Instance.MatchData.BallTheme,
                     0.5f,
                     0.5f);
                 if (themedBall != null)
