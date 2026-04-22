@@ -1,0 +1,114 @@
+Your final module mark is made from three assessed parts: 
+Game Concept and Design, 20 percent
+Final Game, 60 percent. This includes Game and Report, 40 percent, and Game Demo / Presentation, 20 percent
+Professionalism, 20 percent
+The assessment has been designed to reflect the kind of practical work expected in games development. Because of that, I will judge both the quality of your final outcome and the quality of your process. I will look at your concept, your programming, your design decisions, your testing, your presentation, and the professionalism of the way you work throughout the module.
+
+Game Concept and Design
+This part is about the strength of your idea and the quality of your planning. Before you build the final game, I want to see that you understand what you are making, why you are making it, and how you plan to deliver it.
+
+I will look for the following.
+
+A clear game idea
+Evidence that you understand game design principles
+Creativity and originality
+Realistic scope
+Sensible choice and use of tools, assets, and resources
+Awareness of legal, ethical, social, accessibility, and security issues where relevant
+Clear planning for development
+Good work here is focused, realistic, and well reasoned. A smaller idea with a strong mechanic and a clear plan will be judged more positively than a huge idea that is not achievable.
+
+Example. A strong concept might propose a short puzzle platform game built around one memorable mechanic, explain the intended player experience, identify the main systems needed, note how assets will be sourced and credited, and give a realistic plan for producing one polished level. A weak concept might promise a large multiplayer action game with many features but no convincing plan, no clear player focus, and no realistic sense of scope.
+
+Final Game
+This is the largest part of the module and the place where you show that you can programme an immersive and engaging vertical slice of a game.
+
+A vertical slice means a small but complete piece of a game that gives a real sense of the finished experience. It should feel playable, coherent, and purposeful. It should not feel like a set of disconnected experiments.
+
+I will not reward size by itself. I will reward a game that is well designed, well programmed, well tested, and clearly improved over time.
+
+Game and Report
+In the game itself, I will look for the following.
+
+A playable and stable build
+A convincing vertical slice with a clear player experience
+Appropriate use of game systems such as input, game logic, interaction, audio, animation, physics, collision, user interface, and artificial intelligence where relevant to the project
+Evidence of sound programming decisions
+Evidence of testing, debugging, and improvement
+Consideration of legal, ethical, social, accessibility, and security issues where relevant
+A clear connection between the design plan and the final result
+In the report, I will look for the following.
+
+Clear explanation of design choices
+Clear explanation of technical decisions
+Honest discussion of problems and limitations
+Evidence of testing and what you changed because of it
+Reflection on how the game developed from concept to final version
+Good work in this part feels complete for its size. The controls work. The rules are clear. The core mechanic is meaningful. The game gives useful feedback to the player. Bugs have been reduced through testing. The report explains not only what was made, but why it was made that way and how the work improved.
+
+Example. A strong submission might include one polished level, a clear user interface, reliable movement, appropriate sound and animation, sensible enemy or puzzle behaviour, and a report that explains how play testing changed the level layout, difficulty, and pacing. A weaker submission might have many unfinished features, unstable gameplay, little evidence of testing, and a report that only lists features without explanation or reflection.
+
+Game Demo / Presentation
+This part assesses how clearly and professionally you can present your work.
+
+I will look for the following.
+
+A clear explanation of the game and its goals
+A confident demonstration of the main features
+Good explanation of design and programming decisions
+Honest and thoughtful answers to questions
+A professional presentation style
+Good work here is clear, prepared, and easy to follow. You should be able to explain what the player does, what makes the game interesting, how key systems were built, what problems you faced, and what you learned.
+
+Example. A strong demo shows the main gameplay, explains why the design works the way it does, points out important systems, and reflects on strengths and weaknesses. A weak demo simply runs the game without explanation or gives vague answers about the work.
+
+Professionalism
+Professionalism is about the way you work across the whole module.
+
+I will judge this by looking at how consistently and responsibly you manage your project. This includes organisation, time management, communication, independent work, response to feedback, and steady evidence of progress.
+
+Good work in this area shows that you are developing good professional habits. It shows that you work consistently, keep your project organised, respond to problems in a mature way, and take responsibility for the quality of your work.
+
+Example. A professional student updates work regularly, keeps records clearly, responds to feedback, arrives prepared to discuss progress, and can explain what changed from one stage to the next. A weak professional record usually shows little planning, weak organisation, long periods with no visible progress, or heavy last minute work with little evidence of development over time.
+
+GitHub is required throughout the module
+You must use GitHub throughout the module to record and manage your work.
+
+GitHub is one of the main ways you will show your process. It helps me see how your project develops from early idea to final build. It also supports fair assessment by showing progress over time, evidence of testing and revision, and clear evidence that the work presented is your own.
+
+I expect your GitHub repository to include the following.
+
+A readable project structure
+A README that explains the game, the controls, how to run it, and any credits for external assets or resources
+Evidence of planning, development, testing, and bug fixing
+Good GitHub use tells the story of your project. I should be able to see how the idea developed, how features were added, how problems were solved, and how the final game became more polished over time.
+
+What strong work looks like overall
+Strong work in this module usually has these qualities.
+
+A clear and realistic concept
+Original and thoughtful design
+A convincing vertical slice
+Sound programming and sensible technical choices
+Evidence of testing, debugging, and improvement
+Awareness of legal, ethical, social, accessibility, and security issues where relevant
+A clear explanation of design and development decisions
+Consistent progress and clear process shown through GitHub
+A professional presentation and professional working practice
+What will not be enough
+To avoid misunderstandings, it is important to be clear about what will not count as strong work.
+
+A very large idea is not enough if it cannot be delivered well.
+
+A final game is not enough on its own if there is little evidence of process, testing, and reflection.
+
+A last minute upload to GitHub is not the same as steady development throughout the module.
+
+A report that only describes features is weaker than a report that explains decisions, problems, testing, and improvement.
+
+A presentation that only shows gameplay is weaker than a presentation that shows understanding, explanation, and reflection.
+
+How to do well in this module
+Start early. Keep the scope realistic. Build steadily. Test often. Use GitHub from the beginning. Improve your work based on feedback. Be ready to explain your choices clearly.
+
+The students who do well are usually not the students with the biggest ideas. They are the students who make good decisions, manage their time well, develop consistently, and present a clear, polished, well tested piece of work.
