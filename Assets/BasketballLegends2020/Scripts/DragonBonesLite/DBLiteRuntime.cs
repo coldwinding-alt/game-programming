@@ -945,6 +945,18 @@ namespace BasketballLegends2020
 
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
         {
+            if (display != null && display.Name == ".Game/ball/BallClip")
+            {
+                var themedBall = BLGameplaySpriteLoader.LoadImageSprite(
+                    BLAssets.Images.BallTheme(BLInventory.Instance.MatchData.BallTheme),
+                    0.5f,
+                    0.5f);
+                if (themedBall != null)
+                {
+                    return themedBall;
+                }
+            }
+
             var armature = slotTransform.GetComponentInParent<DBLiteArmature>();
             var dataField = typeof(DBLiteArmature).GetField("data", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var armatureData = dataField != null ? dataField.GetValue(armature) as DBLiteArmatureData : null;
