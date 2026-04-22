@@ -13,11 +13,11 @@ namespace BasketballLegends2020
     public sealed class BLHudView
     {
         private const float ScreenCenterY = 240f;
-        private const float LeftPortraitX = 311f;
-        private const float RightPortraitX = 492f;
-        private const float PortraitY = 103f;
-        private const float PortraitTargetPixels = 74f;
-        private const int PortraitSortingOrder = 79;
+        private const float LeftPortraitX = BLConstants.Width2 - 102f;
+        private const float RightPortraitX = BLConstants.Width2 + 103f;
+        private const float PortraitY = 46f;
+        private const float PortraitTargetPixels = 52f;
+        private const int PortraitSortingOrder = 81;
         private readonly TextMesh leftScore;
         private readonly TextMesh rightScore;
         private readonly TextMesh leftNameText;
@@ -665,6 +665,8 @@ namespace BasketballLegends2020
 
     public sealed class BLRadialIconMesh
     {
+        private const int RadialSteps = 36;
+        private const float DegreesPerStep = 10f;
         private readonly GameObject graphic;
         private readonly Mesh mesh;
         private readonly float width;
@@ -710,13 +712,13 @@ namespace BasketballLegends2020
             }
 
             graphic.SetActive(true);
-            BuildSector(360f * (1f - progress));
+            var hiddenSteps = Mathf.Clamp(Mathf.FloorToInt(progress * RadialSteps), 0, RadialSteps);
+            BuildSector((RadialSteps - hiddenSteps) * DegreesPerStep);
         }
 
         private void BuildSector(float degrees)
         {
-            const int maxSegments = 36;
-            var segmentCount = Mathf.Max(3, Mathf.CeilToInt(maxSegments * Mathf.Clamp01(degrees / 360f)));
+            var segmentCount = Mathf.Max(1, Mathf.CeilToInt(RadialSteps * Mathf.Clamp01(degrees / 360f)));
             var radius = Mathf.Min(width, height) * 0.5f;
             var vertices = new Vector3[segmentCount + 2];
             var uvs = new Vector2[segmentCount + 2];

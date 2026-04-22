@@ -18,10 +18,18 @@ namespace BasketballLegends2020.EditorTools
                 CheckResource<TextAsset>("BL2020/Atlases/gameplay", errors);
                 CheckResource<Texture2D>("BL2020/Atlases/interface", errors);
                 CheckResource<TextAsset>("BL2020/Atlases/interface", errors);
+                CheckResource<Font>("BL2020/Fonts/Impact", errors);
+                CheckResource<Font>("BL2020/Fonts/Impact2", errors);
+                CheckResource<Font>("BL2020/Fonts/CfCrackBold", errors);
                 CheckResource<TextAsset>("BL2020/DragonBones/sk2", errors);
                 CheckResource<TextAsset>("BL2020/DragonBones/texture2", errors);
                 CheckResource<Texture2D>("BL2020/DragonBones/texture2", errors);
                 CheckResource<AudioClip>("BL2020/Sound/24_TrackSnd", errors);
+
+                if (Shader.Find("BasketballLegends2020/TextMeshOutlined") == null)
+                {
+                    errors.Add("Could not find BasketballLegends2020/TextMeshOutlined shader.");
+                }
 
                 var gameplay = BLAtlasCache.Instance.Gameplay;
                 if (!gameplay.HasFrame("0bg_gameplay0000") || !gameplay.HasFrame("BallMC0000"))
