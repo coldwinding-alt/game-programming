@@ -75,7 +75,7 @@ namespace BasketballLegends2020
 
     public static class BLAISkillsData
     {
-        // Direct mapping of the original AISkillsData.botsSkills table.
+        // Skill tuning table used as the current AI difficulty baseline.
         private static readonly BLAISkillProfile[] Profiles =
         {
             new BLAISkillProfile(
