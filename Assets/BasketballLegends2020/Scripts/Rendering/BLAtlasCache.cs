@@ -15,6 +15,8 @@ namespace BasketballLegends2020
 
         public BLAtlas Interface => Get(BLAssets.Atlases.Interface);
 
+        public BLAtlas SkillFx => Get(BLAssets.Atlases.SkillFx);
+
         public BLAtlas Get(string atlasKey)
         {
             if (!atlases.TryGetValue(atlasKey, out var atlas))
@@ -144,12 +146,29 @@ namespace BasketballLegends2020
         }
     }
 
-    public enum BLFontKind
-    {
-        Impact,
-        Impact2,
-        CfCrackBold
-    }
+public enum BLFontKind
+{
+    Impact,
+    Impact2,
+    CfCrackBold,
+    AgencyBold,
+    RajdhaniSemiBold,
+    RajdhaniBold,
+    Griffy
+}
+
+public enum BLTextStyle
+{
+    HudName,
+    HudScore,
+    HudTimer,
+    HudPopup,
+    TournamentBody,
+    TournamentAccent,
+    ButtonLabel,
+    DisplayTitle,
+    Subtitle
+}
 
     public static class BLFontCache
     {
@@ -174,6 +193,26 @@ namespace BasketballLegends2020
             Font font;
             switch (fontKind)
             {
+                case BLFontKind.RajdhaniSemiBold:
+                    font = Font.CreateDynamicFontFromOSFont(
+                        new[] { "Rajdhani SemiBold", "Bahnschrift SemiBold", "Bahnschrift SemiCondensed", "Arial Black", "Arial" },
+                        fontSize);
+                    break;
+                case BLFontKind.RajdhaniBold:
+                    font = Font.CreateDynamicFontFromOSFont(
+                        new[] { "Rajdhani Bold", "Bahnschrift Bold", "Bahnschrift SemiBold", "Arial Black", "Arial" },
+                        fontSize);
+                    break;
+                case BLFontKind.Griffy:
+                    font = Font.CreateDynamicFontFromOSFont(
+                        new[] { "Griffy", "Impact", "Arial Black", "Arial" },
+                        fontSize);
+                    break;
+                case BLFontKind.AgencyBold:
+                    font = Font.CreateDynamicFontFromOSFont(
+                        new[] { "Agency FB", "Bahnschrift SemiCondensed", "Impact", "Arial Black", "Arial" },
+                        fontSize);
+                    break;
                 case BLFontKind.CfCrackBold:
                     font = Font.CreateDynamicFontFromOSFont(
                         new[] { "CfCrackBold", "Arial Black", "Impact", "Arial" },
@@ -223,6 +262,14 @@ namespace BasketballLegends2020
         {
             switch (fontKind)
             {
+                case BLFontKind.RajdhaniSemiBold:
+                    return "BL2020/Fonts/Rajdhani-SemiBold";
+                case BLFontKind.RajdhaniBold:
+                    return "BL2020/Fonts/Rajdhani-Bold";
+                case BLFontKind.Griffy:
+                    return "BL2020/Fonts/Griffy-Regular";
+                case BLFontKind.AgencyBold:
+                    return "BL2020/Fonts/AgencyBold";
                 case BLFontKind.CfCrackBold:
                     return "BL2020/Fonts/CfCrackBold";
                 case BLFontKind.Impact2:
@@ -244,7 +291,7 @@ namespace BasketballLegends2020
         }
     }
 
-    public static class BLFontMaterialCache
+public static class BLFontMaterialCache
     {
         private const string OutlinedShaderName = "BasketballLegends2020/TextMeshOutlined";
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
@@ -325,11 +372,102 @@ namespace BasketballLegends2020
         {
             var color32 = (Color32)color;
             return $"{color32.r:X2}{color32.g:X2}{color32.b:X2}{color32.a:X2}";
+    }
+}
+
+internal enum BLTextRasterProfile
+{
+    UiSmall,
+    UiMedium,
+    Display,
+    Score
+}
+
+internal struct BLResolvedTextStyle
+{
+    public BLFontKind FontKind;
+    public Color? OutlineColor;
+    public float OutlinePixels;
+    public Color? ShadowColor;
+    public Vector2? ShadowOffset;
+    public BLTextRasterProfile RasterProfile;
+}
+
+internal static class BLTextStyles
+{
+    public static BLResolvedTextStyle Resolve(BLTextStyle style, int fontSize)
+    {
+        switch (style)
+        {
+            case BLTextStyle.HudName:
+                return Create(
+                    BLFontKind.RajdhaniSemiBold,
+                    BLTextRasterProfile.UiMedium,
+                    new Color32(0x04, 0x1A, 0x22, 0xE0),
+                    fontSize >= 18 ? 0.65f : 0.5f);
+            case BLTextStyle.HudScore:
+                return Create(
+                    BLFontKind.RajdhaniBold,
+                    BLTextRasterProfile.Score,
+                    new Color32(0x41, 0x10, 0x00, 0xEA),
+                    fontSize >= 34 ? 1.15f : 0.95f);
+            case BLTextStyle.HudTimer:
+                return Create(
+                    BLFontKind.RajdhaniSemiBold,
+                    BLTextRasterProfile.UiMedium,
+                    new Color32(0x10, 0x27, 0x1A, 0xD8),
+                    0.55f);
+            case BLTextStyle.HudPopup:
+                return Create(
+                    BLFontKind.Griffy,
+                    BLTextRasterProfile.Display,
+                    new Color32(0x24, 0x05, 0x47, 0xE8),
+                    fontSize >= 54 ? 1.2f : 0.95f);
+            case BLTextStyle.TournamentBody:
+                return Create(BLFontKind.Impact2, BLTextRasterProfile.UiSmall);
+            case BLTextStyle.TournamentAccent:
+                return Create(BLFontKind.Impact2, BLTextRasterProfile.UiMedium);
+            case BLTextStyle.ButtonLabel:
+                return Create(
+                    BLFontKind.Impact2,
+                    BLTextRasterProfile.UiMedium,
+                    new Color(0f, 0f, 0f, 0.35f),
+                    fontSize >= 28 ? 0.75f : 0.55f);
+            case BLTextStyle.DisplayTitle:
+                return Create(
+                    BLFontKind.AgencyBold,
+                    BLTextRasterProfile.Display,
+                    new Color(0f, 0f, 0f, 0.72f),
+                    fontSize >= 42 ? 0.95f : 0.8f);
+            case BLTextStyle.Subtitle:
+                return Create(BLFontKind.Impact2, BLTextRasterProfile.UiMedium);
+            default:
+                return Create(BLFontKind.Impact2, BLTextRasterProfile.UiSmall);
         }
     }
 
-    public static class BLRender
+    private static BLResolvedTextStyle Create(
+        BLFontKind fontKind,
+        BLTextRasterProfile rasterProfile,
+        Color? outlineColor = null,
+        float outlinePixels = 0f,
+        Color? shadowColor = null,
+        Vector2? shadowOffset = null)
     {
+        return new BLResolvedTextStyle
+        {
+            FontKind = fontKind,
+            OutlineColor = outlineColor,
+            OutlinePixels = outlinePixels,
+            ShadowColor = shadowColor,
+            ShadowOffset = shadowOffset,
+            RasterProfile = rasterProfile
+        };
+    }
+}
+
+public static class BLRender
+{
         public static GameObject Sprite(string name, BLAtlas atlas, string frame, float x, float y, float anchorX, float anchorY, int sortingOrder, Transform parent = null)
         {
             var go = new GameObject(name);
@@ -363,34 +501,101 @@ namespace BasketballLegends2020
             return go;
         }
 
-        public static TextMesh Text(
-            string name,
-            string text,
+    public static TextMesh Text(
+        string name,
+        string text,
             float x,
             float y,
             int fontSize,
             Color color,
             TextAnchor anchor,
-            int sortingOrder,
-            Transform parent = null,
-            BLFontKind fontKind = BLFontKind.Impact,
-            Color? outlineColor = null,
-            float outlinePixels = 0f,
-            Color? shadowColor = null,
-            Vector2? shadowOffset = null)
-        {
-            var go = new GameObject(name);
-            if (parent != null)
+        int sortingOrder,
+        Transform parent,
+        BLTextStyle style)
+    {
+        var resolvedStyle = BLTextStyles.Resolve(style, fontSize);
+        return TextInternal(
+            name,
+            text,
+            x,
+            y,
+            fontSize,
+            color,
+            anchor,
+            sortingOrder,
+            parent,
+            resolvedStyle.FontKind,
+            resolvedStyle.OutlineColor,
+            resolvedStyle.OutlinePixels,
+            resolvedStyle.ShadowColor,
+            resolvedStyle.ShadowOffset,
+            resolvedStyle.RasterProfile);
+    }
+
+    public static TextMesh Text(
+        string name,
+        string text,
+        float x,
+        float y,
+        int fontSize,
+        Color color,
+        TextAnchor anchor,
+        int sortingOrder,
+        Transform parent = null,
+        BLFontKind fontKind = BLFontKind.Impact,
+        Color? outlineColor = null,
+        float outlinePixels = 0f,
+        Color? shadowColor = null,
+        Vector2? shadowOffset = null)
+    {
+        var rasterProfile = ResolveRawRasterProfile(fontSize, outlineColor, outlinePixels, shadowColor);
+        return TextInternal(
+            name,
+            text,
+            x,
+            y,
+            fontSize,
+            color,
+            anchor,
+            sortingOrder,
+            parent,
+            fontKind,
+            outlineColor,
+            outlinePixels,
+            shadowColor,
+            shadowOffset,
+            rasterProfile);
+    }
+
+    private static TextMesh TextInternal(
+        string name,
+        string text,
+        float x,
+        float y,
+        int fontSize,
+        Color color,
+        TextAnchor anchor,
+        int sortingOrder,
+        Transform parent,
+        BLFontKind fontKind,
+        Color? outlineColor,
+        float outlinePixels,
+        Color? shadowColor,
+        Vector2? shadowOffset,
+        BLTextRasterProfile rasterProfile)
+    {
+        var go = new GameObject(name);
+        if (parent != null)
             {
                 go.transform.SetParent(parent, false);
             }
 
-            var mesh = go.AddComponent<TextMesh>();
-            mesh.text = text;
-            mesh.fontSize = GetFontRasterSize(fontSize);
-            mesh.characterSize = Mathf.Max(0.1f, fontSize * 0.1f);
-            mesh.anchor = anchor;
-            mesh.alignment = AnchorToAlignment(anchor);
+        var mesh = go.AddComponent<TextMesh>();
+        mesh.text = text;
+        mesh.fontSize = GetFontRasterSize(fontSize, rasterProfile);
+        mesh.characterSize = Mathf.Max(0.1f, fontSize * 0.1f);
+        mesh.anchor = anchor;
+        mesh.alignment = AnchorToAlignment(anchor);
             mesh.color = color;
             mesh.font = BLFontCache.Get(fontKind, mesh.fontSize);
             var renderer = go.GetComponent<MeshRenderer>();
@@ -408,10 +613,10 @@ namespace BasketballLegends2020
             }
 
             renderer.sortingOrder = sortingOrder;
-            ApplyPixelTransform(go.transform, x, y);
+        ApplyPixelTransform(go.transform, x, y);
 
-            return mesh;
-        }
+        return mesh;
+    }
 
         public static void ApplyPixelTransform(Transform transform, float x, float y, float z = 0f, float scale = 1f, float rotationDegrees = 0f)
         {
@@ -421,17 +626,57 @@ namespace BasketballLegends2020
             transform.rotation = Quaternion.Euler(0f, 0f, -rotationDegrees);
         }
 
-        private static int GetFontRasterSize(int fontSize)
+    private static BLTextRasterProfile ResolveRawRasterProfile(int fontSize, Color? outlineColor, float outlinePixels, Color? shadowColor)
+    {
+        var hasOutline = outlineColor.HasValue && outlineColor.Value.a > 0f && outlinePixels > 0f;
+        var hasShadow = shadowColor.HasValue && shadowColor.Value.a > 0f;
+        if (fontSize >= 40)
         {
-            var multiplier =
-                fontSize <= 12 ? 8f :
-                fontSize <= 18 ? 7f :
-                fontSize <= 24 ? 6f :
-                fontSize <= 36 ? 5f :
-                4f;
-
-            return Mathf.Clamp(Mathf.RoundToInt(fontSize * multiplier), 48, 512);
+            return BLTextRasterProfile.Display;
         }
+
+        if (hasOutline || hasShadow)
+        {
+            return fontSize <= 18 ? BLTextRasterProfile.UiSmall : BLTextRasterProfile.UiMedium;
+        }
+
+        return fontSize <= 18 ? BLTextRasterProfile.UiSmall : BLTextRasterProfile.UiMedium;
+    }
+
+    private static int GetFontRasterSize(int fontSize, BLTextRasterProfile rasterProfile)
+    {
+        float multiplier;
+        switch (rasterProfile)
+        {
+            case BLTextRasterProfile.UiSmall:
+                multiplier =
+                    fontSize <= 12 ? 10f :
+                    fontSize <= 18 ? 9f :
+                    8f;
+                break;
+            case BLTextRasterProfile.UiMedium:
+                multiplier =
+                    fontSize <= 18 ? 8f :
+                    fontSize <= 28 ? 7f :
+                    6f;
+                break;
+            case BLTextRasterProfile.Score:
+                multiplier =
+                    fontSize <= 28 ? 7f :
+                    fontSize <= 48 ? 6f :
+                    5f;
+                break;
+            default:
+                multiplier =
+                    fontSize <= 24 ? 7f :
+                    fontSize <= 36 ? 6f :
+                    fontSize <= 64 ? 5f :
+                    4f;
+                break;
+        }
+
+        return Mathf.Clamp(Mathf.RoundToInt(fontSize * multiplier), 48, 512);
+    }
 
         private static TextAlignment AnchorToAlignment(TextAnchor anchor)
         {

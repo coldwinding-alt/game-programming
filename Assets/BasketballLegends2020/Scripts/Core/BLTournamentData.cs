@@ -6,7 +6,9 @@ namespace BasketballLegends2020
     public enum BLTournamentStage
     {
         None,
+        RegularSeason,
         SemiFinal,
+        ThirdPlace,
         Final,
         Complete
     }
@@ -49,49 +51,173 @@ namespace BasketballLegends2020
         }
     }
 
+    public sealed class BLTournamentStandingEntry
+    {
+        public int CharacterId { get; private set; } = -1;
+        public int DivisionIndex { get; private set; } = -1;
+        public int DivisionSlot { get; private set; } = -1;
+        public int Wins { get; private set; }
+        public int Losses { get; private set; }
+        public int PointsFor { get; private set; }
+        public int PointsAgainst { get; private set; }
+        public int GamesPlayed => Wins + Losses;
+        public int PointDiff => PointsFor - PointsAgainst;
+        public float Percentage => GamesPlayed > 0 ? Wins / (float)GamesPlayed : 0f;
+
+        public void Reset(int characterId, int divisionIndex, int divisionSlot)
+        {
+            CharacterId = characterId;
+            DivisionIndex = divisionIndex;
+            DivisionSlot = divisionSlot;
+            Wins = 0;
+            Losses = 0;
+            PointsFor = 0;
+            PointsAgainst = 0;
+        }
+
+        public void ApplyResult(int scored, int allowed)
+        {
+            PointsFor += scored;
+            PointsAgainst += allowed;
+            if (scored > allowed)
+            {
+                Wins++;
+            }
+            else
+            {
+                Losses++;
+            }
+        }
+    }
+
     public sealed class BLTournamentData
     {
+        private const int DivisionCount = 2;
+        private const int TeamsPerDivision = 4;
+        private const int RegularSeasonRoundCount = 3;
+        private const int MatchesPerRegularSeasonRound = 4;
+
+        private static readonly int[,,] RoundRobinPairings =
+        {
+            { { 0, 3 }, { 1, 2 } },
+            { { 0, 2 }, { 3, 1 } },
+            { { 0, 1 }, { 2, 3 } }
+        };
+
         public bool Active { get; private set; }
         public bool Completed { get; private set; }
+        public bool RegularSeasonCompleted { get; private set; }
+        public bool PlayerQualifiedForPlayoffs { get; private set; }
         public BLAiDifficulty Difficulty { get; private set; }
         public BLTournamentStage CurrentStage { get; private set; }
         public int CurrentOpponentCharacterId { get; private set; } = -1;
         public int PlayerCharacterId { get; private set; } = -1;
         public int ChampionCharacterId { get; private set; } = -1;
         public int PlayerPlacement { get; private set; }
-        public int[] EntrantCharacterIds { get; } = { -1, -1, -1, -1 };
+        public int CurrentRegularSeasonRoundIndex { get; private set; }
+        public bool HasPendingPlayerMatch => Active && !Completed && CurrentOpponentCharacterId >= 0;
+
+        public int[][] DivisionEntrantCharacterIds { get; } =
+        {
+            new[] { -1, -1, -1, -1 },
+            new[] { -1, -1, -1, -1 }
+        };
+
+        public BLTournamentStandingEntry[][] DivisionStandings { get; } =
+        {
+            new[]
+            {
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry()
+            },
+            new[]
+            {
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry(),
+                new BLTournamentStandingEntry()
+            }
+        };
+
+        public BLTournamentMatchResult[][] RegularSeasonRounds { get; } =
+        {
+            new[]
+            {
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult()
+            },
+            new[]
+            {
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult()
+            },
+            new[]
+            {
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult(),
+                new BLTournamentMatchResult()
+            }
+        };
+
         public BLTournamentMatchResult[] SemiFinalResults { get; } =
         {
             new BLTournamentMatchResult(),
             new BLTournamentMatchResult()
         };
+
+        public BLTournamentMatchResult ThirdPlaceResult { get; } = new BLTournamentMatchResult();
         public BLTournamentMatchResult FinalResult { get; } = new BLTournamentMatchResult();
 
         public void Reset()
         {
             Active = false;
             Completed = false;
+            RegularSeasonCompleted = false;
+            PlayerQualifiedForPlayoffs = false;
             Difficulty = BLAiDifficulty.Normal;
             CurrentStage = BLTournamentStage.None;
             CurrentOpponentCharacterId = -1;
             PlayerCharacterId = -1;
             ChampionCharacterId = -1;
             PlayerPlacement = 0;
-            for (var i = 0; i < EntrantCharacterIds.Length; i++)
+            CurrentRegularSeasonRoundIndex = 0;
+
+            for (var division = 0; division < DivisionCount; division++)
             {
-                EntrantCharacterIds[i] = -1;
+                for (var slot = 0; slot < TeamsPerDivision; slot++)
+                {
+                    DivisionEntrantCharacterIds[division][slot] = -1;
+                    DivisionStandings[division][slot].Reset(-1, division, slot);
+                }
+            }
+
+            for (var round = 0; round < RegularSeasonRoundCount; round++)
+            {
+                for (var matchIndex = 0; matchIndex < MatchesPerRegularSeasonRound; matchIndex++)
+                {
+                    RegularSeasonRounds[round][matchIndex].Reset();
+                }
             }
 
             SemiFinalResults[0].Reset();
             SemiFinalResults[1].Reset();
+            ThirdPlaceResult.Reset();
             FinalResult.Reset();
         }
 
         public bool Create(int playerCharacterId, BLAiDifficulty difficulty)
         {
             Reset();
+
             var activeCharacters = BLPlayersData.GetActiveCharacterIds();
-            if (activeCharacters.Length < 4)
+            if (activeCharacters.Length < DivisionCount * TeamsPerDivision)
             {
                 return false;
             }
@@ -111,19 +237,50 @@ namespace BasketballLegends2020
 
             Shuffle(availableOpponents);
 
-            EntrantCharacterIds[0] = PlayerCharacterId;
-            for (var i = 0; i < 3; i++)
+            DivisionEntrantCharacterIds[0][0] = PlayerCharacterId;
+            for (var slot = 1; slot < TeamsPerDivision; slot++)
             {
-                EntrantCharacterIds[i + 1] = availableOpponents[i];
+                DivisionEntrantCharacterIds[0][slot] = availableOpponents[slot - 1];
             }
 
-            SemiFinalResults[0].Reset(EntrantCharacterIds[0], EntrantCharacterIds[1]);
-            SemiFinalResults[1].Reset(EntrantCharacterIds[2], EntrantCharacterIds[3]);
-            FinalResult.Reset();
+            for (var slot = 0; slot < TeamsPerDivision; slot++)
+            {
+                DivisionEntrantCharacterIds[1][slot] = availableOpponents[slot + TeamsPerDivision - 1];
+            }
+
+            for (var division = 0; division < DivisionCount; division++)
+            {
+                for (var slot = 0; slot < TeamsPerDivision; slot++)
+                {
+                    DivisionStandings[division][slot].Reset(
+                        DivisionEntrantCharacterIds[division][slot],
+                        division,
+                        slot);
+                }
+            }
+
+            BuildRegularSeasonSchedule();
+
+            CurrentStage = BLTournamentStage.RegularSeason;
+            CurrentRegularSeasonRoundIndex = 0;
+            CurrentOpponentCharacterId = GetPlayerOpponentForRound(CurrentRegularSeasonRoundIndex);
+            return true;
+        }
+
+        public void BeginFinals()
+        {
+            if (!Active || Completed || !RegularSeasonCompleted || !PlayerQualifiedForPlayoffs)
+            {
+                return;
+            }
+
+            if (CurrentStage != BLTournamentStage.RegularSeason)
+            {
+                return;
+            }
 
             CurrentStage = BLTournamentStage.SemiFinal;
-            CurrentOpponentCharacterId = EntrantCharacterIds[1];
-            return true;
+            CurrentOpponentCharacterId = GetPlayerOpponentForMatchSet(SemiFinalResults);
         }
 
         public void ApplyCurrentMatchResult(int playerScore, int opponentScore)
@@ -133,38 +290,411 @@ namespace BasketballLegends2020
                 return;
             }
 
-            if (CurrentStage == BLTournamentStage.SemiFinal)
+            switch (CurrentStage)
             {
-                SemiFinalResults[0].Complete(playerScore, opponentScore);
-                SimulateMatch(SemiFinalResults[1]);
+                case BLTournamentStage.RegularSeason:
+                    ApplyRegularSeasonResult(playerScore, opponentScore);
+                    break;
+                case BLTournamentStage.SemiFinal:
+                    ApplySemiFinalResult(playerScore, opponentScore);
+                    break;
+                case BLTournamentStage.ThirdPlace:
+                    ApplyPlacementResult(ThirdPlaceResult, playerScore, opponentScore);
+                    break;
+                case BLTournamentStage.Final:
+                    ApplyPlacementResult(FinalResult, playerScore, opponentScore);
+                    break;
+            }
+        }
 
-                if (SemiFinalResults[0].WinnerCharacterId != PlayerCharacterId)
-                {
-                    FinalResult.Reset(SemiFinalResults[0].WinnerCharacterId, SemiFinalResults[1].WinnerCharacterId);
-                    SimulateMatch(FinalResult);
-                    ChampionCharacterId = FinalResult.WinnerCharacterId;
-                    PlayerPlacement = 3;
-                    CurrentOpponentCharacterId = -1;
-                    CurrentStage = BLTournamentStage.Complete;
-                    Completed = true;
-                    return;
-                }
+        public BLTournamentStandingEntry[] GetDivisionStandings(int divisionIndex)
+        {
+            if (divisionIndex < 0 || divisionIndex >= DivisionCount)
+            {
+                return new BLTournamentStandingEntry[0];
+            }
 
-                FinalResult.Reset(PlayerCharacterId, SemiFinalResults[1].WinnerCharacterId);
-                CurrentOpponentCharacterId = FinalResult.RightCharacterId;
-                CurrentStage = BLTournamentStage.Final;
+            var standings = new BLTournamentStandingEntry[TeamsPerDivision];
+            for (var i = 0; i < TeamsPerDivision; i++)
+            {
+                standings[i] = DivisionStandings[divisionIndex][i];
+            }
+
+            System.Array.Sort(standings, CompareDivisionStandings);
+            return standings;
+        }
+
+        private void ApplyRegularSeasonResult(int playerScore, int opponentScore)
+        {
+            if (RegularSeasonCompleted || CurrentRegularSeasonRoundIndex < 0 || CurrentRegularSeasonRoundIndex >= RegularSeasonRoundCount)
+            {
                 return;
             }
 
-            if (CurrentStage == BLTournamentStage.Final)
+            var playerMatch = GetPlayerMatchForRound(CurrentRegularSeasonRoundIndex);
+            if (playerMatch == null || playerMatch.Completed)
             {
-                FinalResult.Complete(playerScore, opponentScore);
-                ChampionCharacterId = FinalResult.WinnerCharacterId;
-                PlayerPlacement = ChampionCharacterId == PlayerCharacterId ? 1 : 2;
-                CurrentOpponentCharacterId = -1;
-                CurrentStage = BLTournamentStage.Complete;
-                Completed = true;
+                return;
             }
+
+            playerMatch.Complete(playerScore, opponentScore);
+            ApplyStandingUpdate(playerMatch);
+
+            var roundMatches = RegularSeasonRounds[CurrentRegularSeasonRoundIndex];
+            for (var i = 0; i < roundMatches.Length; i++)
+            {
+                if (roundMatches[i] == playerMatch || roundMatches[i].Completed)
+                {
+                    continue;
+                }
+
+                SimulateMatch(roundMatches[i]);
+                ApplyStandingUpdate(roundMatches[i]);
+            }
+
+            CurrentRegularSeasonRoundIndex++;
+            if (CurrentRegularSeasonRoundIndex < RegularSeasonRoundCount)
+            {
+                CurrentOpponentCharacterId = GetPlayerOpponentForRound(CurrentRegularSeasonRoundIndex);
+                return;
+            }
+
+            RegularSeasonCompleted = true;
+            CurrentOpponentCharacterId = -1;
+            BuildPlayoffBracket();
+
+            if (!PlayerQualifiedForPlayoffs)
+            {
+                SimulateEntirePlayoffs();
+                FinalizeTournament();
+            }
+        }
+
+        private void ApplySemiFinalResult(int playerScore, int opponentScore)
+        {
+            var playerSemi = GetPlayerMatchFromSet(SemiFinalResults);
+            if (playerSemi == null || playerSemi.Completed)
+            {
+                return;
+            }
+
+            playerSemi.Complete(playerScore, opponentScore);
+
+            for (var i = 0; i < SemiFinalResults.Length; i++)
+            {
+                if (SemiFinalResults[i].Completed)
+                {
+                    continue;
+                }
+
+                SimulateMatch(SemiFinalResults[i]);
+            }
+
+            ConfigurePlacementMatchesFromSemiFinals();
+            if (playerSemi.WinnerCharacterId == PlayerCharacterId)
+            {
+                SimulateMatch(ThirdPlaceResult);
+                CurrentStage = BLTournamentStage.Final;
+                CurrentOpponentCharacterId = GetOpponentCharacterId(FinalResult, PlayerCharacterId);
+                return;
+            }
+
+            SimulateMatch(FinalResult);
+            CurrentStage = BLTournamentStage.ThirdPlace;
+            CurrentOpponentCharacterId = GetOpponentCharacterId(ThirdPlaceResult, PlayerCharacterId);
+        }
+
+        private void ApplyPlacementResult(BLTournamentMatchResult match, int playerScore, int opponentScore)
+        {
+            if (match == null || match.Completed)
+            {
+                return;
+            }
+
+            match.Complete(playerScore, opponentScore);
+            FinalizeTournament();
+        }
+
+        private void FinalizeTournament()
+        {
+            if (!FinalResult.Completed || !ThirdPlaceResult.Completed)
+            {
+                return;
+            }
+
+            ChampionCharacterId = FinalResult.WinnerCharacterId;
+            PlayerPlacement = ResolvePlayerPlacement();
+            CurrentOpponentCharacterId = -1;
+            CurrentStage = BLTournamentStage.Complete;
+            Completed = true;
+        }
+
+        private int ResolvePlayerPlacement()
+        {
+            var champion = FinalResult.WinnerCharacterId;
+            var runnerUp = GetMatchLoserCharacterId(FinalResult);
+            var third = ThirdPlaceResult.WinnerCharacterId;
+            var fourth = GetMatchLoserCharacterId(ThirdPlaceResult);
+
+            if (PlayerCharacterId == champion)
+            {
+                return 1;
+            }
+
+            if (PlayerCharacterId == runnerUp)
+            {
+                return 2;
+            }
+
+            if (PlayerCharacterId == third)
+            {
+                return 3;
+            }
+
+            if (PlayerCharacterId == fourth)
+            {
+                return 4;
+            }
+
+            var nonPlayoffEntries = new List<BLTournamentStandingEntry>(4);
+            var playoffCharacters = new HashSet<int> { champion, runnerUp, third, fourth };
+            for (var division = 0; division < DivisionCount; division++)
+            {
+                for (var slot = 0; slot < TeamsPerDivision; slot++)
+                {
+                    var entry = DivisionStandings[division][slot];
+                    if (entry.CharacterId >= 0 && !playoffCharacters.Contains(entry.CharacterId))
+                    {
+                        nonPlayoffEntries.Add(entry);
+                    }
+                }
+            }
+
+            nonPlayoffEntries.Sort(CompareOverallStandings);
+            for (var i = 0; i < nonPlayoffEntries.Count; i++)
+            {
+                if (nonPlayoffEntries[i].CharacterId == PlayerCharacterId)
+                {
+                    return 5 + i;
+                }
+            }
+
+            return 8;
+        }
+
+        private void BuildRegularSeasonSchedule()
+        {
+            for (var round = 0; round < RegularSeasonRoundCount; round++)
+            {
+                for (var division = 0; division < DivisionCount; division++)
+                {
+                    for (var pair = 0; pair < 2; pair++)
+                    {
+                        var matchIndex = division * 2 + pair;
+                        var leftSlot = RoundRobinPairings[round, pair, 0];
+                        var rightSlot = RoundRobinPairings[round, pair, 1];
+                        RegularSeasonRounds[round][matchIndex].Reset(
+                            DivisionEntrantCharacterIds[division][leftSlot],
+                            DivisionEntrantCharacterIds[division][rightSlot]);
+                    }
+                }
+            }
+        }
+
+        private void BuildPlayoffBracket()
+        {
+            var divisionA = GetDivisionStandings(0);
+            var divisionB = GetDivisionStandings(1);
+
+            SemiFinalResults[0].Reset(divisionA[0].CharacterId, divisionB[1].CharacterId);
+            SemiFinalResults[1].Reset(divisionB[0].CharacterId, divisionA[1].CharacterId);
+            ThirdPlaceResult.Reset();
+            FinalResult.Reset();
+
+            PlayerQualifiedForPlayoffs =
+                SemiFinalResults[0].LeftCharacterId == PlayerCharacterId ||
+                SemiFinalResults[0].RightCharacterId == PlayerCharacterId ||
+                SemiFinalResults[1].LeftCharacterId == PlayerCharacterId ||
+                SemiFinalResults[1].RightCharacterId == PlayerCharacterId;
+        }
+
+        private void ConfigurePlacementMatchesFromSemiFinals()
+        {
+            FinalResult.Reset(
+                SemiFinalResults[0].WinnerCharacterId,
+                SemiFinalResults[1].WinnerCharacterId);
+            ThirdPlaceResult.Reset(
+                GetMatchLoserCharacterId(SemiFinalResults[0]),
+                GetMatchLoserCharacterId(SemiFinalResults[1]));
+        }
+
+        private void SimulateEntirePlayoffs()
+        {
+            for (var i = 0; i < SemiFinalResults.Length; i++)
+            {
+                SimulateMatch(SemiFinalResults[i]);
+            }
+
+            ConfigurePlacementMatchesFromSemiFinals();
+            SimulateMatch(ThirdPlaceResult);
+            SimulateMatch(FinalResult);
+        }
+
+        private BLTournamentMatchResult GetPlayerMatchForRound(int roundIndex)
+        {
+            if (roundIndex < 0 || roundIndex >= RegularSeasonRounds.Length)
+            {
+                return null;
+            }
+
+            var matches = RegularSeasonRounds[roundIndex];
+            for (var i = 0; i < matches.Length; i++)
+            {
+                if (matches[i].LeftCharacterId == PlayerCharacterId || matches[i].RightCharacterId == PlayerCharacterId)
+                {
+                    return matches[i];
+                }
+            }
+
+            return null;
+        }
+
+        private BLTournamentMatchResult GetPlayerMatchFromSet(BLTournamentMatchResult[] matches)
+        {
+            if (matches == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < matches.Length; i++)
+            {
+                if (matches[i].LeftCharacterId == PlayerCharacterId || matches[i].RightCharacterId == PlayerCharacterId)
+                {
+                    return matches[i];
+                }
+            }
+
+            return null;
+        }
+
+        private int GetPlayerOpponentForRound(int roundIndex)
+        {
+            return GetOpponentCharacterId(GetPlayerMatchForRound(roundIndex), PlayerCharacterId);
+        }
+
+        private int GetPlayerOpponentForMatchSet(BLTournamentMatchResult[] matches)
+        {
+            return GetOpponentCharacterId(GetPlayerMatchFromSet(matches), PlayerCharacterId);
+        }
+
+        private void ApplyStandingUpdate(BLTournamentMatchResult match)
+        {
+            var leftEntry = GetStandingEntry(match.LeftCharacterId);
+            var rightEntry = GetStandingEntry(match.RightCharacterId);
+            if (leftEntry == null || rightEntry == null)
+            {
+                return;
+            }
+
+            leftEntry.ApplyResult(match.LeftScore, match.RightScore);
+            rightEntry.ApplyResult(match.RightScore, match.LeftScore);
+        }
+
+        private BLTournamentStandingEntry GetStandingEntry(int characterId)
+        {
+            for (var division = 0; division < DivisionCount; division++)
+            {
+                for (var slot = 0; slot < TeamsPerDivision; slot++)
+                {
+                    var entry = DivisionStandings[division][slot];
+                    if (entry.CharacterId == characterId)
+                    {
+                        return entry;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static int CompareDivisionStandings(BLTournamentStandingEntry left, BLTournamentStandingEntry right)
+        {
+            var winCompare = right.Wins.CompareTo(left.Wins);
+            if (winCompare != 0)
+            {
+                return winCompare;
+            }
+
+            var diffCompare = right.PointDiff.CompareTo(left.PointDiff);
+            if (diffCompare != 0)
+            {
+                return diffCompare;
+            }
+
+            var pointsCompare = right.PointsFor.CompareTo(left.PointsFor);
+            if (pointsCompare != 0)
+            {
+                return pointsCompare;
+            }
+
+            return left.DivisionSlot.CompareTo(right.DivisionSlot);
+        }
+
+        private static int CompareOverallStandings(BLTournamentStandingEntry left, BLTournamentStandingEntry right)
+        {
+            var compare = CompareDivisionStandings(left, right);
+            if (compare != 0)
+            {
+                return compare;
+            }
+
+            compare = left.DivisionIndex.CompareTo(right.DivisionIndex);
+            if (compare != 0)
+            {
+                return compare;
+            }
+
+            return left.DivisionSlot.CompareTo(right.DivisionSlot);
+        }
+
+        private static int GetOpponentCharacterId(BLTournamentMatchResult match, int characterId)
+        {
+            if (match == null)
+            {
+                return -1;
+            }
+
+            if (match.LeftCharacterId == characterId)
+            {
+                return match.RightCharacterId;
+            }
+
+            if (match.RightCharacterId == characterId)
+            {
+                return match.LeftCharacterId;
+            }
+
+            return -1;
+        }
+
+        private static int GetMatchLoserCharacterId(BLTournamentMatchResult match)
+        {
+            if (match == null || !match.Completed)
+            {
+                return -1;
+            }
+
+            if (match.WinnerCharacterId == match.LeftCharacterId)
+            {
+                return match.RightCharacterId;
+            }
+
+            if (match.WinnerCharacterId == match.RightCharacterId)
+            {
+                return match.LeftCharacterId;
+            }
+
+            return -1;
         }
 
         private static void SimulateMatch(BLTournamentMatchResult match)

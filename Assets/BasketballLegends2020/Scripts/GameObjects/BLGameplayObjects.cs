@@ -3,6 +3,37 @@ using UnityEngine;
 
 namespace BasketballLegends2020
 {
+    internal static class BLGameplaySpriteLoader
+    {
+        private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
+
+        public static Sprite LoadImageSprite(string resourcePath, float anchorX, float anchorY)
+        {
+            if (string.IsNullOrEmpty(resourcePath))
+            {
+                return null;
+            }
+
+            var cacheKey = $"{resourcePath}|{anchorX:0.###}|{anchorY:0.###}";
+            if (SpriteCache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            var texture = Resources.Load<Texture2D>($"BL2020/Images/{resourcePath}");
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var rect = new Rect(0f, 0f, texture.width, texture.height);
+            var sprite = Sprite.Create(texture, rect, new Vector2(anchorX, 1f - anchorY), 1f, 0, SpriteMeshType.Tight);
+            sprite.name = texture.name;
+            SpriteCache[cacheKey] = sprite;
+            return sprite;
+        }
+    }
+
     public sealed class BLArenaObject
     {
         public GameObject Graphic { get; }
@@ -81,16 +112,12 @@ namespace BasketballLegends2020
             renderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("BasketGraphic0000", 0.7f, 0.93f);
             renderer.sortingOrder = 4;
 
-            frontEar = BLRender.Sprite(
-                side == -1 ? "FrontEarLeft" : "FrontEarRight",
-                BLAtlasCache.Instance.Gameplay,
-                "FrontEar0000",
-                Center,
-                BLObjectsData.BasketHeight,
-                0.5f,
-                0.5f,
-                60,
-                parent);
+            frontEar = new GameObject(side == -1 ? "FrontEarLeft" : "FrontEarRight");
+            frontEar.transform.SetParent(parent, false);
+            var frontEarRenderer = frontEar.AddComponent<SpriteRenderer>();
+            frontEarRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("FrontEar0000", 0.5f, 0.5f);
+            frontEarRenderer.sortingOrder = 60;
+            BLRender.ApplyPixelTransform(frontEar.transform, Center, BLObjectsData.BasketHeight);
             frontEar.transform.localScale = new Vector3(BLConstants.UnitsPerPixel * (side == -1 ? 1f : -1f), BLConstants.UnitsPerPixel, 1f);
 
             for (var i = 0; i < 10; i++)
@@ -200,7 +227,12 @@ namespace BasketballLegends2020
         public BLBallObject(BLGameCore gameCore, Transform parent)
         {
             this.gameCore = gameCore;
-            graphic = BLRender.Sprite("BallObject", BLAtlasCache.Instance.Gameplay, "BallMC0000", BLConstants.Width2, BLObjectsData.BallIndentYCenter, 0.5f, 0.5f, 50, parent);
+            graphic = new GameObject("BallObject");
+            graphic.transform.SetParent(parent, false);
+            var graphicRenderer = graphic.AddComponent<SpriteRenderer>();
+            graphicRenderer.sprite = ResolveBallSprite();
+            graphicRenderer.sortingOrder = 50;
+            BLRender.ApplyPixelTransform(graphic.transform, BLConstants.Width2, BLObjectsData.BallIndentYCenter, 0.2f);
             shadow = BLRender.Sprite("BallShadow", BLAtlasCache.Instance.Gameplay, "ShadowMC0002", BLConstants.Width2, BLObjectsData.FloorY, 0.5f, 0.5f, 3, parent);
             shadow.transform.localScale *= 0.7f;
             Restart();
@@ -831,6 +863,15 @@ namespace BasketballLegends2020
             visibleNextFrame = true;
         }
 
+        private Sprite ResolveBallSprite()
+        {
+            var themedSprite = BLGameplaySpriteLoader.LoadImageSprite(
+                BLAssets.Images.BallTheme(gameCore.MatchData.BallTheme),
+                0.5f,
+                0.5f);
+            return themedSprite ?? BLAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
+        }
+
         private void UpdateGraphic()
         {
             if (visibleNextFrame)
@@ -883,13 +924,13 @@ namespace BasketballLegends2020
             blackNode.SetParent(graphic.transform, false);
             blackRenderer = blackNode.gameObject.AddComponent<SpriteRenderer>();
             blackRenderer.sortingOrder = 74;
-            blackRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport10000");
+            blackRenderer.sprite = BLAtlasCache.Instance.SkillFx.Sprite("teleport10000");
 
             var centerNode = new GameObject("TeleportCenter");
             centerNode.transform.SetParent(blackNode, false);
             centerRenderer = centerNode.AddComponent<SpriteRenderer>();
             centerRenderer.sortingOrder = 75;
-            centerRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport20000");
+            centerRenderer.sprite = BLAtlasCache.Instance.SkillFx.Sprite("teleport20000");
 
             var animNode = new GameObject("TeleportAnim");
             animNode.transform.SetParent(graphic.transform, false);
@@ -900,14 +941,14 @@ namespace BasketballLegends2020
             whiteNode.transform.SetParent(graphic.transform, false);
             whiteRenderer = whiteNode.AddComponent<SpriteRenderer>();
             whiteRenderer.sortingOrder = 77;
-            whiteRenderer.sprite = BLAtlasCache.Instance.Gameplay.Sprite("teleport40000");
+            whiteRenderer.sprite = BLAtlasCache.Instance.SkillFx.Sprite("teleport40000");
 
             frames = new[]
             {
-                BLAtlasCache.Instance.Gameplay.Sprite("teleport30000"),
-                BLAtlasCache.Instance.Gameplay.Sprite("teleport30001"),
-                BLAtlasCache.Instance.Gameplay.Sprite("teleport30002"),
-                BLAtlasCache.Instance.Gameplay.Sprite("teleport30003")
+                BLAtlasCache.Instance.SkillFx.Sprite("teleport30000"),
+                BLAtlasCache.Instance.SkillFx.Sprite("teleport30001"),
+                BLAtlasCache.Instance.SkillFx.Sprite("teleport30002"),
+                BLAtlasCache.Instance.SkillFx.Sprite("teleport30003")
             };
 
             Hide();
@@ -1046,6 +1087,8 @@ namespace BasketballLegends2020
         private const float IntroTime = 0.14f;
         private const float IntroDropTime = 0.12f;
         private const float IntroDropOffsetY = -600f;
+        private const float IntroBlurScaleX = 1.08f;
+        private const float IntroBlurScaleY = 1.16f;
         private const float ShowTime = 3f;
         private const float FadeTime = 0.5f;
         private const float AnimationFps = 30f;
@@ -1078,7 +1121,7 @@ namespace BasketballLegends2020
             graphic = new GameObject(side == -1 ? "ShieldLeft" : "ShieldRight");
             graphic.transform.SetParent(parent, false);
 
-            var shieldStartSprite = BLAtlasCache.Instance.Gameplay.Sprite("ShieldMC0000");
+            var shieldStartSprite = BLAtlasCache.Instance.SkillFx.Sprite("ShieldMC0000");
             startRenderer = CreateRenderer("ShieldStart", 63, shieldStartSprite);
             blurRenderer = CreateRenderer("ShieldBlur", 64, shieldStartSprite);
             animRenderer = CreateRenderer("ShieldAnim", 65, null);
@@ -1087,10 +1130,10 @@ namespace BasketballLegends2020
             for (var i = 0; i < frames.Length; i++)
             {
                 var frameName = $"ShieldMC2{i:0000}";
-                var frame = BLAtlasCache.Instance.Gameplay.Frame(frameName);
+                var frame = BLAtlasCache.Instance.SkillFx.Frame(frameName);
                 if (frame != null && frame.W > 0f && frame.H > 0f)
                 {
-                    frames[i] = BLAtlasCache.Instance.Gameplay.Sprite(frameName);
+                    frames[i] = BLAtlasCache.Instance.SkillFx.Sprite(frameName);
                 }
             }
 
@@ -1110,6 +1153,9 @@ namespace BasketballLegends2020
             blurRenderer.enabled = true;
             animRenderer.enabled = false;
             blurRenderer.transform.localPosition = new Vector3(StartSpriteLocalX, IntroDropOffsetY, 0f);
+            blurRenderer.transform.localScale = new Vector3(IntroBlurScaleX, IntroBlurScaleY, 1f);
+            startRenderer.transform.localScale = Vector3.one;
+            animRenderer.transform.localScale = Vector3.one;
             ApplyAlpha();
             UpdateGraphic();
             BLAudio.Instance?.Play(BLAssets.Sounds.PShield);
@@ -1222,6 +1268,10 @@ namespace BasketballLegends2020
                 StartSpriteLocalX,
                 Mathf.Lerp(IntroDropOffsetY, 0f, EaseOutBack(t)),
                 0f);
+            blurRenderer.transform.localScale = new Vector3(
+                Mathf.Lerp(IntroBlurScaleX, 1f, t),
+                Mathf.Lerp(IntroBlurScaleY, 1f, t),
+                1f);
         }
 
         private void UpdateActive()
