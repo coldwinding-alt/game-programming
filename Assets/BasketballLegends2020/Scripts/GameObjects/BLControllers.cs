@@ -198,6 +198,7 @@ namespace BasketballLegends2020
     {
         protected readonly BLPlayerObject player;
         protected readonly BLAiDifficulty difficulty;
+        protected readonly BLAIDifficultyTuningProfile tuning;
 
         protected BLBallObject ball;
         protected List<BLPlayerObject> opponents;
@@ -255,6 +256,7 @@ namespace BasketballLegends2020
         {
             this.player = player;
             difficulty = BLInventory.Instance.Difficulty;
+            tuning = BLAIDifficultyTuning.Get(difficulty);
             profile = BLAISkillsData.Get(skillLevel);
             jumpBall = new NegativeDelay(BLObjectsData.IdealJumpBallJump, profile.JumpBall);
             attack = new FullDelay(BLObjectsData.IdealAttackJump, profile.Attack);
@@ -397,6 +399,7 @@ namespace BasketballLegends2020
         public virtual void BallOpponentShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
+            opponent = FindOpponentByPlayerNo(shooterPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
             if (player.SuperId == 1 && player.ReadyForSuper)
             {
                 player.SuperShot();
@@ -406,7 +409,7 @@ namespace BasketballLegends2020
             strategy = 4;
             reboundPoint = reboundPointInDefence;
             superDashDelay.Reset();
-            opponent = FindOpponentByPlayerNo(shooterPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
+            TryUseHellBonusShieldAgainstHumanShot();
             queuedReboundJump = opponent != null &&
                                 opponent.IsGrounded &&
                                 IsOpponentCloseBehind(120f) &&
@@ -533,7 +536,7 @@ namespace BasketballLegends2020
 
         protected virtual void StrategyBallFight(float dt)
         {
-            var ballX = ball.Position.x;
+            var ballX = GetTechnicalLooseBallTargetX();
             var offset = ballX - player.Position.x >= 0f ? 10f : -10f;
             CurrentMove = MoveTo(ballX + offset);
             CurrentJump = false;
@@ -694,7 +697,8 @@ namespace BasketballLegends2020
             }
 
             CurrentJump = contestJump || (Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f);
-            CurrentMove = CurrentJump ? 0 : player.IsGrounded ? MoveTo(reboundPoint) : 0;
+            var targetReboundPoint = ShouldUseTechnicalPrediction() ? GetTechnicalReboundTargetX() : reboundPoint;
+            CurrentMove = CurrentJump ? 0 : player.IsGrounded ? MoveTo(targetReboundPoint) : 0;
             CurrentAction = false;
         }
 
@@ -731,7 +735,9 @@ namespace BasketballLegends2020
 
         protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
         {
-            if (player.SuperId != 3 || !player.ReadyForSuper || !shouldUse)
+            var canUseNativeSuperDash = player.SuperId == 3 && player.ReadyForSuper;
+            var canUseHellBonusSuperDash = player.CanUseHellBonusSuperDash;
+            if ((!canUseNativeSuperDash && !canUseHellBonusSuperDash) || !shouldUse)
             {
                 superDashDelay.Reset();
                 return false;
@@ -749,9 +755,21 @@ namespace BasketballLegends2020
                 return false;
             }
 
-            TriggerSuperInput();
+            if (canUseNativeSuperDash)
+            {
+                TriggerSuperInput();
+                superDashDelay.Reset();
+                return true;
+            }
+
+            if (player.TryUseHellBonusSuperDash())
+            {
+                superDashDelay.Reset();
+                return true;
+            }
+
             superDashDelay.Reset();
-            return true;
+            return false;
         }
 
         protected void TriggerSuperInput()
@@ -877,9 +895,12 @@ namespace BasketballLegends2020
                     attack.Activate();
                     directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                 }
-                else if (side == -player.Side && UnityEngine.Random.value <= profile.JumpThrow)
+                else if (side == -player.Side)
                 {
-                    defenceDelay.Activate();
+                    if (ShouldUsePerfectContestOnJump() || UnityEngine.Random.value <= profile.JumpThrow)
+                    {
+                        defenceDelay.Activate();
+                    }
                 }
 
                 return;
@@ -889,12 +910,20 @@ namespace BasketballLegends2020
             {
                 if (side == -player.Side && player.CanAct && IsOpponentCloseBehind(90f))
                 {
-                    if (++pumpCount <= 3 && UnityEngine.Random.value <= profile.JumpPump)
+                    if (++pumpCount <= 3)
                     {
-                        defenceDelay.Activate();
-                        stealDelay.Reset();
-                        CurrentMove = 0;
-                        isPumped = true;
+                        if (ShouldIgnorePumpFake())
+                        {
+                            return;
+                        }
+
+                        if (UnityEngine.Random.value <= profile.JumpPump)
+                        {
+                            defenceDelay.Activate();
+                            stealDelay.Reset();
+                            CurrentMove = 0;
+                            isPumped = true;
+                        }
                     }
                 }
 
@@ -968,47 +997,65 @@ namespace BasketballLegends2020
 
         protected float GetDefenceContestDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 220f : 180f;
+            return tuning.DefenceContestDistance;
         }
 
         protected float GetStealBehindDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 110f : 80f;
+            return tuning.StealBehindDistance;
         }
 
         protected float GetStealBasketDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 65f : 45f;
+            return tuning.StealBasketDistance;
         }
 
         protected float GetHolderSuperDashMinDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 70f : 90f;
+            return tuning.HolderSuperDashMinDistance;
         }
 
         protected float GetHolderSuperDashMaxDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 520f : 460f;
+            return tuning.HolderSuperDashMaxDistance;
         }
 
         protected float GetLooseBallSuperDashDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 90f : 120f;
+            return tuning.LooseBallSuperDashDistance;
         }
 
         protected float GetAttackPressureDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 180f : 140f;
+            return tuning.AttackPressureDistance;
         }
 
         protected float GetAttackSuperDashDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 220f : 260f;
+            return tuning.AttackSuperDashDistance;
         }
 
         protected float GetDashBlockRangeMaxDistance()
         {
-            return difficulty == BLAiDifficulty.Hard ? 220f : 180f;
+            return tuning.DashBlockRangeMaxDistance;
+        }
+
+        protected void TryUseHellBonusShieldAgainstHumanShot()
+        {
+            if (difficulty != BLAiDifficulty.Hell || opponent == null || !opponent.IsHuman)
+            {
+                return;
+            }
+
+            var threateningShot =
+                player.GameCore.IsCurrentShotThreePointer(opponent.Side) ||
+                player.GameCore.RemainingMatchTime <= 15f ||
+                player.GameCore.GetScoreLeadForSide(opponent.Side) >= 4;
+
+            if (threateningShot)
+            {
+                player.TryUseHellBonusShield();
+            }
         }
 
         protected void InitZones()
@@ -1147,7 +1194,15 @@ namespace BasketballLegends2020
             }
             else
             {
-                if ((player.Position.x - 450f) * player.Side > 0f && UnityEngine.Random.value <= BLObjectsData.ChanceForThree)
+                if (ShouldForceClutchThree())
+                {
+                    attackPoint = 500f + 24f * UnityEngine.Random.value;
+                }
+                else if (ShouldPreferSafeClutchTwo())
+                {
+                    attackPoint = 140f + 80f * UnityEngine.Random.value;
+                }
+                else if ((player.Position.x - 450f) * player.Side > 0f && UnityEngine.Random.value <= BLObjectsData.ChanceForThree)
                 {
                     attackPoint = 510f;
                 }
@@ -1168,6 +1223,99 @@ namespace BasketballLegends2020
                 attackPoint = BLConstants.Width - attackPoint;
                 jumpPoint = BLConstants.Width - jumpPoint;
             }
+        }
+
+        protected bool ShouldUseTechnicalPrediction()
+        {
+            return difficulty == BLAiDifficulty.Hell;
+        }
+
+        protected float GetTechnicalLooseBallTargetX()
+        {
+            if (!ShouldUseTechnicalPrediction() || ball == null)
+            {
+                return ball != null ? ball.Position.x : player.Position.x;
+            }
+
+            if (ball.State == "bounce" || ball.State == "steal")
+            {
+                return ball.Position.x;
+            }
+
+            return ball.PredictFloorLandingX();
+        }
+
+        protected float GetTechnicalReboundTargetX()
+        {
+            if (!ShouldUseTechnicalPrediction() || ball == null)
+            {
+                return reboundPoint;
+            }
+
+            if (ball.State == "shooting" || ball.State == "basket" || ball.State == "block" || ball.State == "dunk" || ball.State == "alleyOop")
+            {
+                return ball.PredictFloorLandingX();
+            }
+
+            return reboundPoint;
+        }
+
+        protected bool ShouldForceClutchThree()
+        {
+            return SupportsClutchShotSelection() &&
+                   player.GameCore.RemainingMatchTime <= 12f &&
+                   player.GameCore.GetScoreLeadForSide(player.Side) <= -2;
+        }
+
+        protected bool ShouldPreferSafeClutchTwo()
+        {
+            return SupportsClutchShotSelection() &&
+                   player.GameCore.RemainingMatchTime <= 15f &&
+                   player.GameCore.GetScoreLeadForSide(player.Side) >= 3;
+        }
+
+        protected bool SupportsClutchShotSelection()
+        {
+            return difficulty == BLAiDifficulty.Hard || difficulty == BLAiDifficulty.Hell;
+        }
+
+        protected bool ShouldUsePerfectContestOnJump()
+        {
+            return difficulty == BLAiDifficulty.Hell &&
+                   IsOpponentImmediateShotThreat() &&
+                   IsOpponentCloseAbs(GetDefenceContestDistance() + 24f);
+        }
+
+        protected bool ShouldIgnorePumpFake()
+        {
+            if (difficulty != BLAiDifficulty.Hell)
+            {
+                return false;
+            }
+
+            if (pumpCount > 1)
+            {
+                return false;
+            }
+
+            return !IsOpponentImmediateShotThreat();
+        }
+
+        protected bool IsOpponentImmediateShotThreat()
+        {
+            if (opponent == null || !opponent.WithBall)
+            {
+                return false;
+            }
+
+            var distanceToTargetBasket = Mathf.Abs(opponent.Position.x - opponent.AttackTargetX);
+            if (distanceToTargetBasket <= 220f)
+            {
+                return true;
+            }
+
+            return player.GameCore.RemainingMatchTime <= 8f &&
+                   player.GameCore.GetScoreLeadForSide(opponent.Side) <= 0;
         }
 
         protected int IsReboundInAttackZone()

@@ -358,6 +358,40 @@ namespace BasketballLegends2020
             gameCore.NotifyBallOthers();
         }
 
+        public float PredictFloorLandingX()
+        {
+            if (!IsInGame)
+            {
+                return Mathf.Clamp(Position.x, 20f, BLConstants.Width - 20f);
+            }
+
+            if (Position.y >= BLObjectsData.BallFloorY)
+            {
+                return Mathf.Clamp(Position.x, 20f, BLConstants.Width - 20f);
+            }
+
+            var gravity = BLObjectsData.Gravity.y * BLObjectsData.BallGravMass;
+            if (gravity <= 0.0001f)
+            {
+                return Mathf.Clamp(Position.x, 20f, BLConstants.Width - 20f);
+            }
+
+            var floorDelta = BLObjectsData.BallFloorY - Position.y;
+            var discriminant = Velocity.y * Velocity.y + 2f * gravity * floorDelta;
+            if (discriminant <= 0f)
+            {
+                return Mathf.Clamp(Position.x, 20f, BLConstants.Width - 20f);
+            }
+
+            var timeToFloor = (-Velocity.y + Mathf.Sqrt(discriminant)) / gravity;
+            if (timeToFloor <= 0f)
+            {
+                return Mathf.Clamp(Position.x, 20f, BLConstants.Width - 20f);
+            }
+
+            return Mathf.Clamp(Position.x + Velocity.x * timeToFloor, 20f, BLConstants.Width - 20f);
+        }
+
         public void ApplyBlock(BLPlayerObject blocker)
         {
             var direction = Position.x >= blocker.Position.x ? 1f : -1f;
@@ -1144,6 +1178,7 @@ namespace BasketballLegends2020
         }
 
         public bool IsBlocking => phase == ShieldPhase.Active && phaseTime < AnimationDuration + ShowTime;
+        public bool CanActivate => phase == ShieldPhase.Hidden;
 
         public void Activate()
         {
@@ -1411,6 +1446,8 @@ namespace BasketballLegends2020
         private readonly int skillLevel;
         private readonly int superId;
         private readonly int brainSlot;
+        private readonly BLAIDifficultyTuningProfile aiDifficultyTuning;
+        private readonly bool hellEnhanced;
         private readonly float accuracy;
         private readonly float chanceToCompleteDunk;
         private readonly float superCoolDown;
@@ -1418,10 +1455,12 @@ namespace BasketballLegends2020
         private readonly float superDunkEndX;
         private readonly float superDunkEndY;
         private readonly float[] superDashTargets = new float[2];
-        private readonly UseDelay dashDelay = new UseDelay(BLObjectsData.DashDelay);
+        private readonly UseDelay dashDelay;
         private readonly BLEnergyBarView energyBar;
         private readonly BLTeleportFx teleportFx;
         private readonly BLShieldObject shield;
+        private readonly float hellBonusSuperDashCooldownDuration;
+        private readonly float hellBonusShieldCooldownDuration;
         private readonly HashSet<int> superDashHits = new HashSet<int>();
         private float actionLatch;
         private string visualState = "";
@@ -1461,6 +1500,8 @@ namespace BasketballLegends2020
         private bool isSuperShot;
         private bool removedFromPlay;
         private float superChargeTime;
+        private float hellBonusSuperDashCooldownTimer;
+        private float hellBonusShieldCooldownTimer;
         private float graphicScaleMultiplier = 1f;
         private SuperPhase superPhase;
         private float superTimer;
@@ -1470,6 +1511,8 @@ namespace BasketballLegends2020
         private bool dashToRight;
         private bool dashTeammatePending;
         private BLPlayerObject teamMate;
+        private bool hellOpeningChargeApplied;
+        private bool hellNativeSuperRefundPending;
 
         public BLGameCore GameCore { get; }
         public Vector2 Position;
@@ -1494,6 +1537,8 @@ namespace BasketballLegends2020
         public int SkillLevel => skillLevel;
         public int SuperId => superId;
         public bool ReadyForSuper => readyForSuper;
+        public bool CanUseHellBonusSuperDash => hellEnhanced && hellBonusSuperDashCooldownTimer <= 0f;
+        public bool CanUseHellBonusShield => hellEnhanced && shield != null && hellBonusShieldCooldownTimer <= 0f && shield.CanActivate;
         public bool IsSuperShot => isSuperShot;
         public bool NeedBlock => needBlock;
         public bool CanThrow => canThrow;
@@ -1508,11 +1553,20 @@ namespace BasketballLegends2020
             IsHuman = !playerBrain.StartsWith("B");
             brainSlot = BLControlsData.ParseControllerSlot(playerBrain);
             superId = BLPlayersData.GetCharacterSuperId(characterId);
+            aiDifficultyTuning = BLAIDifficultyTuning.Get(BLInventory.Instance.Difficulty);
+            hellEnhanced = !IsHuman && BLInventory.Instance.Difficulty == BLAiDifficulty.Hell;
 
             var profile = BLAISkillsData.Get(skillLevel);
             accuracy = profile.Accuracy;
             chanceToCompleteDunk = profile.ChanceToCompleteDunk;
             superCoolDown = profile.CoolDown;
+            dashDelay = new UseDelay(BLObjectsData.DashDelay * (hellEnhanced ? aiDifficultyTuning.DashCooldownMultiplier : 1f));
+            hellBonusSuperDashCooldownDuration = hellEnhanced
+                ? skillLevel >= 11 ? aiDifficultyTuning.BonusSuperDashBossCooldown : aiDifficultyTuning.BonusSuperDashCooldown
+                : 0f;
+            hellBonusShieldCooldownDuration = hellEnhanced
+                ? skillLevel >= 11 ? aiDifficultyTuning.BonusShieldBossCooldown : aiDifficultyTuning.BonusShieldCooldown
+                : 0f;
 
             if (Side == 1)
             {
@@ -1570,7 +1624,7 @@ namespace BasketballLegends2020
 
             energyBar = IsHuman ? new BLEnergyBarView(parent, brainSlot, superId, superCoolDown) : null;
             teleportFx = superId == 0 || superId == 2 ? new BLTeleportFx(parent) : null;
-            shield = superId == 1 ? new BLShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent) : null;
+            shield = superId == 1 || hellEnhanced ? new BLShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent) : null;
 
             Restart(0);
         }
@@ -1620,6 +1674,7 @@ namespace BasketballLegends2020
             teamMate = GameCore.GetTeamMate(Side, playerNo);
             superDashHits.Clear();
             isSuperShot = false;
+            hellNativeSuperRefundPending = false;
             GameCore.IsSuperShot = false;
             teleportFx?.Hide();
             shield?.Reset();
@@ -1633,6 +1688,23 @@ namespace BasketballLegends2020
             Position = new Vector2(x, BLObjectsData.PlayerIndentY);
             pointOfThrow = Position.x;
             IsGrounded = true;
+            if (!hellOpeningChargeApplied && hellEnhanced && superCoolDown > 0f)
+            {
+                superChargeTime = Mathf.Max(superChargeTime, superCoolDown * aiDifficultyTuning.OpeningSuperChargeFraction);
+                hellOpeningChargeApplied = true;
+            }
+
+            if (superCoolDown <= 0f)
+            {
+                readyForSuper = true;
+                superChargeTime = 0f;
+            }
+            else
+            {
+                superChargeTime = Mathf.Clamp(superChargeTime, 0f, superCoolDown);
+                readyForSuper = superChargeTime >= superCoolDown;
+            }
+
             PlayState("idle");
             controller.Restart(startSide);
             energyBar?.SetCharge(superCoolDown <= 0f ? 1f : superChargeTime / superCoolDown);
@@ -1643,6 +1715,8 @@ namespace BasketballLegends2020
         {
             teleportFx?.Update(dt);
             shield?.Update(dt);
+            hellBonusSuperDashCooldownTimer = Mathf.Max(0f, hellBonusSuperDashCooldownTimer - dt);
+            hellBonusShieldCooldownTimer = Mathf.Max(0f, hellBonusShieldCooldownTimer - dt);
 
             if (!readyForSuper && !isSuperShot && superCoolDown > 0f)
             {
@@ -2017,6 +2091,11 @@ namespace BasketballLegends2020
             return shield != null && shield.TryBlockBall(ball);
         }
 
+        public float GetStealDistanceBonus()
+        {
+            return hellEnhanced ? aiDifficultyTuning.StealRangeBonus : 0f;
+        }
+
         public float GetCollisionMass()
         {
             return HasGroundBlockBody ? GroundBlockCollisionMass : GroundCollisionMass;
@@ -2094,7 +2173,7 @@ namespace BasketballLegends2020
             GetBeStolen(Position.x, false);
         }
 
-        public float CheckToBeStolen(float thiefX, float thiefFacingScaleX)
+        public float CheckToBeStolen(float thiefX, float thiefFacingScaleX, float stealDistance)
         {
             if (!IsGrounded || stunTimer > 0f || removedFromPlay || isSuperShot)
             {
@@ -2103,12 +2182,12 @@ namespace BasketballLegends2020
 
             if (thiefFacingScaleX >= 0f)
             {
-                return Position.x >= thiefX && Position.x <= thiefX + BLObjectsData.StealDistance
+                return Position.x >= thiefX && Position.x <= thiefX + stealDistance
                     ? Mathf.Abs(Position.x - thiefX)
                     : -1f;
             }
 
-            return Position.x >= thiefX - BLObjectsData.StealDistance && Position.x <= thiefX
+            return Position.x >= thiefX - stealDistance && Position.x <= thiefX
                 ? Mathf.Abs(Position.x - thiefX)
                 : -1f;
         }
@@ -2128,7 +2207,8 @@ namespace BasketballLegends2020
             pendingGroundThrow = false;
             canThrow = false;
             attackJump = false;
-            stunTimer = Mathf.Max(stunTimer, BLObjectsData.StunDuration);
+            var stunDuration = BLObjectsData.StunDuration * (hellEnhanced ? aiDifficultyTuning.StunDurationMultiplier : 1f);
+            stunTimer = Mathf.Max(stunTimer, stunDuration);
             canDoAction = false;
             jumpBlockActive = false;
             canTakeInHands = false;
@@ -2209,14 +2289,14 @@ namespace BasketballLegends2020
                     return false;
                 }
 
-                StartSuper();
+                StartSuper(true);
                 MakeMegaDunk();
                 return true;
             }
 
             if (superId == 1)
             {
-                StartSuper();
+                StartSuper(true);
                 MakeShield();
                 return true;
             }
@@ -2228,14 +2308,14 @@ namespace BasketballLegends2020
                     return false;
                 }
 
-                StartSuper();
+                StartSuper(true);
                 MakeAlleyOop();
                 return true;
             }
 
             if (superId == 3)
             {
-                StartSuper();
+                StartSuper(true);
                 MakeSuperDash();
                 return true;
             }
@@ -2243,12 +2323,49 @@ namespace BasketballLegends2020
             return false;
         }
 
-        public void StartSuper()
+        public bool TryUseHellBonusSuperDash()
         {
-            readyForSuper = false;
+            if (!CanUseHellBonusSuperDash || GameCore.IsSuperShot || isSuperShot || removedFromPlay || !IsGrounded || stunTimer > 0f || isDunking)
+            {
+                return false;
+            }
+
+            StartSuper(false);
+            MakeSuperDash();
+            hellBonusSuperDashCooldownTimer = hellBonusSuperDashCooldownDuration;
+            GameCore.ShowHudBonusNotice("HELL DASH!", 0.9f);
+            return true;
+        }
+
+        public bool TryUseHellBonusShield()
+        {
+            if (!CanUseHellBonusShield || GameCore.IsSuperShot || isSuperShot || removedFromPlay || stunTimer > 0f || isDunking)
+            {
+                return false;
+            }
+
+            StartSuper(false);
+            MakeShield();
+            hellBonusShieldCooldownTimer = hellBonusShieldCooldownDuration;
+            GameCore.ShowHudBonusNotice("HELL SHIELD!", 0.95f);
+            return true;
+        }
+
+        private void StartSuper(bool consumeNativeCharge)
+        {
             isSuperShot = true;
-            superChargeTime = 0f;
-            energyBar?.SetCharge(0f);
+            if (consumeNativeCharge)
+            {
+                readyForSuper = false;
+                superChargeTime = 0f;
+                energyBar?.SetCharge(0f);
+                hellNativeSuperRefundPending = hellEnhanced && aiDifficultyTuning.NativeSuperRefundFraction > 0f;
+            }
+            else
+            {
+                hellNativeSuperRefundPending = false;
+            }
+
             GameCore.IsSuperShot = true;
             pendingGroundThrow = false;
             CancelStealAnimation(false);
@@ -2257,13 +2374,21 @@ namespace BasketballLegends2020
             dashTimer = 0f;
         }
 
-        public void EndSuper()
+        private void EndSuper()
         {
             isSuperShot = false;
             GameCore.IsSuperShot = false;
             superPhase = SuperPhase.None;
             graphicScaleMultiplier = 1f;
             removedFromPlay = false;
+            if (hellNativeSuperRefundPending && superCoolDown > 0f)
+            {
+                superChargeTime = Mathf.Min(superCoolDown, superChargeTime + superCoolDown * aiDifficultyTuning.NativeSuperRefundFraction);
+                readyForSuper = superChargeTime >= superCoolDown;
+                energyBar?.SetCharge(superChargeTime / superCoolDown);
+            }
+
+            hellNativeSuperRefundPending = false;
         }
 
         private void MakeMegaDunk()
