@@ -27,6 +27,10 @@ namespace BasketballLegends2020.EditorTools
                 CheckResource<Font>("BL2020/Fonts/Rajdhani-SemiBold", errors);
                 CheckResource<Font>("BL2020/Fonts/Rajdhani-Bold", errors);
                 CheckResource<Font>("BL2020/Fonts/Griffy-Regular", errors);
+                CheckResource<Texture2D>("BL2020/Images/pause_button", errors);
+                CheckResource<Texture2D>("BL2020/Images/music_button_on", errors);
+                CheckResource<Texture2D>("BL2020/Images/music_button_off", errors);
+                CheckResource<Texture2D>("BL2020/Images/help_button", errors);
                 CheckResource<Texture2D>("BL2020/Hud/scoreboard_halloween", errors);
                 CheckResource<Texture2D>("BL2020/Hud/popup_halloween", errors);
                 CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_ghoul_green", errors);
@@ -96,7 +100,9 @@ namespace BasketballLegends2020.EditorTools
                 ValidateDifficultyCycleAndSkillMapping(errors);
                 ValidateTournamentSeasonMode(errors, BLAiDifficulty.Normal, "normal");
                 ValidateTournamentSeasonMode(errors, BLAiDifficulty.Hard, "hard");
+                ValidateTournamentSeasonMode(errors, BLAiDifficulty.Hell, "hell");
                 ValidateHardTournamentSkillMapping(errors);
+                ValidateHellTournamentSkillMapping(errors);
                 ValidateBallSelectionStateAndResolution(errors);
 
                 root = new GameObject("SmokeRuntimeRoot");
@@ -404,9 +410,15 @@ namespace BasketballLegends2020.EditorTools
                 }
 
                 inventory.ToggleDifficulty();
+                if (inventory.Difficulty != BLAiDifficulty.Hell || inventory.DifficultyLabel != "AI: HELL")
+                {
+                    errors.Add("Difficulty toggle did not advance from Hard to Hell.");
+                }
+
+                inventory.ToggleDifficulty();
                 if (inventory.Difficulty != BLAiDifficulty.Easy || inventory.DifficultyLabel != "AI: EASY")
                 {
-                    errors.Add("Difficulty toggle did not cycle from Hard back to Easy.");
+                    errors.Add("Difficulty toggle did not cycle from Hell back to Easy.");
                 }
 
                 var matchData = new BLMatchData(true);
@@ -415,6 +427,12 @@ namespace BasketballLegends2020.EditorTools
 
                 matchData.StartRandomMatch(0, BLAiDifficulty.Hard);
                 AssertOpponentSkill(matchData, 5, errors, "Random Match hard mapping");
+
+                matchData.StartQuickMatch(0, BLAiDifficulty.Hell);
+                AssertOpponentSkill(matchData, 10, errors, "Quick Match hell mapping");
+
+                matchData.StartRandomMatch(0, BLAiDifficulty.Hell);
+                AssertOpponentSkill(matchData, 10, errors, "Random Match hell mapping");
             }
             finally
             {
@@ -550,6 +568,68 @@ namespace BasketballLegends2020.EditorTools
             AssertOpponentSkill(thirdPlaceMatchData, 7, errors, "Hard tournament third-place match");
         }
 
+        private static void ValidateHellTournamentSkillMapping(List<string> errors)
+        {
+            var tournament = new BLTournamentData();
+            if (!tournament.Create(0, BLAiDifficulty.Hell))
+            {
+                errors.Add("Hell tournament mapping test could not create a tournament.");
+                return;
+            }
+
+            var matchData = new BLMatchData(true);
+            var expectedRoundSkills = new[] { 8, 9, 10 };
+            for (var round = 0; round < expectedRoundSkills.Length; round++)
+            {
+                matchData.StartTournamentMatch(tournament);
+                AssertOpponentSkill(matchData, expectedRoundSkills[round], errors, $"Hell tournament round {round + 1}");
+                tournament.ApplyCurrentMatchResult(34 + round, 18 + round);
+            }
+
+            tournament.BeginFinals();
+            if (tournament.CurrentStage != BLTournamentStage.SemiFinal || !tournament.HasPendingPlayerMatch)
+            {
+                errors.Add("Hell tournament did not open a pending semifinal after finals start.");
+                return;
+            }
+
+            matchData.StartTournamentMatch(tournament);
+            AssertOpponentSkill(matchData, 10, errors, "Hell tournament semifinal");
+
+            tournament.ApplyCurrentMatchResult(36, 22);
+            matchData.StartTournamentMatch(tournament);
+            AssertOpponentSkill(matchData, 11, errors, "Hell tournament final");
+
+            var thirdPlaceTournament = new BLTournamentData();
+            if (!thirdPlaceTournament.Create(0, BLAiDifficulty.Hell))
+            {
+                errors.Add("Hell third-place mapping test could not create a tournament.");
+                return;
+            }
+
+            var thirdPlaceMatchData = new BLMatchData(true);
+            for (var round = 0; round < expectedRoundSkills.Length; round++)
+            {
+                thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
+                AssertOpponentSkill(thirdPlaceMatchData, expectedRoundSkills[round], errors, $"Hell tournament third-place path round {round + 1}");
+                thirdPlaceTournament.ApplyCurrentMatchResult(31 + round, 16 + round);
+            }
+
+            thirdPlaceTournament.BeginFinals();
+            thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
+            AssertOpponentSkill(thirdPlaceMatchData, 10, errors, "Hell tournament third-place path semifinal");
+
+            thirdPlaceTournament.ApplyCurrentMatchResult(21, 27);
+            if (thirdPlaceTournament.CurrentStage != BLTournamentStage.ThirdPlace || !thirdPlaceTournament.HasPendingPlayerMatch)
+            {
+                errors.Add("Hell tournament did not route a semifinal loss into a pending third-place match.");
+                return;
+            }
+
+            thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
+            AssertOpponentSkill(thirdPlaceMatchData, 10, errors, "Hell tournament third-place match");
+        }
+
         private static void AssertOpponentSkill(BLMatchData matchData, int expectedSkill, List<string> errors, string context)
         {
             if (matchData.Skills == null || matchData.Skills.Length < 2 || matchData.Skills[1] == null || matchData.Skills[1].Length == 0)
@@ -564,7 +644,7 @@ namespace BasketballLegends2020.EditorTools
                 errors.Add($"{context} expected opponent skill {expectedSkill}, got {actualSkill}.");
             }
 
-            if (actualSkill < 0 || actualSkill > 8)
+            if (actualSkill < 0 || actualSkill > BLAISkillsData.MaxSkillIndex)
             {
                 errors.Add($"{context} produced out-of-range opponent skill {actualSkill}.");
             }
