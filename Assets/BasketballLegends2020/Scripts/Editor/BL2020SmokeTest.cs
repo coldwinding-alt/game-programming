@@ -32,6 +32,10 @@ namespace BasketballLegends2020.EditorTools
                 CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_ghoul_green", errors);
                 CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_pumpkin_ember", errors);
                 CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_moonlit_violet", errors);
+                CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_jack_o_lantern", errors);
+                CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_evil_eye", errors);
+                CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_cursed_8ball", errors);
+                CheckResource<Texture2D>("BL2020/Images/Gameplay/ball_halloween_candy_swirl", errors);
                 CheckResource<TextAsset>("BL2020/DragonBones/sk2", errors);
                 CheckResource<TextAsset>("BL2020/DragonBones/texture2", errors);
                 CheckResource<Texture2D>("BL2020/DragonBones/texture2", errors);
@@ -39,6 +43,10 @@ namespace BasketballLegends2020.EditorTools
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_ghoul_green", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_ghoul_green.png", errors);
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_pumpkin_ember", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_pumpkin_ember.png", errors);
                 ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_moonlit_violet", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_moonlit_violet.png", errors);
+                ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_jack_o_lantern", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_jack_o_lantern.png", errors);
+                ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_evil_eye", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_evil_eye.png", errors);
+                ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_cursed_8ball", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_cursed_8ball.png", errors);
+                ValidateBallSpriteAsset("BL2020/Images/Gameplay/ball_halloween_candy_swirl", "Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_candy_swirl.png", errors);
 
                 if (Shader.Find("BasketballLegends2020/TextMeshOutlined") == null)
                 {
@@ -89,10 +97,12 @@ namespace BasketballLegends2020.EditorTools
                 ValidateTournamentSeasonMode(errors, BLAiDifficulty.Normal, "normal");
                 ValidateTournamentSeasonMode(errors, BLAiDifficulty.Hard, "hard");
                 ValidateHardTournamentSkillMapping(errors);
+                ValidateBallSelectionStateAndResolution(errors);
 
                 root = new GameObject("SmokeRuntimeRoot");
                 BLAudio.Create(root.transform);
                 BLInventory.Instance.SetQuickSelection(0);
+                BLInventory.Instance.SetQuickBallSelection(BLBallSelection.ClassicOriginal);
                 BLInventory.Instance.StartQuickGame();
                 var core = new BLGameBuilder().Build(root.transform);
                 core.Update(0.016f);
@@ -196,6 +206,8 @@ namespace BasketballLegends2020.EditorTools
                 ValidateCornerAlpha(inspector, resourcePath, inspector.width - 1, 0, errors);
                 ValidateCornerAlpha(inspector, resourcePath, 0, inspector.height - 1, errors);
                 ValidateCornerAlpha(inspector, resourcePath, inspector.width - 1, inspector.height - 1, errors);
+                ValidateBallBounds(inspector, resourcePath, errors);
+                ValidateNoWhiteHalo(inspector, resourcePath, errors);
             }
             finally
             {
@@ -208,6 +220,161 @@ namespace BasketballLegends2020.EditorTools
             if (texture.GetPixel(x, y).a > 0.03f)
             {
                 errors.Add($"{resourcePath} corner ({x},{y}) should stay transparent for rotation.");
+            }
+        }
+
+        private static void ValidateBallBounds(Texture2D texture, string resourcePath, List<string> errors)
+        {
+            var minX = texture.width;
+            var minY = texture.height;
+            var maxX = -1;
+            var maxY = -1;
+
+            for (var y = 0; y < texture.height; y++)
+            {
+                for (var x = 0; x < texture.width; x++)
+                {
+                    if (texture.GetPixel(x, y).a <= 0.03f)
+                    {
+                        continue;
+                    }
+
+                    minX = Math.Min(minX, x);
+                    minY = Math.Min(minY, y);
+                    maxX = Math.Max(maxX, x);
+                    maxY = Math.Max(maxY, y);
+                }
+            }
+
+            if (minX != 0 || minY != 0 || maxX != texture.width - 1 || maxY != texture.height - 1)
+            {
+                errors.Add($"{resourcePath} expected a full-footprint ball within the 36x36 canvas, got x={minX}..{maxX}, y={minY}..{maxY}.");
+            }
+        }
+
+        private static void ValidateNoWhiteHalo(Texture2D texture, string resourcePath, List<string> errors)
+        {
+            for (var y = 0; y < texture.height; y++)
+            {
+                for (var x = 0; x < texture.width; x++)
+                {
+                    var pixel = texture.GetPixel(x, y);
+                    if (pixel.a <= 0f || pixel.a >= 0.999f)
+                    {
+                        continue;
+                    }
+
+                    if (pixel.r > 0.92f && pixel.g > 0.92f && pixel.b > 0.92f)
+                    {
+                        errors.Add($"{resourcePath} has a near-white semi-transparent edge pixel at ({x},{y}); this can reintroduce a white halo in Unity.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        private static void ValidateBallSelectionStateAndResolution(List<string> errors)
+        {
+            var inventory = BLInventory.Instance;
+            var originalRandomState = UnityEngine.Random.state;
+            var originalQuickBall = inventory.SelectedQuickBallSelection;
+            var originalTournamentBall = inventory.SelectedTournamentBallSelection;
+            var originalTrainingBall = inventory.SelectedTrainingBallSelection;
+            var originalVersusBall = inventory.SelectedVersusBallSelection;
+            var originalQuickCharacter = inventory.SelectedQuickCharacterId;
+            var originalTournamentCharacter = inventory.SelectedTournamentCharacterId;
+            var originalTrainingCharacter = inventory.SelectedTrainingCharacterId;
+            var originalDifficulty = inventory.Difficulty;
+            var originalParticipantMode = inventory.ParticipantMode;
+            var originalSessionMode = inventory.SessionMode;
+            var originalGameMode = inventory.GameMode;
+            var originalMatchPrepared = inventory.MatchPrepared;
+            var originalTournament = inventory.Tournament;
+
+            try
+            {
+                if (BLAssets.Images.BallTheme(BLBallTheme.ClassicOriginal) != null)
+                {
+                    errors.Add("Classic ball theme should stay atlas-backed and not resolve to an external image path.");
+                }
+
+                if (BLGameplaySpriteLoader.LoadBallThemeSprite(BLBallTheme.ClassicOriginal, 0.5f, 0.5f) != null)
+                {
+                    errors.Add("Classic ball theme unexpectedly resolved through the external ball sprite loader.");
+                }
+
+                inventory.SetQuickSelection(0);
+                inventory.SetQuickBallSelection(BLBallSelection.GhoulGreen);
+                inventory.Difficulty = BLAiDifficulty.Normal;
+                inventory.StartQuickGame();
+                if (inventory.MatchData.BallTheme != BLBallTheme.GhoulGreen)
+                {
+                    errors.Add("Quick Match did not use the quick-mode ball selection.");
+                }
+
+                inventory.SetTrainingSelection(1);
+                inventory.SetTrainingBallSelection(BLBallSelection.EvilEye);
+                inventory.StartTraining();
+                if (inventory.MatchData.BallTheme != BLBallTheme.EvilEye)
+                {
+                    errors.Add("Training did not use the training-mode ball selection.");
+                }
+
+                inventory.SetVersusBallSelection(BLBallSelection.Cursed8Ball);
+                inventory.StartTwoPlayerVersus(0, 1);
+                if (inventory.MatchData.BallTheme != BLBallTheme.Cursed8Ball)
+                {
+                    errors.Add("2 Players did not use the versus-mode ball selection.");
+                }
+
+                inventory.SetTournamentSelection(0);
+                inventory.SetTournamentBallSelection(BLBallSelection.CandySwirl);
+                inventory.Difficulty = BLAiDifficulty.Normal;
+                if (!inventory.BeginTournament())
+                {
+                    errors.Add("Tournament ball selection test could not create a tournament.");
+                }
+                else if (inventory.MatchData.BallTheme != BLBallTheme.CandySwirl)
+                {
+                    errors.Add("Tournament did not use the tournament-mode ball selection.");
+                }
+
+                var randomMatchData = new BLMatchData(true);
+                var seenThemes = new HashSet<BLBallTheme>();
+                UnityEngine.Random.InitState(24680);
+                for (var i = 0; i < 16; i++)
+                {
+                    randomMatchData.StartQuickMatch(0, BLAiDifficulty.Normal, BLBallSelection.Random);
+                    seenThemes.Add(randomMatchData.BallTheme);
+                }
+
+                if (seenThemes.Count < 2)
+                {
+                    errors.Add("Random ball selection did not reroll across repeated match starts.");
+                }
+
+                randomMatchData.StartQuickMatch(0, BLAiDifficulty.Normal, BLBallSelection.ClassicOriginal);
+                if (randomMatchData.BallTheme != BLBallTheme.ClassicOriginal)
+                {
+                    errors.Add("Classic ball selection did not resolve to the classic ball theme.");
+                }
+            }
+            finally
+            {
+                UnityEngine.Random.state = originalRandomState;
+                inventory.SelectedQuickBallSelection = originalQuickBall;
+                inventory.SelectedTournamentBallSelection = originalTournamentBall;
+                inventory.SelectedTrainingBallSelection = originalTrainingBall;
+                inventory.SelectedVersusBallSelection = originalVersusBall;
+                inventory.SelectedQuickCharacterId = originalQuickCharacter;
+                inventory.SelectedTournamentCharacterId = originalTournamentCharacter;
+                inventory.SelectedTrainingCharacterId = originalTrainingCharacter;
+                inventory.Difficulty = originalDifficulty;
+                inventory.ParticipantMode = originalParticipantMode;
+                inventory.SessionMode = originalSessionMode;
+                inventory.GameMode = originalGameMode;
+                inventory.MatchPrepared = originalMatchPrepared;
+                inventory.Tournament = originalTournament ?? new BLTournamentData();
             }
         }
 
