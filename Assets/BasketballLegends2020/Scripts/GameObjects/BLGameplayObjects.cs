@@ -293,7 +293,7 @@ namespace BasketballLegends2020
             guaranteedDunkScore = completed;
             if (completed)
             {
-                // Original dunk flow is intended to resolve as a make most of the time once released.
+                // Completed dunks should resolve as made baskets once the ball is released.
                 // Priming the upper sensor avoids false "down-first" misses from coarse substeps.
                 upperSensorPassed = true;
                 scoreArmedSide = side;

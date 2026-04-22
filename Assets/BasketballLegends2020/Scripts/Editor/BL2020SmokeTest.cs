@@ -26,7 +26,7 @@ namespace BasketballLegends2020.EditorTools
                 var gameplay = BLAtlasCache.Instance.Gameplay;
                 if (!gameplay.HasFrame("0bg_gameplay0000") || !gameplay.HasFrame("BallMC0000"))
                 {
-                    errors.Add("Gameplay atlas did not expose expected original frame keys.");
+                    errors.Add("Gameplay atlas did not expose the expected frame keys.");
                 }
 
                 if (!gameplay.HasFrame("ShieldMC20000") || !gameplay.HasFrame("teleport30000"))
