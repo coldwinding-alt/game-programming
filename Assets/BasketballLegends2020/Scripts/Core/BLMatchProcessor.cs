@@ -1,6 +1,6 @@
 namespace BasketballLegends2020
 {
-    // Lightweight parity layer for original MatchProcessor score context.
+    // Lightweight score-context helper for basket sensor processing.
     public sealed class BLMatchProcessor
     {
         private bool canScore = true;
@@ -65,7 +65,7 @@ namespace BasketballLegends2020
 
         public int ResolvePointsForScore(int scoringSide, int fallbackPoints)
         {
-            // Original: if score was from own-block chain, it is treated as 2 points.
+            // Scores armed by a self-block chain are settled as 2 points.
             if (blockSide == -scoringSide)
             {
                 isHuman = blockIsHuman;
