@@ -14,7 +14,7 @@ Updated: `2026-04-22`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
-| 2026-04-22 | Core Halloween SFX regeneration pass | Partial pass | Rebuilt the actively used skill, UI, and match-state cues as new generated `wav` assets, confirmed there are no duplicate audio basenames in `Resources/BL2020/Sound`, and ran batch smoke up to runtime resource validation; the only failures remained the existing `ball_halloween_*` `32x32` checks in `Logs/audio_core_sfx_smoke.log`, not the new audio set |
+| 2026-04-22 | Core Halloween audio revision pass | Partial pass | Replaced `24_TrackSnd.ogg` with a more energetic public `CC0` Halloween action loop, retuned the generated core SFX toward a darker and less synthetic mix, and kept the resource keys stable; Unity smoke remains blocked only by the existing `ball_halloween_*` `32x32` checks in `Logs/audio_core_sfx_smoke.log`, not the revised audio set |
 | 2026-04-22 | Batch smoke after Halloween skill FX split (`BL2020SmokeTest.Run`) | Pass | New `Resources/BL2020/Atlases/skillfx` atlas resolved, `BLShieldObject` and `BLTeleportFx` loaded from the dedicated atlas, and the updated `texture2.png` supersheet still booted in batch mode |
 | 2026-04-22 | Batch smoke after Halloween ball/hoop hookup (`BL2020SmokeTest.Run`) | Pass | New `Resources/BL2020/Images/Gameplay` textures resolved, gameplay booted in batch mode, and the match-scoped random ball theme code compiled successfully |
 | 2026-04-22 | Batch smoke (`BL2020SmokeTest.Run`) | Pass | Project compiled and the current playable flow booted successfully after the latest roster/UI adjustments |

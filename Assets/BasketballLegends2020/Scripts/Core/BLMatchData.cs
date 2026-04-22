@@ -8,7 +8,8 @@ namespace BasketballLegends2020
     {
         Easy,
         Normal,
-        Hard
+        Hard,
+        Hell
     }
 
     public enum BLParticipantMode
@@ -301,6 +302,8 @@ namespace BasketballLegends2020
             {
                 case BLAiDifficulty.Easy:
                     return 1;
+                case BLAiDifficulty.Hell:
+                    return 10;
                 case BLAiDifficulty.Hard:
                     return 5;
                 default:
@@ -337,6 +340,16 @@ namespace BasketballLegends2020
                         _ => 5
                     };
                     break;
+                case BLAiDifficulty.Hell:
+                    skill = tournament.CurrentStage switch
+                    {
+                        BLTournamentStage.RegularSeason => 8 + Mathf.Clamp(tournament.CurrentRegularSeasonRoundIndex, 0, 2),
+                        BLTournamentStage.SemiFinal => 10,
+                        BLTournamentStage.ThirdPlace => 10,
+                        BLTournamentStage.Final => 11,
+                        _ => 8
+                    };
+                    break;
                 default:
                     skill = tournament.CurrentStage switch
                     {
@@ -348,7 +361,7 @@ namespace BasketballLegends2020
                     break;
             }
 
-            return Mathf.Clamp(skill, 0, 8);
+            return Mathf.Clamp(skill, 0, BLAISkillsData.MaxSkillIndex);
         }
 
         public void RollBallTheme()
@@ -407,6 +420,7 @@ namespace BasketballLegends2020
         {
             BLAiDifficulty.Easy => "AI: EASY",
             BLAiDifficulty.Hard => "AI: HARD",
+            BLAiDifficulty.Hell => "AI: HELL",
             _ => "AI: NORMAL"
         };
 
@@ -418,6 +432,7 @@ namespace BasketballLegends2020
             {
                 BLAiDifficulty.Easy => BLAiDifficulty.Normal,
                 BLAiDifficulty.Normal => BLAiDifficulty.Hard,
+                BLAiDifficulty.Hard => BLAiDifficulty.Hell,
                 _ => BLAiDifficulty.Easy
             };
         }
