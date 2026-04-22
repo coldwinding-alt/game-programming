@@ -71,6 +71,7 @@ namespace BasketballLegends2020
 
     public sealed class DBLiteArmature : MonoBehaviour
     {
+        private const float SlotDepthStep = 0.001f;
         private DBLiteFactory factory;
         private DBLiteArmatureData data;
         private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>();
@@ -257,6 +258,7 @@ namespace BasketballLegends2020
 
                 var slotGo = new GameObject(slotData.Name);
                 slotGo.transform.SetParent(parent, false);
+                slotGo.transform.localPosition = new Vector3(0f, 0f, -slotData.Order * SlotDepthStep);
                 var slot = new DBLiteSlotInstance(slotData, data.GetDisplays(slotData.Name), slotGo.transform, factory);
                 slots[slotData.Name] = slot;
             }
@@ -289,7 +291,9 @@ namespace BasketballLegends2020
                     pose = pose.Combine(track.Sample(animFrame));
                 }
 
-                transform.localPosition = new Vector3(pose.X, -pose.Y, 0f);
+                transform.localPosition = BLConstants.SnapLocalPositionToScreenPixels(
+                    transform.parent,
+                    new Vector3(pose.X, -pose.Y, 0f));
                 transform.localRotation = Quaternion.Euler(0f, 0f, -pose.Rotation);
                 transform.localScale = new Vector3(pose.ScaleX, pose.ScaleY, 1f);
             }
@@ -949,7 +953,9 @@ namespace BasketballLegends2020
 
         private static void ApplyDisplayTransform(Transform transform, DBLiteTransform displayTransform)
         {
-            transform.localPosition = new Vector3(displayTransform.X, -displayTransform.Y, 0f);
+            transform.localPosition = BLConstants.SnapLocalPositionToScreenPixels(
+                transform.parent,
+                new Vector3(displayTransform.X, -displayTransform.Y, 0f));
             transform.localRotation = Quaternion.Euler(0f, 0f, -displayTransform.Rotation);
             transform.localScale = new Vector3(displayTransform.ScaleX, displayTransform.ScaleY, 1f);
         }

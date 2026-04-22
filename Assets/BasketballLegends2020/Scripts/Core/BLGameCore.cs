@@ -164,6 +164,7 @@ namespace BasketballLegends2020
                 player.Update(dt);
             }
 
+            ResolvePlayerBlocking();
             TryBlockBall();
             TryPickupLooseBall();
 
@@ -345,6 +346,63 @@ namespace BasketballLegends2020
             }
 
             return true;
+        }
+
+        private void ResolvePlayerBlocking()
+        {
+            if (playersLeft.Count == 0 || playersRight.Count == 0 || IsSuperShot)
+            {
+                return;
+            }
+
+            var left = playersLeft[0];
+            var right = playersRight[0];
+            if (left == null || right == null || !left.CanResolveGroundBlock || !right.CanResolveGroundBlock)
+            {
+                return;
+            }
+
+            if (!left.HasGroundBlockBody && !right.HasGroundBlockBody)
+            {
+                return;
+            }
+
+            var deltaX = right.Position.x - left.Position.x;
+            var overlapX = BLObjectsData.BlockWidth - Mathf.Abs(deltaX);
+            if (overlapX <= 0f)
+            {
+                return;
+            }
+
+            var overlapY = BLObjectsData.BlockHeight - Mathf.Abs(right.Position.y - left.Position.y);
+            if (overlapY <= 0f)
+            {
+                return;
+            }
+
+            var leftApproaching = left.IsMovingToward(right);
+            var rightApproaching = right.IsMovingToward(left);
+            if (!leftApproaching && !rightApproaching)
+            {
+                return;
+            }
+
+            var leftMass = left.GetCollisionMass();
+            var rightMass = right.GetCollisionMass();
+            var totalMass = Mathf.Max(0.001f, leftMass + rightMass);
+            var separationSign = deltaX >= 0f ? 1f : -1f;
+            left.ApplyHorizontalSeparation(-overlapX * (rightMass / totalMass) * separationSign);
+            right.ApplyHorizontalSeparation(overlapX * (leftMass / totalMass) * separationSign);
+
+            if (left.HasGroundBlockBody && right.IsDashingInto(left))
+            {
+                right.InterruptDashByBlock();
+            }
+
+            if (right.HasGroundBlockBody && left.IsDashingInto(right))
+            {
+                left.InterruptDashByBlock();
+            }
         }
 
         private bool IsThreePointer(int scoringSide)

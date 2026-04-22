@@ -15,6 +15,7 @@ namespace BasketballLegends2020
             public int SuperId;
             public bool Enabled;
             public string PortraitSpriteName;
+            public float HeadOffsetX;
             public float HeadOffsetY;
             public float HeadScale = 1f;
             public float PreviewScaleMultiplier = 1f;
@@ -28,13 +29,13 @@ namespace BasketballLegends2020
         private static readonly BLCharacterDefinition[] CharacterDefinitions =
         {
             new BLCharacterDefinition { DisplayName = "PUMPKIN", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "LeBron James0", HeadOffsetY = 0f, HeadScale = 1f, PreviewScaleMultiplier = 0.98f, PortraitScaleMultiplier = 1.02f },
-            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 5, FormIndex = 2, SuperId = 0, Enabled = true, PortraitSpriteName = "Draymond Green0", HeadOffsetY = -4.75f, HeadScale = 0.94f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 0.92f, PortraitOffsetY = 8f },
-            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 8, FormIndex = 4, SuperId = 1, Enabled = true, PortraitSpriteName = "Brook Lopez", HeadOffsetY = -7f, HeadScale = 0.97f, PreviewScaleMultiplier = 0.94f, PreviewOffsetY = -3f, PortraitScaleMultiplier = 1.02f, PortraitOffsetY = 10f },
-            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 11, FormIndex = 6, SuperId = 2, Enabled = true, PortraitSpriteName = "Marcus Smart0", HeadOffsetY = -6f, HeadScale = 0.98f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 9f },
-            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 13, FormIndex = 8, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetY = 2.75f, HeadScale = 0.92f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f },
-            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 14, FormIndex = 9, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 4.25f, HeadScale = 1.03f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -6f },
-            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 15, FormIndex = 10, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_witch", HeadOffsetY = 4.25f, HeadScale = 1.08f, PreviewScaleMultiplier = 0.98f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.12f, PortraitOffsetY = -8f },
-            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 16, FormIndex = 11, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetY = 4.25f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -4f }
+            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 5, FormIndex = 2, SuperId = 0, Enabled = true, PortraitSpriteName = "Draymond Green0", HeadOffsetX = 4.5f, HeadOffsetY = -5.5f, HeadScale = 0.94f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 0.92f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 8, FormIndex = 4, SuperId = 1, Enabled = true, PortraitSpriteName = "Brook Lopez", HeadOffsetY = -7f, HeadScale = 0.97f, PreviewScaleMultiplier = 0.94f, PreviewOffsetY = -3f, PortraitScaleMultiplier = 1.02f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 11, FormIndex = 6, SuperId = 2, Enabled = true, PortraitSpriteName = "Marcus Smart0", HeadOffsetY = -6f, HeadScale = 0.98f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 13, FormIndex = 8, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetX = 2.75f, HeadOffsetY = -1.5f, HeadScale = 0.92f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f },
+            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 14, FormIndex = 9, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 0f, HeadScale = 1.03f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -6f },
+            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 15, FormIndex = 10, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_witch", HeadOffsetX = 3.5f, HeadOffsetY = -0.75f, HeadScale = 1.08f, PreviewScaleMultiplier = 0.98f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.12f, PortraitOffsetY = -8f },
+            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 16, FormIndex = 11, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetY = -0.5f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -4f }
         };
 
         private static readonly int[] Hands =
@@ -276,9 +277,10 @@ namespace BasketballLegends2020
             if (head != null)
             {
                 var headPosition = head.transform.localPosition;
+                headPosition.x = definition.HeadOffsetX;
                 headPosition.y = definition.HeadOffsetY;
                 headPosition.z = 0f;
-                head.transform.localPosition = headPosition;
+                head.transform.localPosition = BLConstants.SnapLocalPositionToScreenPixels(head.transform.parent, headPosition);
                 head.transform.localScale = new Vector3(definition.HeadScale, definition.HeadScale, 1f);
             }
 
@@ -288,7 +290,7 @@ namespace BasketballLegends2020
                 var bodyPosition = body.transform.localPosition;
                 bodyPosition.y = 0f;
                 bodyPosition.z = 0f;
-                body.transform.localPosition = bodyPosition;
+                body.transform.localPosition = BLConstants.SnapLocalPositionToScreenPixels(body.transform.parent, bodyPosition);
                 body.transform.localScale = Vector3.one;
             }
         }

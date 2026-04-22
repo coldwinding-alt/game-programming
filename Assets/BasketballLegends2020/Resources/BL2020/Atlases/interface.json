@@ -385,67 +385,67 @@
 	"sourceSize": {"w":45,"h":45}
 },
 "icon_ball0000":
-{
-	"frame": {"x":1280,"y":1448,"w":67,"h":64},
-	"rotated": false,
-	"trimmed": true,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":900,"y":1540,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball0001":
-{
-	"frame": {"x":935,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":969,"y":1540,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball0002":
-{
-	"frame": {"x":935,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":1038,"y":1540,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball0003":
-{
-	"frame": {"x":1004,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":1107,"y":1540,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball20000":
-{
-	"frame": {"x":1073,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":900,"y":1609,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball20001":
-{
-	"frame": {"x":1142,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":969,"y":1609,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball20002":
-{
-	"frame": {"x":1142,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
-	"sourceSize": {"w":67,"h":67}
-},
+	{
+		"frame": {"x":1038,"y":1609,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+		"sourceSize": {"w":67,"h":67}
+	},
 "icon_ball20003":
-{
-	"frame": {"x":1211,"y":1448,"w":67,"h":67},
-	"rotated": false,
-	"trimmed": false,
-	"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
+	{
+		"frame": {"x":1107,"y":1609,"w":67,"h":67},
+		"rotated": false,
+		"trimmed": false,
+		"spriteSourceSize": {"x":0,"y":0,"w":67,"h":67},
 	"sourceSize": {"w":67,"h":67}
 },
 "keybrd_plate0000":
