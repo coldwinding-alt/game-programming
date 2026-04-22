@@ -151,89 +151,22 @@ namespace BasketballLegends2020
         CfCrackBold
     }
 
-    public sealed class BLTextSync : MonoBehaviour
-    {
-        public TextMesh Source;
-        public TextMesh[] Mirrors;
-        private MeshRenderer sourceRenderer;
-        private readonly List<MeshRenderer> mirrorRenderers = new List<MeshRenderer>();
-
-        private void Awake()
-        {
-            sourceRenderer = GetComponent<MeshRenderer>();
-            mirrorRenderers.Clear();
-            if (Mirrors == null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < Mirrors.Length; i++)
-            {
-                if (Mirrors[i] != null)
-                {
-                    mirrorRenderers.Add(Mirrors[i].GetComponent<MeshRenderer>());
-                }
-            }
-        }
-
-        private void LateUpdate()
-        {
-            if (Source == null || Mirrors == null)
-            {
-                return;
-            }
-
-            if (sourceRenderer == null)
-            {
-                sourceRenderer = GetComponent<MeshRenderer>();
-            }
-
-            var visible = !string.IsNullOrEmpty(Source.text);
-            if (sourceRenderer != null)
-            {
-                sourceRenderer.enabled = visible;
-                if (Source.font != null)
-                {
-                    sourceRenderer.sharedMaterial = Source.font.material;
-                }
-            }
-
-            for (var i = 0; i < Mirrors.Length; i++)
-            {
-                var mirror = Mirrors[i];
-                if (mirror == null)
-                {
-                    continue;
-                }
-
-                mirror.text = Source.text;
-                mirror.font = Source.font;
-                mirror.fontSize = Source.fontSize;
-                mirror.characterSize = Source.characterSize;
-                mirror.anchor = Source.anchor;
-                mirror.alignment = Source.alignment;
-
-                var renderer = mirror.GetComponent<MeshRenderer>();
-                if (renderer != null)
-                {
-                    renderer.enabled = visible;
-                    if (mirror.font != null)
-                    {
-                        renderer.sharedMaterial = mirror.font.material;
-                    }
-                }
-            }
-        }
-    }
-
     public static class BLFontCache
     {
-        private static readonly Dictionary<string, Font> Fonts = new Dictionary<string, Font>();
+        private static readonly Dictionary<BLFontKind, Font> ResourceFonts = new Dictionary<BLFontKind, Font>();
+        private static readonly Dictionary<string, Font> FallbackFonts = new Dictionary<string, Font>();
+        private static readonly HashSet<BLFontKind> MissingResourceWarnings = new HashSet<BLFontKind>();
 
         public static Font Get(BLFontKind fontKind, int fontSize)
         {
+            var resourceFont = GetResourceFont(fontKind);
+            if (resourceFont != null)
+            {
+                return resourceFont;
+            }
+
             var cacheKey = $"{fontKind}:{fontSize}";
-            if (Fonts.TryGetValue(cacheKey, out var cached))
+            if (FallbackFonts.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
             }
@@ -258,8 +191,140 @@ namespace BasketballLegends2020
                     break;
             }
 
-            Fonts[cacheKey] = font;
+            PrepareFont(font);
+            FallbackFonts[cacheKey] = font;
             return font;
+        }
+
+        private static Font GetResourceFont(BLFontKind fontKind)
+        {
+            if (ResourceFonts.TryGetValue(fontKind, out var cached))
+            {
+                return cached;
+            }
+
+            var font = Resources.Load<Font>(GetResourcePath(fontKind));
+            if (font == null)
+            {
+                if (MissingResourceWarnings.Add(fontKind))
+                {
+                    Debug.LogWarning($"Missing bundled font resource for {fontKind}, falling back to OS fonts.");
+                }
+
+                return null;
+            }
+
+            PrepareFont(font);
+            ResourceFonts[fontKind] = font;
+            return font;
+        }
+
+        private static string GetResourcePath(BLFontKind fontKind)
+        {
+            switch (fontKind)
+            {
+                case BLFontKind.CfCrackBold:
+                    return "BL2020/Fonts/CfCrackBold";
+                case BLFontKind.Impact2:
+                    return "BL2020/Fonts/Impact2";
+                default:
+                    return "BL2020/Fonts/Impact";
+            }
+        }
+
+        private static void PrepareFont(Font font)
+        {
+            if (font == null || font.material == null || font.material.mainTexture == null)
+            {
+                return;
+            }
+
+            font.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
+            font.material.mainTexture.filterMode = FilterMode.Bilinear;
+        }
+    }
+
+    public static class BLFontMaterialCache
+    {
+        private const string OutlinedShaderName = "BasketballLegends2020/TextMeshOutlined";
+        private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
+        private static bool missingShaderLogged;
+        private static Shader outlinedShader;
+
+        public static Material Get(
+            Font font,
+            Color? outlineColor,
+            float outlinePixels,
+            Color? shadowColor,
+            Vector2? shadowOffset,
+            float rasterScale)
+        {
+            if (font == null || font.material == null)
+            {
+                return null;
+            }
+
+            var baseMaterial = font.material;
+            var mainTexture = baseMaterial.mainTexture;
+            if (mainTexture == null)
+            {
+                return baseMaterial;
+            }
+
+            var hasOutline = outlineColor.HasValue && outlineColor.Value.a > 0f && outlinePixels > 0f;
+            var hasShadow = shadowColor.HasValue && shadowColor.Value.a > 0f;
+            if (!hasOutline && !hasShadow)
+            {
+                return baseMaterial;
+            }
+
+            if (outlinedShader == null)
+            {
+                outlinedShader = Shader.Find(OutlinedShaderName);
+            }
+
+            if (outlinedShader == null)
+            {
+                if (!missingShaderLogged)
+                {
+                    Debug.LogWarning($"Could not find shader '{OutlinedShaderName}', using default font material.");
+                    missingShaderLogged = true;
+                }
+
+                return baseMaterial;
+            }
+
+            var resolvedOutlineColor = hasOutline ? outlineColor.Value : Color.clear;
+            var resolvedShadowColor = hasShadow ? shadowColor.Value : Color.clear;
+            var resolvedShadowOffset = hasShadow ? shadowOffset ?? new Vector2(0f, 2f) : Vector2.zero;
+            var outlineTexels = hasOutline ? outlinePixels * rasterScale : 0f;
+            var shadowTexels = hasShadow ? resolvedShadowOffset * rasterScale : Vector2.zero;
+
+            var cacheKey =
+                $"{font.GetInstanceID()}:{mainTexture.GetInstanceID()}:{ColorKey(resolvedOutlineColor)}:{outlineTexels:0.###}:{ColorKey(resolvedShadowColor)}:{shadowTexels.x:0.###}:{shadowTexels.y:0.###}";
+            if (!Materials.TryGetValue(cacheKey, out var material))
+            {
+                material = new Material(outlinedShader)
+                {
+                    name = $"{font.name}_Outlined",
+                    hideFlags = HideFlags.HideAndDontSave,
+                    renderQueue = baseMaterial.renderQueue
+                };
+                Materials[cacheKey] = material;
+            }
+
+            material.SetTexture("_MainTex", mainTexture);
+            material.SetColor("_OutlineColor", resolvedOutlineColor);
+            material.SetFloat("_OutlineWidth", outlineTexels);
+            material.SetColor("_ShadowColor", resolvedShadowColor);
+            material.SetVector("_ShadowOffset", new Vector4(shadowTexels.x, shadowTexels.y, 0f, 0f));
+            return material;
+        }
+
+        private static string ColorKey(Color color)
+        {
+            var color32 = (Color32)color;
+            return $"{color32.r:X2}{color32.g:X2}{color32.b:X2}{color32.a:X2}";
         }
     }
 
@@ -322,7 +387,7 @@ namespace BasketballLegends2020
 
             var mesh = go.AddComponent<TextMesh>();
             mesh.text = text;
-            mesh.fontSize = Mathf.Clamp(fontSize * 4, 32, 256);
+            mesh.fontSize = GetFontRasterSize(fontSize);
             mesh.characterSize = Mathf.Max(0.1f, fontSize * 0.1f);
             mesh.anchor = anchor;
             mesh.alignment = AnchorToAlignment(anchor);
@@ -331,55 +396,41 @@ namespace BasketballLegends2020
             var renderer = go.GetComponent<MeshRenderer>();
             if (mesh.font != null)
             {
-                renderer.sharedMaterial = mesh.font.material;
+                mesh.font.RequestCharactersInTexture(text, mesh.fontSize, FontStyle.Normal);
+                renderer.sharedMaterial = BLFontMaterialCache.Get(
+                    mesh.font,
+                    outlineColor,
+                    outlinePixels,
+                    shadowColor,
+                    shadowOffset,
+                    mesh.fontSize / (float)Mathf.Max(1, fontSize))
+                    ?? mesh.font.material;
             }
 
             renderer.sortingOrder = sortingOrder;
             ApplyPixelTransform(go.transform, x, y);
-
-            var mirrors = new List<TextMesh>();
-            if (shadowColor.HasValue && shadowColor.Value.a > 0f)
-            {
-                mirrors.Add(CreateMirror(go.transform, "Shadow", sortingOrder - 2, shadowColor.Value, shadowOffset ?? new Vector2(0f, 2f)));
-            }
-
-            if (outlineColor.HasValue && outlinePixels > 0f && outlineColor.Value.a > 0f)
-            {
-                var outline = Mathf.Max(1f, outlinePixels * 0.5f);
-                mirrors.Add(CreateMirror(go.transform, "OutlineL", sortingOrder - 1, outlineColor.Value, new Vector2(-outline, 0f)));
-                mirrors.Add(CreateMirror(go.transform, "OutlineR", sortingOrder - 1, outlineColor.Value, new Vector2(outline, 0f)));
-                mirrors.Add(CreateMirror(go.transform, "OutlineU", sortingOrder - 1, outlineColor.Value, new Vector2(0f, -outline)));
-                mirrors.Add(CreateMirror(go.transform, "OutlineD", sortingOrder - 1, outlineColor.Value, new Vector2(0f, outline)));
-            }
-
-            if (mirrors.Count > 0)
-            {
-                var sync = go.AddComponent<BLTextSync>();
-                sync.Source = mesh;
-                sync.Mirrors = mirrors.ToArray();
-            }
 
             return mesh;
         }
 
         public static void ApplyPixelTransform(Transform transform, float x, float y, float z = 0f, float scale = 1f, float rotationDegrees = 0f)
         {
-            transform.position = BLConstants.PixelToWorld(x, y, z);
+            transform.position = BLConstants.PixelToWorldSnapped(x, y, z);
             var scaled = BLConstants.UnitsPerPixel * scale;
             transform.localScale = new Vector3(scaled, scaled, 1f);
             transform.rotation = Quaternion.Euler(0f, 0f, -rotationDegrees);
         }
 
-        private static TextMesh CreateMirror(Transform parent, string name, int sortingOrder, Color color, Vector2 offsetPixels)
+        private static int GetFontRasterSize(int fontSize)
         {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.transform.localPosition = new Vector3(offsetPixels.x, -offsetPixels.y, 0f);
-            var mesh = go.AddComponent<TextMesh>();
-            mesh.color = color;
-            var renderer = go.GetComponent<MeshRenderer>();
-            renderer.sortingOrder = sortingOrder;
-            return mesh;
+            var multiplier =
+                fontSize <= 12 ? 8f :
+                fontSize <= 18 ? 7f :
+                fontSize <= 24 ? 6f :
+                fontSize <= 36 ? 5f :
+                4f;
+
+            return Mathf.Clamp(Mathf.RoundToInt(fontSize * multiplier), 48, 512);
         }
 
         private static TextAlignment AnchorToAlignment(TextAnchor anchor)
