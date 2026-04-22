@@ -1327,6 +1327,10 @@ namespace BasketballLegends2020
 
     public sealed class BLPlayerObject
     {
+        private const float GroundCollisionMass = 3f;
+        private const float GroundBlockCollisionMass = 6f;
+        private const float GroundCollisionSpeedEpsilon = 5f;
+
         private enum BlockPumpPhase
         {
             None,
@@ -1424,12 +1428,14 @@ namespace BasketballLegends2020
         public float AttackTargetX => Side == -1 ? BLObjectsData.BasketCenter2 : BLObjectsData.BasketCenter;
         public bool IsDashing => dashTimer > 0f;
         public bool IsBlocking => blockPumpPhase == BlockPumpPhase.Holding && !blockPumpIsPump;
+        public bool HasGroundBlockBody => IsBlocking && IsGrounded && !removedFromPlay && !isSuperShot && stunTimer <= 0f;
         public bool IsPumping => blockPumpPhase != BlockPumpPhase.None && blockPumpIsPump;
         public bool IsMoving => Mathf.Abs(Velocity.x) > 20f;
         public bool IsDunking => isDunking;
         public float FacingDirection => facingDirection;
         public bool CanTakeInHands => canTakeInHands && !WithBall && !removedFromPlay;
         public bool CanAct => actionLatch <= 0f && stunTimer <= 0f && !stealAnimationActive && !isDunking && !isSuperShot;
+        public bool CanResolveGroundBlock => IsGrounded && !removedFromPlay && !isSuperShot && !isDunking && stunTimer <= 0f && !stealAnimationActive;
         public bool ReadyForDash => readyForDash && dashTimer <= 0f && !isSuperShot;
         public int PlayerNo => playerNo;
         public int SkillLevel => skillLevel;
@@ -1489,8 +1495,13 @@ namespace BasketballLegends2020
             if (armature != null)
             {
                 armature.transform.SetParent(graphic.transform, false);
-                armature.transform.localPosition = new Vector3(0f, -35f, 0f);
-                armature.transform.localScale = new Vector3(0.73f, 0.73f, 1f);
+                armature.transform.localPosition = BLConstants.SnapLocalPositionToScreenPixels(
+                    graphic.transform,
+                    new Vector3(0f, -35f, 0f));
+                armature.transform.localScale = new Vector3(
+                    BLConstants.PixelPerfectCharacterScale,
+                    BLConstants.PixelPerfectCharacterScale,
+                    1f);
                 BLPlayersData.ApplyCharacter(armature, characterId);
                 armature.AnimationComplete += OnAnimationComplete;
                 armature.FrameEvent += OnAnimationFrameEvent;
@@ -1951,6 +1962,78 @@ namespace BasketballLegends2020
         public bool TryShieldBall(BLBallObject ball)
         {
             return shield != null && shield.TryBlockBall(ball);
+        }
+
+        public float GetCollisionMass()
+        {
+            return HasGroundBlockBody ? GroundBlockCollisionMass : GroundCollisionMass;
+        }
+
+        public bool IsMovingToward(BLPlayerObject other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            var delta = other.Position.x - Position.x;
+            if (Mathf.Abs(delta) <= 0.01f)
+            {
+                return Mathf.Abs(Velocity.x) > GroundCollisionSpeedEpsilon;
+            }
+
+            return Velocity.x * Mathf.Sign(delta) > GroundCollisionSpeedEpsilon;
+        }
+
+        public bool IsDashingInto(BLPlayerObject other)
+        {
+            if (!IsDashing || other == null)
+            {
+                return false;
+            }
+
+            var delta = other.Position.x - Position.x;
+            if (Mathf.Abs(delta) <= 0.01f)
+            {
+                return true;
+            }
+
+            return dashDirection * Mathf.Sign(delta) > 0f;
+        }
+
+        public void InterruptDashByBlock()
+        {
+            if (!IsDashing)
+            {
+                return;
+            }
+
+            dashTimer = 0f;
+            dashDirection = 0;
+            bufferedDashDirection = 0;
+            dashBufferTimer = 0f;
+            readyForDash = false;
+            Velocity.x = 0f;
+            dashDelay.Activate();
+            controller.PlayerOnDashEnd();
+
+            if (IsGrounded && blockPumpPhase == BlockPumpPhase.None && !stealAnimationActive && stunTimer <= 0f && !isDunking && !isSuperShot)
+            {
+                PlayState(WithBall ? "idle_wb" : "idle");
+            }
+
+            UpdateGraphic();
+        }
+
+        public void ApplyHorizontalSeparation(float delta)
+        {
+            if (Mathf.Abs(delta) <= 0.001f)
+            {
+                return;
+            }
+
+            Position.x = Mathf.Clamp(Position.x + delta, 20f, BLConstants.Width - 20f);
+            UpdateGraphic();
         }
 
         public void OnStolen()
@@ -2663,7 +2746,7 @@ namespace BasketballLegends2020
 
         private void UpdateGraphic()
         {
-            graphic.transform.position = BLConstants.PixelToWorld(Position.x, Position.y, 0.12f + playerNo * 0.01f);
+            graphic.transform.position = BLConstants.PixelToWorldSnapped(Position.x, Position.y, 0.12f + playerNo * 0.01f);
             graphic.transform.localScale = new Vector3(
                 BLConstants.UnitsPerPixel * facingDirection * graphicScaleMultiplier,
                 BLConstants.UnitsPerPixel * graphicScaleMultiplier,

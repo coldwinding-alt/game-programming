@@ -23,6 +23,7 @@ namespace BasketballLegends2020
         public const float RenderScale = 4f / 3f;
         public const float PixelsPerUnit = 100f;
         public const float UnitsPerPixel = RenderScale / PixelsPerUnit;
+        public const float PixelPerfectCharacterScale = 1f / RenderScale;
 
         public static readonly int[] LimitsForAchievements =
         {
@@ -37,11 +38,39 @@ namespace BasketballLegends2020
                 z);
         }
 
+        public static Vector3 PixelToWorldSnapped(float x, float y, float z = 0f)
+        {
+            return new Vector3(
+                (Mathf.Round(x * RenderScale) - GameW2) / PixelsPerUnit,
+                (GameH2 - Mathf.Round(y * RenderScale)) / PixelsPerUnit,
+                z);
+        }
+
+        public static Vector3 SnapLocalPositionToScreenPixels(Transform parent, Vector3 localPosition)
+        {
+            var parentScale = parent != null ? parent.lossyScale : Vector3.one;
+            return new Vector3(
+                SnapLocalAxisToScreenPixels(localPosition.x, parentScale.x),
+                SnapLocalAxisToScreenPixels(localPosition.y, parentScale.y),
+                localPosition.z);
+        }
+
         public static Vector2 WorldToPixel(Vector3 world)
         {
             return new Vector2(
                 (world.x * PixelsPerUnit + GameW2) / RenderScale,
                 (GameH2 - world.y * PixelsPerUnit) / RenderScale);
+        }
+
+        private static float SnapLocalAxisToScreenPixels(float localValue, float parentWorldScale)
+        {
+            var pixelsPerLocalUnit = Mathf.Abs(parentWorldScale) * PixelsPerUnit;
+            if (pixelsPerLocalUnit <= 0.0001f)
+            {
+                return localValue;
+            }
+
+            return Mathf.Round(localValue * pixelsPerLocalUnit) / pixelsPerLocalUnit;
         }
     }
 }
