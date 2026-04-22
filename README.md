@@ -13,7 +13,7 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
   - `SCARECROW`
   - `WITCH`
   - `BLACK CAT`
-- Main menu with `1 PLAYER`, `2 PLAYERS`, `QUICK MATCH`, `TRAINING`, and `AI: EASY / AI: NORMAL`.
+- Main menu with `1 PLAYER`, `2 PLAYERS`, `QUICK MATCH`, `TRAINING`, and `AI: EASY / AI: NORMAL / AI: HARD`.
 - Character-based match setup and a `4`-character single-elimination `TOURNAMENT` flow.
 - Direct boot into a playable match loop from the Unity editor.
 - Player movement, jump, dash, shoot, steal, stun, loose-ball pickup, score reset, timer, overtime, and post-match overlay.

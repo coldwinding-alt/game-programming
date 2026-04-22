@@ -190,7 +190,7 @@ namespace BasketballLegends2020
             }
 
             CurrentAction = stealState == 1;
-            CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseBehind(180f);
+            CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseBehind(GetDefenceContestDistance());
         }
     }
 
@@ -509,7 +509,7 @@ namespace BasketballLegends2020
                 }
             }
 
-            CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseAbs(180f);
+            CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseAbs(GetDefenceContestDistance());
             CurrentAction = stealState == 1;
             if (!CurrentAction && !CurrentJump && CurrentMove == 0)
             {
@@ -705,7 +705,7 @@ namespace BasketballLegends2020
                 return;
             }
 
-            if (IsOpponentCloseBehind(80f))
+            if (IsOpponentCloseBehind(GetStealBehindDistance()))
             {
                 if (UnityEngine.Random.value <= profile.MakeSteal)
                 {
@@ -716,7 +716,7 @@ namespace BasketballLegends2020
                     stealDelay.SkipIt();
                 }
             }
-            else if (IsOpponentCloseToBasket(45f))
+            else if (IsOpponentCloseToBasket(GetStealBasketDistance()))
             {
                 if (UnityEngine.Random.value <= 1.5f * profile.MakeSteal)
                 {
@@ -769,7 +769,7 @@ namespace BasketballLegends2020
             }
 
             var distance = Mathf.Abs(player.Position.x - opponent.Position.x);
-            return distance >= 90f && distance <= 460f;
+            return distance >= GetHolderSuperDashMinDistance() && distance <= GetHolderSuperDashMaxDistance();
         }
 
         protected bool ShouldUseSuperDashForBall()
@@ -785,7 +785,7 @@ namespace BasketballLegends2020
             }
 
             return ball.Position.y > BLObjectsData.BasketHeight &&
-                   Mathf.Abs(DeltaBallX()) >= 120f;
+                   Mathf.Abs(DeltaBallX()) >= GetLooseBallSuperDashDistance();
         }
 
         protected bool ShouldUseSuperDashInAttack()
@@ -795,12 +795,12 @@ namespace BasketballLegends2020
                 return false;
             }
 
-            if (opponent != null && IsOpponentCloseBehind(140f))
+            if (opponent != null && IsOpponentCloseBehind(GetAttackPressureDistance()))
             {
                 return true;
             }
 
-            return Mathf.Abs(player.Position.x - player.AttackTargetX) >= 260f &&
+            return Mathf.Abs(player.Position.x - player.AttackTargetX) >= GetAttackSuperDashDistance() &&
                    InDashingZone();
         }
 
@@ -907,7 +907,7 @@ namespace BasketballLegends2020
                 {
                     attack.Reset();
                 }
-                else if (strategy == 0 && player.CanAct && IsOpponentInRangeBehind())
+                else if (strategy == 0 && player.CanAct && IsOpponentInRangeBehind(40f, GetDashBlockRangeMaxDistance()))
                 {
                     if (UnityEngine.Random.value <= profile.MakeBlock)
                     {
@@ -964,6 +964,51 @@ namespace BasketballLegends2020
             }
 
             avoidStealMove = player.Side;
+        }
+
+        protected float GetDefenceContestDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 220f : 180f;
+        }
+
+        protected float GetStealBehindDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 110f : 80f;
+        }
+
+        protected float GetStealBasketDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 65f : 45f;
+        }
+
+        protected float GetHolderSuperDashMinDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 70f : 90f;
+        }
+
+        protected float GetHolderSuperDashMaxDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 520f : 460f;
+        }
+
+        protected float GetLooseBallSuperDashDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 90f : 120f;
+        }
+
+        protected float GetAttackPressureDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 180f : 140f;
+        }
+
+        protected float GetAttackSuperDashDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 220f : 260f;
+        }
+
+        protected float GetDashBlockRangeMaxDistance()
+        {
+            return difficulty == BLAiDifficulty.Hard ? 220f : 180f;
         }
 
         protected void InitZones()
