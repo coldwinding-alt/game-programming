@@ -20,6 +20,7 @@ namespace BasketballLegends2020
         private float restartDelay;
         private int restartSide;
         private bool preMatchCountdown;
+        private bool pauseResumeCountdown;
         private bool waitingForBallAfterBuzzer;
         private float postMatchDelay;
         private int postMatchWinner;
@@ -33,6 +34,7 @@ namespace BasketballLegends2020
         public bool AdvanceFlowRequested { get; private set; }
         public bool IsSuperShot { get; set; }
         public bool IsAlleyOop { get; set; }
+        public float RemainingMatchTime => Mathf.Max(0f, endTime - matchTime);
         public IReadOnlyList<BLPlayerObject> PlayersLeft => playersLeft;
         public IReadOnlyList<BLPlayerObject> PlayersRight => playersRight;
         public BLBasketObject BasketLeft => basketLeft;
@@ -58,7 +60,7 @@ namespace BasketballLegends2020
 
         public void Update(float dt)
         {
-            if (Input.GetKeyDown(KeyCode.P) && postMatchDelay <= 0f && !hud.IsPostMatchVisible)
+            if (!pauseResumeCountdown && Input.GetKeyDown(KeyCode.P) && postMatchDelay <= 0f && !hud.IsPostMatchVisible)
             {
                 HandlePauseCommand(BLPauseCommand.Toggle);
             }
@@ -67,6 +69,22 @@ namespace BasketballLegends2020
             HandlePauseCommand(hud.ConsumePauseCommand());
             if (ReturnToMenuRequested)
             {
+                return;
+            }
+
+            if (pauseResumeCountdown)
+            {
+                pauseResumeCountdown = hud.UpdateCountdown(dt);
+                if (!pauseResumeCountdown)
+                {
+                    hud.EndResumeCountdown();
+                    isPaused = false;
+                    if (!preMatchCountdown)
+                    {
+                        BLAudio.Instance?.Play(BLAssets.Sounds.MWhistle);
+                    }
+                }
+
                 return;
             }
 
@@ -314,6 +332,34 @@ namespace BasketballLegends2020
             return null;
         }
 
+        public int GetScoreForSide(int side)
+        {
+            var teamIndex = side == -1 ? 0 : 1;
+            return MatchData.MatchScore != null && MatchData.MatchScore.Length > teamIndex
+                ? MatchData.MatchScore[teamIndex]
+                : 0;
+        }
+
+        public int GetScoreLeadForSide(int side)
+        {
+            return GetScoreForSide(side) - GetScoreForSide(-side);
+        }
+
+        public bool IsCurrentShotThreePointer(int shotSide)
+        {
+            return Ball != null && IsThreePointer(shotSide);
+        }
+
+        public void ShowHudMessage(string message, float duration = 1.2f)
+        {
+            hud?.ShowMessage(message, duration);
+        }
+
+        public void ShowHudBonusNotice(string message, float duration = 0.9f)
+        {
+            hud?.ShowBonusNotice(message, duration);
+        }
+
         public bool TryStealBall(BLPlayerObject thief, float facingDirection)
         {
             if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying || IsSuperShot)
@@ -322,11 +368,12 @@ namespace BasketballLegends2020
             }
 
             var opponents = thief.Side == -1 ? playersRight : playersLeft;
+            var stealDistance = BLObjectsData.StealDistance + thief.GetStealDistanceBonus();
             BLPlayerObject target = null;
             var bestDistance = float.MaxValue;
             foreach (var opponent in opponents)
             {
-                var candidateDistance = opponent.CheckToBeStolen(thief.Position.x, facingDirection);
+                var candidateDistance = opponent.CheckToBeStolen(thief.Position.x, facingDirection, stealDistance);
                 if (candidateDistance >= 0f && candidateDistance < bestDistance)
                 {
                     bestDistance = candidateDistance;
@@ -474,9 +521,10 @@ namespace BasketballLegends2020
             MatchProcessor.Reset();
             Restart(0);
             preMatchCountdown = !isTraining;
+            pauseResumeCountdown = false;
             if (preMatchCountdown)
             {
-                hud.StartCountdown(3f);
+                hud.StartCountdown(3f, "TIP OFF IN");
             }
             else
             {
@@ -487,7 +535,7 @@ namespace BasketballLegends2020
 
         private void HandlePauseCommand(BLPauseCommand command)
         {
-            if (command == BLPauseCommand.None || postMatchDelay > 0f || hud.IsPostMatchVisible)
+            if (command == BLPauseCommand.None || pauseResumeCountdown || postMatchDelay > 0f || hud.IsPostMatchVisible)
             {
                 return;
             }
@@ -495,16 +543,34 @@ namespace BasketballLegends2020
             switch (command)
             {
                 case BLPauseCommand.Toggle:
-                    SetPaused(!isPaused);
+                    if (isPaused)
+                    {
+                        BeginPauseResumeCountdown();
+                    }
+                    else
+                    {
+                        SetPaused(true);
+                    }
                     break;
                 case BLPauseCommand.Resume:
-                    SetPaused(false);
+                    BeginPauseResumeCountdown();
                     break;
                 case BLPauseCommand.Menu:
                     SetPaused(false);
                     ReturnToMenuRequested = true;
                     break;
             }
+        }
+
+        private void BeginPauseResumeCountdown()
+        {
+            if (!isPaused || pauseResumeCountdown)
+            {
+                return;
+            }
+
+            pauseResumeCountdown = true;
+            hud.BeginResumeCountdown(3f);
         }
 
         private void SetPaused(bool paused)
@@ -526,12 +592,14 @@ namespace BasketballLegends2020
             isPaused = paused;
             if (paused)
             {
+                pauseResumeCountdown = false;
                 hud.ShowPauseOverlay();
             }
             else
             {
+                pauseResumeCountdown = false;
                 hud.HidePauseOverlay();
-                hud.ShowMessage("GO!!!", 0.8f);
+                hud.EndResumeCountdown();
             }
         }
 
@@ -645,7 +713,8 @@ namespace BasketballLegends2020
             hud.HidePostMatch();
             Restart(0);
             preMatchCountdown = true;
-            hud.StartCountdown(3f);
+            pauseResumeCountdown = false;
+            hud.StartCountdown(3f, "OVERTIME IN");
         }
 
         private bool IsBallInGame()
