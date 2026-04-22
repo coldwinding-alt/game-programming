@@ -26,10 +26,27 @@ namespace BasketballLegends2020
         private const float TimerY = 110f;
         private const int PortraitSortingOrder = 83;
         private const float CountdownY = 172f;
+        private const float PauseTitleY = 78f;
+        private const float PauseMatchupY = 112f;
+        private const float PauseBoardY = 214f;
+        private const float PauseNameY = 292f;
+        private const float PauseMetaY = 330f;
+        private const float PauseActionY = 392f;
+        private const float PausePortraitOffsetX = 210f;
+        private const float PausePortraitPixels = 84f;
+        private const float PauseScoreOffsetX = 40f;
         private const float PopupCenterY = 236f;
         private const float PopupBackdropWidth = 432f;
         private const float MessageExitWindow = 0.18f;
         private const float CountdownPulseDuration = 0.42f;
+        private const float BonusNoticeX = 676f;
+        private const float BonusNoticeY = 142f;
+        private const float TopRightButtonY = 44f;
+        private const float PauseButtonX = 770f;
+        private const float MusicButtonX = 706f;
+        private const float HelpButtonX = 642f;
+        private const float TopRightButtonSize = 60f;
+        private const float TopRightIconPixels = 58f;
         private readonly TextMesh leftScore;
         private readonly TextMesh rightScore;
         private readonly TextMesh leftNameText;
@@ -37,16 +54,30 @@ namespace BasketballLegends2020
         private readonly TextMesh timerText;
         private readonly BLMenuButton pauseButton;
         private readonly GameObject pauseButtonIcon;
+        private readonly BLIconButton musicButton;
+        private readonly BLIconButton helpButton;
+        private readonly GameObject pauseOverlayRoot;
         private readonly GameObject pauseShade;
         private readonly GameObject pausePanel;
         private readonly TextMesh pauseTitleText;
         private readonly TextMesh pauseMatchupText;
         private readonly TextMesh pauseScoreText;
+        private readonly TextMesh pauseLeftNameText;
+        private readonly TextMesh pauseRightNameText;
+        private readonly TextMesh pauseLeftScoreText;
+        private readonly TextMesh pauseRightScoreText;
+        private readonly TextMesh pauseScoreDividerText;
+        private readonly GameObject pauseLeftPortrait;
+        private readonly GameObject pauseRightPortrait;
         private readonly BLMenuButton pauseMenuButton;
         private readonly BLMenuButton pauseResumeButton;
         private readonly bool isTraining;
         private readonly GameObject messageRoot;
         private readonly TextMesh messageText;
+        private readonly GameObject bonusNoticeRoot;
+        private readonly TextMesh bonusNoticeText;
+        private readonly GameObject countdownBackdrop;
+        private readonly TextMesh countdownCaptionText;
         private readonly TextMesh countdownText;
         private readonly Vector3 countdownBaseScale;
         private readonly TextMesh postMatchTitleText;
@@ -55,6 +86,8 @@ namespace BasketballLegends2020
         private float messageTime;
         private float messageDuration;
         private float messageVisualScale = 1f;
+        private float bonusNoticeTime;
+        private float bonusNoticeDuration;
         private float countdownTime = -1f;
         private float countdownPulseTime;
         private BLPauseCommand pendingPauseCommand;
@@ -132,11 +165,47 @@ namespace BasketballLegends2020
                 parent,
                 BLTextStyle.HudTimer);
 
-            pauseButton = new BLMenuButton(string.Empty, 770f, 44f, 60f, 60f, () => pendingPauseCommand = BLPauseCommand.Toggle, parent);
+            pauseButton = new BLMenuButton(string.Empty, PauseButtonX, TopRightButtonY, TopRightButtonSize, TopRightButtonSize, () => pendingPauseCommand = BLPauseCommand.Toggle, parent);
             pauseButton.SetBackgroundVisible(false);
             pauseButton.SetLabelVisible(false);
             pauseButtonIcon = CreatePauseButtonIcon(parent);
+            musicButton = new BLIconButton(
+                "HudMusicButton",
+                MusicButtonX,
+                TopRightButtonY,
+                TopRightButtonSize,
+                TopRightButtonSize,
+                ToggleBackgroundMusic,
+                parent,
+                82,
+                TopRightIconPixels,
+                "BL2020/Images/music_button_on",
+                "BL2020/Images/music_button_off");
+            musicButton.SetActiveIconIndex(GetMusicIconIndex());
+            helpButton = new BLIconButton(
+                "HudHelpButton",
+                HelpButtonX,
+                TopRightButtonY,
+                TopRightButtonSize,
+                TopRightButtonSize,
+                NoOpAction,
+                parent,
+                82,
+                TopRightIconPixels,
+                "BL2020/Images/help_button");
 
+            countdownBackdrop = CreateHudImage("CountdownBackdrop", "BL2020/Hud/popup_halloween", BLConstants.Width2, CountdownY + 4f, 360f, 119, parent);
+            countdownCaptionText = BLRender.Text(
+                "CountdownCaption",
+                string.Empty,
+                BLConstants.Width2,
+                CountdownY - 28f,
+                16,
+                new Color32(0xC8, 0xFF, 0x55, 0xFF),
+                TextAnchor.MiddleCenter,
+                120,
+                parent,
+                BLTextStyle.TournamentAccent);
             countdownText = BLRender.Text(
                 "Countdown",
                 string.Empty,
@@ -170,6 +239,21 @@ namespace BasketballLegends2020
                 BLTextStyle.HudPopup);
             messageText.transform.SetParent(messageRoot.transform, true);
             messageRoot.SetActive(false);
+
+            bonusNoticeRoot = CreateHudAnchor("BonusNoticeRoot", BonusNoticeX, BonusNoticeY, parent);
+            bonusNoticeText = BLRender.Text(
+                "BonusNotice",
+                string.Empty,
+                BonusNoticeX,
+                BonusNoticeY,
+                16,
+                new Color32(0xFF, 0x7A, 0x39, 0xFF),
+                TextAnchor.MiddleCenter,
+                119,
+                parent,
+                BLTextStyle.TournamentAccent);
+            bonusNoticeText.transform.SetParent(bonusNoticeRoot.transform, true);
+            bonusNoticeRoot.SetActive(false);
 
             postMatchTitleText = BLRender.Text(
                 "PostMatchTitle",
@@ -205,53 +289,140 @@ namespace BasketballLegends2020
                 parent,
                 BLTextStyle.TournamentAccent);
 
-            pauseShade = CreatePausePanel("PauseShade", BLConstants.Width2, ScreenCenterY, 800f, 480f, 140, parent, new Color(0f, 0f, 0f, 0.68f));
-            pausePanel = CreatePausePanel("PausePanel", BLConstants.Width2, ScreenCenterY, 420f, 272f, 141, parent, new Color(0.13f, 0.1f, 0.23f, 0.96f));
+            pauseOverlayRoot = CreateHudRoot("PauseOverlayRoot", parent);
+            pauseShade = CreatePausePanel("PauseShade", BLConstants.Width2, ScreenCenterY, 800f, 480f, 140, pauseOverlayRoot.transform, new Color(0.01f, 0.03f, 0.05f, 0.78f));
+            CreatePausePanel("PauseTopGlow", BLConstants.Width2, 96f, 760f, 104f, 141, pauseOverlayRoot.transform, new Color(0.22f, 0.86f, 0.94f, 0.12f));
+            CreatePausePanel("PauseBottomGlow", BLConstants.Width2, 388f, 760f, 132f, 141, pauseOverlayRoot.transform, new Color(0.56f, 0.22f, 0.94f, 0.1f));
+            pausePanel = CreatePausePanel("PausePanel", BLConstants.Width2, ScreenCenterY, 582f, 308f, 142, pauseOverlayRoot.transform, new Color(0.05f, 0.08f, 0.12f, 0.9f));
+            CreatePauseFrame("PauseFrame", "MatchBack0002", BLConstants.Width2, ScreenCenterY, 632f, 332f, 143, pauseOverlayRoot.transform, new Color(0.9f, 0.98f, 1f, 0.96f));
+            CreatePausePanel("PauseBoardTint", BLConstants.Width2, PauseBoardY, 206f, 72f, 144, pauseOverlayRoot.transform, new Color(0.02f, 0.04f, 0.09f, 0.4f));
+            var pauseBoard = CreateHudImage("PauseBoard", "BL2020/Hud/scoreboard_halloween", BLConstants.Width2, PauseBoardY, 560f, 145, pauseOverlayRoot.transform);
+            if (pauseBoard == null)
+            {
+                CreatePauseFrame("PauseBoardFallback", "btn_bg0000", BLConstants.Width2, PauseBoardY, 456f, 150f, 145, pauseOverlayRoot.transform, new Color(0.22f, 0.84f, 0.95f, 0.94f));
+            }
+
+            CreatePortraitAura("PauseLeftPortraitAura", BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY, 0.46f, 146, pauseOverlayRoot.transform);
+            CreatePortraitAura("PauseRightPortraitAura", BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY, 0.46f, 146, pauseOverlayRoot.transform);
+            pauseLeftPortrait = CreateCharacterPortrait("PauseLeftPortrait", matchData.CharacterIds[0], BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
+            pauseRightPortrait = CreateCharacterPortrait("PauseRightPortrait", matchData.CharacterIds[1], BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
             pauseTitleText = BLRender.Text(
                 "PauseTitle",
                 "GAME PAUSED",
                 BLConstants.Width2,
-                158f,
-                30,
-                new Color32(0xFF, 0xA3, 0x00, 0xFF),
+                PauseTitleY,
+                40,
+                new Color32(0xC8, 0xFF, 0x55, 0xFF),
                 TextAnchor.MiddleCenter,
                 145,
-                parent,
+                pauseOverlayRoot.transform,
                 BLFontKind.CfCrackBold,
-                outlineColor: Color.white,
-                outlinePixels: 1.4f);
+                outlineColor: new Color(0.04f, 0.08f, 0.02f, 0.95f),
+                outlinePixels: 1.85f,
+                shadowColor: new Color(0f, 0f, 0f, 0.45f),
+                shadowOffset: new Vector2(1.4f, -1.4f));
             pauseMatchupText = BLRender.Text(
                 "PauseMatchup",
                 $"{leftCharacterName}  VS  {rightCharacterName}",
                 BLConstants.Width2,
-                200f,
+                PauseMatchupY,
                 18,
-                Color.white,
+                new Color32(0x92, 0xFA, 0xFF, 0xFF),
                 TextAnchor.MiddleCenter,
                 145,
-                parent,
-                BLTextStyle.TournamentBody);
-            pauseScoreText = BLRender.Text(
-                "PauseScore",
-                "0 : 0",
+                pauseOverlayRoot.transform,
+                BLFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.9f),
+                outlinePixels: 0.75f);
+            pauseLeftNameText = BLRender.Text(
+                "PauseLeftName",
+                leftCharacterName,
+                BLConstants.Width2 - PausePortraitOffsetX,
+                PauseNameY,
+                16,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                146,
+                pauseOverlayRoot.transform,
+                BLFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.9f),
+                outlinePixels: 0.68f);
+            pauseRightNameText = BLRender.Text(
+                "PauseRightName",
+                rightCharacterName,
+                BLConstants.Width2 + PausePortraitOffsetX,
+                PauseNameY,
+                16,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                146,
+                pauseOverlayRoot.transform,
+                BLFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.9f),
+                outlinePixels: 0.68f);
+            pauseLeftScoreText = BLRender.Text(
+                "PauseLeftScore",
+                "0",
+                BLConstants.Width2 - PauseScoreOffsetX,
+                PauseBoardY,
+                42,
+                new Color32(0xFF, 0xC2, 0x42, 0xFF),
+                TextAnchor.MiddleCenter,
+                146,
+                pauseOverlayRoot.transform,
+                BLFontKind.CfCrackBold,
+                outlineColor: new Color(0.12f, 0.04f, 0f, 0.95f),
+                outlinePixels: 1.4f);
+            pauseScoreDividerText = BLRender.Text(
+                "PauseScoreDivider",
+                ":",
                 BLConstants.Width2,
-                236f,
-                28,
-                Color.white,
+                PauseBoardY - 1f,
+                32,
+                new Color32(0x8F, 0xFF, 0xF8, 0xFF),
+                TextAnchor.MiddleCenter,
+                146,
+                pauseOverlayRoot.transform,
+                BLFontKind.CfCrackBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.95f),
+                outlinePixels: 1f);
+            pauseRightScoreText = BLRender.Text(
+                "PauseRightScore",
+                "0",
+                BLConstants.Width2 + PauseScoreOffsetX,
+                PauseBoardY,
+                42,
+                new Color32(0xFF, 0xC2, 0x42, 0xFF),
+                TextAnchor.MiddleCenter,
+                146,
+                pauseOverlayRoot.transform,
+                BLFontKind.CfCrackBold,
+                outlineColor: new Color(0.12f, 0.04f, 0f, 0.95f),
+                outlinePixels: 1.4f);
+            pauseScoreText = BLRender.Text(
+                "PauseMeta",
+                string.Empty,
+                BLConstants.Width2,
+                PauseMetaY,
+                15,
+                new Color32(0xCC, 0xF6, 0xFF, 0xFF),
                 TextAnchor.MiddleCenter,
                 145,
-                parent,
-                BLTextStyle.HudScore);
-            pauseMenuButton = new BLMenuButton("MENU", 314f, 322f, 154f, 44f, () => pendingPauseCommand = BLPauseCommand.Menu, parent);
-            pauseResumeButton = new BLMenuButton("RESUME", 486f, 322f, 174f, 44f, () => pendingPauseCommand = BLPauseCommand.Resume, parent);
+                pauseOverlayRoot.transform,
+                BLFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.88f),
+                outlinePixels: 0.62f);
+            pauseMenuButton = new BLMenuButton("MENU", 310f, PauseActionY, 168f, 48f, () => pendingPauseCommand = BLPauseCommand.Menu, pauseOverlayRoot.transform, 147);
+            pauseResumeButton = new BLMenuButton("RESUME", 490f, PauseActionY, 196f, 48f, () => pendingPauseCommand = BLPauseCommand.Resume, pauseOverlayRoot.transform, 147);
 
             SetPauseOverlayVisible(false);
             if (isTraining)
             {
-                SetGameObjectVisible(leftNameText.gameObject, false);
-                SetGameObjectVisible(rightNameText.gameObject, false);
-                SetGameObjectVisible(pauseMatchupText.gameObject, false);
-                SetGameObjectVisible(pauseScoreText.gameObject, false);
+                SetText(pauseMatchupText, "TRAINING SESSION");
+                SetText(pauseScoreText, "FREE PLAY / NO TIMER");
+                SetGameObjectVisible(pauseLeftScoreText.gameObject, false);
+                SetGameObjectVisible(pauseRightScoreText.gameObject, false);
+                SetGameObjectVisible(pauseScoreDividerText.gameObject, false);
             }
 
             HideMessage();
@@ -264,12 +435,18 @@ namespace BasketballLegends2020
         {
             SetText(leftScore, left.ToString());
             SetText(rightScore, right.ToString());
-            SetText(pauseScoreText, $"{left} : {right}");
+            SetText(pauseLeftScoreText, left.ToString());
+            SetText(pauseRightScoreText, right.ToString());
         }
 
         public void UpdateTimer(float secondsLeft)
         {
-            SetText(timerText, FormatTime(secondsLeft));
+            var timeText = FormatTime(secondsLeft);
+            SetText(timerText, timeText);
+            if (!isTraining)
+            {
+                SetText(pauseScoreText, $"TIME FROZEN / {timeText}");
+            }
         }
 
         public void SetTimerVisible(bool visible)
@@ -298,10 +475,15 @@ namespace BasketballLegends2020
 
         public void ShowPauseOverlay()
         {
+            HideMessage();
+            HideBonusNotice();
+            HideCountdown();
             IsPauseOverlayVisible = true;
             SetPauseOverlayVisible(true);
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
+            musicButton?.SetVisible(false);
+            helpButton?.SetVisible(false);
         }
 
         public void HidePauseOverlay()
@@ -310,6 +492,27 @@ namespace BasketballLegends2020
             SetPauseOverlayVisible(false);
             pauseButton.SetVisible(true);
             SetGameObjectVisible(pauseButtonIcon, true);
+            musicButton?.SetVisible(true);
+            helpButton?.SetVisible(true);
+        }
+
+        public void BeginResumeCountdown(float duration)
+        {
+            IsPauseOverlayVisible = false;
+            SetPauseOverlayVisible(false);
+            pauseButton.SetVisible(false);
+            SetGameObjectVisible(pauseButtonIcon, false);
+            musicButton?.SetVisible(false);
+            helpButton?.SetVisible(false);
+            StartCountdown(duration, "RESUMING IN");
+        }
+
+        public void EndResumeCountdown()
+        {
+            pauseButton.SetVisible(true);
+            SetGameObjectVisible(pauseButtonIcon, true);
+            musicButton?.SetVisible(true);
+            helpButton?.SetVisible(true);
         }
 
         public void ShowMessage(string message, float duration = 1.2f)
@@ -332,6 +535,22 @@ namespace BasketballLegends2020
             messageRoot.SetActive(true);
         }
 
+        public void ShowBonusNotice(string message, float duration = 0.9f)
+        {
+            if (bonusNoticeRoot == null)
+            {
+                return;
+            }
+
+            ApplyBonusNoticeTheme(message);
+            SetText(bonusNoticeText, message);
+            bonusNoticeDuration = Mathf.Max(0.01f, duration);
+            bonusNoticeTime = bonusNoticeDuration;
+            bonusNoticeRoot.transform.position = BLConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY);
+            bonusNoticeRoot.transform.localScale = Vector3.one * 0.72f;
+            bonusNoticeRoot.SetActive(true);
+        }
+
         public void HideMessage()
         {
             SetText(messageText, string.Empty);
@@ -346,24 +565,49 @@ namespace BasketballLegends2020
             }
         }
 
+        public void HideBonusNotice()
+        {
+            SetText(bonusNoticeText, string.Empty);
+            bonusNoticeTime = 0f;
+            bonusNoticeDuration = 0f;
+            if (bonusNoticeRoot != null)
+            {
+                bonusNoticeRoot.transform.localScale = Vector3.one;
+                bonusNoticeRoot.transform.position = BLConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY);
+                bonusNoticeRoot.SetActive(false);
+            }
+        }
+
         public void HideCountdown()
         {
             SetText(countdownText, string.Empty);
+            SetText(countdownCaptionText, string.Empty);
             countdownTime = -1f;
             countdownPulseTime = 0f;
             lastCountdownTick = int.MinValue;
             countdownText.transform.localScale = countdownBaseScale;
+            SetGameObjectVisible(countdownBackdrop, false);
+            SetGameObjectVisible(countdownCaptionText.gameObject, false);
         }
 
         public void StartCountdown(float duration)
+        {
+            StartCountdown(duration, string.Empty);
+        }
+
+        public void StartCountdown(float duration, string caption)
         {
             countdownTime = duration;
             countdownPulseTime = 0f;
             lastCountdownTick = int.MinValue;
             SetText(countdownText, string.Empty);
+            SetText(countdownCaptionText, caption ?? string.Empty);
             countdownText.color = new Color32(0xFF, 0xB8, 0x2E, 0xFF);
             countdownText.transform.localScale = countdownBaseScale * 0.82f;
+            SetGameObjectVisible(countdownBackdrop, true);
+            SetGameObjectVisible(countdownCaptionText.gameObject, !string.IsNullOrEmpty(caption));
             HideMessage();
+            HideBonusNotice();
             HidePostMatch();
         }
 
@@ -406,12 +650,16 @@ namespace BasketballLegends2020
         {
             if (IsPauseOverlayVisible)
             {
+                musicButton?.SetActiveIconIndex(GetMusicIconIndex());
                 pauseMenuButton.Update(Camera.main);
                 pauseResumeButton.Update(Camera.main);
                 return;
             }
 
             pauseButton.Update(Camera.main);
+            musicButton?.SetActiveIconIndex(GetMusicIconIndex());
+            musicButton?.Update(Camera.main);
+            helpButton?.Update(Camera.main);
 
             if (messageTime > 0f)
             {
@@ -425,6 +673,20 @@ namespace BasketballLegends2020
             else if (messageRoot != null && messageRoot.activeSelf)
             {
                 HideMessage();
+            }
+
+            if (bonusNoticeTime > 0f)
+            {
+                bonusNoticeTime = Mathf.Max(0f, bonusNoticeTime - dt);
+                UpdateBonusNoticeVisual();
+                if (bonusNoticeTime <= 0f)
+                {
+                    HideBonusNotice();
+                }
+            }
+            else if (bonusNoticeRoot != null && bonusNoticeRoot.activeSelf)
+            {
+                HideBonusNotice();
             }
 
             if (countdownPulseTime > 0f)
@@ -465,6 +727,7 @@ namespace BasketballLegends2020
             SetText(postMatchScoreText, $"{leftScoreValue} - {rightScoreValue}");
             SetText(postMatchPromptText, inventory.IsTournamentActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER");
             HideMessage();
+            HideBonusNotice();
             HideCountdown();
         }
 
@@ -507,6 +770,22 @@ namespace BasketballLegends2020
             messageRoot.transform.localScale = Vector3.one * (scale * messageVisualScale);
         }
 
+        private void UpdateBonusNoticeVisual()
+        {
+            if (bonusNoticeRoot == null || !bonusNoticeRoot.activeSelf)
+            {
+                return;
+            }
+
+            var progress = 1f - Mathf.Clamp01(bonusNoticeTime / Mathf.Max(0.01f, bonusNoticeDuration));
+            var scale = progress < 0.2f
+                ? Mathf.Lerp(0.62f, 0.8f, progress / 0.2f)
+                : Mathf.Lerp(0.8f, 0.72f, (progress - 0.2f) / 0.8f);
+            var drift = Mathf.Lerp(4f, 0f, Mathf.Clamp01(progress * 1.1f));
+            bonusNoticeRoot.transform.position = BLConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY - drift);
+            bonusNoticeRoot.transform.localScale = Vector3.one * scale;
+        }
+
         private void UpdateCountdownVisual()
         {
             var progress = 1f - Mathf.Clamp01(countdownPulseTime / CountdownPulseDuration);
@@ -539,8 +818,30 @@ namespace BasketballLegends2020
                 case "OVERTIME":
                     messageText.color = new Color32(0x42, 0xFF, 0xEA, 0xFF);
                     break;
+                case "HELL DASH!":
+                    messageText.color = new Color32(0xFF, 0x62, 0x32, 0xFF);
+                    break;
+                case "HELL SHIELD!":
+                    messageText.color = new Color32(0xFF, 0x52, 0x92, 0xFF);
+                    break;
                 default:
                     messageText.color = new Color32(0x8B, 0x2D, 0xFF, 0xFF);
+                    break;
+            }
+        }
+
+        private void ApplyBonusNoticeTheme(string message)
+        {
+            switch (message)
+            {
+                case "HELL DASH!":
+                    bonusNoticeText.color = new Color32(0xFF, 0x74, 0x2B, 0xFF);
+                    break;
+                case "HELL SHIELD!":
+                    bonusNoticeText.color = new Color32(0xFF, 0x5A, 0xB8, 0xFF);
+                    break;
+                default:
+                    bonusNoticeText.color = new Color32(0xFF, 0xD6, 0x63, 0xFF);
                     break;
             }
         }
@@ -571,6 +872,24 @@ namespace BasketballLegends2020
             return panel;
         }
 
+        private static GameObject CreatePauseFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
+        {
+            var panel = BLRender.Sprite(name, BLAtlasCache.Instance.Interface, frame, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            var atlasFrame = BLAtlasCache.Instance.Interface.Frame(frame);
+            if (atlasFrame != null)
+            {
+                var sourceWidth = Mathf.Max(1f, atlasFrame.SourceW);
+                var sourceHeight = Mathf.Max(1f, atlasFrame.SourceH);
+                panel.transform.localScale = new Vector3(
+                    BLConstants.UnitsPerPixel * width / sourceWidth,
+                    BLConstants.UnitsPerPixel * height / sourceHeight,
+                    1f);
+            }
+
+            panel.GetComponent<SpriteRenderer>().color = tint;
+            return panel;
+        }
+
         private static void SetGameObjectVisible(GameObject target, bool visible)
         {
             if (target != null)
@@ -592,38 +911,37 @@ namespace BasketballLegends2020
 
         private void SetPauseOverlayVisible(bool visible)
         {
-            SetGameObjectVisible(pauseShade, visible);
-            SetGameObjectVisible(pausePanel, visible);
-            SetGameObjectVisible(pauseTitleText.gameObject, visible);
+            SetGameObjectVisible(pauseOverlayRoot, visible);
             pauseMenuButton.SetVisible(visible);
             pauseResumeButton.SetVisible(visible);
-            if (!isTraining)
-            {
-                SetGameObjectVisible(pauseMatchupText.gameObject, visible);
-                SetGameObjectVisible(pauseScoreText.gameObject, visible);
-            }
         }
 
         private GameObject CreatePauseButtonIcon(Transform parent)
         {
-            const float x = 770f;
-            const float y = 44f;
-            var texture = Resources.Load<Texture2D>("BL2020/Images/pause_button");
-            GameObject icon;
+            const string resourcePath = "BL2020/Images/pause_button";
+            var texture = Resources.Load<Texture2D>(resourcePath);
             if (texture != null)
             {
-                icon = BLRender.Image("PauseButtonIcon", texture, x, y, 0.5f, 0.5f, 82, parent);
-                var targetPixels = 58f;
-                var sourcePixels = Mathf.Max(texture.width, texture.height);
-                icon.transform.localScale *= targetPixels / Mathf.Max(1f, sourcePixels);
-            }
-            else
-            {
-                icon = BLRender.Sprite("PauseButtonIconFallback", BLAtlasCache.Instance.Gameplay, "InGamePauseButton0000", x, y, 0.5f, 0.5f, 82, parent);
-                icon.transform.localScale *= 1.2f;
+                return BLIconButton.CreateImageIcon("PauseButtonIcon", resourcePath, PauseButtonX, TopRightButtonY, 82, TopRightIconPixels, parent);
             }
 
+            var icon = BLRender.Sprite("PauseButtonIconFallback", BLAtlasCache.Instance.Gameplay, "InGamePauseButton0000", PauseButtonX, TopRightButtonY, 0.5f, 0.5f, 82, parent);
+            icon.transform.localScale *= 1.2f;
             return icon;
+        }
+
+        private static void ToggleBackgroundMusic()
+        {
+            BLAudio.Instance?.ToggleMusic();
+        }
+
+        private static void NoOpAction()
+        {
+        }
+
+        private static int GetMusicIconIndex()
+        {
+            return BLAudio.Instance != null && BLAudio.Instance.MusicEnabled ? 0 : 1;
         }
 
         private static void CreateScoreboardBackdrop(Transform parent)
@@ -653,6 +971,17 @@ namespace BasketballLegends2020
             var image = BLRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
             image.transform.localScale *= targetWidth / Mathf.Max(1f, texture.width);
             return image;
+        }
+
+        private static GameObject CreateHudRoot(string name, Transform parent)
+        {
+            var root = new GameObject(name);
+            if (parent != null)
+            {
+                root.transform.SetParent(parent, false);
+            }
+
+            return root;
         }
 
         private static GameObject CreateHudAnchor(string name, float x, float y, Transform parent)
@@ -730,11 +1059,11 @@ namespace BasketballLegends2020
         private bool pressed;
         public GameObject Root => sprite;
 
-        public BLMenuButton(string text, float x, float y, float width, float height, System.Action action, Transform parent)
+        public BLMenuButton(string text, float x, float y, float width, float height, System.Action action, Transform parent, int sortingOrder = 50)
         {
             this.action = action;
             rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
-            sprite = BLRender.Sprite($"Button_{text}", BLAtlasCache.Instance.Interface, "btn_bg0000", x, y, 0.5f, 0.5f, 50, parent);
+            sprite = BLRender.Sprite($"Button_{text}", BLAtlasCache.Instance.Interface, "btn_bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
             var frame = BLAtlasCache.Instance.Interface.Frame("btn_bg0000");
             if (frame != null)
             {
@@ -754,7 +1083,7 @@ namespace BasketballLegends2020
                 fontSize,
                 Color.white,
                 TextAnchor.MiddleCenter,
-                80,
+                sortingOrder + 30,
                 parent,
                 BLTextStyle.ButtonLabel);
         }
@@ -818,6 +1147,82 @@ namespace BasketballLegends2020
         {
             labelVisible = isVisible;
             label.gameObject.SetActive(visible && labelVisible);
+        }
+    }
+
+    public sealed class BLIconButton
+    {
+        private readonly BLMenuButton button;
+        private readonly GameObject[] icons;
+        private bool visible = true;
+        private int activeIconIndex;
+
+        public BLIconButton(
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            System.Action action,
+            Transform parent,
+            int sortingOrder,
+            float targetPixels,
+            params string[] resourcePaths)
+        {
+            button = new BLMenuButton(string.Empty, x, y, width, height, action, parent);
+            button.SetBackgroundVisible(false);
+            button.SetLabelVisible(false);
+
+            icons = new GameObject[resourcePaths.Length];
+            for (var i = 0; i < resourcePaths.Length; i++)
+            {
+                icons[i] = CreateImageIcon($"{name}_Icon{i}", resourcePaths[i], x, y, sortingOrder, targetPixels, parent);
+            }
+
+            RefreshIcons();
+        }
+
+        public void Update(Camera camera)
+        {
+            button.Update(camera);
+        }
+
+        public void SetVisible(bool isVisible)
+        {
+            visible = isVisible;
+            button.SetVisible(isVisible);
+            RefreshIcons();
+        }
+
+        public void SetActiveIconIndex(int iconIndex)
+        {
+            activeIconIndex = Mathf.Clamp(iconIndex, 0, Mathf.Max(0, icons.Length - 1));
+            RefreshIcons();
+        }
+
+        public static GameObject CreateImageIcon(string name, string resourcePath, float x, float y, int sortingOrder, float targetPixels, Transform parent)
+        {
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var icon = BLRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            var sourcePixels = Mathf.Max(texture.width, texture.height);
+            icon.transform.localScale *= targetPixels / Mathf.Max(1f, sourcePixels);
+            return icon;
+        }
+
+        private void RefreshIcons()
+        {
+            for (var i = 0; i < icons.Length; i++)
+            {
+                if (icons[i] != null)
+                {
+                    icons[i].SetActive(visible && i == activeIconIndex);
+                }
+            }
         }
     }
 

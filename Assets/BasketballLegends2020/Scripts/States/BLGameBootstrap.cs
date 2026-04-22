@@ -152,6 +152,11 @@ namespace BasketballLegends2020
         private const float TournamentAwardsArmatureYOffset = -18f;
         private const float TournamentAwardsPodiumScale = 0.98f;
         private const float TournamentAwardsCelebrationDelay = 0.66f;
+        private const float MenuTopButtonY = 44f;
+        private const float MenuMusicButtonX = 770f;
+        private const float MenuHelpButtonX = 706f;
+        private const float MenuTopButtonSize = 60f;
+        private const float MenuTopIconPixels = 58f;
         private const float OptionBallHeaderY = 208f;
         private const float OptionBallPreviewY = 232f;
         private const float OptionBallLabelY = 260f;
@@ -182,6 +187,8 @@ namespace BasketballLegends2020
         private bool awardsCelebrationTriggered;
         private DBLiteArmature awardsCelebrationPlayer;
         private string awardsCelebrationCupAnimation;
+        private BLIconButton menuMusicButton;
+        private BLIconButton menuHelpButton;
 
         private void Awake()
         {
@@ -245,6 +252,23 @@ namespace BasketballLegends2020
                 if (screenRoot != runtimeRoot)
                 {
                     break;
+                }
+            }
+
+            if (runtimeRoot != null)
+            {
+                menuMusicButton?.SetActiveIconIndex(GetMusicIconIndex());
+                var iconScreenRoot = runtimeRoot;
+                menuMusicButton?.Update(mainCamera);
+                if (iconScreenRoot != runtimeRoot)
+                {
+                    return;
+                }
+
+                menuHelpButton?.Update(mainCamera);
+                if (iconScreenRoot != runtimeRoot)
+                {
+                    return;
                 }
             }
 
@@ -366,11 +390,16 @@ namespace BasketballLegends2020
                 OptionBallHeaderY,
                 OptionBallPreviewY,
                 OptionBallLabelY);
+
             menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 304f, 188f, 46f, () =>
             {
                 BLInventory.Instance.ToggleDifficulty();
                 ShowSinglePlayerSetup();
             }, runtimeRoot));
+            if (BLInventory.Instance.Difficulty == BLAiDifficulty.Hell)
+            {
+                CreateHellDifficultyWarning(575f, 346f);
+            }
 
             menuButtons.Add(new BLMenuButton("BACK", 488f, 452f, 150f, 42f, ShowMatchTypeMenu, runtimeRoot));
             menuButtons.Add(new BLMenuButton("PLAY", 660f, 452f, 150f, 42f, StartQuickMatchFlow, runtimeRoot));
@@ -557,7 +586,6 @@ namespace BasketballLegends2020
                 20,
                 runtimeRoot,
                 BLTextStyle.TournamentBody);
-
             CreateBallSelector(
                 "TournamentBall",
                 575f,
@@ -581,6 +609,10 @@ namespace BasketballLegends2020
                 BLInventory.Instance.ToggleDifficulty();
                 ShowTournamentSetup();
             }, runtimeRoot));
+            if (BLInventory.Instance.Difficulty == BLAiDifficulty.Hell)
+            {
+                CreateHellDifficultyWarning(575f, 346f);
+            }
 
             var enoughCharacters = BLPlayersData.GetActiveCharacterIds().Length >= 8;
             if (!enoughCharacters)
@@ -649,6 +681,10 @@ namespace BasketballLegends2020
             var tournament = inventory.Tournament;
             currentScreen = tournament.Completed ? BLBootstrapScreen.TournamentComplete : BLBootstrapScreen.TournamentBracket;
             var regularSeasonScreen = tournament.CurrentStage == BLTournamentStage.RegularSeason;
+            var titleY = regularSeasonScreen ? 42f : 34f;
+            var titleFontSize = regularSeasonScreen ? 32 : 30;
+            var subtitleY = regularSeasonScreen ? 76f : 62f;
+            var subtitleFontSize = regularSeasonScreen ? 18 : 14;
 
             var backgroundFrame = tournament.Completed || !regularSeasonScreen
                 ? "bg10000"
@@ -656,13 +692,13 @@ namespace BasketballLegends2020
             BeginMenuScreen(false, false, backgroundFrame);
             AddTitle(
                 "TOURNAMENT",
-                regularSeasonScreen ? 42f : 48f,
-                regularSeasonScreen ? 32 : 36,
+                titleY,
+                titleFontSize,
                 new Color32(0xD7, 0xF2, 0x4A, 0xFF));
             AddSubtitle(
                 GetTournamentStatusText(tournament),
-                regularSeasonScreen ? 76f : 82f,
-                regularSeasonScreen ? 18 : 20);
+                subtitleY,
+                subtitleFontSize);
             CreateTournamentBracketBoard(tournament);
 
             if (tournament.Completed)
@@ -763,6 +799,31 @@ namespace BasketballLegends2020
                         1f);
                 }
             }
+
+            menuMusicButton = new BLIconButton(
+                "MenuMusicButton",
+                MenuMusicButtonX,
+                MenuTopButtonY,
+                MenuTopButtonSize,
+                MenuTopButtonSize,
+                ToggleBackgroundMusic,
+                runtimeRoot,
+                32,
+                MenuTopIconPixels,
+                "BL2020/Images/music_button_on",
+                "BL2020/Images/music_button_off");
+            menuMusicButton.SetActiveIconIndex(GetMusicIconIndex());
+            menuHelpButton = new BLIconButton(
+                "MenuHelpButton",
+                MenuHelpButtonX,
+                MenuTopButtonY,
+                MenuTopButtonSize,
+                MenuTopButtonSize,
+                NoOpAction,
+                runtimeRoot,
+                32,
+                MenuTopIconPixels,
+                "BL2020/Images/help_button");
 
             if (showControls)
             {
@@ -887,6 +948,21 @@ namespace BasketballLegends2020
                 20,
                 runtimeRoot,
                 BLTextStyle.TournamentBody);
+        }
+
+        private void CreateHellDifficultyWarning(float centerX, float y)
+        {
+            BLRender.Text(
+                "HellDifficultyWarning",
+                "UNFAIR CHALLENGE: CPU USES BONUS SUPERS",
+                centerX,
+                y,
+                12,
+                new Color32(0xFF, 0x9C, 0x32, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                runtimeRoot,
+                BLTextStyle.TournamentAccent);
         }
 
         private void CreateCharacterSelector(
@@ -1218,53 +1294,48 @@ namespace BasketballLegends2020
 
         private void CreateTournamentPlayoffBoard(BLTournamentData tournament)
         {
+            const float playoffBackdropY = 232f;
+            const float playoffBackdropHeight = 292f;
+            const float finalPanelY = 168f;
+            const float semiPanelY = 238f;
+            const float semiPanelOffsetX = 200f;
+            const float placementPanelY = 324f;
+
             CreatePanel(
                 "PlayoffBackdrop",
                 BLConstants.Width2,
-                236f,
+                playoffBackdropY,
                 742f,
-                300f,
+                playoffBackdropHeight,
                 8,
                 new Color(0.02f, 0.05f, 0.08f, 0.28f));
-
-            BLRender.Text(
-                "PlayoffTitle",
-                "FINALS",
-                BLConstants.Width2,
-                118f,
-                30,
-                new Color32(0x42, 0xF1, 0xE6, 0xFF),
-                TextAnchor.MiddleCenter,
-                11,
-                runtimeRoot,
-                BLTextStyle.TournamentAccent);
 
             var semiCurrent = !tournament.Completed && tournament.CurrentStage == BLTournamentStage.SemiFinal;
             CreateTournamentPlayoffMatchPanel(
                 "SemiFinalLeft",
-                178f,
-                254f,
+                BLConstants.Width2 - semiPanelOffsetX,
+                semiPanelY,
                 "SEMIFINAL",
                 tournament.SemiFinalResults[0],
                 semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[0], tournament.PlayerCharacterId));
             CreateTournamentPlayoffMatchPanel(
                 "SemiFinalRight",
-                622f,
-                254f,
+                BLConstants.Width2 + semiPanelOffsetX,
+                semiPanelY,
                 "SEMIFINAL",
                 tournament.SemiFinalResults[1],
                 semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[1], tournament.PlayerCharacterId));
             CreateTournamentPlayoffMatchPanel(
                 "FinalMatch",
                 BLConstants.Width2,
-                162f,
+                finalPanelY,
                 "FINAL",
                 tournament.FinalResult,
                 !tournament.Completed && tournament.CurrentStage == BLTournamentStage.Final);
             CreateTournamentPlayoffMatchPanel(
                 "ThirdPlaceMatch",
                 BLConstants.Width2,
-                346f,
+                placementPanelY,
                 "3RD PLACE MATCH",
                 tournament.ThirdPlaceResult,
                 !tournament.Completed && tournament.CurrentStage == BLTournamentStage.ThirdPlace);
@@ -1272,12 +1343,13 @@ namespace BasketballLegends2020
 
         private void CreateTournamentPlayoffMatchPanel(string key, float x, float y, string title, BLTournamentMatchResult match, bool current)
         {
-            const float panelWidth = 168f;
-            const float panelHeight = 116f;
-            const float badgeOffsetX = 54f;
-            const float nameXOffset = 30f;
-            const float scoreXOffset = 58f;
-            const float rowOffset = 22f;
+            const float panelWidth = 180f;
+            const float panelHeight = 96f;
+            const float badgeOffsetX = 58f;
+            const float nameXOffset = 24f;
+            const float scoreXOffset = 72f;
+            const float rowOffset = 18f;
+            const float titleOffsetY = 58f;
 
             var tint = current
                 ? new Color(1f, 0.78f, 0.52f, 1f)
@@ -1291,8 +1363,8 @@ namespace BasketballLegends2020
                 $"{key}_Shade",
                 x,
                 y,
-                panelWidth - 22f,
-                panelHeight - 18f,
+                panelWidth - 20f,
+                panelHeight - 16f,
                 14,
                 new Color(0.03f, 0.05f, 0.08f, 0.3f));
 
@@ -1300,16 +1372,15 @@ namespace BasketballLegends2020
                 $"{key}_Title",
                 title,
                 x,
-                y - 72f,
-                title.Length > 10 ? 14 : 16,
+                y - titleOffsetY,
+                title.Length > 10 ? 13 : 15,
                 current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                 TextAnchor.MiddleCenter,
                 15,
                 runtimeRoot,
                 BLTextStyle.TournamentAccent);
 
-            CreatePanel($"{key}_DividerVertical", x + 6f, y, 2f, panelHeight - 28f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
-            CreatePanel($"{key}_DividerHorizontal", x - 4f, y, panelWidth - 24f, 2f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
+            CreatePanel($"{key}_DividerHorizontal", x, y, panelWidth - 28f, 2f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
 
             var leftRowY = y - rowOffset;
             var rightRowY = y + rowOffset;
@@ -1381,40 +1452,39 @@ namespace BasketballLegends2020
                 glowColor);
 
             var name = CharacterNameOrTbd(characterId);
-            BLRender.Text(
+            CreateStandingsBodyText(
                 $"{key}_Name",
                 name,
                 nameX,
                 y,
-                GetCompactFontSize(name, 11, 10, 9),
+                GetCompactFontSize(name, 10, 9, 8),
                 winner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
                 TextAnchor.MiddleLeft,
-                17,
-                runtimeRoot,
-                BLTextStyle.TournamentBody);
-            BLRender.Text(
+                17);
+            CreateStandingsAccentText(
                 $"{key}_Score",
                 showScore ? score.ToString() : string.Empty,
                 scoreX,
                 y,
                 14,
                 winner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xD7, 0xF2, 0x4A, 0xFF),
-                TextAnchor.MiddleCenter,
-                17,
-                runtimeRoot,
-                BLTextStyle.TournamentAccent);
+                TextAnchor.MiddleRight,
+                17);
         }
 
         private void CreateTournamentSummaryPanel(BLTournamentData tournament)
         {
             var summaryCompleted = tournament.Completed;
+            var summaryWidth = summaryCompleted ? 312f : 292f;
+            var summaryHeight = summaryCompleted ? 72f : 50f;
+            var summaryY = summaryCompleted ? TournamentSummaryY : TournamentSummaryY + 2f;
             CreateFramedPanel(
                 "TournamentSummaryPanel",
                 "btn_bg0000",
                 BLConstants.Width2,
-                TournamentSummaryY,
-                312f,
-                72f,
+                summaryY,
+                summaryWidth,
+                summaryHeight,
                 15,
                 summaryCompleted
                     ? new Color(0.2f, 0.78f, 0.88f, 0.96f)
@@ -1422,12 +1492,12 @@ namespace BasketballLegends2020
 
             if (summaryCompleted)
             {
-                CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 280f, TournamentSummaryY, 16);
+                CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 280f, summaryY, 16);
                 BLRender.Text(
                     "ChampionLabel",
                     "CHAMPION",
                     312f,
-                    TournamentSummaryY - 12f,
+                    summaryY - 12f,
                     12,
                     new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                     TextAnchor.MiddleLeft,
@@ -1438,7 +1508,7 @@ namespace BasketballLegends2020
                     "ChampionName",
                     CharacterNameOrTbd(tournament.ChampionCharacterId),
                     312f,
-                    TournamentSummaryY + 2f,
+                    summaryY + 2f,
                     GetCompactFontSize(CharacterNameOrTbd(tournament.ChampionCharacterId), 15, 13, 11),
                     Color.white,
                     TextAnchor.MiddleLeft,
@@ -1449,7 +1519,7 @@ namespace BasketballLegends2020
                     "PlacementLabel",
                     $"YOU FINISHED #{tournament.PlayerPlacement}",
                     312f,
-                    TournamentSummaryY + 18f,
+                    summaryY + 18f,
                     11,
                     new Color32(0xFF, 0xD6, 0x6D, 0xFF),
                     TextAnchor.MiddleLeft,
@@ -1465,7 +1535,7 @@ namespace BasketballLegends2020
             {
                 if (tournament.RegularSeasonCompleted)
                 {
-                    headline = "FINALS READY";
+                    headline = "READY";
                     detail = GetMatchupText(GetPlayerPlayoffMatch(tournament), "START FINALS");
                 }
                 else
@@ -1476,42 +1546,38 @@ namespace BasketballLegends2020
             }
             else if (tournament.CurrentStage == BLTournamentStage.SemiFinal)
             {
-                headline = "FINAL FOUR";
+                headline = "UP NEXT";
                 detail = GetMatchupText(GetPlayerPlayoffMatch(tournament), "SEMIFINAL SET");
             }
             else if (tournament.CurrentStage == BLTournamentStage.ThirdPlace)
             {
-                headline = "PLAY FOR THIRD";
+                headline = "UP NEXT";
                 detail = GetMatchupText(tournament.ThirdPlaceResult, "3RD PLACE MATCH");
             }
             else
             {
-                headline = "CHAMPIONSHIP GAME";
+                headline = "UP NEXT";
                 detail = GetMatchupText(tournament.FinalResult, "FINAL");
             }
 
-            BLRender.Text(
+            CreateStandingsAccentText(
                 "TournamentSummaryHeadline",
                 headline,
                 BLConstants.Width2,
-                TournamentSummaryY - 10f,
-                16,
+                summaryY - 8f,
+                13,
                 new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                 TextAnchor.MiddleCenter,
-                17,
-                runtimeRoot,
-                BLTextStyle.TournamentAccent);
-            BLRender.Text(
+                17);
+            CreateStandingsBodyText(
                 "TournamentSummaryDetail",
                 detail,
                 BLConstants.Width2,
-                TournamentSummaryY + 12f,
-                GetCompactFontSize(detail, 13, 11, 10),
+                summaryY + 10f,
+                GetCompactFontSize(detail, 12, 11, 10),
                 Color.white,
                 TextAnchor.MiddleCenter,
-                17,
-                runtimeRoot,
-                BLTextStyle.TournamentBody);
+                17);
         }
 
         private void CreateTournamentBadge(
@@ -2201,12 +2267,28 @@ namespace BasketballLegends2020
         {
             gameCore = null;
             menuButtons.Clear();
+            menuMusicButton = null;
+            menuHelpButton = null;
             ResetTournamentAwardsState();
             if (runtimeRoot != null)
             {
                 Destroy(runtimeRoot.gameObject);
                 runtimeRoot = null;
             }
+        }
+
+        private static void ToggleBackgroundMusic()
+        {
+            BLAudio.Instance?.ToggleMusic();
+        }
+
+        private static void NoOpAction()
+        {
+        }
+
+        private static int GetMusicIconIndex()
+        {
+            return BLAudio.Instance != null && BLAudio.Instance.MusicEnabled ? 0 : 1;
         }
 
         private static string GetTournamentStatusText(BLTournamentData tournament)
