@@ -6,6 +6,7 @@ namespace BasketballLegends2020
         {
             public const string Gameplay = "gameplay";
             public const string Interface = "interface";
+            public const string SkillFx = "skillfx";
         }
 
         public static class Images
@@ -13,6 +14,28 @@ namespace BasketballLegends2020
             public const string GameLogo = "logo";
             public const string DBPers = "texture";
             public const string DBPers2 = "texture2";
+
+            public static class GameplayImages
+            {
+                public const string BallGhoulGreen = "Gameplay/ball_halloween_ghoul_green";
+                public const string BallPumpkinEmber = "Gameplay/ball_halloween_pumpkin_ember";
+                public const string BallMoonlitViolet = "Gameplay/ball_halloween_moonlit_violet";
+                public const string BasketHalloweenMain = "Gameplay/basket_halloween_main";
+                public const string BasketHalloweenFrontRim = "Gameplay/basket_halloween_front_rim";
+            }
+
+            public static string BallTheme(BLBallTheme theme)
+            {
+                switch (theme)
+                {
+                    case BLBallTheme.PumpkinEmber:
+                        return GameplayImages.BallPumpkinEmber;
+                    case BLBallTheme.MoonlitViolet:
+                        return GameplayImages.BallMoonlitViolet;
+                    default:
+                        return GameplayImages.BallGhoulGreen;
+                }
+            }
         }
 
         public static class JsonData

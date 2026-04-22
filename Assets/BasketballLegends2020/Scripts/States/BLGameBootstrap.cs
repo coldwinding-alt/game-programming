@@ -43,6 +43,31 @@ namespace BasketballLegends2020
             public Color[] TextBaseColors;
         }
 
+        private sealed class TournamentStandingsCellViewModel
+        {
+            public string TopText;
+            public string BottomText;
+            public Color TopColor = Color.white;
+            public Color BottomColor = Color.white;
+        }
+
+        private sealed class TournamentStandingsRowViewModel
+        {
+            public int Seed;
+            public int CharacterId;
+            public bool IsPlayer;
+            public bool IsCurrent;
+            public bool IsChampion;
+            public bool IsFinalist;
+            public int Wins;
+            public int Losses;
+            public string PercentageText;
+            public string StatusText;
+            public Color StatusColor;
+            public TournamentStandingsCellViewModel SemiCell = new TournamentStandingsCellViewModel();
+            public TournamentStandingsCellViewModel FinalCell = new TournamentStandingsCellViewModel();
+        }
+
         private readonly System.Collections.Generic.List<BLMenuButton> menuButtons = new System.Collections.Generic.List<BLMenuButton>();
         private readonly System.Collections.Generic.List<TournamentAwardsAnimatedItem> awardsAnimatedItems = new System.Collections.Generic.List<TournamentAwardsAnimatedItem>();
         private const float SelectorHeaderY = 126f;
@@ -75,7 +100,42 @@ namespace BasketballLegends2020
         private const float TournamentFinalPanelY = 249f;
         private const float TournamentMatchRowOffset = 16f;
         private const float TournamentConnectorThickness = 6f;
-        private const float TournamentSummaryY = 390f;
+        private const float TournamentSummaryY = 402f;
+        private const float TournamentStandingsBoardX = 236f;
+        private const float TournamentStandingsBoardY = 226f;
+        private const float TournamentStandingsBoardScale = 0.72f;
+        private const float TournamentStandingsTitleY = 121f;
+        private const float TournamentStandingsTableX = TournamentStandingsBoardX;
+        private const float TournamentStandingsHeaderY = 154f;
+        private const float TournamentStandingsHeaderHeight = 24f;
+        private const float TournamentStandingsRowStartY = 186f;
+        private const float TournamentStandingsRowSpacing = 34f;
+        private const float TournamentStandingsRowHeight = 30f;
+        private const float TournamentStandingsTableWidth = 248f;
+        private const float TournamentStandingsIndexWidth = 22f;
+        private const float TournamentStandingsTeamWidth = 100f;
+        private const float TournamentStandingsWinsWidth = 32f;
+        private const float TournamentStandingsLossesWidth = 32f;
+        private const float TournamentStandingsPctWidth = 62f;
+        private const float TournamentStandingsBadgeScale = 0.22f;
+        private const float TournamentStandingsGlowScale = 0.28f;
+        private const float TournamentStandingsPortraitPixels = 28f;
+        private const float TournamentFinalsTitleX = 574f;
+        private const float TournamentFinalsTitleY = 120f;
+        private const float TournamentBracketPanelScale = 0.9f;
+        private const float TournamentBracketPanelWidth = 132f * TournamentBracketPanelScale;
+        private const float TournamentBracketPanelHeight = 102f * TournamentBracketPanelScale;
+        private const float TournamentBracketFinalX = 574f;
+        private const float TournamentBracketFinalY = 172f;
+        private const float TournamentBracketSemiLeftX = 450f;
+        private const float TournamentBracketSemiRightX = 698f;
+        private const float TournamentBracketSemiY = 244f;
+        private const float TournamentBracketPlacementX = 574f;
+        private const float TournamentBracketPlacementY = 332f;
+        private const float TournamentBracketRowOffset = 18f;
+        private const float TournamentBracketBadgeScale = 0.2f;
+        private const float TournamentBracketGlowScale = 0.26f;
+        private const float TournamentBracketPortraitPixels = 24f;
         private const float TournamentAwardsBadgeY = 114f;
         private const float TournamentAwardsBannerY = 172f;
         private const float TournamentAwardsPodiumY = 382f;
@@ -353,7 +413,7 @@ namespace BasketballLegends2020
                 runtimeRoot,
                 BLFontKind.CfCrackBold,
                 outlineColor: Color.white,
-                outlinePixels: 1.8f);
+                outlinePixels: 1.4f);
 
             CreateCharacterSelector(
                 "P2",
@@ -412,17 +472,15 @@ namespace BasketballLegends2020
             CreateOptionsPanel("Tournament", 575f);
             BLRender.Text(
                 "ModeFixed",
-                "FORMAT: 4 PLAYER KO",
+                "FORMAT: 8 PLAYER / 2 DIVISIONS",
                 575f,
                 216f,
-                18,
+                16,
                 Color.white,
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentBody);
 
             menuButtons.Add(new BLMenuButton(BLInventory.Instance.DifficultyLabel, 575f, 270f, 188f, 46f, () =>
             {
@@ -430,10 +488,10 @@ namespace BasketballLegends2020
                 ShowTournamentSetup();
             }, runtimeRoot));
 
-            var enoughCharacters = BLPlayersData.GetActiveCharacterIds().Length >= 4;
+            var enoughCharacters = BLPlayersData.GetActiveCharacterIds().Length >= 8;
             if (!enoughCharacters)
             {
-                AddSubtitle("NEED 4 ENABLED CHARACTERS", 408f, 18);
+                AddSubtitle("NEED 8 ENABLED CHARACTERS", 408f, 18);
             }
 
             menuButtons.Add(new BLMenuButton("BACK", 488f, 452f, 150f, 42f, ShowMatchTypeMenu, runtimeRoot));
@@ -475,6 +533,12 @@ namespace BasketballLegends2020
             ShowTournamentBracket();
         }
 
+        private void StartTournamentFinalsFlow()
+        {
+            BLInventory.Instance.BeginTournamentFinals();
+            ShowTournamentBracket();
+        }
+
         private void StartTwoPlayerMatch()
         {
             BLInventory.Instance.StartTwoPlayerVersus(versusLeftCharacterId, versusRightCharacterId);
@@ -486,10 +550,21 @@ namespace BasketballLegends2020
             var inventory = BLInventory.Instance;
             var tournament = inventory.Tournament;
             currentScreen = tournament.Completed ? BLBootstrapScreen.TournamentComplete : BLBootstrapScreen.TournamentBracket;
+            var regularSeasonScreen = tournament.CurrentStage == BLTournamentStage.RegularSeason;
 
-            BeginMenuScreen(false, false, tournament.Completed ? "bg10000" : "bg2blue0000");
-            AddTitle("TOURNAMENT", 48f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            AddSubtitle(GetTournamentStatusText(tournament), 82f, 20);
+            var backgroundFrame = tournament.Completed || !regularSeasonScreen
+                ? "bg10000"
+                : "bg2blue0000";
+            BeginMenuScreen(false, false, backgroundFrame);
+            AddTitle(
+                "TOURNAMENT",
+                regularSeasonScreen ? 42f : 48f,
+                regularSeasonScreen ? 32 : 36,
+                new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            AddSubtitle(
+                GetTournamentStatusText(tournament),
+                regularSeasonScreen ? 76f : 82f,
+                regularSeasonScreen ? 18 : 20);
             CreateTournamentBracketBoard(tournament);
 
             if (tournament.Completed)
@@ -500,6 +575,23 @@ namespace BasketballLegends2020
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
                 menuButtons.Add(new BLMenuButton("CEREMONY", 576f, 452f, 208f, 42f, ShowTournamentAwards, runtimeRoot));
+            }
+            else if (tournament.CurrentStage == BLTournamentStage.RegularSeason)
+            {
+                menuButtons.Add(new BLMenuButton("BACK", 172f, 452f, 150f, 42f, () =>
+                {
+                    BLInventory.Instance.AbandonTournament();
+                    ShowPlayerCountMenu();
+                }, runtimeRoot));
+
+                if (tournament.RegularSeasonCompleted)
+                {
+                    menuButtons.Add(new BLMenuButton("START FINALS", 606f, 452f, 196f, 42f, StartTournamentFinalsFlow, runtimeRoot));
+                }
+                else
+                {
+                    menuButtons.Add(new BLMenuButton($"PLAY ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}", 608f, 452f, 208f, 42f, StartGameplay, runtimeRoot));
+                }
             }
             else
             {
@@ -586,11 +678,7 @@ namespace BasketballLegends2020
                     TextAnchor.MiddleCenter,
                     30,
                     runtimeRoot,
-                    BLFontKind.Impact2,
-                    outlineColor: new Color(0f, 0f, 0f, 0.9f),
-                    outlinePixels: 1f,
-                    shadowColor: new Color(0f, 0f, 0f, 0.2f),
-                    shadowOffset: new Vector2(1f, 1f));
+                    BLTextStyle.TournamentBody);
             }
 
             menuButtons.Clear();
@@ -608,11 +696,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
-                BLFontKind.CfCrackBold,
-                outlineColor: new Color(0f, 0f, 0f, 0.92f),
-                outlinePixels: 1.6f,
-                shadowColor: new Color(0f, 0f, 0f, 0.28f),
-                shadowOffset: new Vector2(1.5f, 1.5f));
+                BLTextStyle.DisplayTitle);
         }
 
         private void AddSubtitle(string subtitle, float y, int fontSize = 18)
@@ -627,9 +711,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 19,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: new Color(0f, 0f, 0f, 0.85f),
-                outlinePixels: 1f);
+                BLTextStyle.Subtitle);
         }
 
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint)
@@ -660,9 +742,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentAccent);
         }
 
         private void CreateCharacterSelector(
@@ -686,9 +766,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 20,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentAccent);
 
             menuButtons.Add(new BLMenuButton("<", centerX - SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, previousCharacterAction, runtimeRoot));
             menuButtons.Add(new BLMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
@@ -704,9 +782,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 21,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentBody);
         }
 
         private void CreatePreviewPlayer(int characterId, float x, float y, float scale)
@@ -734,282 +810,434 @@ namespace BasketballLegends2020
 
         private void CreateTournamentBracketBoard(BLTournamentData tournament)
         {
-            CreateFramedPanel(
-                "TournamentBoardFrame",
-                "0bg100000",
-                TournamentBoardX,
-                TournamentBoardY,
-                391f * TournamentBoardScale,
-                399f * TournamentBoardScale,
-                8,
-                Color.white);
-
-            CreatePanel(
-                "TournamentBoardShade",
-                TournamentBoardX,
-                TournamentBoardY + 4f,
-                286f,
-                302f,
-                9,
-                new Color(0.02f, 0.04f, 0.07f, 0.24f));
-
-            var entrantY =
-            new[]
+            if (tournament.CurrentStage == BLTournamentStage.RegularSeason)
             {
-                TournamentSemiTopY - TournamentMatchRowOffset,
-                TournamentSemiTopY + TournamentMatchRowOffset,
-                TournamentSemiBottomY - TournamentMatchRowOffset,
-                TournamentSemiBottomY + TournamentMatchRowOffset
-            };
-
-            var semi1Current = !tournament.Completed && tournament.CurrentStage == BLTournamentStage.SemiFinal;
-            var finalCurrent = !tournament.Completed && tournament.CurrentStage == BLTournamentStage.Final;
-            var semi1Completed = tournament.SemiFinalResults[0].Completed;
-            var semi2Completed = tournament.SemiFinalResults[1].Completed;
-            var semi1Winner = tournament.SemiFinalResults[0].WinnerCharacterId;
-            var semi2Winner = tournament.SemiFinalResults[1].WinnerCharacterId;
-            var topFinalStartY = semi1Completed
-                ? semi1Winner == tournament.SemiFinalResults[0].RightCharacterId
-                    ? TournamentSemiTopY + TournamentMatchRowOffset
-                    : TournamentSemiTopY - TournamentMatchRowOffset
-                : TournamentSemiTopY;
-            var bottomFinalStartY = semi2Completed
-                ? semi2Winner == tournament.SemiFinalResults[1].RightCharacterId
-                    ? TournamentSemiBottomY + TournamentMatchRowOffset
-                    : TournamentSemiBottomY - TournamentMatchRowOffset
-                : TournamentSemiBottomY;
-
-            CreateHorizontalConnector(
-                "Semi1TopConnector",
-                TournamentEntrantBadgeX + 26f,
-                TournamentSemiPanelX - TournamentMatchHalfWidth - 6f,
-                entrantY[0],
-                semi1Current || (semi1Completed && semi1Winner == tournament.EntrantCharacterIds[0]));
-            CreateHorizontalConnector(
-                "Semi1BottomConnector",
-                TournamentEntrantBadgeX + 26f,
-                TournamentSemiPanelX - TournamentMatchHalfWidth - 6f,
-                entrantY[1],
-                semi1Current || (semi1Completed && semi1Winner == tournament.EntrantCharacterIds[1]));
-            CreateHorizontalConnector(
-                "Semi2TopConnector",
-                TournamentEntrantBadgeX + 26f,
-                TournamentSemiPanelX - TournamentMatchHalfWidth - 6f,
-                entrantY[2],
-                semi2Completed && semi2Winner == tournament.EntrantCharacterIds[2]);
-            CreateHorizontalConnector(
-                "Semi2BottomConnector",
-                TournamentEntrantBadgeX + 26f,
-                TournamentSemiPanelX - TournamentMatchHalfWidth - 6f,
-                entrantY[3],
-                semi2Completed && semi2Winner == tournament.EntrantCharacterIds[3]);
-
-            CreateElbowConnector(
-                "TopFinalConnector",
-                TournamentSemiPanelX + TournamentMatchHalfWidth - 2f,
-                topFinalStartY,
-                TournamentFinalPanelX - TournamentMatchHalfWidth - 12f,
-                TournamentFinalPanelY - TournamentMatchRowOffset,
-                finalCurrent || tournament.Completed);
-            CreateElbowConnector(
-                "BottomFinalConnector",
-                TournamentSemiPanelX + TournamentMatchHalfWidth - 2f,
-                bottomFinalStartY,
-                TournamentFinalPanelX - TournamentMatchHalfWidth - 12f,
-                TournamentFinalPanelY + TournamentMatchRowOffset,
-                finalCurrent || tournament.Completed);
-
-            for (var i = 0; i < tournament.EntrantCharacterIds.Length; i++)
-            {
-                var characterId = tournament.EntrantCharacterIds[i];
-                var isPlayer = characterId == tournament.PlayerCharacterId;
-                var highlighted = semi1Current
-                    ? i < 2
-                    : semi1Completed && semi1Winner == characterId || semi2Completed && semi2Winner == characterId;
-                CreateTournamentEntrantSlot($"Entrant_{i}", characterId, TournamentEntrantBadgeX, entrantY[i], isPlayer, highlighted);
+                CreateTournamentRegularSeasonBoard(tournament);
             }
-
-            CreateTournamentMatchPanel(
-                "SemiFinal1",
-                TournamentSemiPanelX,
-                TournamentSemiTopY,
-                "SEMIFINAL 1",
-                tournament.SemiFinalResults[0],
-                semi1Current);
-            CreateTournamentMatchPanel(
-                "SemiFinal2",
-                TournamentSemiPanelX,
-                TournamentSemiBottomY,
-                "SEMIFINAL 2",
-                tournament.SemiFinalResults[1],
-                false);
-            CreateTournamentMatchPanel(
-                "Final",
-                TournamentFinalPanelX,
-                TournamentFinalPanelY,
-                "FINAL",
-                tournament.FinalResult,
-                finalCurrent);
+            else
+            {
+                CreateTournamentPlayoffBoard(tournament);
+            }
 
             CreateTournamentSummaryPanel(tournament);
         }
 
-        private void CreateTournamentEntrantSlot(string key, int characterId, float x, float y, bool isPlayer, bool highlighted)
+        private void CreateTournamentRegularSeasonBoard(BLTournamentData tournament)
         {
-            var accent = highlighted
-                ? new Color32(0xFF, 0xA3, 0x00, 0xFF)
-                : isPlayer
-                    ? new Color32(0xCD, 0xF0, 0x0F, 0xFF)
-                    : new Color32(0x42, 0xF1, 0xE6, 0xFF);
+            CreatePanel(
+                "RegularSeasonBackdrop",
+                BLConstants.Width2,
+                236f,
+                744f,
+                302f,
+                8,
+                new Color(0.01f, 0.04f, 0.08f, 0.28f));
 
-            var glow = BLRender.Sprite($"{key}_Glow", BLAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, 11, runtimeRoot);
-            glow.transform.localScale *= TournamentEntrantGlowScale;
-            glow.GetComponent<SpriteRenderer>().color = new Color(accent.r / 255f, accent.g / 255f, accent.b / 255f, highlighted ? 0.38f : 0.24f);
-
-            var badge = BLRender.Sprite($"{key}_Badge", BLAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, 12, runtimeRoot);
-            badge.transform.localScale *= TournamentEntrantBadgeScale;
-            badge.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.94f);
-
-            CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, TournamentEntrantPortraitPixels, 13);
-
-            BLRender.Text(
-                $"{key}_Name",
-                CharacterNameOrTbd(characterId),
-                TournamentEntrantNameX,
-                y + 1f,
-                GetCompactFontSize(CharacterNameOrTbd(characterId), 12, 10, 9),
-                highlighted
-                    ? new Color32(0xFF, 0xD6, 0x6D, 0xFF)
-                    : isPlayer
-                        ? new Color32(0xD7, 0xF2, 0x4A, 0xFF)
-                        : Color.white,
-                TextAnchor.MiddleLeft,
-                13,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
+            CreateTournamentDivisionBoard("DivisionA", 222f, 242f, "DIV. A", tournament, 0);
+            CreateTournamentDivisionBoard("DivisionB", 578f, 242f, "DIV. B", tournament, 1);
         }
 
-        private void CreateTournamentMatchPanel(string key, float x, float y, string title, BLTournamentMatchResult match, bool current)
+        private void CreateTournamentDivisionBoard(string key, float x, float y, string title, BLTournamentData tournament, int divisionIndex)
         {
+            const float boardWidth = 292f;
+            const float boardHeight = 322f;
+            const float rowHeight = 34f;
+            const float rowSpacing = 42f;
+
+            CreateFramedPanel(
+                $"{key}_Frame",
+                "0bg100000",
+                x,
+                y,
+                boardWidth,
+                boardHeight,
+                9,
+                Color.white);
+            CreatePanel(
+                $"{key}_Shade",
+                x,
+                y + 3f,
+                boardWidth - 74f,
+                boardHeight - 92f,
+                10,
+                new Color(0.02f, 0.05f, 0.07f, 0.36f));
+
+            CreateStandingsAccentText(
+                $"{key}_Title",
+                title,
+                x,
+                y - 124f,
+                19,
+                new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                TextAnchor.MiddleCenter,
+                11);
+
+            var headerY = y - 86f;
+            CreatePanel(
+                $"{key}_Header",
+                x,
+                headerY,
+                boardWidth - 98f,
+                24f,
+                11,
+                new Color(0.15f, 0.67f, 0.82f, 0.92f));
+
+            CreateStandingsAccentText($"{key}_HeaderRank", "#", x - 102f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderTeam", "TEAM", x - 52f, headerY + 1f, 12, Color.white, TextAnchor.MiddleLeft, 12);
+            CreateStandingsAccentText($"{key}_HeaderW", "W", x + 58f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderL", "L", x + 90f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderPct", "PCT", x + 124f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+
+            var standings = tournament.GetDivisionStandings(divisionIndex);
+            for (var i = 0; i < standings.Length; i++)
+            {
+                var entry = standings[i];
+                var rowY = y - 46f + i * rowSpacing;
+                var isPlayer = entry.CharacterId == tournament.PlayerCharacterId;
+                var isCurrentOpponent = !tournament.RegularSeasonCompleted && entry.CharacterId == tournament.CurrentOpponentCharacterId;
+                var qualified = tournament.RegularSeasonCompleted && i < 2;
+
+                var rowTint = new Color(0.34f, 0.2f, 0.58f, 0.92f);
+                if (qualified)
+                {
+                    rowTint = new Color(0.12f, 0.56f, 0.42f, 0.94f);
+                }
+
+                if (isCurrentOpponent)
+                {
+                    rowTint = new Color(0.16f, 0.44f, 0.72f, 0.94f);
+                }
+
+                if (isPlayer)
+                {
+                    rowTint = new Color(0.94f, 0.58f, 0.16f, 0.96f);
+                }
+
+                CreatePanel(
+                    $"{key}_Row_{i}",
+                    x,
+                    rowY,
+                    boardWidth - 110f,
+                    rowHeight,
+                    11,
+                    rowTint);
+
+                CreateStandingsAccentText(
+                    $"{key}_Rank_{i}",
+                    (i + 1).ToString(),
+                    x - 102f,
+                    rowY + 1f,
+                    16,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    12);
+
+                var glowColor = qualified
+                    ? new Color(0.3f, 1f, 0.64f, 0.34f)
+                    : isPlayer
+                        ? new Color(1f, 0.74f, 0.32f, 0.34f)
+                        : new Color(0.3f, 0.96f, 1f, 0.26f);
+                CreateTournamentBadge(
+                    $"{key}_Badge_{i}",
+                    entry.CharacterId,
+                    x - 72f,
+                    rowY,
+                    12,
+                    TournamentStandingsGlowScale,
+                    TournamentStandingsBadgeScale,
+                    TournamentStandingsPortraitPixels,
+                    glowColor);
+
+                var name = CharacterNameOrTbd(entry.CharacterId);
+                CreateStandingsBodyText(
+                    $"{key}_Name_{i}",
+                    name,
+                    x - 48f,
+                    rowY + 1f,
+                    GetCompactFontSize(name, 13, 12, 11),
+                    Color.white,
+                    TextAnchor.MiddleLeft,
+                    12);
+                CreateStandingsAccentText(
+                    $"{key}_W_{i}",
+                    entry.Wins.ToString(),
+                    x + 58f,
+                    rowY + 1f,
+                    14,
+                    qualified ? new Color32(0xD7, 0xF2, 0x4A, 0xFF) : Color.white,
+                    TextAnchor.MiddleCenter,
+                    12);
+                CreateStandingsAccentText(
+                    $"{key}_L_{i}",
+                    entry.Losses.ToString(),
+                    x + 90f,
+                    rowY + 1f,
+                    14,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    12);
+                CreateStandingsBodyText(
+                    $"{key}_Pct_{i}",
+                    FormatWinningPercentage(entry.Percentage),
+                    x + 124f,
+                    rowY + 1f,
+                    12,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    12);
+
+                if (qualified)
+                {
+                    CreateStandingsAccentText(
+                        $"{key}_Qualified_{i}",
+                        "Q",
+                        x + 152f,
+                        rowY + 1f,
+                        12,
+                        new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                        TextAnchor.MiddleCenter,
+                        12);
+                }
+            }
+        }
+
+        private TextMesh CreateStandingsBodyText(
+            string name,
+            string text,
+            float x,
+            float y,
+            int fontSize,
+            Color color,
+            TextAnchor anchor,
+            int sortingOrder)
+        {
+            return BLRender.Text(
+                name,
+                text,
+                x,
+                y,
+                fontSize,
+                color,
+                anchor,
+                sortingOrder,
+                runtimeRoot,
+                BLFontKind.RajdhaniSemiBold,
+                outlineColor: new Color(0.02f, 0.03f, 0.08f, 0.9f),
+                outlinePixels: fontSize >= 13 ? 0.7f : 0.58f);
+        }
+
+        private TextMesh CreateStandingsAccentText(
+            string name,
+            string text,
+            float x,
+            float y,
+            int fontSize,
+            Color color,
+            TextAnchor anchor,
+            int sortingOrder)
+        {
+            return BLRender.Text(
+                name,
+                text,
+                x,
+                y,
+                fontSize,
+                color,
+                anchor,
+                sortingOrder,
+                runtimeRoot,
+                BLFontKind.RajdhaniBold,
+                outlineColor: new Color(0.02f, 0.03f, 0.08f, 0.92f),
+                outlinePixels: fontSize >= 14 ? 0.8f : 0.62f);
+        }
+
+        private void CreateTournamentPlayoffBoard(BLTournamentData tournament)
+        {
+            CreatePanel(
+                "PlayoffBackdrop",
+                BLConstants.Width2,
+                236f,
+                742f,
+                300f,
+                8,
+                new Color(0.02f, 0.05f, 0.08f, 0.28f));
+
+            BLRender.Text(
+                "PlayoffTitle",
+                "FINALS",
+                BLConstants.Width2,
+                118f,
+                30,
+                new Color32(0x42, 0xF1, 0xE6, 0xFF),
+                TextAnchor.MiddleCenter,
+                11,
+                runtimeRoot,
+                BLTextStyle.TournamentAccent);
+
+            var semiCurrent = !tournament.Completed && tournament.CurrentStage == BLTournamentStage.SemiFinal;
+            CreateTournamentPlayoffMatchPanel(
+                "SemiFinalLeft",
+                178f,
+                254f,
+                "SEMIFINAL",
+                tournament.SemiFinalResults[0],
+                semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[0], tournament.PlayerCharacterId));
+            CreateTournamentPlayoffMatchPanel(
+                "SemiFinalRight",
+                622f,
+                254f,
+                "SEMIFINAL",
+                tournament.SemiFinalResults[1],
+                semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[1], tournament.PlayerCharacterId));
+            CreateTournamentPlayoffMatchPanel(
+                "FinalMatch",
+                BLConstants.Width2,
+                162f,
+                "FINAL",
+                tournament.FinalResult,
+                !tournament.Completed && tournament.CurrentStage == BLTournamentStage.Final);
+            CreateTournamentPlayoffMatchPanel(
+                "ThirdPlaceMatch",
+                BLConstants.Width2,
+                346f,
+                "3RD PLACE MATCH",
+                tournament.ThirdPlaceResult,
+                !tournament.Completed && tournament.CurrentStage == BLTournamentStage.ThirdPlace);
+        }
+
+        private void CreateTournamentPlayoffMatchPanel(string key, float x, float y, string title, BLTournamentMatchResult match, bool current)
+        {
+            const float panelWidth = 168f;
+            const float panelHeight = 116f;
+            const float badgeOffsetX = 54f;
+            const float nameXOffset = 30f;
+            const float scoreXOffset = 58f;
+            const float rowOffset = 22f;
+
             var tint = current
                 ? new Color(1f, 0.78f, 0.52f, 1f)
                 : match.Completed
-                    ? new Color(0.82f, 0.98f, 0.9f, 1f)
-                    : new Color(0.78f, 0.82f, 0.9f, 0.94f);
+                    ? new Color(0.8f, 0.98f, 0.9f, 1f)
+                    : new Color(0.76f, 0.82f, 0.9f, 0.9f);
             var frame = current ? "MatchBack0002" : "MatchBack0001";
 
-            CreateFramedPanel(
-                $"{key}_Panel",
-                frame,
+            CreateFramedPanel($"{key}_Frame", frame, x, y, panelWidth, panelHeight, 13, tint);
+            CreatePanel(
+                $"{key}_Shade",
                 x,
                 y,
-                TournamentMatchWidth,
-                TournamentMatchHeight,
-                13,
-                tint);
-
-            CreatePanel(
-                $"{key}_InnerShade",
-                x + 1f,
-                y + 1f,
-                TournamentMatchWidth - 18f,
-                TournamentMatchHeight - 24f,
+                panelWidth - 22f,
+                panelHeight - 18f,
                 14,
-                new Color(0.02f, 0.04f, 0.06f, 0.26f));
+                new Color(0.03f, 0.05f, 0.08f, 0.3f));
 
             BLRender.Text(
                 $"{key}_Title",
                 title,
                 x,
-                y - 56f,
-                13,
-                current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xCD, 0xF0, 0x0F, 0xFF),
+                y - 72f,
+                title.Length > 10 ? 14 : 16,
+                current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                 TextAnchor.MiddleCenter,
                 15,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentAccent);
 
-            var leftName = CharacterNameOrTbd(match.LeftCharacterId);
-            var rightName = CharacterNameOrTbd(match.RightCharacterId);
-            var leftWinner = match.Completed && match.WinnerCharacterId == match.LeftCharacterId;
-            var rightWinner = match.Completed && match.WinnerCharacterId == match.RightCharacterId;
-            var leftRowY = y - TournamentMatchRowOffset;
-            var rightRowY = y + TournamentMatchRowOffset;
+            CreatePanel($"{key}_DividerVertical", x + 6f, y, 2f, panelHeight - 28f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
+            CreatePanel($"{key}_DividerHorizontal", x - 4f, y, panelWidth - 24f, 2f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
 
-            CreateHorizontalConnector($"{key}_Divider", x - 42f, x + 42f, y, false, 15, 2f);
-            BLRender.Text(
+            var leftRowY = y - rowOffset;
+            var rightRowY = y + rowOffset;
+            CreateTournamentPlayoffEntry(
                 $"{key}_Left",
-                leftName,
-                x - 36f,
+                match.LeftCharacterId,
+                match.Completed && match.WinnerCharacterId == match.LeftCharacterId,
+                x - badgeOffsetX,
                 leftRowY,
-                GetCompactFontSize(leftName, 12, 10, 9),
-                leftWinner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
-                TextAnchor.MiddleLeft,
-                16,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
-            BLRender.Text(
+                x - nameXOffset,
+                x + scoreXOffset,
+                match.LeftScore,
+                match.Completed,
+                current);
+            CreateTournamentPlayoffEntry(
                 $"{key}_Right",
-                rightName,
-                x - 36f,
+                match.RightCharacterId,
+                match.Completed && match.WinnerCharacterId == match.RightCharacterId,
+                x - badgeOffsetX,
                 rightRowY,
-                GetCompactFontSize(rightName, 12, 10, 9),
-                rightWinner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
-                TextAnchor.MiddleLeft,
-                16,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
-            BLRender.Text(
-                $"{key}_LeftScore",
-                match.Completed ? match.LeftScore.ToString() : string.Empty,
-                x + 42f,
-                leftRowY,
-                13,
-                leftWinner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xCD, 0xF0, 0x0F, 0xFF),
-                TextAnchor.MiddleCenter,
-                16,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
-            BLRender.Text(
-                $"{key}_RightScore",
-                match.Completed ? match.RightScore.ToString() : string.Empty,
-                x + 42f,
-                rightRowY,
-                13,
-                rightWinner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xCD, 0xF0, 0x0F, 0xFF),
-                TextAnchor.MiddleCenter,
-                16,
-                runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
+                x - nameXOffset,
+                x + scoreXOffset,
+                match.RightScore,
+                match.Completed,
+                current);
 
             if (!match.Completed)
             {
                 BLRender.Text(
                     $"{key}_Versus",
-                    "VS",
-                    x + 42f,
+                    "-",
+                    x + scoreXOffset,
                     y,
-                    11,
+                    18,
                     current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0x42, 0xF1, 0xE6, 0xFF),
                     TextAnchor.MiddleCenter,
                     16,
                     runtimeRoot,
-                    BLFontKind.CfCrackBold,
-                    outlineColor: Color.black,
-                    outlinePixels: 0.8f);
+                    BLTextStyle.TournamentAccent);
             }
+        }
+
+        private void CreateTournamentPlayoffEntry(
+            string key,
+            int characterId,
+            bool winner,
+            float badgeX,
+            float y,
+            float nameX,
+            float scoreX,
+            int score,
+            bool showScore,
+            bool current)
+        {
+            var glowColor = winner
+                ? new Color(1f, 0.74f, 0.28f, 0.36f)
+                : current
+                    ? new Color(0.3f, 0.96f, 1f, 0.32f)
+                    : new Color(0.24f, 0.94f, 0.78f, 0.24f);
+            CreateTournamentBadge(
+                key,
+                characterId,
+                badgeX,
+                y,
+                16,
+                TournamentBracketGlowScale,
+                TournamentBracketBadgeScale,
+                TournamentBracketPortraitPixels,
+                glowColor);
+
+            var name = CharacterNameOrTbd(characterId);
+            BLRender.Text(
+                $"{key}_Name",
+                name,
+                nameX,
+                y,
+                GetCompactFontSize(name, 11, 10, 9),
+                winner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
+                TextAnchor.MiddleLeft,
+                17,
+                runtimeRoot,
+                BLTextStyle.TournamentBody);
+            BLRender.Text(
+                $"{key}_Score",
+                showScore ? score.ToString() : string.Empty,
+                scoreX,
+                y,
+                14,
+                winner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                TextAnchor.MiddleCenter,
+                17,
+                runtimeRoot,
+                BLTextStyle.TournamentAccent);
         }
 
         private void CreateTournamentSummaryPanel(BLTournamentData tournament)
@@ -1020,8 +1248,8 @@ namespace BasketballLegends2020
                 "btn_bg0000",
                 BLConstants.Width2,
                 TournamentSummaryY,
-                236f,
-                70f,
+                312f,
+                72f,
                 15,
                 summaryCompleted
                     ? new Color(0.2f, 0.78f, 0.88f, 0.96f)
@@ -1029,55 +1257,73 @@ namespace BasketballLegends2020
 
             if (summaryCompleted)
             {
-                CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 314f, TournamentSummaryY, 16);
+                CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 280f, TournamentSummaryY, 16);
                 BLRender.Text(
                     "ChampionLabel",
                     "CHAMPION",
-                    346f,
+                    312f,
                     TournamentSummaryY - 12f,
                     12,
                     new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                     TextAnchor.MiddleLeft,
                     17,
                     runtimeRoot,
-                    BLFontKind.Impact2,
-                    outlineColor: Color.black,
-                    outlinePixels: 0.8f);
+                    BLTextStyle.TournamentAccent);
                 BLRender.Text(
                     "ChampionName",
                     CharacterNameOrTbd(tournament.ChampionCharacterId),
-                    346f,
+                    312f,
                     TournamentSummaryY + 2f,
                     GetCompactFontSize(CharacterNameOrTbd(tournament.ChampionCharacterId), 15, 13, 11),
                     Color.white,
                     TextAnchor.MiddleLeft,
                     17,
                     runtimeRoot,
-                    BLFontKind.CfCrackBold,
-                    outlineColor: Color.black,
-                    outlinePixels: 0.9f);
+                    BLTextStyle.TournamentBody);
                 BLRender.Text(
                     "PlacementLabel",
                     $"YOU FINISHED #{tournament.PlayerPlacement}",
-                    346f,
+                    312f,
                     TournamentSummaryY + 18f,
                     11,
                     new Color32(0xFF, 0xD6, 0x6D, 0xFF),
                     TextAnchor.MiddleLeft,
                     17,
                     runtimeRoot,
-                    BLFontKind.Impact2,
-                    outlineColor: Color.black,
-                    outlinePixels: 0.8f);
+                    BLTextStyle.TournamentAccent);
                 return;
             }
 
-            var headline = tournament.CurrentStage == BLTournamentStage.Final
-                ? "FINAL SHOWDOWN"
-                : "WIN YOUR SEMIFINAL";
-            var detail = tournament.CurrentStage == BLTournamentStage.Final
-                ? $"{CharacterNameOrTbd(tournament.FinalResult.LeftCharacterId)} VS {CharacterNameOrTbd(tournament.FinalResult.RightCharacterId)}"
-                : $"{CharacterNameOrTbd(tournament.SemiFinalResults[0].LeftCharacterId)} VS {CharacterNameOrTbd(tournament.SemiFinalResults[0].RightCharacterId)}";
+            string headline;
+            string detail;
+            if (tournament.CurrentStage == BLTournamentStage.RegularSeason)
+            {
+                if (tournament.RegularSeasonCompleted)
+                {
+                    headline = "FINALS READY";
+                    detail = GetMatchupText(GetPlayerPlayoffMatch(tournament), "START FINALS");
+                }
+                else
+                {
+                    headline = $"ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}";
+                    detail = $"{CharacterNameOrTbd(tournament.PlayerCharacterId)} VS {CharacterNameOrTbd(tournament.CurrentOpponentCharacterId)}";
+                }
+            }
+            else if (tournament.CurrentStage == BLTournamentStage.SemiFinal)
+            {
+                headline = "FINAL FOUR";
+                detail = GetMatchupText(GetPlayerPlayoffMatch(tournament), "SEMIFINAL SET");
+            }
+            else if (tournament.CurrentStage == BLTournamentStage.ThirdPlace)
+            {
+                headline = "PLAY FOR THIRD";
+                detail = GetMatchupText(tournament.ThirdPlaceResult, "3RD PLACE MATCH");
+            }
+            else
+            {
+                headline = "CHAMPIONSHIP GAME";
+                detail = GetMatchupText(tournament.FinalResult, "FINAL");
+            }
 
             BLRender.Text(
                 "TournamentSummaryHeadline",
@@ -1089,9 +1335,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 17,
                 runtimeRoot,
-                BLFontKind.CfCrackBold,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
+                BLTextStyle.TournamentAccent);
             BLRender.Text(
                 "TournamentSummaryDetail",
                 detail,
@@ -1102,9 +1346,73 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 17,
                 runtimeRoot,
-                BLFontKind.Impact2,
-                outlineColor: Color.black,
-                outlinePixels: 0.8f);
+                BLTextStyle.TournamentBody);
+        }
+
+        private void CreateTournamentBadge(
+            string key,
+            int characterId,
+            float x,
+            float y,
+            int sortingOrder,
+            float glowScale,
+            float badgeScale,
+            float portraitPixels,
+            Color glowColor,
+            Transform parent = null)
+        {
+            if (parent == null)
+            {
+                parent = runtimeRoot;
+            }
+
+            var glow = BLRender.Sprite($"{key}_Glow", BLAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
+            glow.transform.localScale *= glowScale;
+            glow.GetComponent<SpriteRenderer>().color = glowColor;
+
+            var badge = BLRender.Sprite($"{key}_Badge", BLAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder + 1, parent);
+            badge.transform.localScale *= badgeScale;
+            badge.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.94f);
+
+            if (characterId >= 0)
+            {
+                CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, portraitPixels, sortingOrder + 2, parent);
+            }
+        }
+
+        private static string FormatWinningPercentage(float value)
+        {
+            return value.ToString("0.000");
+        }
+
+        private static bool MatchIncludesPlayer(BLTournamentMatchResult match, int playerCharacterId)
+        {
+            return match != null && (match.LeftCharacterId == playerCharacterId || match.RightCharacterId == playerCharacterId);
+        }
+
+        private static BLTournamentMatchResult GetPlayerPlayoffMatch(BLTournamentData tournament)
+        {
+            if (MatchIncludesPlayer(tournament.SemiFinalResults[0], tournament.PlayerCharacterId))
+            {
+                return tournament.SemiFinalResults[0];
+            }
+
+            if (MatchIncludesPlayer(tournament.SemiFinalResults[1], tournament.PlayerCharacterId))
+            {
+                return tournament.SemiFinalResults[1];
+            }
+
+            return null;
+        }
+
+        private static string GetMatchupText(BLTournamentMatchResult match, string fallback)
+        {
+            if (match == null || match.LeftCharacterId < 0 || match.RightCharacterId < 0)
+            {
+                return fallback;
+            }
+
+            return $"{CharacterNameOrTbd(match.LeftCharacterId)} VS {CharacterNameOrTbd(match.RightCharacterId)}";
         }
 
         private void CreateTournamentAwardsScene(BLTournamentData tournament)
@@ -1165,9 +1473,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 13,
                 bannerGroup.transform,
-                BLFontKind.CfCrackBold,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentAccent);
             RegisterTournamentAwardsAnimation(bannerGroup.transform, new Vector2(0f, 18f), 0.1f, 0.42f, 0.95f);
 
             var podiumGroup = CreateTournamentAwardsGroup("AwardsPodium");
@@ -1290,9 +1596,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 18,
                 parent,
-                BLFontKind.CfCrackBold,
-                outlineColor: Color.black,
-                outlinePixels: 1f);
+                BLTextStyle.TournamentAccent);
         }
 
         private void CreateTournamentAwardsLaneLabel(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
@@ -1325,9 +1629,7 @@ namespace BasketballLegends2020
                     TextAnchor.MiddleCenter,
                     14,
                     parent,
-                    BLFontKind.Impact2,
-                    outlineColor: Color.black,
-                    outlinePixels: 0.9f);
+                    BLTextStyle.TournamentAccent);
             }
 
             var name = CharacterNameOrTbd(placement.CharacterId);
@@ -1341,9 +1643,7 @@ namespace BasketballLegends2020
                 TextAnchor.MiddleCenter,
                 14,
                 parent,
-                BLFontKind.CfCrackBold,
-                outlineColor: Color.black,
-                outlinePixels: 0.9f);
+                BLTextStyle.TournamentBody);
         }
 
         private void CreateTournamentAwardsCharacterGroup(
@@ -1394,46 +1694,12 @@ namespace BasketballLegends2020
 
         private TournamentAwardsPlacement[] BuildTournamentAwardsPlacements(BLTournamentData tournament)
         {
-            var placements = new[]
+            return new[]
             {
                 CreateTournamentAwardsPlacement(1, tournament.ChampionCharacterId, tournament.PlayerCharacterId),
                 CreateTournamentAwardsPlacement(2, GetMatchLoserCharacterId(tournament.FinalResult), tournament.PlayerCharacterId),
-                CreateTournamentAwardsPlacement(
-                    3,
-                    tournament.PlayerPlacement == 3 ? tournament.PlayerCharacterId : GetMatchLoserCharacterId(tournament.SemiFinalResults[1]),
-                    tournament.PlayerCharacterId)
+                CreateTournamentAwardsPlacement(3, tournament.ThirdPlaceResult.WinnerCharacterId, tournament.PlayerCharacterId)
             };
-
-            for (var i = 0; i < placements.Length; i++)
-            {
-                if (placements[i].CharacterId >= 0)
-                {
-                    continue;
-                }
-
-                for (var entrant = 0; entrant < tournament.EntrantCharacterIds.Length; entrant++)
-                {
-                    var candidate = tournament.EntrantCharacterIds[entrant];
-                    var alreadyUsed = false;
-                    for (var used = 0; used < placements.Length; used++)
-                    {
-                        if (used != i && placements[used].CharacterId == candidate)
-                        {
-                            alreadyUsed = true;
-                            break;
-                        }
-                    }
-
-                    if (!alreadyUsed)
-                    {
-                        placements[i].CharacterId = candidate;
-                        placements[i].IsPlayer = candidate == tournament.PlayerCharacterId;
-                        break;
-                    }
-                }
-            }
-
-            return placements;
         }
 
         private static TournamentAwardsPlacement CreateTournamentAwardsPlacement(int placement, int characterId, int playerCharacterId)
@@ -1792,10 +2058,37 @@ namespace BasketballLegends2020
                     return "RUNNER-UP";
                 }
 
-                return "SEMIFINALIST";
+                if (tournament.PlayerPlacement == 3)
+                {
+                    return "THIRD PLACE";
+                }
+
+                if (tournament.PlayerPlacement == 4)
+                {
+                    return "FOURTH PLACE";
+                }
+
+                return $"FINISHED #{tournament.PlayerPlacement}";
             }
 
-            return tournament.CurrentStage == BLTournamentStage.Final ? "FINAL" : "SEMIFINAL";
+            if (tournament.CurrentStage == BLTournamentStage.RegularSeason)
+            {
+                return tournament.RegularSeasonCompleted
+                    ? "FINALS READY"
+                    : $"ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}";
+            }
+
+            if (tournament.CurrentStage == BLTournamentStage.SemiFinal)
+            {
+                return "FINAL FOUR";
+            }
+
+            if (tournament.CurrentStage == BLTournamentStage.ThirdPlace)
+            {
+                return "3RD PLACE MATCH";
+            }
+
+            return "GRAND FINAL";
         }
 
         private static string CharacterNameOrTbd(int characterId)
