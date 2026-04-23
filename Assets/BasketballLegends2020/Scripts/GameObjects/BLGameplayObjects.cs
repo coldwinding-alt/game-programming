@@ -25,7 +25,7 @@ namespace BasketballLegends2020
                 return cached;
             }
 
-            var texture = Resources.Load<Texture2D>($"BL2020/Images/{resourcePath}");
+            var texture = Resources.Load<Texture2D>(BLAssets.Images.ResourcePath(resourcePath));
             if (texture == null)
             {
                 return null;
