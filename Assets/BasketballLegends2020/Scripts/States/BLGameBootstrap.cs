@@ -172,6 +172,7 @@ namespace BasketballLegends2020
         private Transform runtimeRoot;
         private BLGameCore gameCore;
         private Camera mainCamera;
+        private BLFixedResolutionPresenter fixedResolutionPresenter;
         private BLBootstrapScreen currentScreen;
         private BLParticipantMode pendingParticipantMode = BLParticipantMode.OnePlayer;
         private int quickCharacterId;
@@ -204,6 +205,13 @@ namespace BasketballLegends2020
             mainCamera.orthographicSize = BLConstants.GameH / (2f * BLConstants.PixelsPerUnit);
             mainCamera.transform.position = new Vector3(0f, 0f, -10f);
             mainCamera.backgroundColor = Color.black;
+            fixedResolutionPresenter = GetComponent<BLFixedResolutionPresenter>();
+            if (fixedResolutionPresenter == null)
+            {
+                fixedResolutionPresenter = gameObject.AddComponent<BLFixedResolutionPresenter>();
+            }
+
+            fixedResolutionPresenter.Attach(mainCamera);
 
             runtimeRoot = new GameObject("BL2020Runtime").transform;
             BLAudio.Create(transform);
@@ -789,7 +797,7 @@ namespace BasketballLegends2020
 
             if (showLogo)
             {
-                var logoTexture = Resources.Load<Texture2D>("BL2020/Images/logo");
+                var logoTexture = Resources.Load<Texture2D>(BLAssets.Images.ResourcePath(BLAssets.Images.GameLogo));
                 if (logoTexture != null)
                 {
                     var logo = BLRender.Image("Logo", logoTexture, BLConstants.Width2, 68f, 0.5f, 0.5f, 20, runtimeRoot);
@@ -810,8 +818,8 @@ namespace BasketballLegends2020
                 runtimeRoot,
                 32,
                 MenuTopIconPixels,
-                "BL2020/Images/music_button_on",
-                "BL2020/Images/music_button_off");
+                BLAssets.Images.ResourcePath(BLAssets.Images.MusicButtonOn),
+                BLAssets.Images.ResourcePath(BLAssets.Images.MusicButtonOff));
             menuMusicButton.SetActiveIconIndex(GetMusicIconIndex());
             menuHelpButton = new BLIconButton(
                 "MenuHelpButton",
@@ -823,7 +831,7 @@ namespace BasketballLegends2020
                 runtimeRoot,
                 32,
                 MenuTopIconPixels,
-                "BL2020/Images/help_button");
+                BLAssets.Images.ResourcePath(BLAssets.Images.HelpButton));
 
             if (showControls)
             {
@@ -2145,7 +2153,7 @@ namespace BasketballLegends2020
             BLRender.ApplyPixelTransform(
                 portrait.transform,
                 x,
-                y + BLPlayersData.GetCharacterPortraitOffsetY(characterId),
+                y + BLPlayersData.GetCharacterPortraitOffsetY(characterId) * scale,
                 0f,
                 scale);
             return portrait;
