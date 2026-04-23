@@ -11,7 +11,18 @@ namespace BasketballLegends2020
 
         public static class Images
         {
+            private const string Root = "BL2020/Images/";
+
             public const string GameLogo = "logo";
+            public const string PauseButton = "pause_button";
+            public const string MusicButtonOn = "music_button_on";
+            public const string MusicButtonOff = "music_button_off";
+            public const string HelpButton = "help_button";
+
+            public static string ResourcePath(string imageKey)
+            {
+                return string.IsNullOrEmpty(imageKey) ? null : $"{Root}{imageKey}";
+            }
 
             public static class GameplayImages
             {
@@ -38,6 +49,19 @@ namespace BasketballLegends2020
                     BLBallTheme.CandySwirl => GameplayImages.BallCandySwirl,
                     _ => GameplayImages.BallClassicOriginal
                 };
+            }
+        }
+
+        public static class Hud
+        {
+            private const string Root = "BL2020/Hud/";
+
+            public const string Scoreboard = "scoreboard_halloween";
+            public const string Popup = "popup_halloween";
+
+            public static string ResourcePath(string hudKey)
+            {
+                return string.IsNullOrEmpty(hudKey) ? null : $"{Root}{hudKey}";
             }
         }
 

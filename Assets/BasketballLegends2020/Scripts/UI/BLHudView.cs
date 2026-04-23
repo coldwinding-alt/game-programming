@@ -26,15 +26,20 @@ namespace BasketballLegends2020
         private const float TimerY = 110f;
         private const int PortraitSortingOrder = 83;
         private const float CountdownY = 172f;
-        private const float PauseTitleY = 78f;
-        private const float PauseMatchupY = 112f;
+        private const float PauseTitleY = 100f;
         private const float PauseBoardY = 214f;
         private const float PauseNameY = 292f;
-        private const float PauseMetaY = 330f;
-        private const float PauseActionY = 392f;
-        private const float PausePortraitOffsetX = 210f;
+        private const float PauseMetaY = 320f;
+        private const float PauseActionY = 372f;
+        private const float PausePortraitOffsetX = 170f;
+        private const float PausePortraitOffsetY = -22f;
         private const float PausePortraitPixels = 84f;
         private const float PauseScoreOffsetX = 40f;
+        private const float PauseMenuButtonX = 304f;
+        private const float PauseResumeButtonX = 496f;
+        private const float PauseMenuButtonWidth = 156f;
+        private const float PauseResumeButtonWidth = 188f;
+        private const float PauseActionButtonHeight = 40f;
         private const float PopupCenterY = 236f;
         private const float PopupBackdropWidth = 432f;
         private const float MessageExitWindow = 0.18f;
@@ -60,7 +65,6 @@ namespace BasketballLegends2020
         private readonly GameObject pauseShade;
         private readonly GameObject pausePanel;
         private readonly TextMesh pauseTitleText;
-        private readonly TextMesh pauseMatchupText;
         private readonly TextMesh pauseScoreText;
         private readonly TextMesh pauseLeftNameText;
         private readonly TextMesh pauseRightNameText;
@@ -179,8 +183,8 @@ namespace BasketballLegends2020
                 parent,
                 82,
                 TopRightIconPixels,
-                "BL2020/Images/music_button_on",
-                "BL2020/Images/music_button_off");
+                BLAssets.Images.ResourcePath(BLAssets.Images.MusicButtonOn),
+                BLAssets.Images.ResourcePath(BLAssets.Images.MusicButtonOff));
             musicButton.SetActiveIconIndex(GetMusicIconIndex());
             helpButton = new BLIconButton(
                 "HudHelpButton",
@@ -192,9 +196,9 @@ namespace BasketballLegends2020
                 parent,
                 82,
                 TopRightIconPixels,
-                "BL2020/Images/help_button");
+                BLAssets.Images.ResourcePath(BLAssets.Images.HelpButton));
 
-            countdownBackdrop = CreateHudImage("CountdownBackdrop", "BL2020/Hud/popup_halloween", BLConstants.Width2, CountdownY + 4f, 360f, 119, parent);
+            countdownBackdrop = CreateHudImage("CountdownBackdrop", BLAssets.Hud.ResourcePath(BLAssets.Hud.Popup), BLConstants.Width2, CountdownY + 4f, 360f, 119, parent);
             countdownCaptionText = BLRender.Text(
                 "CountdownCaption",
                 string.Empty,
@@ -296,44 +300,27 @@ namespace BasketballLegends2020
             pausePanel = CreatePausePanel("PausePanel", BLConstants.Width2, ScreenCenterY, 582f, 308f, 142, pauseOverlayRoot.transform, new Color(0.05f, 0.08f, 0.12f, 0.9f));
             CreatePauseFrame("PauseFrame", "MatchBack0002", BLConstants.Width2, ScreenCenterY, 632f, 332f, 143, pauseOverlayRoot.transform, new Color(0.9f, 0.98f, 1f, 0.96f));
             CreatePausePanel("PauseBoardTint", BLConstants.Width2, PauseBoardY, 206f, 72f, 144, pauseOverlayRoot.transform, new Color(0.02f, 0.04f, 0.09f, 0.4f));
-            var pauseBoard = CreateHudImage("PauseBoard", "BL2020/Hud/scoreboard_halloween", BLConstants.Width2, PauseBoardY, 560f, 145, pauseOverlayRoot.transform);
+            var pauseBoard = CreateHudImage("PauseBoard", BLAssets.Hud.ResourcePath(BLAssets.Hud.Scoreboard), BLConstants.Width2, PauseBoardY, 560f, 145, pauseOverlayRoot.transform);
             if (pauseBoard == null)
             {
                 CreatePauseFrame("PauseBoardFallback", "btn_bg0000", BLConstants.Width2, PauseBoardY, 456f, 150f, 145, pauseOverlayRoot.transform, new Color(0.22f, 0.84f, 0.95f, 0.94f));
             }
 
-            CreatePortraitAura("PauseLeftPortraitAura", BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY, 0.46f, 146, pauseOverlayRoot.transform);
-            CreatePortraitAura("PauseRightPortraitAura", BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY, 0.46f, 146, pauseOverlayRoot.transform);
-            pauseLeftPortrait = CreateCharacterPortrait("PauseLeftPortrait", matchData.CharacterIds[0], BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
-            pauseRightPortrait = CreateCharacterPortrait("PauseRightPortrait", matchData.CharacterIds[1], BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
+            CreatePortraitAura("PauseLeftPortraitAura", BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.46f, 146, pauseOverlayRoot.transform);
+            CreatePortraitAura("PauseRightPortraitAura", BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.46f, 146, pauseOverlayRoot.transform);
+            pauseLeftPortrait = CreateCharacterPortrait("PauseLeftPortrait", matchData.CharacterIds[0], BLConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
+            pauseRightPortrait = CreateCharacterPortrait("PauseRightPortrait", matchData.CharacterIds[1], BLConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
             pauseTitleText = BLRender.Text(
                 "PauseTitle",
                 "GAME PAUSED",
                 BLConstants.Width2,
                 PauseTitleY,
-                40,
+                28,
                 new Color32(0xC8, 0xFF, 0x55, 0xFF),
                 TextAnchor.MiddleCenter,
-                145,
+                146,
                 pauseOverlayRoot.transform,
-                BLFontKind.CfCrackBold,
-                outlineColor: new Color(0.04f, 0.08f, 0.02f, 0.95f),
-                outlinePixels: 1.85f,
-                shadowColor: new Color(0f, 0f, 0f, 0.45f),
-                shadowOffset: new Vector2(1.4f, -1.4f));
-            pauseMatchupText = BLRender.Text(
-                "PauseMatchup",
-                $"{leftCharacterName}  VS  {rightCharacterName}",
-                BLConstants.Width2,
-                PauseMatchupY,
-                18,
-                new Color32(0x92, 0xFA, 0xFF, 0xFF),
-                TextAnchor.MiddleCenter,
-                145,
-                pauseOverlayRoot.transform,
-                BLFontKind.RajdhaniBold,
-                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.9f),
-                outlinePixels: 0.75f);
+                BLTextStyle.DisplayTitle);
             pauseLeftNameText = BLRender.Text(
                 "PauseLeftName",
                 leftCharacterName,
@@ -412,13 +399,12 @@ namespace BasketballLegends2020
                 BLFontKind.RajdhaniBold,
                 outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.88f),
                 outlinePixels: 0.62f);
-            pauseMenuButton = new BLMenuButton("MENU", 310f, PauseActionY, 168f, 48f, () => pendingPauseCommand = BLPauseCommand.Menu, pauseOverlayRoot.transform, 147);
-            pauseResumeButton = new BLMenuButton("RESUME", 490f, PauseActionY, 196f, 48f, () => pendingPauseCommand = BLPauseCommand.Resume, pauseOverlayRoot.transform, 147);
+            pauseMenuButton = new BLMenuButton("MENU", PauseMenuButtonX, PauseActionY, PauseMenuButtonWidth, PauseActionButtonHeight, () => pendingPauseCommand = BLPauseCommand.Menu, pauseOverlayRoot.transform, 147);
+            pauseResumeButton = new BLMenuButton("RESUME", PauseResumeButtonX, PauseActionY, PauseResumeButtonWidth, PauseActionButtonHeight, () => pendingPauseCommand = BLPauseCommand.Resume, pauseOverlayRoot.transform, 147);
 
             SetPauseOverlayVisible(false);
             if (isTraining)
             {
-                SetText(pauseMatchupText, "TRAINING SESSION");
                 SetText(pauseScoreText, "FREE PLAY / NO TIMER");
                 SetGameObjectVisible(pauseLeftScoreText.gameObject, false);
                 SetGameObjectVisible(pauseRightScoreText.gameObject, false);
@@ -918,7 +904,7 @@ namespace BasketballLegends2020
 
         private GameObject CreatePauseButtonIcon(Transform parent)
         {
-            const string resourcePath = "BL2020/Images/pause_button";
+            var resourcePath = BLAssets.Images.ResourcePath(BLAssets.Images.PauseButton);
             var texture = Resources.Load<Texture2D>(resourcePath);
             if (texture != null)
             {
@@ -946,7 +932,7 @@ namespace BasketballLegends2020
 
         private static void CreateScoreboardBackdrop(Transform parent)
         {
-            var image = CreateHudImage("ScoreboardBackdrop", "BL2020/Hud/scoreboard_halloween", ScoreboardCenterX, ScoreboardCenterY, ScoreboardTargetWidth, 80, parent);
+            var image = CreateHudImage("ScoreboardBackdrop", BLAssets.Hud.ResourcePath(BLAssets.Hud.Scoreboard), ScoreboardCenterX, ScoreboardCenterY, ScoreboardTargetWidth, 80, parent);
             if (image != null)
             {
                 return;
@@ -957,7 +943,7 @@ namespace BasketballLegends2020
 
         private static GameObject CreatePopupBackdrop(Transform parent)
         {
-            return CreateHudImage("MessageBackdrop", "BL2020/Hud/popup_halloween", BLConstants.Width2, PopupCenterY + 1f, PopupBackdropWidth, 118, parent);
+            return CreateHudImage("MessageBackdrop", BLAssets.Hud.ResourcePath(BLAssets.Hud.Popup), BLConstants.Width2, PopupCenterY + 1f, PopupBackdropWidth, 118, parent);
         }
 
         private static GameObject CreateHudImage(string name, string resourcePath, float x, float y, float targetWidth, int sortingOrder, Transform parent)
@@ -1026,7 +1012,7 @@ namespace BasketballLegends2020
             var targetSize = targetPixels * BLPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
             var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
             var scale = targetSize / Mathf.Max(1f, spritePixels);
-            var adjustedY = y + BLPlayersData.GetCharacterPortraitOffsetY(characterId);
+            var adjustedY = y + BLPlayersData.GetCharacterPortraitOffsetY(characterId) * scale;
             BLRender.ApplyPixelTransform(portrait.transform, x, adjustedY, 0f, scale);
             return portrait;
         }
@@ -1103,9 +1089,19 @@ namespace BasketballLegends2020
             }
 
             var mouse = Input.mousePosition;
-            var world = camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -camera.transform.position.z));
-            var pixel = BLConstants.WorldToPixel(world);
-            var inside = rect.Contains(pixel);
+            Vector2 pixel;
+            bool inside;
+            if (BLFixedResolutionPresenter.HasActivePresenter)
+            {
+                inside = BLFixedResolutionPresenter.TryMapScreenToGamePixel(mouse, out pixel) && rect.Contains(pixel);
+            }
+            else
+            {
+                var world = camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -camera.transform.position.z));
+                pixel = BLConstants.WorldToPixel(world);
+                inside = rect.Contains(pixel);
+            }
+
             sprite.transform.localScale = inside ? baseScale * 1.035f : baseScale;
             label.color = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
 

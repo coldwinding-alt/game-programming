@@ -287,7 +287,8 @@ public enum BLTextStyle
             }
 
             font.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
-            font.material.mainTexture.filterMode = FilterMode.Bilinear;
+            // Keep retro UI text crisp instead of letting font atlas sampling soften edges.
+            font.material.mainTexture.filterMode = FilterMode.Point;
         }
     }
 
