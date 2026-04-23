@@ -16,7 +16,6 @@ namespace BasketballLegends2020
 
         public void EnsureLoaded()
         {
-            Load("sk", "texture", "texture");
             Load("sk2", "texture2", "texture2");
         }
 
