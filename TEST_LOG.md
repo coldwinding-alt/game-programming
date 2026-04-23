@@ -1,6 +1,6 @@
 # Test Log
 
-Updated: `2026-04-22`
+Updated: `2026-04-23`
 
 ## Current Baseline
 
@@ -14,7 +14,8 @@ Updated: `2026-04-22`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
-| 2026-04-22 | Core Halloween audio revision pass | Partial pass | Replaced `24_TrackSnd.ogg` with a more energetic public `CC0` Halloween action loop, retuned the generated core SFX toward a darker and less synthetic mix, and kept the resource keys stable; Unity smoke remains blocked only by the existing `ball_halloween_*` `32x32` checks in `Logs/audio_core_sfx_smoke.log`, not the revised audio set |
+| 2026-04-23 | Legacy DragonBones cleanup and active roster validation | Pass | Removed the unused duplicate `Players/sk/texture` DragonBones files from `Resources/BL2020/DragonBones`, confirmed the runtime now only loads `sk2/texture2`, and verified the active head/body/hand/leg armatures are all renamed to the 8 custom Halloween characters with no old player-name displays left in the live asset chain |
+| 2026-04-22 | Core Halloween audio revision pass | Partial pass | Replaced `24_TrackSnd.ogg` with a more energetic public `CC0` Halloween action loop, retuned the generated core SFX toward a darker and less synthetic mix, and kept the resource keys stable; the only remaining smoke blocker at that point was the existing `ball_halloween_*` `32x32` validation issue, not the revised audio set |
 | 2026-04-22 | Batch smoke after Halloween skill FX split (`BL2020SmokeTest.Run`) | Pass | New `Resources/BL2020/Atlases/skillfx` atlas resolved, `BLShieldObject` and `BLTeleportFx` loaded from the dedicated atlas, and the updated `texture2.png` supersheet still booted in batch mode |
 | 2026-04-22 | Batch smoke after Halloween ball/hoop hookup (`BL2020SmokeTest.Run`) | Pass | New `Resources/BL2020/Images/Gameplay` textures resolved, gameplay booted in batch mode, and the match-scoped random ball theme code compiled successfully |
 | 2026-04-22 | Batch smoke (`BL2020SmokeTest.Run`) | Pass | Project compiled and the current playable flow booted successfully after the latest roster/UI adjustments |
@@ -27,7 +28,7 @@ Updated: `2026-04-22`
 
 - Do a full in-editor visual pass on the `8` playable characters and tighten any remaining head/body overlap issues.
 - Continue polishing menu spacing and tournament presentation so the overall UI reads as one cohesive game.
-- Run a quick in-editor multi-match visual pass to confirm all `3` Halloween ball themes appear and that the front rim overlay still covers the ball cleanly on both baskets.
+- Run a quick in-editor multi-match visual pass to confirm all configured Halloween ball themes appear cleanly during gameplay.
 - Run one longer manual playtest loop before final submission packaging.
 
 ## Known Non-Blocking Issue

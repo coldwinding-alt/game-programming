@@ -27,7 +27,7 @@ From the marking guidance and lecturer handout, the project should be able to sh
 
 ### What is already in a safer state
 
-- The rebuilt core Halloween `SFX` set is newly generated inside this project and does not rely on shipping reused third-party waveform files.
+- The rebuilt core Halloween `SFX` set is newly generated inside this project and ships as project-authored waveforms.
 - The current menu background music has a clear public source and clear `CC0` usage terms.
 - The dedicated Halloween skill FX atlas is already documented as rebuilt from custom AI key art.
 - The Halloween supersheet replacements inside `texture2.png` are already documented as custom AI-generated replacement components.
@@ -40,8 +40,8 @@ This claim is **not currently supportable** from the repository evidence.
 
 Why:
 
-- `gameplay.png` / `interface.png` are still documented as currently bundled runtime atlases, not AI-generated replacements.
-- `Players.json`, `sk.json`, `sk2.json`, `texture.png`, `texture.json`, and most of `texture2.png` are still currently bundled animation/runtime content, not fully replaced AI art.
+- `gameplay.png` / `interface.png` are still active runtime atlases, but their provenance notes are not yet complete enough to support an “all visual assets are AI-generated” claim.
+- `sk2.json`, `texture2.json`, and the non-effect character portions of `texture2.png` are still active runtime animation/content files, and the repo does not yet document the whole active character sheet as fully AI-generated coursework art.
 - `logo.png`, `scoreboard_halloween.png`, and `popup_halloween.png` are active runtime images, but their AI/source notes are not currently documented in the repo.
 - The top-right icon family currently comes from the user-provided sheet `四个图标.png`; the repo does not currently contain a formal note proving that sheet as an AI-generated source asset.
 
@@ -49,7 +49,7 @@ Because of that, the safe statement for the report is:
 
 > The newly created Halloween replacement art in this coursework pass was AI-generated and then edited, cropped, and integrated by the student, but some runtime atlases, character sheets, and interface files in the current build still need separate provenance notes or replacement before making an "all images are AI-generated" claim.
 
-#### 2.2 Legacy audio still present
+#### 2.2 Collision audio still needs provenance notes
 
 The following audio is still active or stored in the runtime package without complete provenance notes:
 
@@ -59,12 +59,6 @@ The following audio is still active or stored in the runtime package without com
   - `21_B_NET.ogg`
   - `22_B_Brick.ogg`
   - `23_B_Basket.ogg`
-- stored runtime audio currently not referenced by the current code:
-  - `1_M_Win.ogg`
-  - `3_M_Tribune.ogg`
-  - `12_M_Lost.ogg`
-  - `14_P_FloorStand.ogg`
-  - `15_P_FloorRun.ogg`
 
 If any of these came from previously imported materials or another unclear source, they are a coursework risk under the lecturer guidance and should either be:
 
@@ -98,19 +92,13 @@ The current repository does not include a font provenance note. That should be a
 
 | Runtime File | Use | Source Page | Creator | License / Rights Page | Accessed | Changes Made | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Assets/BasketballLegends2020/Resources/BL2020/Sound/24_TrackSnd.ogg` | Main menu background music loop | [OpenGameArt - Spooky Action Loop "Hallow Quest"](https://opengameart.org/content/spooky-action-loop-hallow-quest) | Zane Little Music | `CC0`, see [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `2026-04-23` | Selected the more energetic Halloween action loop, replaced the file in place to preserve the existing Unity resource key and playback wiring | Safe to use if this source page and license are kept in the final submission notes |
+| `Assets/BasketballLegends2020/Resources/BL2020/Sound/24_TrackSnd.ogg` | Main menu background music loop | [OpenGameArt - Spooky Action Loop "Hallow Quest"](https://opengameart.org/content/spooky-action-loop-hallow-quest) | Zane Little Music | `CC0`, see [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | `2026-04-23` | Selected the more energetic Halloween action loop and updated the current Unity music asset while keeping the live resource key and playback wiring stable | Safe to use if this source page and license are kept in the final submission notes |
 
 ### 3.3 Active runtime audio that still needs follow-up
 
 | Runtime Files | Use | Current Provenance State | Risk |
 | --- | --- | --- | --- |
 | `10_B_Ring.ogg`, `16_B_Bounce.ogg`, `21_B_NET.ogg`, `22_B_Brick.ogg`, `23_B_Basket.ogg` | Ring, bounce, net, brick, and basket collision feedback | Stored in the runtime package, but the repo does not currently record a source page, creator, license, access date, or edit note | Medium to high risk if these were imported earlier without complete source records or any clear usage note |
-
-### 3.4 Stored runtime audio not currently referenced by code
-
-| Runtime Files | Current State | Risk |
-| --- | --- | --- |
-| `1_M_Win.ogg`, `3_M_Tribune.ogg`, `12_M_Lost.ogg`, `14_P_FloorStand.ogg`, `15_P_FloorRun.ogg` | Present in `Resources/BL2020/Sound`, but no current call sites were found in the scripts | Lower immediate runtime risk than the active collision sounds, but still needs provenance if kept in the repository or final build |
 
 ## 4. Image Asset Status
 
@@ -119,7 +107,7 @@ The current repository does not include a font provenance note. That should be a
 | Files | Runtime Status | Safe Description |
 | --- | --- | --- |
 | `Assets/BasketballLegends2020/Resources/BL2020/Atlases/skillfx.png` and `skillfx.json` | Active | Custom Halloween skill FX atlas rebuilt from AI-generated key art and repacked for runtime use |
-| Replacement subtextures inside `Assets/BasketballLegends2020/Resources/BL2020/DragonBones/texture2.png` for `fx_Blur_mol0..4`, `fx_fire_0..4`, `gsgbfyjgkh`, `fx_smoke_0..7`, `part1`, `fx_spl_0`, `fx_spl2_0` | Active | AI-generated Halloween effect components inserted into the existing DragonBones supersheet while preserving the original layout/timing contract |
+| Replacement subtextures inside `Assets/BasketballLegends2020/Resources/BL2020/DragonBones/texture2.png` for `fx_Blur_mol0..4`, `fx_fire_0..4`, `gsgbfyjgkh`, `fx_smoke_0..7`, `part1`, `fx_spl_0`, `fx_spl2_0` | Active | AI-generated Halloween effect components inserted into the current DragonBones supersheet while keeping the live layout/timing contract stable |
 
 ### 4.2 Image assets that are custom/project-generated, but are not yet safe to label as AI-generated from repo evidence alone
 
@@ -127,15 +115,14 @@ The current repository does not include a font provenance note. That should be a
 | --- | --- | --- |
 | `Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/ball_halloween_ghoul_green.png`, `ball_halloween_pumpkin_ember.png`, `ball_halloween_moonlit_violet.png` | Active | The repo records them as project-generated/redrawn Halloween ball art, but it does not currently include a clear AI provenance note |
 | `Assets/BasketballLegends2020/Resources/BL2020/Images/pause_button.png`, `music_button_on.png`, `music_button_off.png`, `help_button.png` | Active | These now come from the user-provided `四个图标.png` sheet; the repo should not automatically call that sheet AI-generated unless you want to document it explicitly as such |
-| `Assets/BasketballLegends2020/Resources/BL2020/Images/Gameplay/basket_halloween_main.png` and `basket_halloween_front_rim.png` | Inactive reference art | They are project-generated Halloween replacements, but the current repo note does not explicitly establish them as AI-generated source art |
 
 ### 4.3 Active runtime image assets that are currently bundled but undocumented
 
 | Files | Runtime Status | Current Provenance State |
 | --- | --- | --- |
-| `Assets/BasketballLegends2020/Resources/BL2020/Atlases/gameplay.png` and `gameplay.json` | Active | Current runtime atlas package; not currently documented as AI-generated |
-| `Assets/BasketballLegends2020/Resources/BL2020/Atlases/interface.png` and `interface.json` | Active | Current runtime atlas package; not currently documented as AI-generated |
-| `Assets/BasketballLegends2020/Resources/BL2020/DragonBones/Players.json`, `sk.json`, `sk2.json`, `texture.png`, `texture.json`, and non-replaced parts of `texture2.png` | Active | Current runtime animation package; not currently documented as AI-generated |
+| `Assets/BasketballLegends2020/Resources/BL2020/Atlases/gameplay.png` and `gameplay.json` | Active | Current runtime atlas package; provenance note still incomplete for an “all images are AI-generated” claim |
+| `Assets/BasketballLegends2020/Resources/BL2020/Atlases/interface.png` and `interface.json` | Active | Current runtime atlas package; provenance note still incomplete for an “all images are AI-generated” claim |
+| `Assets/BasketballLegends2020/Resources/BL2020/DragonBones/sk2.json`, `texture2.json`, and non-replaced parts of `texture2.png` | Active | Current runtime animation package; rebuilt into the active Halloween roster, but not currently documented as fully AI-generated |
 | `Assets/BasketballLegends2020/Resources/BL2020/Images/logo.png` | Active | Source note is currently too vague for a final coursework submission |
 | `Assets/BasketballLegends2020/Resources/BL2020/Hud/scoreboard_halloween.png` and `popup_halloween.png` | Active | Active runtime HUD textures, but no source/provenance note is currently present in the repo |
 
@@ -160,11 +147,10 @@ That sentence is too strong for the current repository evidence.
 1. Replace or document the remaining active image packages:
    - `gameplay.png`
    - `interface.png`
-   - `texture.png`
    - `logo.png`
    - `scoreboard_halloween.png`
    - `popup_halloween.png`
 2. Decide whether the four top-right icons should be declared as AI-generated. If yes, add a clear note that `四个图标.png` is your own AI-generated source sheet.
 3. Replace or fully document the remaining active collision sounds.
-4. Add a separate font credits note for the bundled `.ttf` files.
+4. Add a separate font credits note for the current bundled `.ttf` files.
 5. Keep this file, `ASSET_CREDITS.md`, and the final README consistent with each other before submission.
