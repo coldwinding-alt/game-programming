@@ -23,7 +23,6 @@ sysinfo.txt
 *.apk
 *.aab
 *.unitypackage
-_reference_do_not_ship/
 微信截图_*.png
 *.mp4
 *.mkv
@@ -31,5 +30,6 @@ unity-*.log
 _asset_backup_*/
 新图/
 tmp_*
+gitshow_*.tmp
 PROJECT_CONTEXT.md
 DOCS/HALLOWEEN_CHARACTER_REPLACEMENT_HANDOFF_ZH.md

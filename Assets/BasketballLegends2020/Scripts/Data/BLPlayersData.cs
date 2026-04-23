@@ -5,7 +5,7 @@ namespace BasketballLegends2020
 {
     public static class BLPlayersData
     {
-        private const int DragonBonesSkinCount = 60;
+        private const int ActiveCharacterSkinCount = 8;
 
         private sealed class BLCharacterDefinition
         {
@@ -28,51 +28,34 @@ namespace BasketballLegends2020
 
         private static readonly BLCharacterDefinition[] CharacterDefinitions =
         {
-            new BLCharacterDefinition { DisplayName = "PUMPKIN", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "LeBron James0", HeadOffsetY = 0f, HeadScale = 1f, PreviewScaleMultiplier = 0.98f, PortraitScaleMultiplier = 1.02f },
-            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 5, FormIndex = 2, SuperId = 0, Enabled = true, PortraitSpriteName = "Draymond Green0", HeadOffsetX = 4.5f, HeadOffsetY = -5.5f, HeadScale = 0.94f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 0.92f, PortraitOffsetY = 4f },
-            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 8, FormIndex = 4, SuperId = 1, Enabled = true, PortraitSpriteName = "Brook Lopez", HeadOffsetY = -7f, HeadScale = 0.97f, PreviewScaleMultiplier = 0.94f, PreviewOffsetY = -3f, PortraitScaleMultiplier = 1.02f, PortraitOffsetY = 4f },
-            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 11, FormIndex = 6, SuperId = 2, Enabled = true, PortraitSpriteName = "Marcus Smart0", HeadOffsetY = -6f, HeadScale = 0.98f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 4f },
-            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 13, FormIndex = 8, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetX = 2.75f, HeadOffsetY = -1.5f, HeadScale = 0.92f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f },
-            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 14, FormIndex = 9, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 0f, HeadScale = 1.03f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -6f },
-            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 15, FormIndex = 10, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_witch", HeadOffsetX = 3.5f, HeadOffsetY = -0.75f, HeadScale = 1.08f, PreviewScaleMultiplier = 0.98f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.12f, PortraitOffsetY = -8f },
-            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 16, FormIndex = 11, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetY = -0.5f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -4f }
+            new BLCharacterDefinition { DisplayName = "PUMPKIN", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_pumpkin", HeadOffsetY = 0f, HeadScale = 1f, PreviewScaleMultiplier = 0.98f, PortraitScaleMultiplier = 1.02f },
+            new BLCharacterDefinition { DisplayName = "FRANKENSTEIN", SkinIndex = 1, FormIndex = 1, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_frankenstein", HeadOffsetX = 4.5f, HeadOffsetY = -5.5f, HeadScale = 0.94f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 0.92f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "MUMMY", SkinIndex = 2, FormIndex = 2, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_mummy", HeadOffsetY = -7f, HeadScale = 0.97f, PreviewScaleMultiplier = 0.94f, PreviewOffsetY = -3f, PortraitScaleMultiplier = 1.02f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 3, FormIndex = 3, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_vampire", HeadOffsetY = -6f, HeadScale = 0.98f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 4f },
+            new BLCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 4, FormIndex = 4, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetX = 2.75f, HeadOffsetY = -1.5f, HeadScale = 0.92f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f },
+            new BLCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 5, FormIndex = 5, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 0f, HeadScale = 1.03f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -6f },
+            new BLCharacterDefinition { DisplayName = "WITCH", SkinIndex = 6, FormIndex = 6, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_witch", HeadOffsetX = 3.5f, HeadOffsetY = -0.75f, HeadScale = 1.08f, PreviewScaleMultiplier = 0.98f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.12f, PortraitOffsetY = -8f },
+            new BLCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 7, FormIndex = 7, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetY = -0.5f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -4f }
         };
 
-        private static readonly int[] Hands =
+        private static readonly int[] Hands = { 1, 2, 3, 4, 5, 6, 7, 8 };
+        private static readonly string[] Legs =
         {
-            2, 2, 3, 2, 3, 1, 2, 2, 3, 2, 2, 4, 1, 2, 2, 1, 2, 2, 1, 1,
-            3, 1, 1, 1, 3, 3, 2, 1, 2, 1, 1, 1, 2, 1, 1, 3, 3, 2, 2, 1,
-            3, 2, 1, 3, 1, 2, 2, 1, 3, 2, 2, 1, 3, 1, 2, 2, 2, 1, 1, 1
+            "leg1",
+            "leg2",
+            "leg3",
+            "leg4",
+            "leg5",
+            "leg6",
+            "leg7",
+            "leg8"
         };
-
-        private static readonly string[] Legs = new string[DragonBonesSkinCount];
 
         public static int CharacterCount => CharacterDefinitions.Length;
 
         public static void SetupPlayers()
         {
-            if (Legs[0] != null)
-            {
-                return;
-            }
-
-            for (var i = 0; i < DragonBonesSkinCount; i++)
-            {
-                var stable = 1 + (i * 7 + 3) % 15;
-                Legs[i] = "leg" + stable;
-            }
-
-            Hands[11] = 4;
-            Hands[13] = 5;
-            Hands[14] = 6;
-            Hands[15] = 7;
-            Hands[16] = 8;
-
-            Legs[11] = "leg16";
-            Legs[13] = "leg17";
-            Legs[14] = "leg18";
-            Legs[15] = "leg19";
-            Legs[16] = "leg20";
+            // Active Halloween characters now use an explicit 8-character DragonBones set.
         }
 
         public static DBLiteArmature BuildGameplayArmature(string name)
@@ -220,15 +203,10 @@ namespace BasketballLegends2020
                 return;
             }
 
-            if (Legs[0] == null)
-            {
-                SetupPlayers();
-            }
-
-            skinId = Mathf.Clamp(skinId, 0, DragonBonesSkinCount - 1);
+            skinId = Mathf.Clamp(skinId, 0, ActiveCharacterSkinCount - 1);
             formId = Mathf.Max(0, formId);
 
-            var hand = Hands[Mathf.Clamp(skinId, 0, Hands.Length - 1)];
+            var hand = Hands[skinId];
             var leg = Legs[skinId];
 
             armature.GetChildArmature("head")?.Play("head" + (skinId + 1));
