@@ -34,7 +34,8 @@ namespace BasketballLegends2020
         private const float PausePortraitOffsetX = 170f;
         private const float PausePortraitOffsetY = -22f;
         private const float PausePortraitPixels = 84f;
-        private const float PauseScoreOffsetX = 40f;
+        private const float PauseScoreOffsetX = 47f;
+        private const float PauseScoreY = PauseBoardY - 34f;
         private const float PauseMenuButtonX = 304f;
         private const float PauseResumeButtonX = 496f;
         private const float PauseMenuButtonWidth = 156f;
@@ -351,7 +352,7 @@ namespace BasketballLegends2020
                 "PauseLeftScore",
                 "0",
                 BLConstants.Width2 - PauseScoreOffsetX,
-                PauseBoardY,
+                PauseScoreY,
                 42,
                 new Color32(0xFF, 0xC2, 0x42, 0xFF),
                 TextAnchor.MiddleCenter,
@@ -364,7 +365,7 @@ namespace BasketballLegends2020
                 "PauseScoreDivider",
                 ":",
                 BLConstants.Width2,
-                PauseBoardY - 1f,
+                PauseScoreY - 1f,
                 32,
                 new Color32(0x8F, 0xFF, 0xF8, 0xFF),
                 TextAnchor.MiddleCenter,
@@ -377,7 +378,7 @@ namespace BasketballLegends2020
                 "PauseRightScore",
                 "0",
                 BLConstants.Width2 + PauseScoreOffsetX,
-                PauseBoardY,
+                PauseScoreY,
                 42,
                 new Color32(0xFF, 0xC2, 0x42, 0xFF),
                 TextAnchor.MiddleCenter,
