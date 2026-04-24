@@ -22,5 +22,3 @@ Unity 2022 short in-class assignment project based on `Interactive_Solar_System_
 
 - `Assets/Scripts/SolarSystemExplorer.cs`
 - `Assets/Scripts/SolarSystemTarget.cs`
-
-The editor helper `Assets/Editor/CreateInteractiveSolarSystemScene.cs` can regenerate or validate the scene if needed.
