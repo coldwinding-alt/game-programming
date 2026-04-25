@@ -16,7 +16,7 @@ public class SolarSystemExplorer : MonoBehaviour
 
     [Header("Main View Text")]
     public string mainTitle = "Solar System Explorer";
-    public string mainFact = "Click Earth or Moon to learn a space fact.";
+    public string mainFact = "Click Sun, Earth, or Moon to learn a space fact.";
 
     private SolarSystemTarget currentTarget;
     private Vector3 mainViewPosition;
