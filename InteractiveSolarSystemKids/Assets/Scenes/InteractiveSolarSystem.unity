@@ -528,8 +528,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayName: Sun
   factText: The Sun is a star. It gives light and warmth to the planets.
-  cameraOffset: {x: 0, y: 0.6, z: -2.8}
-  pulseScaleMultiplier: 1.12
+  cameraOffset: {x: 0, y: 0.55, z: -2}
+  pulseScaleMultiplier: 1.18
   pulseDuration: 0.55
 --- !u!1 &938466141
 GameObject:

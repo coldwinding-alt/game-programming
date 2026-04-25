@@ -24,6 +24,11 @@ public class SolarSystemExplorer : MonoBehaviour
 
     private void Awake()
     {
+        if (mainFact == "Click Earth or Moon to learn a space fact.")
+        {
+            mainFact = "Click Sun, Earth, or Moon to learn a space fact.";
+        }
+
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -34,6 +39,13 @@ public class SolarSystemExplorer : MonoBehaviour
             mainViewPosition = mainCamera.transform.position;
             mainViewRotation = mainCamera.transform.rotation;
         }
+
+        EnsureKnownTarget(
+            "Sun",
+            "Sun",
+            "The Sun is a star. It gives light and warmth to the planets.",
+            new Vector3(0f, 0.55f, -2f),
+            1.18f);
     }
 
     private void Start()
@@ -115,7 +127,7 @@ public class SolarSystemExplorer : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, 100f))
         {
-            SolarSystemTarget target = hit.collider.GetComponentInParent<SolarSystemTarget>();
+            SolarSystemTarget target = GetTargetFromHit(hit.collider);
 
             if (target != null)
             {
@@ -156,6 +168,64 @@ public class SolarSystemExplorer : MonoBehaviour
         {
             factText.text = mainFact;
         }
+    }
+
+    private SolarSystemTarget GetTargetFromHit(Collider hitCollider)
+    {
+        SolarSystemTarget target = hitCollider.GetComponentInParent<SolarSystemTarget>();
+
+        if (target != null)
+        {
+            return target;
+        }
+
+        Transform current = hitCollider.transform;
+
+        while (current != null)
+        {
+            if (current.name == "Sun")
+            {
+                return EnsureKnownTarget(
+                    "Sun",
+                    "Sun",
+                    "The Sun is a star. It gives light and warmth to the planets.",
+                    new Vector3(0f, 0.55f, -2f),
+                    1.18f);
+            }
+
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    private SolarSystemTarget EnsureKnownTarget(
+        string objectName,
+        string displayName,
+        string fact,
+        Vector3 cameraOffset,
+        float pulseScale)
+    {
+        GameObject targetObject = GameObject.Find(objectName);
+
+        if (targetObject == null)
+        {
+            return null;
+        }
+
+        SolarSystemTarget target = targetObject.GetComponent<SolarSystemTarget>();
+
+        if (target == null)
+        {
+            target = targetObject.AddComponent<SolarSystemTarget>();
+        }
+
+        target.displayName = displayName;
+        target.factText = fact;
+        target.cameraOffset = cameraOffset;
+        target.pulseScaleMultiplier = pulseScale;
+
+        return target;
     }
 
     private static bool PointerIsOverUi()
