@@ -7,5 +7,5 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/InteractiveSolarSystem.unity
-    guid: 00000000000000000000000000000000
+    guid: 1914002229970444bb3446e65577089e
   m_configObjects: {}
