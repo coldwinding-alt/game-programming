@@ -18,6 +18,8 @@ Unity 2022 short in-class assignment project based on `Interactive_Solar_System_
 4. Click `Earth` or `Moon`.
 5. Press `Back`, right-click, or press `Esc` to return to the main view.
 
+If Unity opens an empty `Untitled` scene, double-click `Assets/Scenes/InteractiveSolarSystem.unity` before pressing Play.
+
 ## Created Scripts
 
 - `Assets/Scripts/SolarSystemExplorer.cs`
