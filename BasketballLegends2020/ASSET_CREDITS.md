@@ -23,3 +23,4 @@ This file records the active resource files included in the coursework build, wh
 - Any replacement art, audio, or animation data should be added here with the exact file path.
 - If an asset is replaced, update the row instead of leaving the current source note ambiguous.
 - Keep this file focused on the assets that ship with or directly support the current playable build.
+- Keep gameplay inspiration notes separate from asset/source notes: the game can be described as inspired by `热血篮球赛` gameplay, but assets should only be described by their documented source or replacement process.

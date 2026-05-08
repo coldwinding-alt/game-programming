@@ -1,6 +1,6 @@
 # Test Log
 
-Updated: `2026-04-23`
+Updated: `2026-05-08`
 
 ## Current Baseline
 
@@ -14,6 +14,7 @@ Updated: `2026-04-23`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-05-08 | Coursework framing documentation audit | Pass | Updated README, sprint plan, and asset-credit wording so the project is described as gameplay-inspired by the H5 web game `热血篮球赛`, not as a line-by-line rewrite or source-code port |
 | 2026-04-23 | Legacy DragonBones cleanup and active roster validation | Pass | Removed the unused duplicate `Players/sk/texture` DragonBones files from `Resources/BL2020/DragonBones`, confirmed the runtime now only loads `sk2/texture2`, and verified the active head/body/hand/leg armatures are all renamed to the 8 custom Halloween characters with no old player-name displays left in the live asset chain |
 | 2026-04-22 | Core Halloween audio revision pass | Partial pass | Replaced `24_TrackSnd.ogg` with a more energetic public `CC0` Halloween action loop, retuned the generated core SFX toward a darker and less synthetic mix, and kept the resource keys stable; the only remaining smoke blocker at that point was the existing `ball_halloween_*` `32x32` validation issue, not the revised audio set |
 | 2026-04-22 | Batch smoke after Halloween skill FX split (`BL2020SmokeTest.Run`) | Pass | New `Resources/BL2020/Atlases/skillfx` atlas resolved, `BLShieldObject` and `BLTeleportFx` loaded from the dedicated atlas, and the updated `texture2.png` supersheet still booted in batch mode |
