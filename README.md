@@ -4,7 +4,7 @@ This repository is organized as a small Unity coursework monorepo. Each game liv
 
 ## Projects
 
-- `BasketballLegends2020/` - Halloween arcade basketball Unity project.
+- `BasketballLegends2020/` - Halloween arcade basketball Unity project, with gameplay inspired by the H5 web game `热血篮球赛`.
 - `InteractiveSolarSystemKids/` - interactive solar system scene for the short in-class assignment.
 
 ## Unity Version

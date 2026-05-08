@@ -1,6 +1,6 @@
 # Halloween Arcade Basketball
 
-Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game. The game direction references the pacing, readability, and competitive feel of `Basketball Legends 2020` while focusing on an original Halloween presentation, a custom character roster, and a stable playable loop.
+Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game. The gameplay direction is inspired by the H5 web game `热血篮球赛`, especially its quick match rhythm, readable arcade basketball controls, and competitive skill feedback. This project should be presented as a student-built Unity coursework game inspired by that play style, not as a line-by-line rewrite or source-code port of the H5 game.
 
 ## Current Playable Scope
 
@@ -53,6 +53,7 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 ## Repository Guide
 
 - `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
+- `DOCS/PROJECT_FRAMING.md` - coursework-facing project positioning, inspiration notes, and agile management summary
 - `TEST_LOG.md` - current verification log, smoke-test baseline, and known follow-up items
 - `ASSET_CREDITS.md` - source notes for the active resource files used by the build
 - `DOCS/COURSEWORK_ASSET_REVIEW.md` - coursework-facing asset review, audio source register, and current provenance risks
