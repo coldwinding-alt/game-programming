@@ -282,6 +282,53 @@ def render_bsteel() -> np.ndarray:
     return fade(normalize(soft_clip(output, 1.02), 0.86), 0.001, 0.02)
 
 
+def render_bring() -> np.ndarray:
+    duration = 0.33
+    ping = resonance([880, 1310, 1970, 2640], duration, [0.34, 0.2, 0.11, 0.05], 0.0008) * 0.68
+    hammer = band_noise(duration, 1600, 9200, 0.48, 2) * exp_decay(duration, 1.0, 0.00028) * 0.11
+    body = pitch_drop(duration, 230, 92, 0.1) * adsr(duration, 0.002, 0.03, 0.02, 0.06)
+    output = echo(ping + hammer + body, [31, 67], [0.12, 0.07])
+    return fade(normalize(soft_clip(output, 1.03), 0.84), 0.001, 0.03)
+
+
+def render_bbounce() -> np.ndarray:
+    duration = 0.19
+    thump = pitch_drop(duration, 170, 54, 0.58) * adsr(duration, 0.001, 0.025, 0.03, 0.04)
+    skin = band_noise(duration, 650, 3200, 0.6, 2) * exp_decay(duration, 1.0, 0.00045) * 0.16
+    air = band_noise(duration, 1800, 9200, 0.22, 2) * adsr(duration, 0.001, 0.018, 0.01, 0.03) * 0.05
+    output = thump + skin + air
+    return fade(normalize(soft_clip(output, 1.02), 0.84), 0.001, 0.02)
+
+
+def render_bnet() -> np.ndarray:
+    duration = 0.16
+    swish = band_noise(duration, 900, 8600, 0.76, 2) * adsr(duration, 0.001, 0.035, 0.02, 0.035) * 0.42
+    rope = band_noise(duration, 240, 1800, 0.3, 2) * exp_decay(duration, 1.0, 0.003) * 0.06
+    tail = band_noise(duration, 4200, 12000, 0.16, 2) * adsr(duration, 0.001, 0.02, 0.01, 0.025) * 0.04
+    output = echo(swish + rope + tail, [18], [0.08])
+    return fade(normalize(soft_clip(output, 1.01), 0.8), 0.001, 0.018)
+
+
+def render_bbrick() -> np.ndarray:
+    duration = 0.24
+    knock = pitch_drop(duration, 210, 68, 0.46) * adsr(duration, 0.001, 0.035, 0.03, 0.05)
+    crack = band_noise(duration, 1200, 6200, 0.68, 2) * exp_decay(duration, 1.0, 0.0003) * 0.18
+    edge = resonance([320, 570, 910], duration, [0.18, 0.09, 0.05], 0.0012) * 0.18
+    grit = band_noise(duration, 2600, 9800, 0.18, 2) * adsr(duration, 0.001, 0.03, 0.01, 0.035) * 0.05
+    output = knock + crack + edge + grit
+    return fade(normalize(soft_clip(output, 1.04), 0.86), 0.001, 0.025)
+
+
+def render_bbasket() -> np.ndarray:
+    duration = 0.27
+    hoop = resonance([540, 810, 1220], duration, [0.22, 0.11, 0.05], 0.0011) * 0.24
+    drop = pitch_drop(duration, 140, 52, 0.4) * adsr(duration, 0.001, 0.03, 0.03, 0.05)
+    net = band_noise(duration, 850, 7200, 0.52, 2) * adsr(duration, 0.001, 0.03, 0.02, 0.04) * 0.18
+    pop = band_noise(duration, 2100, 9800, 0.22, 2) * exp_decay(duration, 1.0, 0.0008) * 0.06
+    output = echo(hoop + drop + net + pop, [24, 52], [0.09, 0.05])
+    return fade(normalize(soft_clip(output, 1.03), 0.84), 0.001, 0.025)
+
+
 RENDERS = {
     "20_ButtonSnd": render_button,
     "19_M_Countdown": render_countdown,
@@ -296,6 +343,11 @@ RENDERS = {
     "17_P_Dash": render_dash,
     "18_P_SuperDash": render_super_dash,
     "8_B_Steel": render_bsteel,
+    "10_B_Ring": render_bring,
+    "16_B_Bounce": render_bbounce,
+    "21_B_NET": render_bnet,
+    "22_B_Brick": render_bbrick,
+    "23_B_Basket": render_bbasket,
 }
 
 
