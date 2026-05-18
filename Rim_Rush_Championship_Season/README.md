@@ -57,6 +57,7 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 - `TEST_LOG.md` - current verification log, smoke-test baseline, and known follow-up items
 - `ASSET_CREDITS.md` - source notes for the active resource files used by the build
 - `DOCS/COURSEWORK_ASSET_REVIEW.md` - coursework-facing asset review, audio source register, and current provenance risks
+- `DOCS/FONT_PROVENANCE.md` - verified Google Fonts matches and the remaining runtime font follow-up list
 - `DOCS/HALLOWEEN_ASSET_PROMPTS.md` - prompt references for future visual asset replacement work
 - `DOCS/lecturer_asset_resources_guide.pdf` and `DOCS/评分标准.txt` - coursework delivery references
 

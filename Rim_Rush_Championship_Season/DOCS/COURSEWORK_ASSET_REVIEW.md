@@ -1,6 +1,6 @@
 # Coursework Asset Review
 
-Reviewed on: `2026-04-23`
+Reviewed on: `2026-05-18`
 
 This note was prepared against:
 
@@ -28,9 +28,11 @@ From the marking guidance and lecturer handout, the project should be able to sh
 ### What is already in a safer state
 
 - The rebuilt core Halloween `SFX` set is newly generated inside this project and ships as project-authored waveforms.
+- The current collision and basket-contact cues are also now locally generated `wav` assets, replacing the older unresolved runtime `ogg` set while keeping the live resource keys stable.
 - The current menu background music has a clear public source and clear `CC0` usage terms.
 - The dedicated Halloween skill FX atlas is already documented as rebuilt from custom AI key art.
 - The Halloween supersheet replacements inside `texture2.png` are already documented as custom AI-generated replacement components.
+- `Rajdhani-Bold.ttf`, `Rajdhani-SemiBold.ttf`, and `Griffy-Regular.ttf` are now documented in `DOCS/FONT_PROVENANCE.md` as exact upstream Google Fonts matches.
 
 ### What is currently risky
 
@@ -49,36 +51,28 @@ Because of that, the safe statement for the report is:
 
 > The newly created Halloween replacement art in this coursework pass was AI-generated and then edited, cropped, and integrated by the student, but some runtime atlases, character sheets, and interface files in the current build still need separate provenance notes or replacement before making an "all images are AI-generated" claim.
 
-#### 2.2 Collision audio still needs provenance notes
+#### 2.2 Some runtime fonts still need provenance or replacement
 
-The following audio is still active or stored in the runtime package without complete provenance notes:
+The repository now has a font provenance note, but not every active runtime font is fully resolved yet.
 
-- active collision/gameplay audio:
-  - `10_B_Ring.ogg`
-  - `16_B_Bounce.ogg`
-  - `21_B_NET.ogg`
-  - `22_B_Brick.ogg`
-  - `23_B_Basket.ogg`
+Already verified in `DOCS/FONT_PROVENANCE.md`:
 
-If any of these came from previously imported materials or another unclear source, they are a coursework risk under the lecturer guidance and should either be:
+- `Rajdhani-Bold.ttf`
+- `Rajdhani-SemiBold.ttf`
+- `Griffy-Regular.ttf`
 
-- replaced
-- documented with a valid source and license
-- or explicitly removed from the final playable build
-
-#### 2.3 Fonts also need source notes
-
-This is outside the audio/image scope you asked for, but it is still a real submission risk because these fonts are active runtime resources:
+Still unresolved in the current bundled runtime pack:
 
 - `Impact.ttf`
 - `Impact2.ttf`
 - `CfCrackBold.ttf`
 - `AgencyBold.ttf`
-- `Rajdhani-SemiBold.ttf`
-- `Rajdhani-Bold.ttf`
-- `Griffy-Regular.ttf`
 
-The current repository does not include a font provenance note. That should be added before submission.
+Those unresolved files should either be:
+
+- replaced
+- documented with a valid source and license
+- or replaced before the final playable submission package is frozen
 
 ## 3. Audio Asset Register
 
@@ -86,7 +80,7 @@ The current repository does not include a font provenance note. That should be a
 
 | Runtime Files | Use | Source Page | Creator | License / Rights Basis | Accessed | Changes Made | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `Assets/BasketballLegends2020/Resources/BL2020/Sound/2_M_Whistle.wav`, `4_P_Teleport.wav`, `5_P_Swoosh.wav`, `6_P_Energy.wav`, `7_P_Stunned.wav`, `8_B_Steel.wav`, `9_M_Buzzer.wav`, `11_P_MegaStart.wav`, `13_P_Shield.wav`, `17_P_Dash.wav`, `18_P_SuperDash.wav`, `19_M_Countdown.wav`, `20_ButtonSnd.wav` | Core match, skill, and UI cues used by the current runtime | N/A - produced locally through `Tools/Audio/generate_halloween_core_sfx.py` | Student / project-authored synthesis pipeline | Original coursework asset authored in-project; no external waveform reuse documented | N/A | Generated locally with `numpy`, `scipy`, ADSR/filter/echo synthesis, then retuned for a darker and less synthetic match to the current visual style | Safe to describe as self-authored/generated coursework audio |
+| `Assets/BasketballLegends2020/Resources/BL2020/Sound/2_M_Whistle.wav`, `4_P_Teleport.wav`, `5_P_Swoosh.wav`, `6_P_Energy.wav`, `7_P_Stunned.wav`, `8_B_Steel.wav`, `9_M_Buzzer.wav`, `10_B_Ring.wav`, `11_P_MegaStart.wav`, `13_P_Shield.wav`, `16_B_Bounce.wav`, `17_P_Dash.wav`, `18_P_SuperDash.wav`, `19_M_Countdown.wav`, `20_ButtonSnd.wav`, `21_B_NET.wav`, `22_B_Brick.wav`, and `23_B_Basket.wav` | Core match, skill, UI, and collision/basket-contact cues used by the current runtime | N/A - produced locally through `Tools/Audio/generate_halloween_core_sfx.py` | Student / project-authored synthesis pipeline | Original coursework asset authored in-project; no external waveform reuse documented | N/A | Generated locally with `numpy`, `scipy`, ADSR/filter/echo synthesis, then retuned for a darker and less synthetic match to the current visual style; the `2026-05-18` pass also replaced the earlier unresolved collision `ogg` clips with generated `wav` assets while keeping the runtime keys stable | Safe to describe as self-authored/generated coursework audio |
 
 ### 3.2 Active public music source
 
@@ -96,9 +90,7 @@ The current repository does not include a font provenance note. That should be a
 
 ### 3.3 Active runtime audio that still needs follow-up
 
-| Runtime Files | Use | Current Provenance State | Risk |
-| --- | --- | --- | --- |
-| `10_B_Ring.ogg`, `16_B_Bounce.ogg`, `21_B_NET.ogg`, `22_B_Brick.ogg`, `23_B_Basket.ogg` | Ring, bounce, net, brick, and basket collision feedback | Stored in the runtime package, but the repo does not currently record a source page, creator, license, access date, or edit note | Medium to high risk if these were imported earlier without complete source records or any clear usage note |
+None in the current runtime sound pack after the `2026-05-18` generated collision-audio replacement pass.
 
 ## 4. Image Asset Status
 
@@ -132,7 +124,7 @@ The current repository does not include a font provenance note. That should be a
 
 You can safely say:
 
-> The custom Halloween replacement sound effects were self-authored inside the project, and the current menu music uses a documented public `CC0` source. Several of the new Halloween replacement visual effects were AI-generated and then edited, cropped, and integrated by the student. Some runtime atlases, HUD files, and character sheet resources in the current build still need fuller provenance notes before the project can claim that all shipped visuals are AI-generated.
+> The custom Halloween replacement sound effects in the current build, including the collision and basket-contact cues, were self-authored inside the project, and the current menu music uses a documented public `CC0` source. Several of the new Halloween replacement visual effects were AI-generated and then edited, cropped, and integrated by the student. Some runtime atlases, HUD files, character sheet resources, and a subset of bundled legacy fonts still need fuller provenance notes before the project can claim that all shipped visuals are AI-generated and all bundled fonts are fully cleared.
 
 ### Wording that should not be used yet
 
@@ -151,6 +143,5 @@ That sentence is too strong for the current repository evidence.
    - `scoreboard_halloween.png`
    - `popup_halloween.png`
 2. Decide whether the four top-right icons should be declared as AI-generated. If yes, add a clear note that `四个图标.png` is your own AI-generated source sheet.
-3. Replace or fully document the remaining active collision sounds.
-4. Add a separate font credits note for the current bundled `.ttf` files.
-5. Keep this file, `ASSET_CREDITS.md`, and the final README consistent with each other before submission.
+3. Replace or fully document the remaining unresolved legacy fonts: `Impact.ttf`, `Impact2.ttf`, `AgencyBold.ttf`, and `CfCrackBold.ttf`.
+4. Keep `DOCS/FONT_PROVENANCE.md`, this file, `ASSET_CREDITS.md`, and the final README consistent with each other before submission.
