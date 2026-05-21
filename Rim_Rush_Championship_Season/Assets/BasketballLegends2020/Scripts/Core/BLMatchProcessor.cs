@@ -34,7 +34,8 @@ namespace BasketballLegends2020
 
         public void Block(int side, bool blockedByHuman)
         {
-            Reset();
+            // Preserve the current shot/sensor chain so a blocked ball can still
+            // resolve if it continues through the original basket path.
             blockSide = side;
             blockIsHuman = blockedByHuman;
         }
