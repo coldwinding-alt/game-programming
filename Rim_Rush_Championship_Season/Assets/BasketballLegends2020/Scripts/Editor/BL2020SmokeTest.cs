@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -112,6 +113,7 @@ namespace BasketballLegends2020.EditorTools
                 BLInventory.Instance.StartQuickGame();
                 var core = new BLGameBuilder().Build(root.transform);
                 core.Update(0.016f);
+                ValidateBlockedShotScorePersistence(core, errors);
             }
             catch (Exception ex)
             {
@@ -176,6 +178,53 @@ namespace BasketballLegends2020.EditorTools
             for (var i = 0; i < audioPaths.Length; i++)
             {
                 CheckResource<AudioClip>(audioPaths[i], errors);
+            }
+        }
+
+        private static void ValidateBlockedShotScorePersistence(BLGameCore core, List<string> errors)
+        {
+            if (core == null || core.Ball == null || core.PlayersRight == null || core.PlayersRight.Count == 0)
+            {
+                errors.Add("Blocked-shot score regression test could not access the runtime ball/blocker state.");
+                return;
+            }
+
+            core.MatchProcessor.Shoot(-1, true, 0);
+            core.Ball.Shoot(-1, 240f, 260f, 0f, 1f);
+            core.MatchProcessor.ProcessSensor(0);
+
+            core.Ball.ApplyBlock(core.PlayersRight[0]);
+
+            var canScoreField = typeof(BLBallObject).GetField("canScore", BindingFlags.Instance | BindingFlags.NonPublic);
+            var scoreArmedSideField = typeof(BLBallObject).GetField("scoreArmedSide", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (canScoreField == null || scoreArmedSideField == null)
+            {
+                errors.Add("Blocked-shot score regression test could not inspect BLBallObject scoring state.");
+                return;
+            }
+
+            var canScore = (bool)canScoreField.GetValue(core.Ball);
+            var scoreArmedSide = (int)scoreArmedSideField.GetValue(core.Ball);
+            if (!canScore)
+            {
+                errors.Add("Blocked shot unexpectedly lost its scoring eligibility before entering the basket.");
+            }
+
+            if (scoreArmedSide != -1)
+            {
+                errors.Add($"Blocked shot lost its original scoring side. Expected -1, got {scoreArmedSide}.");
+            }
+
+            if (!core.MatchProcessor.ProcessSensor(1))
+            {
+                errors.Add("Blocked shot did not preserve the upper-sensor progress needed to finish the made-basket chain.");
+                return;
+            }
+
+            var points = core.MatchProcessor.ResolvePointsForScore(-1, 3);
+            if (points != 2)
+            {
+                errors.Add($"Blocked shot that still scored should resolve as 2 points, got {points}.");
             }
         }
 

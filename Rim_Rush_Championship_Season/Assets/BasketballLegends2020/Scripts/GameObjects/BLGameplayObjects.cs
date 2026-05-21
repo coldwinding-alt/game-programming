@@ -403,7 +403,8 @@ namespace BasketballLegends2020
             State = "block";
             physicsRemoved = false;
             alleyOopPlayer = null;
-            ResetScoring(false);
+            // Keep the current shot armed so a clean block that still drops
+            // through the original hoop can be scored by the sensor chain.
             gameCore.MatchProcessor.Block(blocker.Side, blocker.IsHuman);
             Show();
             UpdateGraphic();
