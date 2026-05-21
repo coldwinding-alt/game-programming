@@ -360,7 +360,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Generate the custom Halloween core SFX set.")
     parser.add_argument(
         "--out",
-        default="Assets/BasketballLegends2020/Resources/BL2020/Sound",
+        default="Assets/rimrush/Resources/rimrush/Sound",
         help="Output directory for generated wav files.",
     )
     args = parser.parse_args()

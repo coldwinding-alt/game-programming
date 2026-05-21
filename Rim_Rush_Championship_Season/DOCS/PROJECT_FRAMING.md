@@ -6,7 +6,7 @@ Updated: `2026-05-08`
 
 This is a Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game.
 
-The game takes gameplay inspiration from the H5 web game `热血篮球赛`: fast `1v1` match rhythm, readable movement and shooting, simple competitive feedback, and special-skill moments. The project should be described as gameplay-inspired by that H5 game, not as a line-by-line rewrite, source-code port, or complete remake of the original codebase.
+The game focuses on a fast `1v1` arcade basketball rhythm, readable movement and shooting, simple competitive feedback, and special-skill moments. The project should be described as an original Unity implementation built around that gameplay direction and current coursework scope.
 
 The current Unity build focuses on:
 
