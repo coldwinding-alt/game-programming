@@ -2,7 +2,7 @@
 
 Reviewed on: `2026-05-18`
 
-This note records what the repository can currently prove about the runtime font files bundled under `Assets/BasketballLegends2020/Resources/BL2020/Fonts`.
+This note records what the repository can currently prove about the runtime font files bundled under `Assets/rimrush/Resources/rimrush/Fonts`.
 
 ## Verified exact upstream matches
 

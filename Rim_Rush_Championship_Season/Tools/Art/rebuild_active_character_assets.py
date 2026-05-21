@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover - scipy is optional for local tooling.
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ART_SOURCE_DIR = REPO_ROOT / "ArtSource"
-DRAGON_BONES_DIR = REPO_ROOT / "Assets" / "BasketballLegends2020" / "Resources" / "BL2020" / "DragonBones"
+DRAGON_BONES_DIR = REPO_ROOT / "Assets" / "rimrush" / "Resources" / "rimrush" / "DragonBones"
 TEXTURE_PATH = DRAGON_BONES_DIR / "texture2.png"
 TEXTURE_JSON_PATH = DRAGON_BONES_DIR / "texture2.json"
 
