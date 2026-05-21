@@ -1,6 +1,6 @@
 # Halloween Arcade Basketball
 
-Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game. The gameplay direction is inspired by the H5 web game `热血篮球赛`, especially its quick match rhythm, readable arcade basketball controls, and competitive skill feedback. This project should be presented as a student-built Unity coursework game inspired by that play style, not as a line-by-line rewrite or source-code port of the H5 game.
+Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball game. The current build is an original Unity implementation focused on fast browser-style arcade basketball pacing, readable controls, and strong competitive skill feedback.
 
 ## Current Playable Scope
 
@@ -30,7 +30,7 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 1. Open this folder in Unity Hub with Unity `2022.3.62f3c1`.
 2. Open `Assets/Scenes/Main.unity`.
 3. Press Play.
-4. The project uses `BL2020AutoBoot`, so the menu flow starts directly from the editor.
+4. The project uses `rimrushAutoBoot`, so the menu flow starts directly from the editor.
 
 ## Controls
 
@@ -53,13 +53,13 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 ## Repository Guide
 
 - `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
-- `DOCS/PROJECT_FRAMING.md` - coursework-facing project positioning, inspiration notes, and agile management summary
+- `DOCS/PROJECT_FRAMING.md` - coursework-facing project positioning, implementation scope, and agile management summary
 - `TEST_LOG.md` - current verification log, smoke-test baseline, and known follow-up items
 - `ASSET_CREDITS.md` - source notes for the active resource files used by the build
 - `DOCS/COURSEWORK_ASSET_REVIEW.md` - coursework-facing asset review, audio source register, and current provenance risks
 - `DOCS/FONT_PROVENANCE.md` - verified Google Fonts matches and the remaining runtime font follow-up list
 - `DOCS/HALLOWEEN_ASSET_PROMPTS.md` - prompt references for future visual asset replacement work
-- `DOCS/lecturer_asset_resources_guide.pdf` and `DOCS/评分标准.txt` - coursework delivery references
+- `DOCS/lecturer_asset_resources_guide.pdf` and the grading-reference text file under `DOCS/` - coursework delivery references
 
 ## Current Limitations
 
