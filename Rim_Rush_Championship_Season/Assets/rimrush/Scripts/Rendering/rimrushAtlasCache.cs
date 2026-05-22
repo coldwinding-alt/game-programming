@@ -376,6 +376,70 @@ public static class rimrushFontMaterialCache
     }
 }
 
+public static class rimrushSharedMaterialCache
+{
+    private const string SpritesDefaultShaderName = "Sprites/Default";
+    private static readonly Dictionary<int, Material> SpritesDefaultMaterials = new Dictionary<int, Material>();
+    private static bool missingSpritesDefaultShaderLogged;
+    private static Shader spritesDefaultShader;
+    private static Material untexturedSpritesDefaultMaterial;
+
+    public static Material GetSpritesDefault(Texture mainTexture = null)
+    {
+        var shader = GetSpritesDefaultShader();
+        if (shader == null)
+        {
+            return null;
+        }
+
+        if (mainTexture == null)
+        {
+            if (untexturedSpritesDefaultMaterial == null)
+            {
+                untexturedSpritesDefaultMaterial = CreateSharedMaterial(shader, "SpritesDefault_Shared", null);
+            }
+
+            return untexturedSpritesDefaultMaterial;
+        }
+
+        var textureKey = mainTexture.GetInstanceID();
+        if (!SpritesDefaultMaterials.TryGetValue(textureKey, out var material))
+        {
+            material = CreateSharedMaterial(shader, $"{mainTexture.name}_SpritesDefault", mainTexture);
+            SpritesDefaultMaterials[textureKey] = material;
+        }
+
+        return material;
+    }
+
+    private static Shader GetSpritesDefaultShader()
+    {
+        if (spritesDefaultShader == null)
+        {
+            spritesDefaultShader = Shader.Find(SpritesDefaultShaderName);
+        }
+
+        if (spritesDefaultShader == null && !missingSpritesDefaultShaderLogged)
+        {
+            Debug.LogWarning($"Could not find shader '{SpritesDefaultShaderName}', runtime shared sprite materials will be unavailable.");
+            missingSpritesDefaultShaderLogged = true;
+        }
+
+        return spritesDefaultShader;
+    }
+
+    private static Material CreateSharedMaterial(Shader shader, string name, Texture mainTexture)
+    {
+        var material = new Material(shader)
+        {
+            name = name,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        material.mainTexture = mainTexture;
+        return material;
+    }
+}
+
 internal enum rimrushTextRasterProfile
 {
     UiSmall,

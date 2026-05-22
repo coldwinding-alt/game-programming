@@ -135,7 +135,7 @@ namespace rimrush
                 line.positionCount = 2;
                 line.startWidth = 0.018f;
                 line.endWidth = 0.018f;
-                line.material = new Material(Shader.Find("Sprites/Default"));
+                line.sharedMaterial = rimrushSharedMaterialCache.GetSpritesDefault();
                 line.startColor = Color.white;
                 line.endColor = Color.white;
                 line.sortingOrder = 55;
@@ -1628,6 +1628,11 @@ namespace rimrush
             shield = superId == 1 || hellEnhanced ? new rimrushShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent) : null;
 
             Restart(0);
+        }
+
+        public void ReleaseRuntimeResources()
+        {
+            energyBar?.ReleaseRuntimeResources();
         }
 
         public void Restart(int startSide)
