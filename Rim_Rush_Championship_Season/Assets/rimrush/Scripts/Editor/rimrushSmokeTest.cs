@@ -13,6 +13,7 @@ namespace rimrush.EditorTools
         {
             var errors = new List<string>();
             GameObject root = null;
+            rimrushGameCore core = null;
 
             try
             {
@@ -105,13 +106,14 @@ namespace rimrush.EditorTools
                 ValidateHardTournamentSkillMapping(errors);
                 ValidateHellTournamentSkillMapping(errors);
                 ValidateBallSelectionStateAndResolution(errors);
+                ValidateRuntimeGraphicsResourceReuse(errors);
 
                 root = new GameObject("SmokeRuntimeRoot");
                 rimrushAudio.Create(root.transform);
                 rimrushInventory.Instance.SetQuickSelection(0);
                 rimrushInventory.Instance.SetQuickBallSelection(rimrushBallSelection.ClassicOriginal);
                 rimrushInventory.Instance.StartQuickGame();
-                var core = new rimrushGameBuilder().Build(root.transform);
+                core = new rimrushGameBuilder().Build(root.transform);
                 core.Update(0.016f);
                 ValidateBlockedShotScorePersistence(core, errors);
             }
@@ -121,6 +123,7 @@ namespace rimrush.EditorTools
             }
             finally
             {
+                core?.Shutdown();
                 if (root != null)
                 {
                     UnityEngine.Object.DestroyImmediate(root);
@@ -178,6 +181,110 @@ namespace rimrush.EditorTools
             for (var i = 0; i < audioPaths.Length; i++)
             {
                 CheckResource<AudioClip>(audioPaths[i], errors);
+            }
+        }
+
+        private static void ValidateRuntimeGraphicsResourceReuse(List<string> errors)
+        {
+            ValidateSharedRuntimeMaterials(errors);
+            ValidateGameRuntimeMeshRelease(errors);
+        }
+
+        private static void ValidateSharedRuntimeMaterials(List<string> errors)
+        {
+            var runtimeRoot = new GameObject("GraphicsReuseSmokeRoot");
+            try
+            {
+                new rimrushBasketObject(-1, runtimeRoot.transform);
+                new rimrushBasketObject(1, runtimeRoot.transform);
+
+                var lineRenderers = runtimeRoot.GetComponentsInChildren<LineRenderer>(true);
+                if (lineRenderers.Length < 2)
+                {
+                    errors.Add("Runtime graphics reuse test could not find basket net line renderers.");
+                }
+                else
+                {
+                    var sharedLineMaterial = lineRenderers[0].sharedMaterial;
+                    if (sharedLineMaterial == null)
+                    {
+                        errors.Add("Basket net line renderer did not receive a shared runtime material.");
+                    }
+                    else
+                    {
+                        for (var i = 1; i < lineRenderers.Length; i++)
+                        {
+                            if (lineRenderers[i].sharedMaterial != sharedLineMaterial)
+                            {
+                                errors.Add("Basket net line renderers are still allocating distinct runtime materials.");
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                new rimrushRadialIconMesh("EnergyFillSmokeA", rimrushAtlasCache.Instance.Interface, "icon_ball20000", 40f, 40f, 10, runtimeRoot.transform);
+                new rimrushRadialIconMesh("EnergyFillSmokeB", rimrushAtlasCache.Instance.Interface, "icon_ball20000", 72f, 40f, 10, runtimeRoot.transform);
+
+                var meshRenderers = runtimeRoot.GetComponentsInChildren<MeshRenderer>(true);
+                if (meshRenderers.Length < 2)
+                {
+                    errors.Add("Runtime graphics reuse test could not find radial icon mesh renderers.");
+                }
+                else if (meshRenderers[0].sharedMaterial == null || meshRenderers[1].sharedMaterial == null)
+                {
+                    errors.Add("Radial icon mesh renderer did not receive a shared runtime material.");
+                }
+                else if (meshRenderers[0].sharedMaterial != meshRenderers[1].sharedMaterial)
+                {
+                    errors.Add("Radial icon meshes are still allocating duplicate runtime materials for the same atlas texture.");
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(runtimeRoot);
+            }
+        }
+
+        private static void ValidateGameRuntimeMeshRelease(List<string> errors)
+        {
+            var runtimeRoot = new GameObject("GraphicsReleaseSmokeRoot");
+            rimrushGameCore core = null;
+            Mesh ownedMesh = null;
+            MeshFilter meshFilter = null;
+
+            try
+            {
+                rimrushAudio.Create(runtimeRoot.transform);
+                rimrushInventory.Instance.SetQuickSelection(0);
+                rimrushInventory.Instance.SetQuickBallSelection(rimrushBallSelection.ClassicOriginal);
+                rimrushInventory.Instance.StartQuickGame();
+                core = new rimrushGameBuilder().Build(runtimeRoot.transform);
+
+                meshFilter = runtimeRoot.GetComponentInChildren<MeshFilter>(true);
+                if (meshFilter == null || meshFilter.sharedMesh == null)
+                {
+                    errors.Add("Runtime graphics release test could not access the energy radial dynamic mesh.");
+                    return;
+                }
+
+                ownedMesh = meshFilter.sharedMesh;
+                core.Shutdown();
+
+                if (meshFilter.sharedMesh != null)
+                {
+                    errors.Add("Game runtime shutdown did not detach the radial icon mesh from its MeshFilter.");
+                }
+            }
+            finally
+            {
+                core?.Shutdown();
+                UnityEngine.Object.DestroyImmediate(runtimeRoot);
+            }
+
+            if (ownedMesh != null)
+            {
+                errors.Add("Game runtime shutdown did not release the radial icon dynamic mesh.");
             }
         }
 

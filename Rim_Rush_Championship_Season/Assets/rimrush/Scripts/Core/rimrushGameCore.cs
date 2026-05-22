@@ -25,6 +25,7 @@ namespace rimrush
         private float postMatchDelay;
         private int postMatchWinner;
         private bool overtimePending;
+        private bool runtimeResourcesReleased;
 
         public rimrushBallObject Ball { get; private set; }
         public rimrushMatchData MatchData => rimrushInventory.Instance.MatchData;
@@ -56,6 +57,25 @@ namespace rimrush
 
             BuildPlayers();
             StartMatch(true);
+        }
+
+        public void Shutdown()
+        {
+            if (runtimeResourcesReleased)
+            {
+                return;
+            }
+
+            runtimeResourcesReleased = true;
+            foreach (var player in playersLeft)
+            {
+                player.ReleaseRuntimeResources();
+            }
+
+            foreach (var player in playersRight)
+            {
+                player.ReleaseRuntimeResources();
+            }
         }
 
         public void Update(float dt)
