@@ -1266,6 +1266,11 @@ namespace rimrush
         {
             overlay.SetProgress(progress);
         }
+
+        public void ReleaseRuntimeResources()
+        {
+            overlay?.ReleaseRuntimeResources();
+        }
     }
 
     public sealed class rimrushRadialIconMesh
@@ -1292,9 +1297,7 @@ namespace rimrush
             mesh.MarkDynamic();
             filter.sharedMesh = mesh;
 
-            var material = new Material(Shader.Find("Sprites/Default"));
-            material.mainTexture = sprite.texture;
-            renderer.sharedMaterial = material;
+            renderer.sharedMaterial = rimrushSharedMaterialCache.GetSpritesDefault(sprite.texture);
             renderer.sortingOrder = sortingOrder;
 
             width = frame.W;
@@ -1356,6 +1359,29 @@ namespace rimrush
             mesh.uv = uvs;
             mesh.triangles = triangles;
             mesh.RecalculateBounds();
+        }
+
+        public void ReleaseRuntimeResources()
+        {
+            if (mesh == null)
+            {
+                return;
+            }
+
+            var filter = graphic != null ? graphic.GetComponent<MeshFilter>() : null;
+            if (filter != null && filter.sharedMesh == mesh)
+            {
+                filter.sharedMesh = null;
+            }
+
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(mesh);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(mesh);
+            }
         }
     }
 }

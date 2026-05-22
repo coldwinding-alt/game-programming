@@ -2273,6 +2273,7 @@ namespace rimrush
 
         private void ClearRuntime()
         {
+            gameCore?.Shutdown();
             gameCore = null;
             menuButtons.Clear();
             menuMusicButton = null;
