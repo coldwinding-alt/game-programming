@@ -101,10 +101,136 @@ namespace rimrush
         public bool IsPauseOverlayVisible { get; private set; }
 
         public rimrushHudView(Transform parent, rimrushMatchData matchData)
+            : this(parent, matchData, null)
+        {
+        }
+
+        public rimrushHudView(Transform parent, rimrushMatchData matchData, rimrushHudSceneView sceneView)
         {
             isTraining = rimrushInventory.Instance.GameMode == 3;
             var leftCharacterName = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[0]);
             var rightCharacterName = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[1]);
+            var useSceneView = sceneView != null &&
+                               sceneView.LeftScoreText != null &&
+                               sceneView.RightScoreText != null &&
+                               sceneView.LeftNameText != null &&
+                               sceneView.RightNameText != null &&
+                               sceneView.TimerText != null &&
+                               sceneView.PauseButtonView != null &&
+                               sceneView.MusicButtonView != null &&
+                               sceneView.HelpButtonView != null &&
+                               sceneView.CountdownBackdrop != null &&
+                               sceneView.CountdownCaptionText != null &&
+                               sceneView.CountdownText != null &&
+                               sceneView.MessageRoot != null &&
+                               sceneView.MessageText != null &&
+                               sceneView.BonusNoticeRoot != null &&
+                               sceneView.BonusNoticeText != null &&
+                               sceneView.PostMatchTitleText != null &&
+                               sceneView.PostMatchScoreText != null &&
+                               sceneView.PostMatchPromptText != null &&
+                               sceneView.PauseOverlayRoot != null &&
+                               sceneView.PauseTitleText != null &&
+                               sceneView.PauseScoreText != null &&
+                               sceneView.PauseLeftNameText != null &&
+                               sceneView.PauseRightNameText != null &&
+                               sceneView.PauseLeftScoreText != null &&
+                               sceneView.PauseRightScoreText != null &&
+                               sceneView.PauseScoreDividerText != null &&
+                               sceneView.PauseMenuButtonView != null &&
+                               sceneView.PauseResumeButtonView != null;
+
+            if (useSceneView)
+            {
+                leftNameText = sceneView.LeftNameText;
+                rightNameText = sceneView.RightNameText;
+                leftScore = sceneView.LeftScoreText;
+                rightScore = sceneView.RightScoreText;
+                timerText = sceneView.TimerText;
+                pauseButton = new rimrushMenuButton(sceneView.PauseButtonView, string.Empty, PauseButtonX, TopRightButtonY, TopRightButtonSize, TopRightButtonSize, () => pendingPauseCommand = rimrushPauseCommand.Toggle);
+                pauseButton.SetBackgroundVisible(false);
+                pauseButton.SetLabelVisible(false);
+                pauseButtonIcon = sceneView.PauseButtonIcon != null ? sceneView.PauseButtonIcon : CreatePauseButtonIcon(sceneView.transform);
+                musicButton = new rimrushIconButton(
+                    sceneView.MusicButtonView,
+                    "HudMusicButton",
+                    MusicButtonX,
+                    TopRightButtonY,
+                    TopRightButtonSize,
+                    TopRightButtonSize,
+                    ToggleBackgroundMusic,
+                    82,
+                    TopRightIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn),
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff));
+                musicButton.SetActiveIconIndex(GetMusicIconIndex());
+                helpButton = new rimrushIconButton(
+                    sceneView.HelpButtonView,
+                    "HudHelpButton",
+                    HelpButtonX,
+                    TopRightButtonY,
+                    TopRightButtonSize,
+                    TopRightButtonSize,
+                    NoOpAction,
+                    82,
+                    TopRightIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton));
+
+                pauseOverlayRoot = sceneView.PauseOverlayRoot;
+                pauseShade = sceneView.PauseShade;
+                pausePanel = sceneView.PausePanel;
+                pauseTitleText = sceneView.PauseTitleText;
+                pauseScoreText = sceneView.PauseScoreText;
+                pauseLeftNameText = sceneView.PauseLeftNameText;
+                pauseRightNameText = sceneView.PauseRightNameText;
+                pauseLeftScoreText = sceneView.PauseLeftScoreText;
+                pauseRightScoreText = sceneView.PauseRightScoreText;
+                pauseScoreDividerText = sceneView.PauseScoreDividerText;
+                pauseLeftPortrait = sceneView.PauseLeftPortraitRenderer != null ? sceneView.PauseLeftPortraitRenderer.gameObject : null;
+                pauseRightPortrait = sceneView.PauseRightPortraitRenderer != null ? sceneView.PauseRightPortraitRenderer.gameObject : null;
+                pauseMenuButton = new rimrushMenuButton(sceneView.PauseMenuButtonView, "MENU", PauseMenuButtonX, PauseActionY, PauseMenuButtonWidth, PauseActionButtonHeight, () => pendingPauseCommand = rimrushPauseCommand.Menu, 147);
+                pauseResumeButton = new rimrushMenuButton(sceneView.PauseResumeButtonView, "RESUME", PauseResumeButtonX, PauseActionY, PauseResumeButtonWidth, PauseActionButtonHeight, () => pendingPauseCommand = rimrushPauseCommand.Resume, 147);
+                messageRoot = sceneView.MessageRoot;
+                messageText = sceneView.MessageText;
+                bonusNoticeRoot = sceneView.BonusNoticeRoot;
+                bonusNoticeText = sceneView.BonusNoticeText;
+                countdownBackdrop = sceneView.CountdownBackdrop;
+                countdownCaptionText = sceneView.CountdownCaptionText;
+                countdownText = sceneView.CountdownText;
+                countdownBaseScale = countdownText.transform.localScale;
+                postMatchTitleText = sceneView.PostMatchTitleText;
+                postMatchScoreText = sceneView.PostMatchScoreText;
+                postMatchPromptText = sceneView.PostMatchPromptText;
+
+                if (sceneView.ScoreboardBackdrop != null)
+                {
+                    sceneView.ScoreboardBackdrop.SetActive(true);
+                }
+
+                SetText(leftNameText, leftCharacterName);
+                SetText(rightNameText, rightCharacterName);
+                SetText(pauseLeftNameText, leftCharacterName);
+                SetText(pauseRightNameText, rightCharacterName);
+                ApplyCharacterPortrait(sceneView.LeftPortraitRenderer, matchData.CharacterIds[0], ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder);
+                ApplyCharacterPortrait(sceneView.RightPortraitRenderer, matchData.CharacterIds[1], ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder);
+                ApplyCharacterPortrait(sceneView.PauseLeftPortraitRenderer, matchData.CharacterIds[0], rimrushConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147);
+                ApplyCharacterPortrait(sceneView.PauseRightPortraitRenderer, matchData.CharacterIds[1], rimrushConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147);
+
+                SetPauseOverlayVisible(false);
+                if (isTraining)
+                {
+                    SetText(pauseScoreText, "FREE PLAY / NO TIMER");
+                    SetGameObjectVisible(pauseLeftScoreText != null ? pauseLeftScoreText.gameObject : null, false);
+                    SetGameObjectVisible(pauseRightScoreText != null ? pauseRightScoreText.gameObject : null, false);
+                    SetGameObjectVisible(pauseScoreDividerText != null ? pauseScoreDividerText.gameObject : null, false);
+                }
+
+                HideMessage();
+                HideCountdown();
+                HidePostMatch();
+                UpdateScore(matchData.MatchScore[0], matchData.MatchScore[1]);
+                return;
+            }
 
             CreateScoreboardBackdrop(parent);
             CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.235f, 81, parent);
@@ -996,6 +1122,29 @@ namespace rimrush
             aura.GetComponent<SpriteRenderer>().color = new Color32(0x46, 0xFF, 0xF0, 0x95);
         }
 
+        private static void ApplyCharacterPortrait(SpriteRenderer renderer, int characterId, float x, float y, float targetPixels, int sortingOrder)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId);
+            renderer.sprite = sprite;
+            renderer.sortingOrder = sortingOrder;
+            renderer.enabled = sprite != null;
+            if (sprite == null)
+            {
+                return;
+            }
+
+            var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
+            var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
+            var scale = targetSize / Mathf.Max(1f, spritePixels);
+            var adjustedY = y + rimrushPlayersData.GetCharacterPortraitOffsetY(characterId) * scale;
+            rimrushRender.ApplyPixelTransform(renderer.transform, x, adjustedY, renderer.transform.localPosition.z, scale);
+        }
+
         private static GameObject CreateCharacterPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
             var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId);
@@ -1035,44 +1184,56 @@ namespace rimrush
 
     public sealed class rimrushMenuButton
     {
-        private readonly Rect rect;
+        private Rect rect;
         private readonly System.Action action;
+        private readonly GameObject root;
         private readonly GameObject sprite;
         private readonly TextMesh label;
-        private readonly Vector3 baseScale;
+        private readonly Transform scaleTarget;
+        private Vector3 baseScale;
         private bool visible = true;
         private bool backgroundVisible = true;
         private bool labelVisible = true;
         private bool pressed;
-        public GameObject Root => sprite;
+        public GameObject Root => root;
 
         public rimrushMenuButton(string text, float x, float y, float width, float height, System.Action action, Transform parent, int sortingOrder = 50)
         {
             this.action = action;
-            rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
+            rect = default;
             sprite = rimrushRender.Sprite($"Button_{text}", rimrushAtlasCache.Instance.Interface, "btn_bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
-            var frame = rimrushAtlasCache.Instance.Interface.Frame("btn_bg0000");
-            if (frame != null)
-            {
-                sprite.transform.localScale = new Vector3(
-                    rimrushConstants.UnitsPerPixel * width / frame.W,
-                    rimrushConstants.UnitsPerPixel * height / frame.H,
-                    1f);
-            }
-
-            baseScale = sprite.transform.localScale;
-            var fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
+            root = sprite;
+            scaleTarget = sprite.transform;
             label = rimrushRender.Text(
                 $"ButtonText_{text}",
                 text,
                 x,
                 y + 1f,
-                fontSize,
+                24,
                 Color.white,
                 TextAnchor.MiddleCenter,
                 sortingOrder + 30,
                 parent,
                 rimrushTextStyle.ButtonLabel);
+            baseScale = Vector3.one;
+            ApplyLayout(text, x, y, width, height, sortingOrder);
+        }
+
+        public rimrushMenuButton(rimrushMenuButtonView view, string text, float x, float y, float width, float height, System.Action action, int sortingOrder = 50)
+        {
+            this.action = action;
+            rect = default;
+            if (view == null)
+            {
+                view = rimrushMenuButtonView.CreateRuntimeFallback(string.IsNullOrEmpty(text) ? "MenuButton" : $"Button_{text}", null);
+            }
+
+            root = view.Root;
+            sprite = view.BackgroundRenderer != null ? view.BackgroundRenderer.gameObject : view.Root;
+            scaleTarget = view.BackgroundRenderer != null ? view.BackgroundRenderer.transform : view.transform;
+            label = view.Label;
+            baseScale = Vector3.one;
+            ApplyLayout(text, x, y, width, height, sortingOrder);
         }
 
         public void Update(Camera camera)
@@ -1103,8 +1264,15 @@ namespace rimrush
                 inside = rect.Contains(pixel);
             }
 
-            sprite.transform.localScale = inside ? baseScale * 1.035f : baseScale;
-            label.color = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
+            if (scaleTarget != null)
+            {
+                scaleTarget.localScale = inside ? baseScale * 1.035f : baseScale;
+            }
+
+            if (label != null)
+            {
+                label.color = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
+            }
 
             if (inside && Input.GetMouseButtonDown(0))
             {
@@ -1124,26 +1292,94 @@ namespace rimrush
 
         public void SetText(string text)
         {
+            if (label == null)
+            {
+                return;
+            }
+
             label.text = text;
+            label.font?.RequestCharactersInTexture(text, label.fontSize, FontStyle.Normal);
         }
 
         public void SetVisible(bool isVisible)
         {
             visible = isVisible;
-            sprite.SetActive(isVisible && backgroundVisible);
-            label.gameObject.SetActive(isVisible && labelVisible);
+            if (sprite != null)
+            {
+                sprite.SetActive(isVisible && backgroundVisible);
+            }
+
+            if (label != null)
+            {
+                label.gameObject.SetActive(isVisible && labelVisible);
+            }
         }
 
         public void SetBackgroundVisible(bool isVisible)
         {
             backgroundVisible = isVisible;
-            sprite.SetActive(visible && backgroundVisible);
+            if (sprite != null)
+            {
+                sprite.SetActive(visible && backgroundVisible);
+            }
         }
 
         public void SetLabelVisible(bool isVisible)
         {
             labelVisible = isVisible;
-            label.gameObject.SetActive(visible && labelVisible);
+            if (label != null)
+            {
+                label.gameObject.SetActive(visible && labelVisible);
+            }
+        }
+
+        public void Configure(string text, float x, float y, float width, float height, int sortingOrder = 50)
+        {
+            ApplyLayout(text, x, y, width, height, sortingOrder);
+        }
+
+        private void ApplyLayout(string text, float x, float y, float width, float height, int sortingOrder)
+        {
+            rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
+            if (root != null)
+            {
+                rimrushRender.ApplyPixelTransform(root.transform, x, y, root.transform.localPosition.z);
+            }
+
+            if (sprite != null)
+            {
+                var renderer = sprite.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    renderer.sortingOrder = sortingOrder;
+                    var frame = renderer.sprite != null ? rimrushAtlasCache.Instance.Interface.Frame("btn_bg0000") : null;
+                    if (frame != null)
+                    {
+                        baseScale = new Vector3(
+                            rimrushConstants.UnitsPerPixel * width / frame.W,
+                            rimrushConstants.UnitsPerPixel * height / frame.H,
+                            1f);
+                    }
+                    else
+                    {
+                        baseScale = Vector3.one;
+                    }
+
+                    if (scaleTarget != null)
+                    {
+                        scaleTarget.localScale = baseScale;
+                    }
+                }
+            }
+
+            if (label != null)
+            {
+                label.fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
+                label.anchor = TextAnchor.MiddleCenter;
+                label.GetComponent<MeshRenderer>().sortingOrder = sortingOrder + 30;
+                rimrushRender.ApplyPixelTransform(label.transform, x, y + 1f, label.transform.localPosition.z);
+                SetText(text);
+            }
         }
     }
 
@@ -1179,6 +1415,51 @@ namespace rimrush
             RefreshIcons();
         }
 
+        public rimrushIconButton(
+            rimrushIconButtonView view,
+            string name,
+            float x,
+            float y,
+            float width,
+            float height,
+            System.Action action,
+            int sortingOrder,
+            float targetPixels,
+            params string[] resourcePaths)
+        {
+            if (view != null && view.ButtonView != null)
+            {
+                button = new rimrushMenuButton(view.ButtonView, string.Empty, x, y, width, height, action);
+            }
+            else
+            {
+                button = new rimrushMenuButton(string.Empty, x, y, width, height, action, null);
+            }
+
+            button.SetBackgroundVisible(false);
+            button.SetLabelVisible(false);
+
+            if (view != null && view.Icons != null && view.Icons.Count > 0)
+            {
+                icons = new GameObject[view.Icons.Count];
+                for (var i = 0; i < icons.Length; i++)
+                {
+                    icons[i] = view.GetIcon(i);
+                }
+            }
+            else
+            {
+                icons = new GameObject[resourcePaths.Length];
+                for (var i = 0; i < resourcePaths.Length; i++)
+                {
+                    icons[i] = CreateImageIcon($"{name}_Icon{i}", resourcePaths[i], x, y, sortingOrder, targetPixels, button.Root != null ? button.Root.transform.parent : null);
+                }
+            }
+
+            ConfigureIcons(x, y, targetPixels, sortingOrder);
+            RefreshIcons();
+        }
+
         public void Update(Camera camera)
         {
             button.Update(camera);
@@ -1211,6 +1492,32 @@ namespace rimrush
             return icon;
         }
 
+        private void ConfigureIcons(float x, float y, float targetPixels, int sortingOrder)
+        {
+            for (var i = 0; i < icons.Length; i++)
+            {
+                var icon = icons[i];
+                if (icon == null)
+                {
+                    continue;
+                }
+
+                rimrushRender.ApplyPixelTransform(icon.transform, x, y, icon.transform.localPosition.z);
+                var renderer = icon.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    renderer.sortingOrder = sortingOrder;
+                }
+
+                var sprite = renderer != null ? renderer.sprite : null;
+                if (sprite != null)
+                {
+                    var sourcePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
+                    icon.transform.localScale = Vector3.one * (targetPixels / Mathf.Max(1f, sourcePixels));
+                }
+            }
+        }
+
         private void RefreshIcons()
         {
             for (var i = 0; i < icons.Length; i++)
@@ -1226,9 +1533,11 @@ namespace rimrush
     public sealed class rimrushEnergyBarView
     {
         private readonly rimrushRadialIconMesh overlay;
+        private readonly rimrushEnergyBarSceneView sceneView;
 
         public rimrushEnergyBarView(Transform parent, int controllerSlot, int superId, float fullTime)
         {
+            sceneView = null;
             var profile = rimrushControlsData.ProfileForSlot(controllerSlot);
             var x = 45f;
             if (controllerSlot == 1)
@@ -1262,6 +1571,48 @@ namespace rimrush
             SetCharge(fullTime <= 0f ? 1f : 0f);
         }
 
+        public rimrushEnergyBarView(rimrushEnergyBarSceneView sceneView, int controllerSlot, int superId, float fullTime)
+        {
+            this.sceneView = sceneView;
+            var profile = rimrushControlsData.ProfileForSlot(controllerSlot);
+            if (sceneView == null)
+            {
+                overlay = new rimrushRadialIconMesh($"EnergyFill_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball2000{superId}", 45f, 45f, 85, null);
+                return;
+            }
+
+            sceneView.SetVisible(true);
+            if (sceneView.BackgroundRenderer != null)
+            {
+                sceneView.BackgroundRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("btn_bg20000", 0.5f, 0.5f);
+                sceneView.BackgroundRenderer.sortingOrder = 83;
+                sceneView.BackgroundRenderer.transform.localScale = Vector3.one * 1.1f;
+            }
+
+            if (sceneView.BaseRenderer != null)
+            {
+                sceneView.BaseRenderer.sprite = rimrushAtlasCache.Instance.Interface.Sprite($"icon_ball000{superId}", 0.5f, 0.5f);
+                sceneView.BaseRenderer.sortingOrder = 84;
+            }
+
+            overlay = new rimrushRadialIconMesh(sceneView.OverlayView, rimrushAtlasCache.Instance.Interface, $"icon_ball2000{superId}", 85);
+
+            if (sceneView.HintBackgroundRenderer != null)
+            {
+                sceneView.HintBackgroundRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("key_hint0000", 0.5f, 0.5f);
+                sceneView.HintBackgroundRenderer.sortingOrder = 86;
+            }
+
+            if (sceneView.HintText != null)
+            {
+                sceneView.HintText.text = profile.SuperHint;
+                sceneView.HintText.font?.RequestCharactersInTexture(profile.SuperHint, sceneView.HintText.fontSize, FontStyle.Normal);
+                sceneView.HintText.GetComponent<MeshRenderer>().sortingOrder = 87;
+            }
+
+            SetCharge(fullTime <= 0f ? 1f : 0f);
+        }
+
         public void SetCharge(float progress)
         {
             overlay.SetProgress(progress);
@@ -1270,6 +1621,7 @@ namespace rimrush
         public void ReleaseRuntimeResources()
         {
             overlay?.ReleaseRuntimeResources();
+            sceneView?.SetVisible(false);
         }
     }
 
@@ -1283,13 +1635,14 @@ namespace rimrush
         private readonly float height;
         private readonly Vector2 uvMin;
         private readonly Vector2 uvMax;
+        private readonly MeshFilter filter;
 
         public rimrushRadialIconMesh(string name, rimrushAtlas atlas, string frameName, float x, float y, int sortingOrder, Transform parent)
         {
             graphic = new GameObject(name);
             graphic.transform.SetParent(parent, false);
 
-            var filter = graphic.AddComponent<MeshFilter>();
+            filter = graphic.AddComponent<MeshFilter>();
             var renderer = graphic.AddComponent<MeshRenderer>();
             var sprite = atlas.Sprite(frameName, 0.5f, 0.5f);
             var frame = atlas.Frame(frameName);
@@ -1307,6 +1660,33 @@ namespace rimrush
             uvMax = new Vector2(rect.xMax / sprite.texture.width, rect.yMax / sprite.texture.height);
 
             rimrushRender.ApplyPixelTransform(graphic.transform, x, y, 0.13f, 1f);
+            SetProgress(0f);
+        }
+
+        public rimrushRadialIconMesh(rimrushRadialIconView view, rimrushAtlas atlas, string frameName, int sortingOrder)
+        {
+            if (view == null)
+            {
+                view = rimrushRadialIconView.CreateRuntimeFallback(frameName, null);
+            }
+
+            graphic = view.Root;
+            filter = view.MeshFilter != null ? view.MeshFilter : view.Root.AddComponent<MeshFilter>();
+            var renderer = view.MeshRenderer != null ? view.MeshRenderer : view.Root.AddComponent<MeshRenderer>();
+            var sprite = atlas.Sprite(frameName, 0.5f, 0.5f);
+            var frame = atlas.Frame(frameName);
+            mesh = new Mesh { name = $"{frameName}_Mesh" };
+            mesh.MarkDynamic();
+            filter.sharedMesh = mesh;
+
+            renderer.sharedMaterial = rimrushSharedMaterialCache.GetSpritesDefault(sprite.texture);
+            renderer.sortingOrder = sortingOrder;
+
+            width = frame.W;
+            height = frame.H;
+            var rect = sprite.rect;
+            uvMin = new Vector2(rect.xMin / sprite.texture.width, rect.yMin / sprite.texture.height);
+            uvMax = new Vector2(rect.xMax / sprite.texture.width, rect.yMax / sprite.texture.height);
             SetProgress(0f);
         }
 
@@ -1368,7 +1748,6 @@ namespace rimrush
                 return;
             }
 
-            var filter = graphic != null ? graphic.GetComponent<MeshFilter>() : null;
             if (filter != null && filter.sharedMesh == mesh)
             {
                 filter.sharedMesh = null;

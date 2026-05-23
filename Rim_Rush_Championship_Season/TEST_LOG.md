@@ -1,6 +1,6 @@
 # Test Log
 
-Updated: `2026-05-18`
+Updated: `2026-05-24`
 
 ## Current Baseline
 
@@ -14,6 +14,8 @@ Updated: `2026-05-18`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-05-24 | Stage 2 menu/HUD scene authoring preparation | Pass | Added authored `MenuShell` and `HudSceneRoot` structures to `Main.unity`, kept the original runtime menu/gameplay path as the default, and validated the new scene-owned bindings plus authored page catalog in an isolated Unity clone with a passing `rimrushSmokeTest.Run` |
+| 2026-05-23 | Stage 0/1 migration stabilization | Pass | Restored the original runtime-created menu and gameplay path as the default, kept scene bindings behind explicit bootstrap flags, and added host-only scene migration plus golden baseline tooling for the next staged cutovers |
 | 2026-05-18 | Repository history wording cleanup | Pass | Preserved the incremental branch history while removing the old history-only planning file from the cleaned public branches and replacing an outdated implementation commit title with neutral wording |
 | 2026-05-18 | Collision audio provenance replacement pass | Pass | Replaced `10_B_Ring`, `16_B_Bounce`, `21_B_NET`, `22_B_Brick`, and `23_B_Basket` with locally generated `wav` assets from `Tools/Audio/generate_halloween_core_sfx.py`, while keeping the runtime resource keys stable |
 | 2026-05-18 | Runtime font provenance verification pass | Partial pass | Verified `Rajdhani-Bold.ttf`, `Rajdhani-SemiBold.ttf`, and `Griffy-Regular.ttf` as exact Google Fonts upstream matches and documented them in `DOCS/FONT_PROVENANCE.md`; `Impact.ttf`, `Impact2.ttf`, `AgencyBold.ttf`, and `CfCrackBold.ttf` still need replacement or source records |

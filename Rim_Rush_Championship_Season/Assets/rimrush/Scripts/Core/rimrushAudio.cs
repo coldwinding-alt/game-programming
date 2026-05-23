@@ -26,14 +26,35 @@ namespace rimrush
                 return Instance;
             }
 
+            Instance = FindAnyObjectByType<rimrushAudio>(FindObjectsInactive.Include);
+            if (Instance != null)
+            {
+                if (parent != null && Instance.transform.parent != parent)
+                {
+                    Instance.transform.SetParent(parent, false);
+                }
+
+                Instance.EnsureSources();
+                return Instance;
+            }
+
             var go = new GameObject("rimrushAudio");
             go.transform.SetParent(parent, false);
             Instance = go.AddComponent<rimrushAudio>();
-            Instance.musicSource = go.AddComponent<AudioSource>();
-            Instance.musicSource.loop = true;
-            Instance.musicSource.volume = 0.5f;
-            Instance.sfxSource = go.AddComponent<AudioSource>();
+            Instance.EnsureSources();
             return Instance;
+        }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            EnsureSources();
         }
 
         private void OnDestroy()
@@ -94,6 +115,39 @@ namespace rimrush
         public void ToggleSfx()
         {
             SfxEnabled = !SfxEnabled;
+        }
+
+        private void EnsureSources()
+        {
+            if (musicSource == null || sfxSource == null)
+            {
+                var sources = GetComponents<AudioSource>();
+                if (musicSource == null && sources.Length > 0)
+                {
+                    musicSource = sources[0];
+                }
+
+                if (sfxSource == null && sources.Length > 1)
+                {
+                    sfxSource = sources[1];
+                }
+            }
+
+            if (musicSource == null)
+            {
+                musicSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            musicSource.loop = true;
+            musicSource.volume = 0.5f;
+            musicSource.playOnAwake = false;
+
+            if (sfxSource == null)
+            {
+                sfxSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            sfxSource.playOnAwake = false;
         }
 
         private AudioClip Load(string key)
