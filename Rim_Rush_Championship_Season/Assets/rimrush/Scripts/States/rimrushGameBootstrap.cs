@@ -169,10 +169,16 @@ namespace rimrush
         private const float TwoPlayerBallLabelY = 394f;
         private const float TwoPlayerBallPanelWidth = 168f;
         private const float TwoPlayerBallPanelHeight = 148f;
+        [SerializeField] private rimrushSceneBindings sceneBindings;
+        [SerializeField] private bool preferSceneMenuShell;
+        [SerializeField] private bool preferSceneHudView;
+        [SerializeField] private bool preferSceneGameplayBindings;
         private Transform runtimeRoot;
         private rimrushGameCore gameCore;
         private Camera mainCamera;
         private rimrushFixedResolutionPresenter fixedResolutionPresenter;
+        private bool runtimeRootOwned;
+        private int runtimeVersion;
         private rimrushBootstrapScreen currentScreen;
         private rimrushParticipantMode pendingParticipantMode = rimrushParticipantMode.OnePlayer;
         private int quickCharacterId;
@@ -193,7 +199,8 @@ namespace rimrush
 
         private void Awake()
         {
-            mainCamera = Camera.main;
+            ResolveSceneBindings();
+            mainCamera = sceneBindings != null && sceneBindings.MainCamera != null ? sceneBindings.MainCamera : Camera.main;
             if (mainCamera == null)
             {
                 var cameraObject = new GameObject("Main Camera");
@@ -205,16 +212,17 @@ namespace rimrush
             mainCamera.orthographicSize = rimrushConstants.GameH / (2f * rimrushConstants.PixelsPerUnit);
             mainCamera.transform.position = new Vector3(0f, 0f, -10f);
             mainCamera.backgroundColor = Color.black;
-            fixedResolutionPresenter = GetComponent<rimrushFixedResolutionPresenter>();
+            fixedResolutionPresenter = sceneBindings != null && sceneBindings.Presenter != null
+                ? sceneBindings.Presenter
+                : GetComponent<rimrushFixedResolutionPresenter>();
             if (fixedResolutionPresenter == null)
             {
                 fixedResolutionPresenter = gameObject.AddComponent<rimrushFixedResolutionPresenter>();
             }
 
             fixedResolutionPresenter.Attach(mainCamera);
-
-            runtimeRoot = new GameObject("rimrushRuntime").transform;
-            rimrushAudio.Create(transform);
+            rimrushAudio.Create(sceneBindings != null ? sceneBindings.PersistentRoot : transform);
+            SetSceneRuntimeVisibility(false, false);
 
             var inventory = rimrushInventory.Instance;
             quickCharacterId = rimrushPlayersData.SanitizeCharacterId(inventory.SelectedQuickCharacterId);
@@ -255,9 +263,9 @@ namespace rimrush
 
             for (var i = 0; i < menuButtons.Count; i++)
             {
-                var screenRoot = runtimeRoot;
+                var screenVersion = runtimeVersion;
                 menuButtons[i].Update(mainCamera);
-                if (screenRoot != runtimeRoot)
+                if (screenVersion != runtimeVersion)
                 {
                     break;
                 }
@@ -266,15 +274,15 @@ namespace rimrush
             if (runtimeRoot != null)
             {
                 menuMusicButton?.SetActiveIconIndex(GetMusicIconIndex());
-                var iconScreenRoot = runtimeRoot;
+                var iconScreenVersion = runtimeVersion;
                 menuMusicButton?.Update(mainCamera);
-                if (iconScreenRoot != runtimeRoot)
+                if (iconScreenVersion != runtimeVersion)
                 {
                     return;
                 }
 
                 menuHelpButton?.Update(mainCamera);
-                if (iconScreenRoot != runtimeRoot)
+                if (iconScreenVersion != runtimeVersion)
                 {
                     return;
                 }
@@ -772,30 +780,103 @@ namespace rimrush
         private void StartGameplay()
         {
             ClearRuntime();
-            runtimeRoot = new GameObject("rimrushRuntime").transform;
-            rimrushAudio.Create(transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
+            if (ShouldUseSceneGameplayBindings())
+            {
+                runtimeRoot = PrepareGameplayRuntimeRoot();
+                runtimeRootOwned = sceneBindings == null || sceneBindings.GameplayBindings == null || runtimeRoot != sceneBindings.GameplayBindings.Root;
+            }
+            else
+            {
+                runtimeRoot = new GameObject("rimrushRuntime").transform;
+                runtimeRootOwned = true;
+                SetSceneRuntimeVisibility(false, false);
+            }
+
+            runtimeVersion++;
+            rimrushAudio.Create(sceneBindings != null ? sceneBindings.PersistentRoot : transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
             menuButtons.Clear();
-            gameCore = new rimrushGameBuilder().Build(runtimeRoot);
+            rimrushRuntimeContext runtimeContext;
+            if (ShouldUseSceneGameplayBindings())
+            {
+                runtimeContext = sceneBindings.CreateGameplayContext();
+            }
+            else
+            {
+                runtimeContext = new rimrushRuntimeContext
+                {
+                    Root = runtimeRoot,
+                    SceneBindings = sceneBindings,
+                    HudView = ShouldUseSceneHudView() && sceneBindings != null ? sceneBindings.HudView : null
+                };
+            }
+
+            if (sceneBindings != null && sceneBindings.HudView != null)
+            {
+                sceneBindings.HudView.gameObject.SetActive(ShouldUseSceneHudView());
+            }
+
+            gameCore = new rimrushGameBuilder().Build(runtimeContext);
         }
 
         private void BeginMenuScreen(bool showLogo, bool showControls, string backgroundFrame)
         {
             ClearRuntime();
-            runtimeRoot = new GameObject("rimrushRuntime").transform;
-            rimrushAudio.Create(transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
+            if (ShouldUseSceneMenuShell())
+            {
+                runtimeRoot = PrepareMenuRuntimeRoot();
+                runtimeRootOwned = sceneBindings == null || sceneBindings.MenuShell == null || runtimeRoot != sceneBindings.MenuShell.DynamicContentRoot;
+            }
+            else
+            {
+                runtimeRoot = new GameObject("rimrushRuntime").transform;
+                runtimeRootOwned = true;
+                SetSceneRuntimeVisibility(false, false);
+            }
 
-            rimrushRender.Sprite(
-                "MenuBackground",
-                rimrushAtlasCache.Instance.Interface,
-                backgroundFrame,
-                rimrushConstants.Width2,
-                240f,
-                0.5f,
-                0.5f,
-                0,
-                runtimeRoot);
+            runtimeVersion++;
+            rimrushAudio.Create(sceneBindings != null ? sceneBindings.PersistentRoot : transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
 
-            if (showLogo)
+            var menuShell = ShouldUseSceneMenuShell() && sceneBindings != null ? sceneBindings.MenuShell : null;
+            if (menuShell != null && menuShell.BackgroundRenderer != null)
+            {
+                menuShell.BackgroundRenderer.sprite = rimrushAtlasCache.Instance.Interface.Sprite(backgroundFrame, 0.5f, 0.5f);
+                menuShell.BackgroundRenderer.sortingOrder = 0;
+                rimrushRender.ApplyPixelTransform(menuShell.BackgroundRenderer.transform, rimrushConstants.Width2, 240f, menuShell.BackgroundRenderer.transform.localPosition.z);
+            }
+            else
+            {
+                rimrushRender.Sprite(
+                    "MenuBackground",
+                    rimrushAtlasCache.Instance.Interface,
+                    backgroundFrame,
+                    rimrushConstants.Width2,
+                    240f,
+                    0.5f,
+                    0.5f,
+                    0,
+                    runtimeRoot);
+            }
+
+            if (menuShell != null && menuShell.LogoRenderer != null)
+            {
+                var logoTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameLogo));
+                if (logoTexture != null)
+                {
+                    var sprite = Sprite.Create(
+                        logoTexture,
+                        new Rect(0f, 0f, logoTexture.width, logoTexture.height),
+                        new Vector2(0.5f, 0.5f),
+                        1f);
+                    menuShell.LogoRenderer.sprite = sprite;
+                    menuShell.LogoRenderer.sortingOrder = 20;
+                    rimrushRender.ApplyPixelTransform(menuShell.LogoRenderer.transform, rimrushConstants.Width2, 68f, menuShell.LogoRenderer.transform.localPosition.z);
+                    menuShell.LogoRenderer.transform.localScale = new Vector3(
+                        MenuLogoScaleX,
+                        MenuLogoScaleY,
+                        1f);
+                }
+            }
+            else if (showLogo)
             {
                 var logoTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameLogo));
                 if (logoTexture != null)
@@ -808,30 +889,65 @@ namespace rimrush
                 }
             }
 
-            menuMusicButton = new rimrushIconButton(
-                "MenuMusicButton",
-                MenuMusicButtonX,
-                MenuTopButtonY,
-                MenuTopButtonSize,
-                MenuTopButtonSize,
-                ToggleBackgroundMusic,
-                runtimeRoot,
-                32,
-                MenuTopIconPixels,
-                rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn),
-                rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff));
-            menuMusicButton.SetActiveIconIndex(GetMusicIconIndex());
-            menuHelpButton = new rimrushIconButton(
-                "MenuHelpButton",
-                MenuHelpButtonX,
-                MenuTopButtonY,
-                MenuTopButtonSize,
-                MenuTopButtonSize,
-                NoOpAction,
-                runtimeRoot,
-                32,
-                MenuTopIconPixels,
-                rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton));
+            if (menuShell != null && menuShell.MusicButton != null && menuShell.HelpButton != null)
+            {
+                menuMusicButton = new rimrushIconButton(
+                    menuShell.MusicButton,
+                    "MenuMusicButton",
+                    MenuMusicButtonX,
+                    MenuTopButtonY,
+                    MenuTopButtonSize,
+                    MenuTopButtonSize,
+                    ToggleBackgroundMusic,
+                    32,
+                    MenuTopIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn),
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff));
+                menuMusicButton.SetActiveIconIndex(GetMusicIconIndex());
+                menuHelpButton = new rimrushIconButton(
+                    menuShell.HelpButton,
+                    "MenuHelpButton",
+                    MenuHelpButtonX,
+                    MenuTopButtonY,
+                    MenuTopButtonSize,
+                    MenuTopButtonSize,
+                    NoOpAction,
+                    32,
+                    MenuTopIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton));
+            }
+            else
+            {
+                menuMusicButton = new rimrushIconButton(
+                    "MenuMusicButton",
+                    MenuMusicButtonX,
+                    MenuTopButtonY,
+                    MenuTopButtonSize,
+                    MenuTopButtonSize,
+                    ToggleBackgroundMusic,
+                    runtimeRoot,
+                    32,
+                    MenuTopIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn),
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff));
+                menuMusicButton.SetActiveIconIndex(GetMusicIconIndex());
+                menuHelpButton = new rimrushIconButton(
+                    "MenuHelpButton",
+                    MenuHelpButtonX,
+                    MenuTopButtonY,
+                    MenuTopButtonSize,
+                    MenuTopButtonSize,
+                    NoOpAction,
+                    runtimeRoot,
+                    32,
+                    MenuTopIconPixels,
+                    rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton));
+            }
+
+            if (menuShell != null)
+            {
+                SetMenuShellChromeVisible(true, showLogo, true);
+            }
 
             if (showControls)
             {
@@ -2271,6 +2387,129 @@ namespace rimrush
             versusRightCharacterId = rimrushPlayersData.SanitizeCharacterId(match.CharacterIds[1], rimrushPlayersData.StepCharacterId(versusLeftCharacterId, 1));
         }
 
+        private void ResolveSceneBindings()
+        {
+            if (sceneBindings == null)
+            {
+                sceneBindings = GetComponent<rimrushSceneBindings>();
+            }
+
+            if (sceneBindings == null)
+            {
+                sceneBindings = GetComponentInChildren<rimrushSceneBindings>(true);
+            }
+
+            sceneBindings?.ResolveMissingReferences();
+        }
+
+        private Transform PrepareMenuRuntimeRoot()
+        {
+            var menuShell = ShouldUseSceneMenuShell() && sceneBindings != null ? sceneBindings.MenuShell : null;
+            if (menuShell != null)
+            {
+                SetSceneRuntimeVisibility(true, false);
+                if (menuShell.DynamicContentRoot != null)
+                {
+                    menuShell.DynamicContentRoot.gameObject.SetActive(true);
+                    ClearRootChildren(menuShell.DynamicContentRoot);
+                    return menuShell.DynamicContentRoot;
+                }
+            }
+
+            return new GameObject("rimrushRuntime").transform;
+        }
+
+        private Transform PrepareGameplayRuntimeRoot()
+        {
+            var gameplayBindings = ShouldUseSceneGameplayBindings() && sceneBindings != null ? sceneBindings.GameplayBindings : null;
+            if (gameplayBindings != null && gameplayBindings.Root != null)
+            {
+                SetSceneRuntimeVisibility(false, true);
+                gameplayBindings.Root.gameObject.SetActive(true);
+                return gameplayBindings.Root;
+            }
+
+            return new GameObject("rimrushRuntime").transform;
+        }
+
+        private void SetMenuShellChromeVisible(bool backgroundVisible, bool logoVisible, bool buttonsVisible)
+        {
+            var menuShell = sceneBindings != null ? sceneBindings.MenuShell : null;
+            if (menuShell == null)
+            {
+                return;
+            }
+
+            if (menuShell.BackgroundRenderer != null)
+            {
+                menuShell.BackgroundRenderer.gameObject.SetActive(backgroundVisible);
+            }
+
+            if (menuShell.LogoRenderer != null)
+            {
+                menuShell.LogoRenderer.gameObject.SetActive(logoVisible);
+            }
+
+            if (menuShell.MusicButton != null)
+            {
+                menuShell.MusicButton.Root.SetActive(buttonsVisible);
+            }
+
+            if (menuShell.HelpButton != null)
+            {
+                menuShell.HelpButton.Root.SetActive(buttonsVisible);
+            }
+        }
+
+        private bool ShouldUseSceneMenuShell()
+        {
+            return preferSceneMenuShell && sceneBindings != null && sceneBindings.MenuShell != null;
+        }
+
+        private bool ShouldUseSceneGameplayBindings()
+        {
+            return preferSceneGameplayBindings && sceneBindings != null && sceneBindings.GameplayBindings != null;
+        }
+
+        private bool ShouldUseSceneHudView()
+        {
+            return preferSceneHudView && sceneBindings != null && sceneBindings.HudView != null;
+        }
+
+        private void SetSceneRuntimeVisibility(bool menuVisible, bool gameplayVisible)
+        {
+            var menuShell = sceneBindings != null ? sceneBindings.MenuShell : null;
+            if (menuShell != null)
+            {
+                menuShell.gameObject.SetActive(menuVisible);
+            }
+
+            var gameplayBindings = sceneBindings != null ? sceneBindings.GameplayBindings : null;
+            if (gameplayBindings != null && gameplayBindings.Root != null)
+            {
+                gameplayBindings.Root.gameObject.SetActive(gameplayVisible);
+            }
+
+            var hudView = sceneBindings != null ? sceneBindings.HudView : null;
+            if (hudView != null)
+            {
+                hudView.gameObject.SetActive(gameplayVisible && ShouldUseSceneHudView());
+            }
+        }
+
+        private static void ClearRootChildren(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            for (var i = root.childCount - 1; i >= 0; i--)
+            {
+                Object.Destroy(root.GetChild(i).gameObject);
+            }
+        }
+
         private void ClearRuntime()
         {
             gameCore?.Shutdown();
@@ -2279,11 +2518,27 @@ namespace rimrush
             menuMusicButton = null;
             menuHelpButton = null;
             ResetTournamentAwardsState();
+            runtimeVersion++;
             if (runtimeRoot != null)
             {
-                Destroy(runtimeRoot.gameObject);
+                if (runtimeRootOwned)
+                {
+                    Destroy(runtimeRoot.gameObject);
+                }
+                else if (ShouldUseSceneMenuShell() && sceneBindings != null && sceneBindings.MenuShell != null && runtimeRoot == sceneBindings.MenuShell.DynamicContentRoot)
+                {
+                    ClearRootChildren(runtimeRoot);
+                }
+                else
+                {
+                    runtimeRoot.gameObject.SetActive(false);
+                }
+
                 runtimeRoot = null;
             }
+
+            SetSceneRuntimeVisibility(false, false);
+            runtimeRootOwned = false;
         }
 
         private static void ToggleBackgroundMusic()
