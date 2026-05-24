@@ -2408,6 +2408,7 @@ namespace rimrush
             if (menuShell != null)
             {
                 SetSceneRuntimeVisibility(true, false);
+                SetSceneMenuAuthoringContentVisible(false);
                 if (menuShell.DynamicContentRoot != null)
                 {
                     menuShell.DynamicContentRoot.gameObject.SetActive(true);
@@ -2430,6 +2431,20 @@ namespace rimrush
             }
 
             return new GameObject("rimrushRuntime").transform;
+        }
+
+        private void SetSceneMenuAuthoringContentVisible(bool isVisible)
+        {
+            var menuShell = sceneBindings != null ? sceneBindings.MenuShell : null;
+            if (menuShell == null)
+            {
+                return;
+            }
+
+            if (menuShell.PageCatalog != null)
+            {
+                menuShell.PageCatalog.gameObject.SetActive(isVisible);
+            }
         }
 
         private void SetMenuShellChromeVisible(bool backgroundVisible, bool logoVisible, bool buttonsVisible)
@@ -2482,6 +2497,10 @@ namespace rimrush
             if (menuShell != null)
             {
                 menuShell.gameObject.SetActive(menuVisible);
+                if (!menuVisible)
+                {
+                    SetSceneMenuAuthoringContentVisible(false);
+                }
             }
 
             var gameplayBindings = sceneBindings != null ? sceneBindings.GameplayBindings : null;
