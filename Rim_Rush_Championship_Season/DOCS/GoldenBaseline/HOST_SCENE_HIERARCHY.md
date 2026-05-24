@@ -1,0 +1,1419 @@
+﻿# Host Scene Hierarchy
+
+- Scene: `Assets/Scenes/Main.unity`
+- Captured: `2026-05-24 04:22:25 UTC`
+
+## Main Camera
+
+- `Main Camera` (active) - Transform, Camera, AudioListener
+
+## Bootstrap Root
+
+- `rimrushBootstrap` (active) - Transform, rimrushGameBootstrap, rimrushFixedResolutionPresenter, rimrushSceneBindings, rimrushSceneAuthoringMode
+  - `PersistentRoot` (active)
+    - `GameplayRoot` (active) - Transform, rimrushGameplayBindings
+      - `ArenaObject` (active) - Transform, SpriteRenderer, rimrushArenaView
+      - `BasketLeft` (active) - Transform, rimrushBasketView
+        - `Root` (active)
+          - `BasketGraphic` (active) - Transform, SpriteRenderer
+        - `FrontEar` (active) - Transform, SpriteRenderer
+        - `NetLine0` (active) - Transform, LineRenderer
+        - `NetLine1` (active) - Transform, LineRenderer
+        - `NetLine2` (active) - Transform, LineRenderer
+        - `NetLine3` (active) - Transform, LineRenderer
+        - `NetLine4` (active) - Transform, LineRenderer
+        - `NetLine5` (active) - Transform, LineRenderer
+        - `NetLine6` (active) - Transform, LineRenderer
+        - `NetLine7` (active) - Transform, LineRenderer
+        - `NetLine8` (active) - Transform, LineRenderer
+        - `NetLine9` (active) - Transform, LineRenderer
+      - `BasketRight` (active) - Transform, rimrushBasketView
+        - `Root` (active)
+          - `BasketGraphic` (active) - Transform, SpriteRenderer
+        - `FrontEar` (active) - Transform, SpriteRenderer
+        - `NetLine0` (active) - Transform, LineRenderer
+        - `NetLine1` (active) - Transform, LineRenderer
+        - `NetLine2` (active) - Transform, LineRenderer
+        - `NetLine3` (active) - Transform, LineRenderer
+        - `NetLine4` (active) - Transform, LineRenderer
+        - `NetLine5` (active) - Transform, LineRenderer
+        - `NetLine6` (active) - Transform, LineRenderer
+        - `NetLine7` (active) - Transform, LineRenderer
+        - `NetLine8` (active) - Transform, LineRenderer
+        - `NetLine9` (active) - Transform, LineRenderer
+      - `BallObject` (active) - Transform, rimrushBallView
+        - `Graphic` (active) - Transform, SpriteRenderer
+        - `BallShadow` (active) - Transform, SpriteRenderer
+      - `LeftNeutralSpawn` (active)
+      - `RightNeutralSpawn` (active)
+      - `LeftServeSpawn` (active)
+      - `RightServeSpawn` (active)
+      - `LeftPlayerView` (active) - Transform, rimrushPlayerView
+        - `Root` (active)
+          - `ArmatureMount` (active)
+          - `Fallback` (active) - Transform, SpriteRenderer
+        - `Shadow` (active) - Transform, SpriteRenderer
+      - `RightPlayerView` (active) - Transform, rimrushPlayerView
+        - `Root` (active)
+          - `ArmatureMount` (active)
+          - `Fallback` (active) - Transform, SpriteRenderer
+        - `Shadow` (active) - Transform, SpriteRenderer
+      - `EnergyBarSlot0` (active) - Transform, rimrushEnergyBarSceneView
+        - `Background` (active) - Transform, SpriteRenderer
+        - `Base` (active) - Transform, SpriteRenderer
+        - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+        - `HintBackground` (active) - Transform, SpriteRenderer
+        - `EnergyBarSlot0_Hint` (active) - Transform, MeshRenderer, TextMesh
+      - `EnergyBarSlot1` (active) - Transform, rimrushEnergyBarSceneView
+        - `Background` (active) - Transform, SpriteRenderer
+        - `Base` (active) - Transform, SpriteRenderer
+        - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+        - `HintBackground` (active) - Transform, SpriteRenderer
+        - `EnergyBarSlot1_Hint` (active) - Transform, MeshRenderer, TextMesh
+      - `EnergyBarSlot2` (active) - Transform, rimrushEnergyBarSceneView
+        - `Background` (active) - Transform, SpriteRenderer
+        - `Base` (active) - Transform, SpriteRenderer
+        - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+        - `HintBackground` (active) - Transform, SpriteRenderer
+        - `EnergyBarSlot2_Hint` (active) - Transform, MeshRenderer, TextMesh
+      - `LeftTeleportFxView` (active) - Transform, rimrushTeleportFxView
+        - `TeleportBlack` (active) - Transform, SpriteRenderer
+          - `TeleportCenter` (active) - Transform, SpriteRenderer
+        - `TeleportAnim` (active) - Transform, SpriteRenderer
+        - `TeleportWhite` (active) - Transform, SpriteRenderer
+      - `RightTeleportFxView` (active) - Transform, rimrushTeleportFxView
+        - `TeleportBlack` (active) - Transform, SpriteRenderer
+          - `TeleportCenter` (active) - Transform, SpriteRenderer
+        - `TeleportAnim` (active) - Transform, SpriteRenderer
+        - `TeleportWhite` (active) - Transform, SpriteRenderer
+      - `LeftShieldView` (active) - Transform, rimrushShieldView
+        - `ShieldStart` (active) - Transform, SpriteRenderer
+        - `ShieldBlur` (active) - Transform, SpriteRenderer
+        - `ShieldAnim` (active) - Transform, SpriteRenderer
+      - `RightShieldView` (active) - Transform, rimrushShieldView
+        - `ShieldStart` (active) - Transform, SpriteRenderer
+        - `ShieldBlur` (active) - Transform, SpriteRenderer
+        - `ShieldAnim` (active) - Transform, SpriteRenderer
+    - `OverlayRoot` (active)
+      - `MenuShell` (inactive) - Transform, rimrushMenuShellView, rimrushMenuAuthoringPreview
+        - `Background` (active) - Transform, SpriteRenderer
+        - `Logo` (active) - Transform, SpriteRenderer
+        - `ButtonPool` (active)
+          - `MenuButton0` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton0_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton1` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton1_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton2` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton2_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton3` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton3_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton4` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton4_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton5` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton5_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton6` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton6_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton7` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton7_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton8` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton8_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton9` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton9_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton10` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton10_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton11` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton11_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton12` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton12_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton13` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton13_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton14` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton14_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton15` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton15_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton16` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton16_Label` (active) - Transform, MeshRenderer, TextMesh
+          - `MenuButton17` (inactive) - Transform, rimrushMenuButtonView
+            - `Background` (active) - Transform, SpriteRenderer
+            - `MenuButton17_Label` (active) - Transform, MeshRenderer, TextMesh
+        - `TopButtons` (active)
+          - `MenuMusicButtonView` (active) - Transform, rimrushIconButtonView
+            - `MenuMusicButtonView_Button` (active) - Transform, rimrushMenuButtonView
+              - `Background` (inactive) - Transform, SpriteRenderer
+              - `MenuMusicButtonView_Button_Label` (inactive) - Transform, MeshRenderer, TextMesh
+            - `MenuMusicButtonView_Icon0` (active) - Transform, SpriteRenderer
+            - `MenuMusicButtonView_Icon1` (inactive) - Transform, SpriteRenderer
+          - `MenuHelpButtonView` (active) - Transform, rimrushIconButtonView
+            - `MenuHelpButtonView_Button` (active) - Transform, rimrushMenuButtonView
+              - `Background` (inactive) - Transform, SpriteRenderer
+              - `MenuHelpButtonView_Button_Label` (inactive) - Transform, MeshRenderer, TextMesh
+            - `MenuHelpButtonView_Icon0` (active) - Transform, SpriteRenderer
+        - `DynamicContentRoot` (inactive)
+        - `PageCatalog` (active)
+          - `Page_PlayerCount` (active) - Transform, rimrushMenuPageView
+            - `SELECT PLAYERS_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `PlayersPanel` (active) - Transform, SpriteRenderer
+            - `Button_1 PLAYER_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_1 PLAYER` (active) - Transform, SpriteRenderer
+              - `ButtonText_1 PLAYER` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_2 PLAYER_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_2 PLAYER` (active) - Transform, SpriteRenderer
+              - `ButtonText_2 PLAYER` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_TRAINING_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_TRAINING` (active) - Transform, SpriteRenderer
+              - `ButtonText_TRAINING` (active) - Transform, MeshRenderer, TextMesh
+          - `Page_MatchType` (inactive) - Transform, rimrushMenuPageView
+            - `MATCH TYPE_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `ModePanel` (active) - Transform, SpriteRenderer
+            - `Button_TOURNAMENT_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_TOURNAMENT` (active) - Transform, SpriteRenderer
+              - `ButtonText_TOURNAMENT` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_QUICK MATCH_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_QUICK MATCH` (active) - Transform, SpriteRenderer
+              - `ButtonText_QUICK MATCH` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BACK` (active) - Transform, SpriteRenderer
+              - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+          - `Page_QuickSetup` (inactive) - Transform, rimrushMenuPageView
+            - `QUICK MATCH_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `CharacterPanel` (active) - Transform, SpriteRenderer
+            - `OptionsPanel` (active) - Transform, SpriteRenderer
+            - `Quick_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `PreviewShadow` (active) - Transform, SpriteRenderer
+            - `Preview_0` (active)
+              - `PreviewArmature_0` (active) - Transform
+                - `left leg` (active)
+                  - `left leg` (active)
+                    - `left leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `left hand` (active)
+                  - `left hand` (active)
+                    - `left hand:dbanims/LeftHandDB` (active) - Transform
+                      - `Layer_3` (active)
+                        - `Layer_3` (active)
+                          - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `body` (active)
+                  - `body` (active)
+                    - `body:BodyDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                - `right leg` (active)
+                  - `right leg` (active)
+                    - `right leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `head` (active)
+                  - `head` (active)
+                    - `head:HeadsDB` (active) - Transform
+                      - `Layer 4` (active)
+                        - `Layer 4` (active)
+                          - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                - `right hand` (active)
+                  - `right hand` (active)
+                    - `right hand:dbanims/RightHandDB` (active) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `dighand` (active)
+                  - `dighand` (active)
+                    - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `digleg` (active)
+                  - `digleg` (active)
+                    - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `ball` (active)
+                  - `ball` (active)
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `ball_front` (active)
+                  - `ball_front` (active)
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `effects stun` (active)
+                  - `effects stun` (active)
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                - `eyes` (active)
+                  - `eyes` (active)
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                - `effects stun star` (active)
+                  - `effects stun star` (active)
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `Quick_CharacterName` (active) - Transform, MeshRenderer, TextMesh
+            - `Quick_OptionTitle` (active) - Transform, MeshRenderer, TextMesh
+            - `QuickBall_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `QuickBall_Preview` (active) - Transform, SpriteRenderer
+            - `QuickBall_Label` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_AI: NORMAL_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_AI: NORMAL` (active) - Transform, SpriteRenderer
+              - `ButtonText_AI: NORMAL` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BACK` (active) - Transform, SpriteRenderer
+              - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_PLAY_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_PLAY` (active) - Transform, SpriteRenderer
+              - `ButtonText_PLAY` (active) - Transform, MeshRenderer, TextMesh
+            - `QuickCharacterSelectorView` (active) - Transform, rimrushCharacterSelectorView
+            - `QuickBallSelectorView` (active) - Transform, rimrushBallSelectorView
+          - `Page_TrainingSetup` (inactive) - Transform, rimrushMenuPageView
+            - `TRAINING_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `TrainingCharacterPanel` (active) - Transform, SpriteRenderer
+            - `TrainingOptionsPanel` (active) - Transform, SpriteRenderer
+            - `Training_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `PreviewShadow` (active) - Transform, SpriteRenderer
+            - `Preview_0` (active)
+              - `PreviewArmature_0` (active) - Transform
+                - `left leg` (active)
+                  - `left leg` (active)
+                    - `left leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `left hand` (active)
+                  - `left hand` (active)
+                    - `left hand:dbanims/LeftHandDB` (active) - Transform
+                      - `Layer_3` (active)
+                        - `Layer_3` (active)
+                          - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `body` (active)
+                  - `body` (active)
+                    - `body:BodyDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                - `right leg` (active)
+                  - `right leg` (active)
+                    - `right leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `head` (active)
+                  - `head` (active)
+                    - `head:HeadsDB` (active) - Transform
+                      - `Layer 4` (active)
+                        - `Layer 4` (active)
+                          - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                - `right hand` (active)
+                  - `right hand` (active)
+                    - `right hand:dbanims/RightHandDB` (active) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `dighand` (active)
+                  - `dighand` (active)
+                    - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `digleg` (active)
+                  - `digleg` (active)
+                    - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `ball` (active)
+                  - `ball` (active)
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `ball_front` (active)
+                  - `ball_front` (active)
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `effects stun` (active)
+                  - `effects stun` (active)
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                - `eyes` (active)
+                  - `eyes` (active)
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                - `effects stun star` (active)
+                  - `effects stun star` (active)
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `Training_CharacterName` (active) - Transform, MeshRenderer, TextMesh
+            - `Training_OptionTitle` (active) - Transform, MeshRenderer, TextMesh
+            - `TrainingBall_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `TrainingBall_Preview` (active) - Transform, SpriteRenderer
+            - `TrainingBall_Label` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BACK` (active) - Transform, SpriteRenderer
+              - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_PLAY_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_PLAY` (active) - Transform, SpriteRenderer
+              - `ButtonText_PLAY` (active) - Transform, MeshRenderer, TextMesh
+            - `TrainingCharacterSelectorView` (active) - Transform, rimrushCharacterSelectorView
+            - `TrainingBallSelectorView` (active) - Transform, rimrushBallSelectorView
+          - `Page_TwoPlayerSetup` (inactive) - Transform, rimrushMenuPageView
+            - `2 PLAYERS MATCH_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `P1Panel` (active) - Transform, SpriteRenderer
+            - `P2Panel` (active) - Transform, SpriteRenderer
+            - `P1_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `PreviewShadow` (active) - Transform, SpriteRenderer
+            - `Preview_0` (active)
+              - `PreviewArmature_0` (active) - Transform
+                - `left leg` (active)
+                  - `left leg` (active)
+                    - `left leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `left hand` (active)
+                  - `left hand` (active)
+                    - `left hand:dbanims/LeftHandDB` (active) - Transform
+                      - `Layer_3` (active)
+                        - `Layer_3` (active)
+                          - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `body` (active)
+                  - `body` (active)
+                    - `body:BodyDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                - `right leg` (active)
+                  - `right leg` (active)
+                    - `right leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `head` (active)
+                  - `head` (active)
+                    - `head:HeadsDB` (active) - Transform
+                      - `Layer 4` (active)
+                        - `Layer 4` (active)
+                          - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                - `right hand` (active)
+                  - `right hand` (active)
+                    - `right hand:dbanims/RightHandDB` (active) - Transform, DBLiteArmature
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `dighand` (active)
+                  - `dighand` (active)
+                    - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `digleg` (active)
+                  - `digleg` (active)
+                    - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `ball` (active)
+                  - `ball` (active)
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `ball_front` (active)
+                  - `ball_front` (active)
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `effects stun` (active)
+                  - `effects stun` (active)
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                - `eyes` (active)
+                  - `eyes` (active)
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                - `effects stun star` (active)
+                  - `effects stun star` (active)
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `P1_CharacterName` (active) - Transform, MeshRenderer, TextMesh
+            - `VersusLabel` (active) - Transform, MeshRenderer, TextMesh
+            - `VersusBallPanel` (active) - Transform, SpriteRenderer
+            - `VersusBall_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `VersusBall_Preview` (active) - Transform, SpriteRenderer
+            - `VersusBall_Label` (active) - Transform, MeshRenderer, TextMesh
+            - `P2_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `PreviewShadow` (active) - Transform, SpriteRenderer
+            - `Preview_1` (active)
+              - `PreviewArmature_1` (active) - Transform
+                - `left leg` (active)
+                  - `left leg` (active)
+                    - `left leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_5:custom_leg_frankenstein` (active) - Transform, SpriteRenderer
+                - `left hand` (active)
+                  - `left hand` (active)
+                    - `left hand:dbanims/LeftHandDB` (active) - Transform
+                      - `Layer_3` (active)
+                        - `Layer_3` (active)
+                          - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_3:custom_left_hand_frankenstein` (active) - Transform, SpriteRenderer
+                - `body` (active)
+                  - `body` (active)
+                    - `body:BodyDB` (active) - Transform, DBLiteArmature
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_5:custom_body_frankenstein` (active) - Transform, SpriteRenderer
+                - `right leg` (active)
+                  - `right leg` (active)
+                    - `right leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_5:custom_leg_frankenstein` (active) - Transform, SpriteRenderer
+                - `head` (active)
+                  - `head` (active)
+                    - `head:HeadsDB` (active) - Transform
+                      - `Layer 4` (active)
+                        - `Layer 4` (active)
+                          - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer 4:custom_head_frankenstein` (active) - Transform, SpriteRenderer
+                - `right hand` (active)
+                  - `right hand` (active)
+                    - `right hand:dbanims/RightHandDB` (active) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_4:custom_right_hand_frankenstein` (active) - Transform, SpriteRenderer
+                - `dighand` (active)
+                  - `dighand` (active)
+                    - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_4:custom_dig_hand_frankenstein` (active) - Transform, SpriteRenderer
+                - `digleg` (active)
+                  - `digleg` (active)
+                    - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                          - `Layer_5:custom_leg_frankenstein` (active) - Transform, SpriteRenderer
+                - `ball` (active)
+                  - `ball` (active)
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `ball_front` (active)
+                  - `ball_front` (active)
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `effects stun` (active)
+                  - `effects stun` (active)
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                - `eyes` (active)
+                  - `eyes` (active)
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                - `effects stun star` (active)
+                  - `effects stun star` (active)
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `P2_CharacterName` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BACK` (active) - Transform, SpriteRenderer
+              - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_PLAY_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_PLAY` (active) - Transform, SpriteRenderer
+              - `ButtonText_PLAY` (active) - Transform, MeshRenderer, TextMesh
+            - `P1CharacterSelectorView` (active) - Transform, rimrushCharacterSelectorView
+            - `P2CharacterSelectorView` (active) - Transform, rimrushCharacterSelectorView
+            - `VersusBallSelectorView` (active) - Transform, rimrushBallSelectorView
+          - `Page_TournamentSetup` (inactive) - Transform, rimrushMenuPageView
+            - `TOURNAMENT_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `SelectPanel` (active) - Transform, SpriteRenderer
+            - `OptionsPanel` (active) - Transform, SpriteRenderer
+            - `Tournament_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `PreviewShadow` (active) - Transform, SpriteRenderer
+            - `Preview_0` (active)
+              - `PreviewArmature_0` (active) - Transform
+                - `left leg` (active)
+                  - `left leg` (active)
+                    - `left leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `left hand` (active)
+                  - `left hand` (active)
+                    - `left hand:dbanims/LeftHandDB` (active) - Transform
+                      - `Layer_3` (active)
+                        - `Layer_3` (active)
+                          - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `body` (active)
+                  - `body` (active)
+                    - `body:BodyDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                - `right leg` (active)
+                  - `right leg` (active)
+                    - `right leg:dbanims/LegsDB` (active) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `head` (active)
+                  - `head` (active)
+                    - `head:HeadsDB` (active) - Transform
+                      - `Layer 4` (active)
+                        - `Layer 4` (active)
+                          - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                - `right hand` (active)
+                  - `right hand` (active)
+                    - `right hand:dbanims/RightHandDB` (active) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `dighand` (active)
+                  - `dighand` (active)
+                    - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                      - `Layer_4` (active)
+                        - `Layer_4` (active)
+                          - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                - `digleg` (active)
+                  - `digleg` (active)
+                    - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                      - `Layer_5` (active)
+                        - `Layer_5` (active)
+                          - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                - `ball` (active)
+                  - `ball` (active)
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `ball_front` (active)
+                  - `ball_front` (active)
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                    - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                - `effects stun` (active)
+                  - `effects stun` (active)
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                    - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                - `eyes` (active)
+                  - `eyes` (active)
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                    - `eyes:dbanims/eyes_stunned` (active) - Transform
+                      - `eye1` (active)
+                        - `eye1` (active)
+                          - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                      - `eye2` (active)
+                        - `eye2` (active)
+                          - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                - `effects stun star` (active)
+                  - `effects stun star` (active)
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                    - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `Tournament_CharacterName` (active) - Transform, MeshRenderer, TextMesh
+            - `Tournament_OptionTitle` (active) - Transform, MeshRenderer, TextMesh
+            - `ModeFixed` (active) - Transform, MeshRenderer, TextMesh
+            - `TournamentBall_Header` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_<_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_<` (active) - Transform, SpriteRenderer
+              - `ButtonText_<` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_>_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_>` (active) - Transform, SpriteRenderer
+              - `ButtonText_>` (active) - Transform, MeshRenderer, TextMesh
+            - `TournamentBall_Preview` (active) - Transform, SpriteRenderer
+            - `TournamentBall_Label` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_AI: NORMAL_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_AI: NORMAL` (active) - Transform, SpriteRenderer
+              - `ButtonText_AI: NORMAL` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BACK` (active) - Transform, SpriteRenderer
+              - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_NEXT_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_NEXT` (active) - Transform, SpriteRenderer
+              - `ButtonText_NEXT` (active) - Transform, MeshRenderer, TextMesh
+            - `TournamentCharacterSelectorView` (active) - Transform, rimrushCharacterSelectorView
+            - `TournamentBallSelectorView` (active) - Transform, rimrushBallSelectorView
+          - `Page_TournamentBracket` (inactive) - Transform, rimrushTournamentBracketSceneView, rimrushMenuPageView
+            - `RegularSeasonBoardRoot` (active)
+              - `TOURNAMENT_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `ROUND 1_Subtitle` (active) - Transform, MeshRenderer, TextMesh
+              - `RegularSeasonBackdrop` (active) - Transform, SpriteRenderer
+              - `DivisionA_Frame` (active) - Transform, SpriteRenderer
+              - `DivisionA_Shade` (active) - Transform, SpriteRenderer
+              - `DivisionA_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Header` (active) - Transform, SpriteRenderer
+              - `DivisionA_HeaderRank` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_HeaderTeam` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_HeaderW` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_HeaderL` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_HeaderPct` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Row_0` (active) - Transform, SpriteRenderer
+              - `DivisionA_Rank_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Badge_0_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_0_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_0_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionA_Name_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_W_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_L_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Pct_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Row_1` (active) - Transform, SpriteRenderer
+              - `DivisionA_Rank_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Badge_1_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_1_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_1_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionA_Name_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_W_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_L_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Pct_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Row_2` (active) - Transform, SpriteRenderer
+              - `DivisionA_Rank_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Badge_2_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_2_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_2_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionA_Name_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_W_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_L_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Pct_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Row_3` (active) - Transform, SpriteRenderer
+              - `DivisionA_Rank_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Badge_3_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_3_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionA_Badge_3_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionA_Name_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_W_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_L_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionA_Pct_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Frame` (active) - Transform, SpriteRenderer
+              - `DivisionB_Shade` (active) - Transform, SpriteRenderer
+              - `DivisionB_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Header` (active) - Transform, SpriteRenderer
+              - `DivisionB_HeaderRank` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_HeaderTeam` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_HeaderW` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_HeaderL` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_HeaderPct` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Row_0` (active) - Transform, SpriteRenderer
+              - `DivisionB_Rank_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Badge_0_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_0_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_0_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionB_Name_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_W_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_L_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Pct_0` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Row_1` (active) - Transform, SpriteRenderer
+              - `DivisionB_Rank_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Badge_1_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_1_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_1_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionB_Name_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_W_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_L_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Pct_1` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Row_2` (active) - Transform, SpriteRenderer
+              - `DivisionB_Rank_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Badge_2_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_2_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_2_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionB_Name_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_W_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_L_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Pct_2` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Row_3` (active) - Transform, SpriteRenderer
+              - `DivisionB_Rank_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Badge_3_Glow` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_3_Badge` (active) - Transform, SpriteRenderer
+              - `DivisionB_Badge_3_Portrait` (active) - Transform, SpriteRenderer
+              - `DivisionB_Name_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_W_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_L_3` (active) - Transform, MeshRenderer, TextMesh
+              - `DivisionB_Pct_3` (active) - Transform, MeshRenderer, TextMesh
+              - `TournamentSummaryPanel` (active) - Transform, SpriteRenderer
+              - `TournamentSummaryHeadline` (active) - Transform, MeshRenderer, TextMesh
+              - `TournamentSummaryDetail` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_BACK` (active) - Transform, SpriteRenderer
+                - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_PLAY ROUND 1_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_PLAY ROUND 1` (active) - Transform, SpriteRenderer
+                - `ButtonText_PLAY ROUND 1` (active) - Transform, MeshRenderer, TextMesh
+            - `PlayoffBoardRoot` (inactive)
+              - `TOURNAMENT_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `FINAL FOUR_Subtitle` (active) - Transform, MeshRenderer, TextMesh
+              - `PlayoffBackdrop` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Frame` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Shade` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Right_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Versus` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Frame` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Shade` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Right_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Versus` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Frame` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Shade` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Glow` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Badge` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Right_Glow` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Right_Badge` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Versus` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Frame` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Shade` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Glow` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Badge` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Right_Glow` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Right_Badge` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Versus` (active) - Transform, MeshRenderer, TextMesh
+              - `TournamentSummaryPanel` (active) - Transform, SpriteRenderer
+              - `TournamentSummaryHeadline` (active) - Transform, MeshRenderer, TextMesh
+              - `TournamentSummaryDetail` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_BACK_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_BACK` (active) - Transform, SpriteRenderer
+                - `ButtonText_BACK` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_PLAY_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_PLAY` (active) - Transform, SpriteRenderer
+                - `ButtonText_PLAY` (active) - Transform, MeshRenderer, TextMesh
+            - `CompletedBoardRoot` (inactive)
+              - `TOURNAMENT_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `CHAMPION_Subtitle` (active) - Transform, MeshRenderer, TextMesh
+              - `PlayoffBackdrop` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Frame` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Shade` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Right_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalLeft_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalLeft_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Frame` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Shade` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Right_Glow` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Badge` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `SemiFinalRight_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `SemiFinalRight_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Frame` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Shade` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Glow` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Badge` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Right_Glow` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Right_Badge` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `FinalMatch_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `FinalMatch_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Frame` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Shade` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Title` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_DividerHorizontal` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Glow` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Badge` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Portrait` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Left_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Left_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Right_Glow` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Right_Badge` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Right_Portrait` (active) - Transform, SpriteRenderer
+              - `ThirdPlaceMatch_Right_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `ThirdPlaceMatch_Right_Score` (active) - Transform, MeshRenderer, TextMesh
+              - `TournamentSummaryPanel` (active) - Transform, SpriteRenderer
+              - `ChampionBadge_Glow` (active) - Transform, SpriteRenderer
+              - `ChampionBadge_Badge` (active) - Transform, SpriteRenderer
+              - `ChampionBadge_Portrait` (active) - Transform, SpriteRenderer
+              - `ChampionLabel` (active) - Transform, MeshRenderer, TextMesh
+              - `ChampionName` (active) - Transform, MeshRenderer, TextMesh
+              - `PlacementLabel` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_MAIN MENU_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_MAIN MENU` (active) - Transform, SpriteRenderer
+                - `ButtonText_MAIN MENU` (active) - Transform, MeshRenderer, TextMesh
+              - `Button_CEREMONY_View` (active) - Transform, rimrushMenuButtonView
+                - `Button_CEREMONY` (active) - Transform, SpriteRenderer
+                - `ButtonText_CEREMONY` (active) - Transform, MeshRenderer, TextMesh
+          - `Page_TournamentAwards` (inactive) - Transform, rimrushTournamentAwardsSceneView, rimrushMenuPageView
+            - `AWARDS_Title` (active) - Transform, MeshRenderer, TextMesh
+            - `TOURNAMENT CEREMONY_Subtitle` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsTopShade` (active) - Transform, SpriteRenderer
+            - `AwardsCenterShade` (active) - Transform, SpriteRenderer
+            - `AwardsBottomShade` (active) - Transform, SpriteRenderer
+            - `AwardsResultBanner` (active)
+              - `AwardsResultBannerFrame` (active) - Transform, SpriteRenderer
+              - `AwardsResultBannerLabel` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsPodium` (active)
+              - `AwardsPodiumGlowCenter` (active) - Transform, SpriteRenderer
+              - `AwardsPodiumGlowLeft` (active) - Transform, SpriteRenderer
+              - `AwardsPodiumGlowRight` (active) - Transform, SpriteRenderer
+              - `AwardsTribune` (active) - Transform, SpriteRenderer
+              - `AwardsLaneSecond_Frame` (active) - Transform, SpriteRenderer
+              - `AwardsLaneSecond_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `AwardsLaneChampion_Frame` (active) - Transform, SpriteRenderer
+              - `AwardsLaneChampion_Champion` (active) - Transform, MeshRenderer, TextMesh
+              - `AwardsLaneChampion_Name` (active) - Transform, MeshRenderer, TextMesh
+              - `AwardsLaneThird_Frame` (active) - Transform, SpriteRenderer
+              - `AwardsLaneThird_Name` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsBadgeChampion` (active)
+              - `AwardsBadgeChampion_Glow` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeChampion_Badge` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeChampion_Portrait` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeChampion_Rank` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsBadgeSecond` (active)
+              - `AwardsBadgeSecond_Glow` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeSecond_Badge` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeSecond_Portrait` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeSecond_Rank` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsBadgeThird` (active)
+              - `AwardsBadgeThird_Glow` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeThird_Badge` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeThird_Portrait` (active) - Transform, SpriteRenderer
+              - `AwardsBadgeThird_Rank` (active) - Transform, MeshRenderer, TextMesh
+            - `AwardsSecondPlace` (active)
+              - `AwardsSecondPlace_Aura` (active) - Transform, SpriteRenderer
+              - `AwardsSecondPlace_Shadow` (active) - Transform, SpriteRenderer
+              - `AwardsSecondPlace_Root` (active)
+                - `AwardsSecondPlace_Armature` (active) - Transform
+                  - `left leg` (active)
+                    - `left leg` (active)
+                      - `left leg:dbanims/LegsDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_witch` (active) - Transform, SpriteRenderer
+                  - `left hand` (active)
+                    - `left hand` (active)
+                      - `left hand:dbanims/LeftHandDB` (active) - Transform
+                        - `Layer_3` (active)
+                          - `Layer_3` (active)
+                            - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_3:custom_left_hand_witch` (active) - Transform, SpriteRenderer
+                  - `body` (active)
+                    - `body` (active)
+                      - `body:BodyDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_body_witch` (active) - Transform, SpriteRenderer
+                  - `right leg` (active)
+                    - `right leg` (active)
+                      - `right leg:dbanims/LegsDB` (active) - Transform, DBLiteArmature
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_witch` (active) - Transform, SpriteRenderer
+                  - `head` (active)
+                    - `head` (active)
+                      - `head:HeadsDB` (active) - Transform
+                        - `Layer 4` (active)
+                          - `Layer 4` (active)
+                            - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer 4:custom_head_witch` (active) - Transform, SpriteRenderer
+                  - `right hand` (active)
+                    - `right hand` (active)
+                      - `right hand:dbanims/RightHandDB` (active) - Transform
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_4:custom_right_hand_witch` (active) - Transform, SpriteRenderer
+                  - `dighand` (active)
+                    - `dighand` (active)
+                      - `dighand:dbanims/LeftHandDB2` (inactive) - Transform, DBLiteArmature
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_4:custom_dig_hand_witch` (active) - Transform, SpriteRenderer
+                  - `digleg` (active)
+                    - `digleg` (active)
+                      - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_witch` (active) - Transform, SpriteRenderer
+                  - `ball` (active)
+                    - `ball` (active)
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `ball_front` (active)
+                    - `ball_front` (active)
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `effects stun` (active)
+                    - `effects stun` (active)
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                  - `eyes` (active)
+                    - `eyes` (active)
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                  - `effects stun star` (active)
+                    - `effects stun star` (active)
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `AwardsChampionPlace` (active)
+              - `AwardsChampionPlace_Aura` (active) - Transform, SpriteRenderer
+              - `AwardsChampionPlace_Shadow` (active) - Transform, SpriteRenderer
+              - `AwardsChampionPlace_Root` (active)
+                - `AwardsChampionPlace_Armature` (active) - Transform
+                  - `left leg` (active)
+                    - `left leg` (active)
+                      - `left leg:dbanims/LegsDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                  - `left hand` (active)
+                    - `left hand` (active)
+                      - `left hand:dbanims/LeftHandDB` (active) - Transform
+                        - `Layer_3` (active)
+                          - `Layer_3` (active)
+                            - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                  - `body` (active)
+                    - `body` (active)
+                      - `body:BodyDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                  - `right leg` (active)
+                    - `right leg` (active)
+                      - `right leg:dbanims/LegsDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                  - `head` (active)
+                    - `head` (active)
+                      - `head:HeadsDB` (active) - Transform
+                        - `Layer 4` (active)
+                          - `Layer 4` (active)
+                            - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                  - `right hand` (active)
+                    - `right hand` (active)
+                      - `right hand:dbanims/RightHandDB` (active) - Transform
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                  - `dighand` (active)
+                    - `dighand` (active)
+                      - `dighand:dbanims/LeftHandDB2` (active) - Transform, DBLiteArmature
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                      - `dighand:dbanims/LeftHandDB2` (active) - Transform
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                  - `digleg` (active)
+                    - `digleg` (active)
+                      - `digleg:dbanims/LegsDB2` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                      - `digleg:dbanims/LegsDB2` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                  - `ball` (active)
+                    - `ball` (active)
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `ball_front` (active)
+                    - `ball_front` (active)
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `effects stun` (active)
+                    - `effects stun` (active)
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/CupDB` (active) - Transform
+                        - `Layer 1` (active)
+                          - `Layer 1` (active)
+                            - `Layer 1:dbanims/cup_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/CupDB` (active) - Transform
+                        - `Layer 1` (active)
+                          - `Layer 1` (active)
+                            - `Layer 1:dbanims/cup_01` (active) - Transform, SpriteRenderer
+                            - `Layer 1:dbanims/cup_01` (active) - Transform, SpriteRenderer
+                  - `eyes` (active)
+                    - `eyes` (active)
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                  - `effects stun star` (active)
+                    - `effects stun star` (active)
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `AwardsThirdPlace` (active)
+              - `AwardsThirdPlace_Aura` (active) - Transform, SpriteRenderer
+              - `AwardsThirdPlace_Shadow` (active) - Transform, SpriteRenderer
+              - `AwardsThirdPlace_Root` (active)
+                - `AwardsThirdPlace_Armature` (active) - Transform
+                  - `left leg` (active)
+                    - `left leg` (active)
+                      - `left leg:dbanims/LegsDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_candle` (active) - Transform, SpriteRenderer
+                  - `left hand` (active)
+                    - `left hand` (active)
+                      - `left hand:dbanims/LeftHandDB` (active) - Transform
+                        - `Layer_3` (active)
+                          - `Layer_3` (active)
+                            - `Layer_3:custom_left_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_3:custom_left_hand_candle` (active) - Transform, SpriteRenderer
+                  - `body` (active)
+                    - `body` (active)
+                      - `body:BodyDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_body_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_body_candle` (active) - Transform, SpriteRenderer
+                  - `right leg` (active)
+                    - `right leg` (active)
+                      - `right leg:dbanims/LegsDB` (active) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_candle` (active) - Transform, SpriteRenderer
+                  - `head` (active)
+                    - `head` (active)
+                      - `head:HeadsDB` (active) - Transform, DBLiteArmature
+                        - `Layer 4` (active)
+                          - `Layer 4` (active)
+                            - `Layer 4:custom_head_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer 4:custom_head_candle` (active) - Transform, SpriteRenderer
+                  - `right hand` (active)
+                    - `right hand` (active)
+                      - `right hand:dbanims/RightHandDB` (active) - Transform
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_right_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_4:custom_right_hand_candle` (active) - Transform, SpriteRenderer
+                  - `dighand` (active)
+                    - `dighand` (active)
+                      - `dighand:dbanims/LeftHandDB2` (inactive) - Transform
+                        - `Layer_4` (active)
+                          - `Layer_4` (active)
+                            - `Layer_4:custom_dig_hand_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_4:custom_dig_hand_candle` (active) - Transform, SpriteRenderer
+                  - `digleg` (active)
+                    - `digleg` (active)
+                      - `digleg:dbanims/LegsDB2` (inactive) - Transform
+                        - `Layer_5` (active)
+                          - `Layer_5` (active)
+                            - `Layer_5:custom_leg_pumpkin` (active) - Transform, SpriteRenderer
+                            - `Layer_5:custom_leg_candle` (active) - Transform, SpriteRenderer
+                  - `ball` (active)
+                    - `ball` (active)
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `ball_front` (active)
+                    - `ball_front` (active)
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                      - `ball_front:.Game/ball/BallClip` (active) - Transform, SpriteRenderer
+                  - `effects stun` (active)
+                    - `effects stun` (active)
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                      - `effects stun:dbanims/kuynya_01` (active) - Transform, SpriteRenderer
+                  - `eyes` (active)
+                    - `eyes` (active)
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                      - `eyes:dbanims/eyes_stunned` (active) - Transform
+                        - `eye1` (active)
+                          - `eye1` (active)
+                            - `eye1:dbanims/eye34635` (active) - Transform, SpriteRenderer
+                        - `eye2` (active)
+                          - `eye2` (active)
+                            - `eye2:dbanims/eye23434` (active) - Transform, SpriteRenderer
+                  - `effects stun star` (active)
+                    - `effects stun star` (active)
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+                      - `effects stun star:dbanims/star_0123` (active) - Transform, SpriteRenderer
+            - `Button_BRACKET_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_BRACKET` (active) - Transform, SpriteRenderer
+              - `ButtonText_BRACKET` (active) - Transform, MeshRenderer, TextMesh
+            - `Button_MAIN MENU_View` (active) - Transform, rimrushMenuButtonView
+              - `Button_MAIN MENU` (active) - Transform, SpriteRenderer
+              - `ButtonText_MAIN MENU` (active) - Transform, MeshRenderer, TextMesh
+      - `HudSceneRoot` (active) - Transform, rimrushHudSceneView, rimrushHudAuthoringPreview
+        - `ScoreboardBackdrop` (active) - Transform, SpriteRenderer
+        - `LeftPortraitAura` (active) - Transform, SpriteRenderer
+        - `RightPortraitAura` (active) - Transform, SpriteRenderer
+        - `LeftPortrait` (active) - Transform, SpriteRenderer
+        - `RightPortrait` (active) - Transform, SpriteRenderer
+        - `LeftName` (active) - Transform, MeshRenderer, TextMesh
+        - `RightName` (active) - Transform, MeshRenderer, TextMesh
+        - `LeftScore` (active) - Transform, MeshRenderer, TextMesh
+        - `RightScore` (active) - Transform, MeshRenderer, TextMesh
+        - `Timer` (active) - Transform, MeshRenderer, TextMesh
+        - `PauseButtonView` (active) - Transform, rimrushMenuButtonView
+          - `Background` (inactive) - Transform, SpriteRenderer
+          - `PauseButtonView_Label` (inactive) - Transform, MeshRenderer, TextMesh
+        - `PauseButtonIcon` (active) - Transform, SpriteRenderer
+        - `HudMusicButtonView` (active) - Transform, rimrushIconButtonView
+          - `HudMusicButtonView_Button` (active) - Transform, rimrushMenuButtonView
+            - `Background` (inactive) - Transform, SpriteRenderer
+            - `HudMusicButtonView_Button_Label` (inactive) - Transform, MeshRenderer, TextMesh
+          - `HudMusicButtonView_Icon0` (inactive) - Transform, SpriteRenderer
+          - `HudMusicButtonView_Icon1` (active) - Transform, SpriteRenderer
+        - `HudHelpButtonView` (active) - Transform, rimrushIconButtonView
+          - `HudHelpButtonView_Button` (active) - Transform, rimrushMenuButtonView
+            - `Background` (inactive) - Transform, SpriteRenderer
+            - `HudHelpButtonView_Button_Label` (inactive) - Transform, MeshRenderer, TextMesh
+          - `HudHelpButtonView_Icon0` (active) - Transform, SpriteRenderer
+        - `CountdownBackdrop` (inactive) - Transform, SpriteRenderer
+        - `CountdownCaption` (inactive) - Transform, MeshRenderer, TextMesh
+        - `Countdown` (inactive) - Transform, MeshRenderer, TextMesh
+        - `MessageRoot` (inactive)
+          - `MessageBackdrop` (active) - Transform, SpriteRenderer
+          - `Message` (active) - Transform, MeshRenderer, TextMesh
+        - `BonusNoticeRoot` (inactive)
+          - `BonusNotice` (active) - Transform, MeshRenderer, TextMesh
+        - `PostMatchRoot` (inactive)
+          - `PostMatchTitle` (inactive) - Transform, MeshRenderer, TextMesh
+          - `PostMatchScore` (inactive) - Transform, MeshRenderer, TextMesh
+          - `PostMatchPrompt` (inactive) - Transform, MeshRenderer, TextMesh
+        - `PauseOverlayRoot` (inactive)
+          - `PauseShade` (active) - Transform, SpriteRenderer
+          - `PauseTopGlow` (active) - Transform, SpriteRenderer
+          - `PauseBottomGlow` (active) - Transform, SpriteRenderer
+          - `PausePanel` (active) - Transform, SpriteRenderer
+          - `PauseFrame` (active) - Transform, SpriteRenderer
+          - `PauseBoardTint` (active) - Transform, SpriteRenderer
+          - `PauseLeftPortraitAura` (active) - Transform, SpriteRenderer
+          - `PauseRightPortraitAura` (active) - Transform, SpriteRenderer
+          - `PauseLeftPortrait` (active) - Transform, SpriteRenderer
+          - `PauseRightPortrait` (active) - Transform, SpriteRenderer
+          - `PauseTitle` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseLeftName` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseRightName` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseLeftScore` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseScoreDivider` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseRightScore` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseMeta` (active) - Transform, MeshRenderer, TextMesh
+          - `PauseMenuButtonView` (active) - Transform, rimrushMenuButtonView
+            - `Background` (inactive) - Transform, SpriteRenderer
+            - `PauseMenuButtonView_Label` (inactive) - Transform, MeshRenderer, TextMesh
+          - `PauseResumeButtonView` (active) - Transform, rimrushMenuButtonView
+            - `Background` (inactive) - Transform, SpriteRenderer
+            - `PauseResumeButtonView_Label` (inactive) - Transform, MeshRenderer, TextMesh
+    - `rimrushAudio` (active) - Transform, rimrushAudio, AudioSource, AudioSource
+  - `rimrushFixedResolutionCamera` (active) - Transform, Camera
+  - `rimrushFixedResolutionCanvas` (active) - RectTransform, Canvas, CanvasScaler, GraphicRaycaster
+    - `rimrushFixedResolutionBackground` (active) - RectTransform, CanvasRenderer, Image
+    - `rimrushFixedResolutionOutput` (active) - RectTransform, CanvasRenderer, RawImage
+
