@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace rimrush.EditorTools
@@ -107,6 +108,8 @@ namespace rimrush.EditorTools
                 ValidateHellTournamentSkillMapping(errors);
                 ValidateBallSelectionStateAndResolution(errors);
                 ValidateRuntimeGraphicsResourceReuse(errors);
+                ValidateSceneOwnedBindings(errors);
+                ValidateGoldenBaselinePackage(errors);
 
                 root = new GameObject("SmokeRuntimeRoot");
                 rimrushAudio.Create(root.transform);
@@ -188,6 +191,554 @@ namespace rimrush.EditorTools
         {
             ValidateSharedRuntimeMaterials(errors);
             ValidateGameRuntimeMeshRelease(errors);
+        }
+
+        private static void ValidateSceneOwnedBindings(List<string> errors)
+        {
+            var scenePath = "Assets/Scenes/Main.unity";
+            if (!File.Exists(scenePath))
+            {
+                errors.Add("Main.unity is missing.");
+                return;
+            }
+
+            EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            var bootstrap = GameObject.Find("rimrushBootstrap")?.GetComponent<rimrushGameBootstrap>();
+            var mainCamera = GameObject.Find("Main Camera")?.GetComponent<Camera>();
+            var persistentRoot = GameObject.Find("PersistentRoot");
+            var overlayRoot = GameObject.Find("OverlayRoot");
+            var audioHost = GameObject.Find("rimrushAudio")?.GetComponent<rimrushAudio>();
+
+            if (bootstrap == null)
+            {
+                errors.Add("Main.unity is missing rimrushBootstrap.");
+                return;
+            }
+
+            if (mainCamera == null)
+            {
+                errors.Add("Main.unity is missing Main Camera.");
+            }
+
+            if (persistentRoot == null)
+            {
+                errors.Add("Main.unity is missing PersistentRoot.");
+            }
+
+            if (overlayRoot == null)
+            {
+                errors.Add("Main.unity is missing OverlayRoot.");
+            }
+
+            if (audioHost == null)
+            {
+                errors.Add("Main.unity is missing the rimrushAudio host.");
+            }
+
+            var sceneBindings = bootstrap.GetComponent<rimrushSceneBindings>();
+            if (sceneBindings == null)
+            {
+                errors.Add("Main.unity is missing rimrushSceneBindings on rimrushBootstrap.");
+                return;
+            }
+
+            sceneBindings.ResolveMissingReferences();
+            if (sceneBindings.MainCamera == null || sceneBindings.Presenter == null || sceneBindings.Audio == null || sceneBindings.PersistentRoot == null || sceneBindings.OverlayRoot == null)
+            {
+                errors.Add("Main.unity is missing serialized scene binding references for the Stage 1 hosts.");
+            }
+
+            var menuShell = sceneBindings.MenuShell;
+            if (menuShell == null)
+            {
+                errors.Add("Main.unity is missing MenuShell.");
+            }
+            else
+            {
+                if (menuShell.PageCatalog == null)
+                {
+                    errors.Add("MenuShell is missing PageCatalog.");
+                }
+
+                if (menuShell.Pages == null || menuShell.Pages.Count != 8)
+                {
+                    errors.Add("MenuShell should expose 8 authored menu pages during Stage 2.");
+                }
+                else
+                {
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.PlayerCount, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.MatchType, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.QuickSetup, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.TrainingSetup, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.TwoPlayerSetup, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.TournamentSetup, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.TournamentBracket, errors);
+                    ValidateMenuPage(menuShell, rimrushMenuPageKind.TournamentAwards, errors);
+                }
+
+                if (menuShell.GetComponent<rimrushMenuAuthoringPreview>() == null)
+                {
+                    errors.Add("MenuShell is missing rimrushMenuAuthoringPreview.");
+                }
+            }
+
+            var hudView = sceneBindings.HudView;
+            if (hudView == null)
+            {
+                errors.Add("Main.unity is missing HudSceneRoot / rimrushHudSceneView.");
+            }
+            else
+            {
+                ValidateHudSceneView(hudView, errors);
+                if (hudView.GetComponent<rimrushHudAuthoringPreview>() == null)
+                {
+                    errors.Add("HudSceneRoot is missing rimrushHudAuthoringPreview.");
+                }
+            }
+
+            var gameplayBindings = sceneBindings.GameplayBindings;
+            if (gameplayBindings == null)
+            {
+                errors.Add("Main.unity is missing GameplayRoot / rimrushGameplayBindings.");
+            }
+            else
+            {
+                ValidateGameplayBindings(gameplayBindings, hudView, errors);
+            }
+
+            if (bootstrap.GetComponent<rimrushSceneAuthoringMode>() == null)
+            {
+                errors.Add("rimrushBootstrap is missing rimrushSceneAuthoringMode.");
+            }
+
+            if (GetPrivateBool(bootstrap, "preferSceneMenuShell") ||
+                GetPrivateBool(bootstrap, "preferSceneHudView") ||
+                GetPrivateBool(bootstrap, "preferSceneGameplayBindings"))
+            {
+                errors.Add("Scene-owned menu, HUD, and gameplay cutover flags should remain disabled until manual parity is verified.");
+            }
+        }
+
+        private static void ValidateGameplayBindings(rimrushGameplayBindings gameplayBindings, rimrushHudSceneView sharedHudView, List<string> errors)
+        {
+            if (gameplayBindings.Root == null)
+            {
+                errors.Add("GameplayBindings is missing its root transform.");
+            }
+
+            if (gameplayBindings.ArenaView == null)
+            {
+                errors.Add("GameplayBindings is missing ArenaView.");
+            }
+            else if (gameplayBindings.ArenaView.GraphicRenderer == null)
+            {
+                errors.Add("GameplayBindings ArenaView is missing GraphicRenderer.");
+            }
+
+            if (gameplayBindings.LeftBasketView == null)
+            {
+                errors.Add("GameplayBindings is missing LeftBasketView.");
+            }
+            else if (gameplayBindings.LeftBasketView.Root == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing Root.");
+            }
+            else if (gameplayBindings.LeftBasketView.BasketRenderer == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing BasketRenderer.");
+            }
+            else if (gameplayBindings.LeftBasketView.FrontEarRenderer == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing FrontEarRenderer.");
+            }
+            else if (gameplayBindings.LeftBasketView.NetLines == null || gameplayBindings.LeftBasketView.NetLines.Count < 10)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing complete NetLines.");
+            }
+
+            if (gameplayBindings.RightBasketView == null)
+            {
+                errors.Add("GameplayBindings is missing RightBasketView.");
+            }
+            else if (gameplayBindings.RightBasketView.Root == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing Root.");
+            }
+            else if (gameplayBindings.RightBasketView.BasketRenderer == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing BasketRenderer.");
+            }
+            else if (gameplayBindings.RightBasketView.FrontEarRenderer == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing FrontEarRenderer.");
+            }
+            else if (gameplayBindings.RightBasketView.NetLines == null || gameplayBindings.RightBasketView.NetLines.Count < 10)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing complete NetLines.");
+            }
+
+            if (gameplayBindings.BallView == null)
+            {
+                errors.Add("GameplayBindings is missing BallView.");
+            }
+            else if (gameplayBindings.BallView.Root == null)
+            {
+                errors.Add("GameplayBindings BallView is missing Root.");
+            }
+            else if (gameplayBindings.BallView.GraphicRenderer == null)
+            {
+                errors.Add("GameplayBindings BallView is missing GraphicRenderer.");
+            }
+            else if (gameplayBindings.BallView.ShadowRenderer == null)
+            {
+                errors.Add("GameplayBindings BallView is missing ShadowRenderer.");
+            }
+
+            ValidatePlayerView(gameplayBindings.GetPlayerView(-1), "LeftPlayerView", errors);
+            ValidatePlayerView(gameplayBindings.GetPlayerView(1), "RightPlayerView", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(0), "EnergyBarSlot0", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(1), "EnergyBarSlot1", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(2), "EnergyBarSlot2", errors);
+            ValidateTeleportFxView(gameplayBindings.GetTeleportFxView(-1), "LeftTeleportFxView", errors);
+            ValidateTeleportFxView(gameplayBindings.GetTeleportFxView(1), "RightTeleportFxView", errors);
+            ValidateShieldView(gameplayBindings.GetShieldView(-1), "LeftShieldView", errors);
+            ValidateShieldView(gameplayBindings.GetShieldView(1), "RightShieldView", errors);
+
+            var expectedSpawnNames = new[]
+            {
+                "LeftNeutralSpawn",
+                "RightNeutralSpawn",
+                "LeftServeSpawn",
+                "RightServeSpawn"
+            };
+
+            for (var i = 0; i < expectedSpawnNames.Length; i++)
+            {
+                var spawn = gameplayBindings.Root != null ? gameplayBindings.Root.Find(expectedSpawnNames[i]) : null;
+                if (spawn == null)
+                {
+                    errors.Add($"GameplayBindings is missing spawn anchor `{expectedSpawnNames[i]}`.");
+                }
+            }
+
+            if (gameplayBindings.HudView != sharedHudView)
+            {
+                errors.Add("GameplayBindings should reference the shared Stage 2 HudSceneRoot instead of a duplicate HUD.");
+            }
+
+            if (gameplayBindings.Root != null)
+            {
+                var nestedHudViews = gameplayBindings.Root.GetComponentsInChildren<rimrushHudSceneView>(true);
+                if (nestedHudViews != null && nestedHudViews.Length > 0)
+                {
+                    errors.Add("GameplayRoot should not contain a duplicate HudSceneRoot.");
+                }
+            }
+        }
+
+        private static void ValidatePlayerView(rimrushPlayerView playerView, string label, List<string> errors)
+        {
+            if (playerView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (playerView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (playerView.ShadowRenderer == null)
+            {
+                errors.Add($"{label} is missing ShadowRenderer.");
+            }
+
+            if (playerView.ArmatureMount == null)
+            {
+                errors.Add($"{label} is missing ArmatureMount.");
+            }
+
+            if (playerView.FallbackRenderer == null)
+            {
+                errors.Add($"{label} is missing FallbackRenderer.");
+            }
+        }
+
+        private static void ValidateEnergyBarView(rimrushEnergyBarSceneView energyBarView, string label, List<string> errors)
+        {
+            if (energyBarView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (energyBarView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (energyBarView.BackgroundRenderer == null)
+            {
+                errors.Add($"{label} is missing BackgroundRenderer.");
+            }
+
+            if (energyBarView.BaseRenderer == null)
+            {
+                errors.Add($"{label} is missing BaseRenderer.");
+            }
+
+            if (energyBarView.OverlayView == null || energyBarView.OverlayView.Root == null)
+            {
+                errors.Add($"{label} is missing OverlayView.");
+            }
+
+            if (energyBarView.HintBackgroundRenderer == null)
+            {
+                errors.Add($"{label} is missing HintBackgroundRenderer.");
+            }
+
+            if (energyBarView.HintText == null)
+            {
+                errors.Add($"{label} is missing HintText.");
+            }
+        }
+
+        private static void ValidateTeleportFxView(rimrushTeleportFxView teleportFxView, string label, List<string> errors)
+        {
+            if (teleportFxView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (teleportFxView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (teleportFxView.BlackNode == null)
+            {
+                errors.Add($"{label} is missing BlackNode.");
+            }
+
+            if (teleportFxView.BlackRenderer == null)
+            {
+                errors.Add($"{label} is missing BlackRenderer.");
+            }
+
+            if (teleportFxView.CenterRenderer == null)
+            {
+                errors.Add($"{label} is missing CenterRenderer.");
+            }
+
+            if (teleportFxView.WhiteRenderer == null)
+            {
+                errors.Add($"{label} is missing WhiteRenderer.");
+            }
+
+            if (teleportFxView.AnimRenderer == null)
+            {
+                errors.Add($"{label} is missing AnimRenderer.");
+            }
+        }
+
+        private static void ValidateShieldView(rimrushShieldView shieldView, string label, List<string> errors)
+        {
+            if (shieldView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (shieldView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (shieldView.BlurRenderer == null)
+            {
+                errors.Add($"{label} is missing BlurRenderer.");
+            }
+
+            if (shieldView.StartRenderer == null)
+            {
+                errors.Add($"{label} is missing StartRenderer.");
+            }
+
+            if (shieldView.AnimRenderer == null)
+            {
+                errors.Add($"{label} is missing AnimRenderer.");
+            }
+        }
+
+        private static void ValidateMenuPage(rimrushMenuShellView menuShell, rimrushMenuPageKind pageKind, List<string> errors)
+        {
+            var page = menuShell.GetPage(pageKind);
+            if (page == null)
+            {
+                errors.Add($"MenuShell is missing page binding for {pageKind}.");
+                return;
+            }
+
+            if (page.Root == null)
+            {
+                errors.Add($"{pageKind} page is missing its root GameObject.");
+            }
+
+            switch (pageKind)
+            {
+                case rimrushMenuPageKind.QuickSetup:
+                    ValidateCharacterSelector(page.CharacterSelectors, 1, pageKind, errors);
+                    ValidateBallSelector(page.BallSelectors, 1, pageKind, errors);
+                    break;
+                case rimrushMenuPageKind.TrainingSetup:
+                    ValidateCharacterSelector(page.CharacterSelectors, 1, pageKind, errors);
+                    ValidateBallSelector(page.BallSelectors, 1, pageKind, errors);
+                    break;
+                case rimrushMenuPageKind.TwoPlayerSetup:
+                    ValidateCharacterSelector(page.CharacterSelectors, 2, pageKind, errors);
+                    ValidateBallSelector(page.BallSelectors, 1, pageKind, errors);
+                    break;
+                case rimrushMenuPageKind.TournamentSetup:
+                    ValidateCharacterSelector(page.CharacterSelectors, 1, pageKind, errors);
+                    ValidateBallSelector(page.BallSelectors, 1, pageKind, errors);
+                    break;
+                case rimrushMenuPageKind.TournamentBracket:
+                    if (page.TournamentBracketView == null ||
+                        page.TournamentBracketView.RegularSeasonBoardRoot == null ||
+                        page.TournamentBracketView.PlayoffBoardRoot == null ||
+                        page.TournamentBracketView.CompletedBoardRoot == null)
+                    {
+                        errors.Add("TournamentBracket page is missing one or more bracket board roots.");
+                    }
+                    break;
+                case rimrushMenuPageKind.TournamentAwards:
+                    if (page.TournamentAwardsView == null || page.TournamentAwardsView.Root == null)
+                    {
+                        errors.Add("TournamentAwards page is missing its awards scene view root.");
+                    }
+                    break;
+            }
+        }
+
+        private static void ValidateCharacterSelector(rimrushCharacterSelectorView[] selectors, int expectedCount, rimrushMenuPageKind pageKind, List<string> errors)
+        {
+            if (selectors == null || selectors.Length != expectedCount)
+            {
+                errors.Add($"{pageKind} page should expose {expectedCount} character selector view(s).");
+                return;
+            }
+
+            for (var i = 0; i < selectors.Length; i++)
+            {
+                var selector = selectors[i];
+                if (selector == null ||
+                    selector.HeaderText == null ||
+                    selector.PreviousButtonView == null ||
+                    selector.NextButtonView == null ||
+                    selector.ShadowRenderer == null ||
+                    selector.PreviewMount == null ||
+                    selector.NameText == null)
+                {
+                    errors.Add($"{pageKind} page has an incomplete character selector binding at index {i}.");
+                }
+            }
+        }
+
+        private static void ValidateBallSelector(rimrushBallSelectorView[] selectors, int expectedCount, rimrushMenuPageKind pageKind, List<string> errors)
+        {
+            if (selectors == null || selectors.Length != expectedCount)
+            {
+                errors.Add($"{pageKind} page should expose {expectedCount} ball selector view(s).");
+                return;
+            }
+
+            for (var i = 0; i < selectors.Length; i++)
+            {
+                var selector = selectors[i];
+                if (selector == null ||
+                    selector.HeaderText == null ||
+                    selector.PreviousButtonView == null ||
+                    selector.NextButtonView == null ||
+                    selector.PreviewRenderer == null ||
+                    selector.LabelText == null)
+                {
+                    errors.Add($"{pageKind} page has an incomplete ball selector binding at index {i}.");
+                }
+            }
+        }
+
+        private static void ValidateHudSceneView(rimrushHudSceneView hudView, List<string> errors)
+        {
+            if (hudView.ScoreboardBackdrop == null ||
+                hudView.LeftPortraitAura == null ||
+                hudView.RightPortraitAura == null ||
+                hudView.LeftPortraitRenderer == null ||
+                hudView.RightPortraitRenderer == null ||
+                hudView.LeftNameText == null ||
+                hudView.RightNameText == null ||
+                hudView.LeftScoreText == null ||
+                hudView.RightScoreText == null ||
+                hudView.TimerText == null ||
+                hudView.PauseButtonView == null ||
+                hudView.PauseButtonIcon == null ||
+                hudView.MusicButtonView == null ||
+                hudView.HelpButtonView == null ||
+                hudView.CountdownBackdrop == null ||
+                hudView.CountdownCaptionText == null ||
+                hudView.CountdownText == null ||
+                hudView.MessageRoot == null ||
+                hudView.MessageText == null ||
+                hudView.BonusNoticeRoot == null ||
+                hudView.BonusNoticeText == null ||
+                hudView.PostMatchRoot == null ||
+                hudView.PostMatchTitleText == null ||
+                hudView.PostMatchScoreText == null ||
+                hudView.PostMatchPromptText == null ||
+                hudView.PauseOverlayRoot == null ||
+                hudView.PauseShade == null ||
+                hudView.PausePanel == null ||
+                hudView.PauseTitleText == null ||
+                hudView.PauseScoreText == null ||
+                hudView.PauseLeftNameText == null ||
+                hudView.PauseRightNameText == null ||
+                hudView.PauseLeftScoreText == null ||
+                hudView.PauseRightScoreText == null ||
+                hudView.PauseScoreDividerText == null ||
+                hudView.PauseLeftPortraitRenderer == null ||
+                hudView.PauseRightPortraitRenderer == null ||
+                hudView.PauseMenuButtonView == null ||
+                hudView.PauseResumeButtonView == null)
+            {
+                errors.Add("HudSceneRoot is missing one or more required Stage 2 bindings.");
+            }
+        }
+
+        private static bool GetPrivateBool(object target, string fieldName)
+        {
+            var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            return field != null && field.FieldType == typeof(bool) && (bool)field.GetValue(target);
+        }
+
+        private static void ValidateGoldenBaselinePackage(List<string> errors)
+        {
+            var requiredFiles = new[]
+            {
+                "DOCS/GoldenBaseline/README.md",
+                "DOCS/GoldenBaseline/HOST_SCENE_HIERARCHY.md",
+                "DOCS/GoldenBaseline/KEY_LAYOUT_REFERENCE.md",
+                "DOCS/GoldenBaseline/SCREEN_CAPTURE_CHECKLIST.md",
+                "DOCS/GoldenBaseline/BEHAVIOR_CHECKLIST.md"
+            };
+
+            for (var i = 0; i < requiredFiles.Length; i++)
+            {
+                if (!File.Exists(requiredFiles[i]))
+                {
+                    errors.Add($"Golden baseline artifact is missing: {requiredFiles[i]}");
+                }
+            }
         }
 
         private static void ValidateSharedRuntimeMaterials(List<string> errors)
