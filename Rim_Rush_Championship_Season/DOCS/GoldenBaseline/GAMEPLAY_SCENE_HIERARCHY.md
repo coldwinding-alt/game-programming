@@ -1,0 +1,87 @@
+﻿# Gameplay Scene Hierarchy
+
+- Captured: `2026-05-24 04:22:25 UTC`
+
+- `GameplayRoot` (active) - Transform, rimrushGameplayBindings
+  - `ArenaObject` (active) - Transform, SpriteRenderer, rimrushArenaView
+  - `BasketLeft` (active) - Transform, rimrushBasketView
+    - `Root` (active)
+      - `BasketGraphic` (active) - Transform, SpriteRenderer
+    - `FrontEar` (active) - Transform, SpriteRenderer
+    - `NetLine0` (active) - Transform, LineRenderer
+    - `NetLine1` (active) - Transform, LineRenderer
+    - `NetLine2` (active) - Transform, LineRenderer
+    - `NetLine3` (active) - Transform, LineRenderer
+    - `NetLine4` (active) - Transform, LineRenderer
+    - `NetLine5` (active) - Transform, LineRenderer
+    - `NetLine6` (active) - Transform, LineRenderer
+    - `NetLine7` (active) - Transform, LineRenderer
+    - `NetLine8` (active) - Transform, LineRenderer
+    - `NetLine9` (active) - Transform, LineRenderer
+  - `BasketRight` (active) - Transform, rimrushBasketView
+    - `Root` (active)
+      - `BasketGraphic` (active) - Transform, SpriteRenderer
+    - `FrontEar` (active) - Transform, SpriteRenderer
+    - `NetLine0` (active) - Transform, LineRenderer
+    - `NetLine1` (active) - Transform, LineRenderer
+    - `NetLine2` (active) - Transform, LineRenderer
+    - `NetLine3` (active) - Transform, LineRenderer
+    - `NetLine4` (active) - Transform, LineRenderer
+    - `NetLine5` (active) - Transform, LineRenderer
+    - `NetLine6` (active) - Transform, LineRenderer
+    - `NetLine7` (active) - Transform, LineRenderer
+    - `NetLine8` (active) - Transform, LineRenderer
+    - `NetLine9` (active) - Transform, LineRenderer
+  - `BallObject` (active) - Transform, rimrushBallView
+    - `Graphic` (active) - Transform, SpriteRenderer
+    - `BallShadow` (active) - Transform, SpriteRenderer
+  - `LeftNeutralSpawn` (active)
+  - `RightNeutralSpawn` (active)
+  - `LeftServeSpawn` (active)
+  - `RightServeSpawn` (active)
+  - `LeftPlayerView` (active) - Transform, rimrushPlayerView
+    - `Root` (active)
+      - `ArmatureMount` (active)
+      - `Fallback` (active) - Transform, SpriteRenderer
+    - `Shadow` (active) - Transform, SpriteRenderer
+  - `RightPlayerView` (active) - Transform, rimrushPlayerView
+    - `Root` (active)
+      - `ArmatureMount` (active)
+      - `Fallback` (active) - Transform, SpriteRenderer
+    - `Shadow` (active) - Transform, SpriteRenderer
+  - `EnergyBarSlot0` (active) - Transform, rimrushEnergyBarSceneView
+    - `Background` (active) - Transform, SpriteRenderer
+    - `Base` (active) - Transform, SpriteRenderer
+    - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+    - `HintBackground` (active) - Transform, SpriteRenderer
+    - `EnergyBarSlot0_Hint` (active) - Transform, MeshRenderer, TextMesh
+  - `EnergyBarSlot1` (active) - Transform, rimrushEnergyBarSceneView
+    - `Background` (active) - Transform, SpriteRenderer
+    - `Base` (active) - Transform, SpriteRenderer
+    - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+    - `HintBackground` (active) - Transform, SpriteRenderer
+    - `EnergyBarSlot1_Hint` (active) - Transform, MeshRenderer, TextMesh
+  - `EnergyBarSlot2` (active) - Transform, rimrushEnergyBarSceneView
+    - `Background` (active) - Transform, SpriteRenderer
+    - `Base` (active) - Transform, SpriteRenderer
+    - `Overlay` (active) - Transform, rimrushRadialIconView, MeshFilter, MeshRenderer
+    - `HintBackground` (active) - Transform, SpriteRenderer
+    - `EnergyBarSlot2_Hint` (active) - Transform, MeshRenderer, TextMesh
+  - `LeftTeleportFxView` (active) - Transform, rimrushTeleportFxView
+    - `TeleportBlack` (active) - Transform, SpriteRenderer
+      - `TeleportCenter` (active) - Transform, SpriteRenderer
+    - `TeleportAnim` (active) - Transform, SpriteRenderer
+    - `TeleportWhite` (active) - Transform, SpriteRenderer
+  - `RightTeleportFxView` (active) - Transform, rimrushTeleportFxView
+    - `TeleportBlack` (active) - Transform, SpriteRenderer
+      - `TeleportCenter` (active) - Transform, SpriteRenderer
+    - `TeleportAnim` (active) - Transform, SpriteRenderer
+    - `TeleportWhite` (active) - Transform, SpriteRenderer
+  - `LeftShieldView` (active) - Transform, rimrushShieldView
+    - `ShieldStart` (active) - Transform, SpriteRenderer
+    - `ShieldBlur` (active) - Transform, SpriteRenderer
+    - `ShieldAnim` (active) - Transform, SpriteRenderer
+  - `RightShieldView` (active) - Transform, rimrushShieldView
+    - `ShieldStart` (active) - Transform, SpriteRenderer
+    - `ShieldBlur` (active) - Transform, SpriteRenderer
+    - `ShieldAnim` (active) - Transform, SpriteRenderer

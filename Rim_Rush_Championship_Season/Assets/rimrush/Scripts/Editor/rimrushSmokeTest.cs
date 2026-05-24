@@ -296,11 +296,279 @@ namespace rimrush.EditorTools
                 }
             }
 
+            var gameplayBindings = sceneBindings.GameplayBindings;
+            if (gameplayBindings == null)
+            {
+                errors.Add("Main.unity is missing GameplayRoot / rimrushGameplayBindings.");
+            }
+            else
+            {
+                ValidateGameplayBindings(gameplayBindings, hudView, errors);
+            }
+
+            if (bootstrap.GetComponent<rimrushSceneAuthoringMode>() == null)
+            {
+                errors.Add("rimrushBootstrap is missing rimrushSceneAuthoringMode.");
+            }
+
             if (GetPrivateBool(bootstrap, "preferSceneMenuShell") ||
                 GetPrivateBool(bootstrap, "preferSceneHudView") ||
                 GetPrivateBool(bootstrap, "preferSceneGameplayBindings"))
             {
-                errors.Add("Stage 2 should keep scene-owned menu, HUD, and gameplay cutover disabled until parity is verified.");
+                errors.Add("Scene-owned menu, HUD, and gameplay cutover flags should remain disabled until manual parity is verified.");
+            }
+        }
+
+        private static void ValidateGameplayBindings(rimrushGameplayBindings gameplayBindings, rimrushHudSceneView sharedHudView, List<string> errors)
+        {
+            if (gameplayBindings.Root == null)
+            {
+                errors.Add("GameplayBindings is missing its root transform.");
+            }
+
+            if (gameplayBindings.ArenaView == null)
+            {
+                errors.Add("GameplayBindings is missing ArenaView.");
+            }
+            else if (gameplayBindings.ArenaView.GraphicRenderer == null)
+            {
+                errors.Add("GameplayBindings ArenaView is missing GraphicRenderer.");
+            }
+
+            if (gameplayBindings.LeftBasketView == null)
+            {
+                errors.Add("GameplayBindings is missing LeftBasketView.");
+            }
+            else if (gameplayBindings.LeftBasketView.Root == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing Root.");
+            }
+            else if (gameplayBindings.LeftBasketView.BasketRenderer == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing BasketRenderer.");
+            }
+            else if (gameplayBindings.LeftBasketView.FrontEarRenderer == null)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing FrontEarRenderer.");
+            }
+            else if (gameplayBindings.LeftBasketView.NetLines == null || gameplayBindings.LeftBasketView.NetLines.Count < 10)
+            {
+                errors.Add("GameplayBindings LeftBasketView is missing complete NetLines.");
+            }
+
+            if (gameplayBindings.RightBasketView == null)
+            {
+                errors.Add("GameplayBindings is missing RightBasketView.");
+            }
+            else if (gameplayBindings.RightBasketView.Root == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing Root.");
+            }
+            else if (gameplayBindings.RightBasketView.BasketRenderer == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing BasketRenderer.");
+            }
+            else if (gameplayBindings.RightBasketView.FrontEarRenderer == null)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing FrontEarRenderer.");
+            }
+            else if (gameplayBindings.RightBasketView.NetLines == null || gameplayBindings.RightBasketView.NetLines.Count < 10)
+            {
+                errors.Add("GameplayBindings RightBasketView is missing complete NetLines.");
+            }
+
+            if (gameplayBindings.BallView == null)
+            {
+                errors.Add("GameplayBindings is missing BallView.");
+            }
+            else if (gameplayBindings.BallView.Root == null)
+            {
+                errors.Add("GameplayBindings BallView is missing Root.");
+            }
+            else if (gameplayBindings.BallView.GraphicRenderer == null)
+            {
+                errors.Add("GameplayBindings BallView is missing GraphicRenderer.");
+            }
+            else if (gameplayBindings.BallView.ShadowRenderer == null)
+            {
+                errors.Add("GameplayBindings BallView is missing ShadowRenderer.");
+            }
+
+            ValidatePlayerView(gameplayBindings.GetPlayerView(-1), "LeftPlayerView", errors);
+            ValidatePlayerView(gameplayBindings.GetPlayerView(1), "RightPlayerView", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(0), "EnergyBarSlot0", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(1), "EnergyBarSlot1", errors);
+            ValidateEnergyBarView(gameplayBindings.GetEnergyBarView(2), "EnergyBarSlot2", errors);
+            ValidateTeleportFxView(gameplayBindings.GetTeleportFxView(-1), "LeftTeleportFxView", errors);
+            ValidateTeleportFxView(gameplayBindings.GetTeleportFxView(1), "RightTeleportFxView", errors);
+            ValidateShieldView(gameplayBindings.GetShieldView(-1), "LeftShieldView", errors);
+            ValidateShieldView(gameplayBindings.GetShieldView(1), "RightShieldView", errors);
+
+            var expectedSpawnNames = new[]
+            {
+                "LeftNeutralSpawn",
+                "RightNeutralSpawn",
+                "LeftServeSpawn",
+                "RightServeSpawn"
+            };
+
+            for (var i = 0; i < expectedSpawnNames.Length; i++)
+            {
+                var spawn = gameplayBindings.Root != null ? gameplayBindings.Root.Find(expectedSpawnNames[i]) : null;
+                if (spawn == null)
+                {
+                    errors.Add($"GameplayBindings is missing spawn anchor `{expectedSpawnNames[i]}`.");
+                }
+            }
+
+            if (gameplayBindings.HudView != sharedHudView)
+            {
+                errors.Add("GameplayBindings should reference the shared Stage 2 HudSceneRoot instead of a duplicate HUD.");
+            }
+
+            if (gameplayBindings.Root != null)
+            {
+                var nestedHudViews = gameplayBindings.Root.GetComponentsInChildren<rimrushHudSceneView>(true);
+                if (nestedHudViews != null && nestedHudViews.Length > 0)
+                {
+                    errors.Add("GameplayRoot should not contain a duplicate HudSceneRoot.");
+                }
+            }
+        }
+
+        private static void ValidatePlayerView(rimrushPlayerView playerView, string label, List<string> errors)
+        {
+            if (playerView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (playerView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (playerView.ShadowRenderer == null)
+            {
+                errors.Add($"{label} is missing ShadowRenderer.");
+            }
+
+            if (playerView.ArmatureMount == null)
+            {
+                errors.Add($"{label} is missing ArmatureMount.");
+            }
+
+            if (playerView.FallbackRenderer == null)
+            {
+                errors.Add($"{label} is missing FallbackRenderer.");
+            }
+        }
+
+        private static void ValidateEnergyBarView(rimrushEnergyBarSceneView energyBarView, string label, List<string> errors)
+        {
+            if (energyBarView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (energyBarView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (energyBarView.BackgroundRenderer == null)
+            {
+                errors.Add($"{label} is missing BackgroundRenderer.");
+            }
+
+            if (energyBarView.BaseRenderer == null)
+            {
+                errors.Add($"{label} is missing BaseRenderer.");
+            }
+
+            if (energyBarView.OverlayView == null || energyBarView.OverlayView.Root == null)
+            {
+                errors.Add($"{label} is missing OverlayView.");
+            }
+
+            if (energyBarView.HintBackgroundRenderer == null)
+            {
+                errors.Add($"{label} is missing HintBackgroundRenderer.");
+            }
+
+            if (energyBarView.HintText == null)
+            {
+                errors.Add($"{label} is missing HintText.");
+            }
+        }
+
+        private static void ValidateTeleportFxView(rimrushTeleportFxView teleportFxView, string label, List<string> errors)
+        {
+            if (teleportFxView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (teleportFxView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (teleportFxView.BlackNode == null)
+            {
+                errors.Add($"{label} is missing BlackNode.");
+            }
+
+            if (teleportFxView.BlackRenderer == null)
+            {
+                errors.Add($"{label} is missing BlackRenderer.");
+            }
+
+            if (teleportFxView.CenterRenderer == null)
+            {
+                errors.Add($"{label} is missing CenterRenderer.");
+            }
+
+            if (teleportFxView.WhiteRenderer == null)
+            {
+                errors.Add($"{label} is missing WhiteRenderer.");
+            }
+
+            if (teleportFxView.AnimRenderer == null)
+            {
+                errors.Add($"{label} is missing AnimRenderer.");
+            }
+        }
+
+        private static void ValidateShieldView(rimrushShieldView shieldView, string label, List<string> errors)
+        {
+            if (shieldView == null)
+            {
+                errors.Add($"GameplayBindings is missing {label}.");
+                return;
+            }
+
+            if (shieldView.Root == null)
+            {
+                errors.Add($"{label} is missing Root.");
+            }
+
+            if (shieldView.BlurRenderer == null)
+            {
+                errors.Add($"{label} is missing BlurRenderer.");
+            }
+
+            if (shieldView.StartRenderer == null)
+            {
+                errors.Add($"{label} is missing StartRenderer.");
+            }
+
+            if (shieldView.AnimRenderer == null)
+            {
+                errors.Add($"{label} is missing AnimRenderer.");
             }
         }
 

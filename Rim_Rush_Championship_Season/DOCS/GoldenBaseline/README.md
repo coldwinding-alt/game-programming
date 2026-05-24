@@ -11,6 +11,7 @@ This package is the parity reference for the scene/prefab migration.
 ## Required artifacts
 
 - `HOST_SCENE_HIERARCHY.md`: stage 1 host structure and component reference
+- `GAMEPLAY_SCENE_HIERARCHY.md`: authored gameplay scene structure and binding reference
 - `KEY_LAYOUT_REFERENCE.md`: anchor positions, sizes, and scales for parity checks
 - `SCREEN_CAPTURE_CHECKLIST.md`: required screenshots to capture before each default cutover
 - `BEHAVIOR_CHECKLIST.md`: required manual parity checks

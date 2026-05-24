@@ -37,6 +37,13 @@
 | Right neutral spawn | 430 | 385 | player restart without serve |
 | Left serve spawn | 50 | 385 | player restart after opponent score |
 | Right serve spawn | 750 | 385 | player restart after opponent score |
+| Left player preview root | 370 | 385 | authored Stage 4 player container |
+| Right player preview root | 430 | 385 | authored Stage 4 player container |
+| Left shield preview origin | 27 | 138 | authored Stage 4 basket shield view |
+| Right shield preview origin | 773 | 138 | authored Stage 4 basket shield view |
+| Energy bar slot 0 | 45 | 45 | authored Stage 4 controller slot 0 |
+| Energy bar slot 1 | 185 | 45 | authored Stage 4 controller slot 1 |
+| Energy bar slot 2 | 614 | 45 | authored Stage 4 controller slot 2 |
 | Floor Y | - | 420 | player floor |
 | Ball floor Y | - | 402 | ball rest height |
 | Ball pickup center Y | - | 340 | carried ball baseline |
