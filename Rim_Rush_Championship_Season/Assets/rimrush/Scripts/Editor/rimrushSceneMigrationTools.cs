@@ -181,6 +181,169 @@ namespace rimrush.EditorTools
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("rimrush/Stage 3/Prepare Gameplay Scene Views")]
+        public static void PrepareGameplaySceneViews()
+        {
+            rimrushPlayersData.SetupPlayers();
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var bootstrap = GameObject.Find("rimrushBootstrap")?.GetComponent<rimrushGameBootstrap>();
+            if (bootstrap == null)
+            {
+                throw new InvalidOperationException("Could not find rimrushBootstrap in Main.unity.");
+            }
+
+            var sceneBindings = bootstrap.GetComponent<rimrushSceneBindings>();
+            if (sceneBindings == null)
+            {
+                throw new InvalidOperationException("Could not find rimrushSceneBindings on rimrushBootstrap.");
+            }
+
+            sceneBindings.ResolveMissingReferences();
+            if (sceneBindings.PersistentRoot == null)
+            {
+                throw new InvalidOperationException("Scene bindings did not expose PersistentRoot.");
+            }
+
+            DestroyExistingGameplayRoot(sceneBindings);
+
+            var gameplayBindings = CreateStage3GameplayBindings(sceneBindings.PersistentRoot, sceneBindings.HudView);
+            gameplayBindings.Root.SetSiblingIndex(0);
+
+            Assign(sceneBindings, "gameplayBindings", gameplayBindings);
+            Assign(bootstrap, "sceneBindings", sceneBindings);
+            Assign(bootstrap, "preferSceneGameplayBindings", false);
+
+            if (sceneBindings.HudView != null)
+            {
+                var hudPreview = sceneBindings.HudView.GetComponent<rimrushHudAuthoringPreview>();
+                if (hudPreview != null)
+                {
+                    Assign(hudPreview, "previewState", rimrushHudPreviewState.Live);
+                }
+            }
+
+            var authoringMode = CreateOrGetComponent<rimrushSceneAuthoringMode>(bootstrap.gameObject);
+            Assign(authoringMode, "sceneBindings", sceneBindings);
+            Assign(authoringMode, "focus", rimrushSceneAuthoringFocus.Gameplay);
+            Assign(authoringMode, "showHudInGameplay", true);
+            authoringMode.ApplyEditorState();
+
+            EditorUtility.SetDirty(bootstrap.gameObject);
+            EditorUtility.SetDirty(sceneBindings);
+            EditorUtility.SetDirty(gameplayBindings);
+            EditorUtility.SetDirty(authoringMode);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        [MenuItem("rimrush/Stage 4/Prepare Player Scene Views")]
+        public static void PreparePlayerSceneViews()
+        {
+            rimrushPlayersData.SetupPlayers();
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var bootstrap = GameObject.Find("rimrushBootstrap")?.GetComponent<rimrushGameBootstrap>();
+            if (bootstrap == null)
+            {
+                throw new InvalidOperationException("Could not find rimrushBootstrap in Main.unity.");
+            }
+
+            var sceneBindings = bootstrap.GetComponent<rimrushSceneBindings>();
+            if (sceneBindings == null)
+            {
+                throw new InvalidOperationException("Could not find rimrushSceneBindings on rimrushBootstrap.");
+            }
+
+            sceneBindings.ResolveMissingReferences();
+            if (sceneBindings.PersistentRoot == null)
+            {
+                throw new InvalidOperationException("Scene bindings did not expose PersistentRoot.");
+            }
+
+            DestroyExistingGameplayRoot(sceneBindings);
+
+            var gameplayBindings = CreateStage4GameplayBindings(sceneBindings.PersistentRoot, sceneBindings.HudView);
+            gameplayBindings.Root.SetSiblingIndex(0);
+
+            Assign(sceneBindings, "gameplayBindings", gameplayBindings);
+            Assign(bootstrap, "sceneBindings", sceneBindings);
+            Assign(bootstrap, "preferSceneGameplayBindings", false);
+
+            if (sceneBindings.HudView != null)
+            {
+                var hudPreview = sceneBindings.HudView.GetComponent<rimrushHudAuthoringPreview>();
+                if (hudPreview != null)
+                {
+                    Assign(hudPreview, "previewState", rimrushHudPreviewState.Live);
+                }
+            }
+
+            var authoringMode = CreateOrGetComponent<rimrushSceneAuthoringMode>(bootstrap.gameObject);
+            Assign(authoringMode, "sceneBindings", sceneBindings);
+            Assign(authoringMode, "focus", rimrushSceneAuthoringFocus.Gameplay);
+            Assign(authoringMode, "showHudInGameplay", true);
+            authoringMode.ApplyEditorState();
+
+            EditorUtility.SetDirty(bootstrap.gameObject);
+            EditorUtility.SetDirty(sceneBindings);
+            EditorUtility.SetDirty(gameplayBindings);
+            EditorUtility.SetDirty(authoringMode);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static void PrepareGameplaySceneViewsAndRunSmoke()
+        {
+            PrepareGameplaySceneViews();
+            rimrushSmokeTest.Run();
+        }
+
+        public static void PreparePlayerSceneViewsAndRunSmoke()
+        {
+            PreparePlayerSceneViews();
+            rimrushSmokeTest.Run();
+        }
+
+        public static void DumpGameplaySceneBindings()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var bootstrap = GameObject.Find("rimrushBootstrap")?.GetComponent<rimrushGameBootstrap>();
+            var sceneBindings = bootstrap != null ? bootstrap.GetComponent<rimrushSceneBindings>() : null;
+            sceneBindings?.ResolveMissingReferences();
+
+            var gameplayBindings = sceneBindings != null ? sceneBindings.GameplayBindings : null;
+            Debug.Log($"GameplayBindings scene: {scene.path}");
+            Debug.Log($"GameplayBindings component: {DescribeUnityObject(gameplayBindings)}");
+            Debug.Log($"SceneBindings serialized gameplayBindings: {DescribeSerializedReference(sceneBindings, "gameplayBindings")}");
+            Debug.Log($"GameplayBindings serialized arenaView: {DescribeSerializedReference(gameplayBindings, "arenaView")}");
+            Debug.Log($"GameplayBindings serialized leftBasketView: {DescribeSerializedReference(gameplayBindings, "leftBasketView")}");
+            Debug.Log($"GameplayBindings serialized rightBasketView: {DescribeSerializedReference(gameplayBindings, "rightBasketView")}");
+            Debug.Log($"GameplayBindings serialized ballView: {DescribeSerializedReference(gameplayBindings, "ballView")}");
+            Debug.Log($"ArenaObject component: {DescribeUnityObject(GameObject.Find("ArenaObject")?.GetComponent<rimrushArenaView>())}");
+            Debug.Log($"BasketLeft component: {DescribeUnityObject(GameObject.Find("BasketLeft")?.GetComponent<rimrushBasketView>())}");
+            Debug.Log($"BasketRight component: {DescribeUnityObject(GameObject.Find("BasketRight")?.GetComponent<rimrushBasketView>())}");
+            Debug.Log($"BallObject component: {DescribeUnityObject(GameObject.Find("BallObject")?.GetComponent<rimrushBallView>())}");
+            Debug.Log($"ArenaView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.ArenaView : null)}, GraphicRenderer: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.ArenaView != null ? gameplayBindings.ArenaView.GraphicRenderer : null)}");
+            Debug.Log($"LeftBasketView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.LeftBasketView : null)}, Root: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.LeftBasketView != null ? gameplayBindings.LeftBasketView.Root : null)}, BasketRenderer: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.LeftBasketView != null ? gameplayBindings.LeftBasketView.BasketRenderer : null)}, FrontEar: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.LeftBasketView != null ? gameplayBindings.LeftBasketView.FrontEarRenderer : null)}, NetLines: {DescribeNetLines(gameplayBindings != null ? gameplayBindings.LeftBasketView : null)}");
+            Debug.Log($"RightBasketView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.RightBasketView : null)}, Root: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.RightBasketView != null ? gameplayBindings.RightBasketView.Root : null)}, BasketRenderer: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.RightBasketView != null ? gameplayBindings.RightBasketView.BasketRenderer : null)}, FrontEar: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.RightBasketView != null ? gameplayBindings.RightBasketView.FrontEarRenderer : null)}, NetLines: {DescribeNetLines(gameplayBindings != null ? gameplayBindings.RightBasketView : null)}");
+            Debug.Log($"BallView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.BallView : null)}, Root: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.BallView != null ? gameplayBindings.BallView.Root : null)}, GraphicRenderer: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.BallView != null ? gameplayBindings.BallView.GraphicRenderer : null)}, ShadowRenderer: {DescribeUnityObject(gameplayBindings != null && gameplayBindings.BallView != null ? gameplayBindings.BallView.ShadowRenderer : null)}");
+            Debug.Log($"LeftPlayerView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetPlayerView(-1) : null)}");
+            Debug.Log($"RightPlayerView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetPlayerView(1) : null)}");
+            Debug.Log($"EnergyBarSlot0: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetEnergyBarView(0) : null)}");
+            Debug.Log($"EnergyBarSlot1: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetEnergyBarView(1) : null)}");
+            Debug.Log($"EnergyBarSlot2: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetEnergyBarView(2) : null)}");
+            Debug.Log($"LeftTeleportFxView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetTeleportFxView(-1) : null)}");
+            Debug.Log($"RightTeleportFxView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetTeleportFxView(1) : null)}");
+            Debug.Log($"LeftShieldView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetShieldView(-1) : null)}");
+            Debug.Log($"RightShieldView: {DescribeUnityObject(gameplayBindings != null ? gameplayBindings.GetShieldView(1) : null)}");
+            EditorApplication.Exit(0);
+        }
+
         private static void BuildMenuAuthoringPages(rimrushGameBootstrap bootstrap, rimrushMenuShellView menuShell)
         {
             if (bootstrap == null || menuShell == null)
@@ -920,6 +1083,322 @@ namespace rimrush.EditorTools
             return gameplayBindings;
         }
 
+        private static rimrushGameplayBindings CreateStage3GameplayBindings(Transform parent, rimrushHudSceneView sharedHudView)
+        {
+            var gameplayObject = new GameObject("GameplayRoot");
+            gameplayObject.transform.SetParent(parent, false);
+            var gameplayBindings = gameplayObject.AddComponent<rimrushGameplayBindings>();
+
+            var arenaView = CreateStage3ArenaView(gameplayObject.transform);
+            var leftBasketView = CreateStage3BasketView("BasketLeft", -1, gameplayObject.transform);
+            var rightBasketView = CreateStage3BasketView("BasketRight", 1, gameplayObject.transform);
+            var ballView = CreateStage3BallView(gameplayObject.transform);
+
+            var leftNeutralSpawn = CreateAnchor("LeftNeutralSpawn", rimrushConstants.Width2 - rimrushObjectsData.PlayerIndentX, rimrushObjectsData.PlayerIndentY, gameplayObject.transform);
+            var rightNeutralSpawn = CreateAnchor("RightNeutralSpawn", rimrushConstants.Width2 + rimrushObjectsData.PlayerIndentX, rimrushObjectsData.PlayerIndentY, gameplayObject.transform);
+            var leftServeSpawn = CreateAnchor("LeftServeSpawn", rimrushObjectsData.IndentGeneralX, rimrushObjectsData.PlayerIndentY, gameplayObject.transform);
+            var rightServeSpawn = CreateAnchor("RightServeSpawn", rimrushConstants.Width - rimrushObjectsData.IndentGeneralX, rimrushObjectsData.PlayerIndentY, gameplayObject.transform);
+
+            Assign(gameplayBindings, "root", gameplayObject.transform);
+            Assign(gameplayBindings, "arenaView", arenaView);
+            Assign(gameplayBindings, "leftBasketView", leftBasketView);
+            Assign(gameplayBindings, "rightBasketView", rightBasketView);
+            Assign(gameplayBindings, "ballView", ballView);
+            Assign(gameplayBindings, "leftPlayerView", null);
+            Assign(gameplayBindings, "rightPlayerView", null);
+            Assign(gameplayBindings, "leftNeutralSpawn", leftNeutralSpawn);
+            Assign(gameplayBindings, "rightNeutralSpawn", rightNeutralSpawn);
+            Assign(gameplayBindings, "leftServeSpawn", leftServeSpawn);
+            Assign(gameplayBindings, "rightServeSpawn", rightServeSpawn);
+            Assign(gameplayBindings, "energyBarSlot0", null);
+            Assign(gameplayBindings, "energyBarSlot1", null);
+            Assign(gameplayBindings, "energyBarSlot2", null);
+            Assign(gameplayBindings, "leftTeleportFxView", null);
+            Assign(gameplayBindings, "rightTeleportFxView", null);
+            Assign(gameplayBindings, "leftShieldView", null);
+            Assign(gameplayBindings, "rightShieldView", null);
+            Assign(gameplayBindings, "hudView", sharedHudView);
+
+            return gameplayBindings;
+        }
+
+        private static rimrushGameplayBindings CreateStage4GameplayBindings(Transform parent, rimrushHudSceneView sharedHudView)
+        {
+            var gameplayBindings = CreateStage3GameplayBindings(parent, sharedHudView);
+            var root = gameplayBindings.Root;
+
+            var leftNeutralSpawn = root.Find("LeftNeutralSpawn");
+            var rightNeutralSpawn = root.Find("RightNeutralSpawn");
+
+            var leftPlayerPosition = leftNeutralSpawn != null
+                ? rimrushConstants.WorldToPixel(leftNeutralSpawn.position)
+                : new Vector2(rimrushConstants.Width2 - rimrushObjectsData.PlayerIndentX, rimrushObjectsData.PlayerIndentY);
+            var rightPlayerPosition = rightNeutralSpawn != null
+                ? rimrushConstants.WorldToPixel(rightNeutralSpawn.position)
+                : new Vector2(rimrushConstants.Width2 + rimrushObjectsData.PlayerIndentX, rimrushObjectsData.PlayerIndentY);
+
+            var leftPlayerView = CreateStage4PlayerView("LeftPlayerView", 0, -1, root, leftPlayerPosition);
+            var rightPlayerView = CreateStage4PlayerView("RightPlayerView", 0, 1, root, rightPlayerPosition);
+
+            var energyBarSlot0 = CreateEnergyBarView("EnergyBarSlot0", root, 45f);
+            var energyBarSlot1 = CreateEnergyBarView("EnergyBarSlot1", root, 185f);
+            var energyBarSlot2 = CreateEnergyBarView("EnergyBarSlot2", root, 614f);
+            _ = new rimrushEnergyBarView(energyBarSlot0, 0, 0, 1f);
+            _ = new rimrushEnergyBarView(energyBarSlot1, 1, 1, 1f);
+            _ = new rimrushEnergyBarView(energyBarSlot2, 2, 2, 1f);
+
+            var leftTeleportFxView = CreateStage4TeleportFxView("LeftTeleportFxView", root, leftPlayerPosition + new Vector2(0f, -36f));
+            var rightTeleportFxView = CreateStage4TeleportFxView("RightTeleportFxView", root, rightPlayerPosition + new Vector2(0f, -36f));
+
+            var leftShieldView = CreateStage4ShieldView("LeftShieldView", -1, root);
+            var rightShieldView = CreateStage4ShieldView("RightShieldView", 1, root);
+
+            Assign(gameplayBindings, "leftPlayerView", leftPlayerView);
+            Assign(gameplayBindings, "rightPlayerView", rightPlayerView);
+            Assign(gameplayBindings, "energyBarSlot0", energyBarSlot0);
+            Assign(gameplayBindings, "energyBarSlot1", energyBarSlot1);
+            Assign(gameplayBindings, "energyBarSlot2", energyBarSlot2);
+            Assign(gameplayBindings, "leftTeleportFxView", leftTeleportFxView);
+            Assign(gameplayBindings, "rightTeleportFxView", rightTeleportFxView);
+            Assign(gameplayBindings, "leftShieldView", leftShieldView);
+            Assign(gameplayBindings, "rightShieldView", rightShieldView);
+            return gameplayBindings;
+        }
+
+        private static rimrushArenaView CreateStage3ArenaView(Transform parent)
+        {
+            var arenaObject = rimrushRender.Sprite(
+                "ArenaObject",
+                rimrushAtlasCache.Instance.Gameplay,
+                "0bg_gameplay0000",
+                -299f,
+                0f,
+                0f,
+                0f,
+                0,
+                parent);
+            var arenaView = arenaObject.AddComponent<rimrushArenaView>();
+            Assign(arenaView, "graphicRenderer", arenaObject.GetComponent<SpriteRenderer>());
+            return arenaView;
+        }
+
+        private static rimrushBasketView CreateStage3BasketView(string rootName, int side, Transform parent)
+        {
+            var container = new GameObject(rootName);
+            container.transform.SetParent(parent, false);
+            var basketView = container.AddComponent<rimrushBasketView>();
+
+            var center = side == -1 ? rimrushObjectsData.BasketCenter : rimrushObjectsData.BasketCenter2;
+
+            var graphicRoot = new GameObject("Root");
+            graphicRoot.transform.SetParent(container.transform, false);
+            rimrushRender.ApplyPixelTransform(graphicRoot.transform, center, rimrushObjectsData.BasketHeight, 0.05f);
+            graphicRoot.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * (side == -1 ? 1f : -1f),
+                rimrushConstants.UnitsPerPixel,
+                1f);
+
+            var basketGraphic = new GameObject("BasketGraphic");
+            basketGraphic.transform.SetParent(graphicRoot.transform, false);
+            var basketRenderer = basketGraphic.AddComponent<SpriteRenderer>();
+            basketRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BasketGraphic0000", 0.7f, 0.93f);
+            basketRenderer.sortingOrder = 4;
+
+            var frontEar = new GameObject("FrontEar");
+            frontEar.transform.SetParent(container.transform, false);
+            var frontEarRenderer = frontEar.AddComponent<SpriteRenderer>();
+            frontEarRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("FrontEar0000", 0.5f, 0.5f);
+            frontEarRenderer.sortingOrder = 60;
+            rimrushRender.ApplyPixelTransform(frontEar.transform, center, rimrushObjectsData.BasketHeight, 0f);
+            frontEar.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * (side == -1 ? 1f : -1f),
+                rimrushConstants.UnitsPerPixel,
+                1f);
+
+            var netLines = new LineRenderer[10];
+            for (var i = 0; i < netLines.Length; i++)
+            {
+                var lineObject = new GameObject($"NetLine{i}");
+                lineObject.transform.SetParent(container.transform, false);
+                var line = lineObject.AddComponent<LineRenderer>();
+                line.useWorldSpace = true;
+                line.positionCount = 2;
+                line.startWidth = 0.018f;
+                line.endWidth = 0.018f;
+                line.sharedMaterial = rimrushSharedMaterialCache.GetSpritesDefault(Texture2D.whiteTexture);
+                line.startColor = Color.white;
+                line.endColor = Color.white;
+                line.sortingOrder = 55;
+                netLines[i] = line;
+            }
+
+            Assign(basketView, "root", graphicRoot.transform);
+            Assign(basketView, "basketRenderer", basketRenderer);
+            Assign(basketView, "frontEarRenderer", frontEarRenderer);
+            Assign(basketView, "netLines", netLines);
+            return basketView;
+        }
+
+        private static rimrushBallView CreateStage3BallView(Transform parent)
+        {
+            var container = new GameObject("BallObject");
+            container.transform.SetParent(parent, false);
+            var ballView = container.AddComponent<rimrushBallView>();
+
+            var graphic = new GameObject("Graphic");
+            graphic.transform.SetParent(container.transform, false);
+            var graphicRenderer = graphic.AddComponent<SpriteRenderer>();
+            graphicRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
+            graphicRenderer.sortingOrder = 50;
+            rimrushRender.ApplyPixelTransform(graphic.transform, rimrushConstants.Width2, rimrushObjectsData.BallIndentYCenter, 0.2f);
+
+            var shadow = rimrushRender.Sprite(
+                "BallShadow",
+                rimrushAtlasCache.Instance.Gameplay,
+                "ShadowMC0002",
+                rimrushConstants.Width2,
+                rimrushObjectsData.FloorY,
+                0.5f,
+                0.5f,
+                3,
+                container.transform);
+            shadow.transform.localScale *= 0.7f;
+
+            Assign(ballView, "root", graphic.transform);
+            Assign(ballView, "graphicRenderer", graphicRenderer);
+            Assign(ballView, "shadowRenderer", shadow.GetComponent<SpriteRenderer>());
+            return ballView;
+        }
+
+        private static rimrushPlayerView CreateStage4PlayerView(string name, int playerNo, int side, Transform parent, Vector2 pixelPosition)
+        {
+            var container = new GameObject(name);
+            container.transform.SetParent(parent, false);
+            var playerView = container.AddComponent<rimrushPlayerView>();
+
+            var rootObject = new GameObject("Root");
+            rootObject.transform.SetParent(container.transform, false);
+
+            var shadowObject = rimrushRender.Sprite(
+                "Shadow",
+                rimrushAtlasCache.Instance.Gameplay,
+                playerNo == 0 ? "ShadowMC0000" : "ShadowMC0001",
+                0f,
+                0f,
+                0.5f,
+                0.5f,
+                2,
+                container.transform);
+            var shadowRenderer = shadowObject.GetComponent<SpriteRenderer>();
+
+            var armatureMount = new GameObject("ArmatureMount").transform;
+            armatureMount.SetParent(rootObject.transform, false);
+            armatureMount.transform.localPosition = rimrushConstants.SnapLocalPositionToScreenPixels(
+                rootObject.transform,
+                new Vector3(0f, -35f, 0f));
+
+            var fallbackObject = new GameObject("Fallback");
+            fallbackObject.transform.SetParent(rootObject.transform, false);
+            var fallbackRenderer = fallbackObject.AddComponent<SpriteRenderer>();
+            fallbackRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BallClipMsg0000", 0.5f, 0.5f);
+            fallbackRenderer.color = side == -1 ? new Color(0.95f, 0.25f, 0.2f) : new Color(0.2f, 0.45f, 1f);
+            fallbackRenderer.sortingOrder = 20;
+            fallbackRenderer.enabled = true;
+            fallbackRenderer.transform.localPosition = new Vector3(0f, -80f, 0f);
+            fallbackRenderer.transform.localScale = new Vector3(1.2f, 1.8f, 1f);
+
+            ApplyPlayerPreviewPose(rootObject.transform, shadowRenderer.transform, side, playerNo, pixelPosition);
+
+            Assign(playerView, "root", rootObject.transform);
+            Assign(playerView, "shadowRenderer", shadowRenderer);
+            Assign(playerView, "armatureMount", armatureMount);
+            Assign(playerView, "fallbackRenderer", fallbackRenderer);
+            return playerView;
+        }
+
+        private static rimrushTeleportFxView CreateStage4TeleportFxView(string name, Transform parent, Vector2 pixelPosition)
+        {
+            var view = rimrushTeleportFxView.CreateRuntimeFallback(parent);
+            view.gameObject.name = name;
+            view.Root.SetActive(true);
+            rimrushRender.ApplyPixelTransform(view.Root.transform, pixelPosition.x, pixelPosition.y, 0.16f, 0.72f);
+            if (view.BlackNode != null)
+            {
+                view.BlackNode.localScale = new Vector3(0.55f, 0.55f, 1f);
+                view.BlackNode.localRotation = Quaternion.identity;
+            }
+
+            if (view.BlackRenderer != null)
+            {
+                view.BlackRenderer.enabled = true;
+            }
+
+            if (view.CenterRenderer != null)
+            {
+                view.CenterRenderer.enabled = true;
+            }
+
+            if (view.WhiteRenderer != null)
+            {
+                view.WhiteRenderer.enabled = false;
+            }
+
+            if (view.AnimRenderer != null)
+            {
+                view.AnimRenderer.enabled = false;
+                view.AnimRenderer.sprite = null;
+            }
+
+            return view;
+        }
+
+        private static rimrushShieldView CreateStage4ShieldView(string name, int side, Transform parent)
+        {
+            var view = rimrushShieldView.CreateRuntimeFallback(side, parent);
+            view.gameObject.name = name;
+            var x = (side == -1 ? rimrushObjectsData.BasketCenter : rimrushObjectsData.BasketCenter2) + side * 23f;
+            var y = rimrushObjectsData.BasketHeight - 62f;
+            rimrushRender.ApplyPixelTransform(view.Root.transform, x, y, 0.15f, 1f);
+            var localScale = view.Root.transform.localScale;
+            localScale.x = side == 1 ? -Mathf.Abs(localScale.x) : Mathf.Abs(localScale.x);
+            view.Root.transform.localScale = localScale;
+
+            if (view.BlurRenderer != null)
+            {
+                view.BlurRenderer.enabled = true;
+                view.BlurRenderer.color = new Color(1f, 1f, 1f, 0.82f);
+            }
+
+            if (view.StartRenderer != null)
+            {
+                view.StartRenderer.enabled = true;
+                view.StartRenderer.color = Color.white;
+            }
+
+            if (view.AnimRenderer != null)
+            {
+                view.AnimRenderer.enabled = false;
+                view.AnimRenderer.sprite = null;
+            }
+
+            return view;
+        }
+
+        private static void ApplyPlayerPreviewPose(Transform root, Transform shadow, int side, int playerNo, Vector2 pixelPosition)
+        {
+            rimrushRender.ApplyPixelTransform(root, pixelPosition.x, pixelPosition.y, 0.12f + playerNo * 0.01f);
+            root.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * -side,
+                rimrushConstants.UnitsPerPixel,
+                1f);
+
+            if (shadow != null)
+            {
+                shadow.gameObject.SetActive(true);
+                rimrushRender.ApplyPixelTransform(shadow, pixelPosition.x, rimrushObjectsData.FloorY + 6f, 0.02f, 1f);
+            }
+        }
+
         private static rimrushHudSceneView CreateHudSceneView(Transform parent)
         {
             var hudRoot = new GameObject("HudSceneRoot");
@@ -1099,6 +1578,24 @@ namespace rimrush.EditorTools
             return anchor;
         }
 
+        private static void DestroyExistingGameplayRoot(rimrushSceneBindings sceneBindings)
+        {
+            if (sceneBindings != null && sceneBindings.GameplayBindings != null)
+            {
+                var root = sceneBindings.GameplayBindings.Root;
+                if (root != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(root.gameObject);
+                }
+            }
+
+            var byName = GameObject.Find("GameplayRoot");
+            if (byName != null)
+            {
+                UnityEngine.Object.DestroyImmediate(byName);
+            }
+        }
+
         private static SpriteRenderer CreatePortraitRenderer(string name, int sortingOrder, Transform parent)
         {
             var go = new GameObject(name);
@@ -1215,6 +1712,49 @@ namespace rimrush.EditorTools
             }
 
             field.SetValue(target, value);
+        }
+
+        private static string DescribeSerializedReference(UnityEngine.Object target, string fieldName)
+        {
+            if (target == null)
+            {
+                return "<target:null>";
+            }
+
+            var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(fieldName);
+            if (property == null || property.propertyType != SerializedPropertyType.ObjectReference)
+            {
+                return "<missing-property>";
+            }
+
+            return DescribeUnityObject(property.objectReferenceValue);
+        }
+
+        private static string DescribeNetLines(rimrushBasketView basketView)
+        {
+            if (basketView == null)
+            {
+                return "<basket:null>";
+            }
+
+            var netLines = basketView.NetLines;
+            if (netLines == null)
+            {
+                return "<net-lines:null>";
+            }
+
+            return netLines.Count.ToString();
+        }
+
+        private static string DescribeUnityObject(UnityEngine.Object value)
+        {
+            if (value == null)
+            {
+                return "null";
+            }
+
+            return $"{value.name} ({value.GetType().Name})";
         }
     }
 }

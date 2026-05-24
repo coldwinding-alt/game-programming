@@ -59,8 +59,57 @@ Updated: `2026-05-24`
   - log ended with `rimrush smoke test passed.`
   - updated smoke validation now checks the authored menu page catalog, HUD bindings, preview components, and the disabled default cutover flags
 
+### Stage 3 gameplay scene authoring build
+
+- Scope: author native `GameplayRoot`, `ArenaObject`, `BasketLeft`, `BasketRight`, `BallObject`, and four gameplay spawn anchors directly into `Assets/Scenes/Main.unity` while keeping the runtime-created gameplay path as the default
+- Unity: `2022.3.62f3c1`
+- Command: `rimrush.EditorTools.rimrushSceneMigrationTools.PrepareGameplaySceneViews`
+- Result: pass
+- Notes:
+  - added `rimrushSceneAuthoringMode` so edit-time focus defaults to gameplay authoring instead of menu preview
+  - added authored gameplay bindings that reference the shared Stage 2 `HudSceneRoot`
+  - moved scene-owned gameplay view components into dedicated script files so Unity can serialize the authored basket, ball, arena, and gameplay binding components reliably
+  - kept `preferSceneGameplayBindings` disabled by default
+
+### Stage 3 validation clone smoke
+
+- Scope: confirm the authored Stage 3 gameplay scene survives a fresh project reload, keeps runtime gameplay as the default, and passes the updated automated smoke coverage
+- Unity: `2022.3.62f3c1`
+- Command: `rimrush.EditorTools.rimrushSceneMigrationTools.PrepareGameplaySceneViewsAndRunSmoke`
+- Result: pass
+- Notes:
+  - log ended with `rimrush smoke test passed.`
+  - follow-up `DumpGameplaySceneBindings` confirmed `ArenaObject`, `BasketLeft`, `BasketRight`, `BallObject`, and all Stage 3 bindings deserialize correctly after a fresh Unity reload
+  - gameplay authoring remains edit-time only; runtime play still uses the original runtime-created gameplay path until manual parity is approved
+
+### Stage 4 player/FX scene authoring build
+
+- Scope: extend authored `GameplayRoot` with native player containers, animation mounts, controller energy bars, teleport FX, and shield FX while keeping runtime gameplay as the default
+- Unity: `2022.3.62f3c1`
+- Command: `rimrush.EditorTools.rimrushSceneMigrationTools.PreparePlayerSceneViews`
+- Result: pass
+- Notes:
+  - authored `LeftPlayerView`, `RightPlayerView`, `EnergyBarSlot0`, `EnergyBarSlot1`, `EnergyBarSlot2`, `LeftTeleportFxView`, `RightTeleportFxView`, `LeftShieldView`, and `RightShieldView` directly into `Main.unity`
+  - kept `preferSceneGameplayBindings` disabled by default
+  - retained the shared Stage 2 `HudSceneRoot` instead of creating a duplicate HUD under `GameplayRoot`
+
+### Stage 4 validation smoke
+
+- Scope: confirm the authored Stage 4 gameplay scene survives a fresh project reload, exposes the full player/FX bindings, and still keeps runtime gameplay as the default path
+- Unity: `2022.3.62f3c1`
+- Command: `rimrush.EditorTools.rimrushSceneMigrationTools.PreparePlayerSceneViewsAndRunSmoke`
+- Result: pass
+- Notes:
+  - log ended with `rimrush smoke test passed.`
+  - follow-up `DumpGameplaySceneBindings` confirmed the authored player, energy bar, teleport, and shield view bindings deserialize correctly after a fresh Unity reload
+  - gameplay authoring remains edit-time only; runtime play still uses the original runtime-created gameplay path until manual parity is approved
+
 ## Outstanding Manual Checks
 
 - Reopen `Assets/Scenes/Main.unity` after Stage 1 preparation and confirm the host objects are visible in `Scene view`.
 - Capture the runtime-default golden screenshots listed in `DOCS/GoldenBaseline/SCREEN_CAPTURE_CHECKLIST.md`.
 - Confirm `Quick Match`, `Training`, `2 Players`, and `Tournament` still match the current runtime baseline before Stage 2 begins.
+- Reopen `Assets/Scenes/Main.unity`, leave `rimrushSceneAuthoringMode` on `Gameplay`, and confirm the authored court, baskets, ball, and four spawn anchors are visible and draggable in `Scene view`.
+- Reopen `Assets/Scenes/Main.unity`, leave `rimrushSceneAuthoringMode` on `Gameplay`, and confirm the authored player containers, energy bars, teleport FX, and shield FX are visible and draggable in `Scene view`.
+- Run the Stage 3 gameplay parity checklist in Play Mode before enabling `preferSceneGameplayBindings`.
+- Run the Stage 4 player visual and gameplay-FX parity checklist in Play Mode before enabling `preferSceneGameplayBindings`.

@@ -1,5 +1,4 @@
 using System;
-using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -26,6 +25,7 @@ namespace rimrush.EditorTools
 
             File.WriteAllText(Path.Combine(DocsRoot, "README.md"), BuildReadme(), Encoding.UTF8);
             File.WriteAllText(Path.Combine(DocsRoot, "HOST_SCENE_HIERARCHY.md"), BuildHostHierarchy(scene, mainCamera, bootstrap), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(DocsRoot, "GAMEPLAY_SCENE_HIERARCHY.md"), BuildGameplayHierarchy(bootstrap), Encoding.UTF8);
             File.WriteAllText(Path.Combine(DocsRoot, "KEY_LAYOUT_REFERENCE.md"), BuildLayoutReference(), Encoding.UTF8);
             File.WriteAllText(Path.Combine(DocsRoot, "SCREEN_CAPTURE_CHECKLIST.md"), BuildScreenCaptureChecklist(), Encoding.UTF8);
             File.WriteAllText(Path.Combine(DocsRoot, "BEHAVIOR_CHECKLIST.md"), BuildBehaviorChecklist(), Encoding.UTF8);
@@ -56,6 +56,7 @@ namespace rimrush.EditorTools
             builder.AppendLine("## Required artifacts");
             builder.AppendLine();
             builder.AppendLine("- `HOST_SCENE_HIERARCHY.md`: stage 1 host structure and component reference");
+            builder.AppendLine("- `GAMEPLAY_SCENE_HIERARCHY.md`: authored gameplay scene structure and binding reference");
             builder.AppendLine("- `KEY_LAYOUT_REFERENCE.md`: anchor positions, sizes, and scales for parity checks");
             builder.AppendLine("- `SCREEN_CAPTURE_CHECKLIST.md`: required screenshots to capture before each default cutover");
             builder.AppendLine("- `BEHAVIOR_CHECKLIST.md`: required manual parity checks");
@@ -69,6 +70,27 @@ namespace rimrush.EditorTools
             builder.AppendLine("1. Keep the runtime-default path enabled while capturing the baseline.");
             builder.AppendLine("2. Update screenshots only when the approved golden baseline changes.");
             builder.AppendLine("3. Before each migration stage is switched on by default, compare the new path against this package.");
+            return builder.ToString();
+        }
+
+        private static string BuildGameplayHierarchy(GameObject bootstrap)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("# Gameplay Scene Hierarchy");
+            builder.AppendLine();
+            builder.AppendLine($"- Captured: `{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC`");
+            builder.AppendLine();
+
+            var sceneBindings = bootstrap != null ? bootstrap.GetComponent<rimrushSceneBindings>() : null;
+            sceneBindings?.ResolveMissingReferences();
+            var gameplayBindings = sceneBindings != null ? sceneBindings.GameplayBindings : null;
+            if (gameplayBindings == null || gameplayBindings.Root == null)
+            {
+                builder.AppendLine("`GameplayRoot` is not currently authored in `Main.unity`.");
+                return builder.ToString();
+            }
+
+            AppendTree(gameplayBindings.Root, builder, 0);
             return builder.ToString();
         }
 
@@ -151,6 +173,13 @@ namespace rimrush.EditorTools
             builder.AppendLine($"| Right neutral spawn | {rimrushConstants.Width2 + rimrushObjectsData.PlayerIndentX} | {rimrushObjectsData.PlayerIndentY} | player restart without serve |");
             builder.AppendLine($"| Left serve spawn | {rimrushObjectsData.IndentGeneralX} | {rimrushObjectsData.PlayerIndentY} | player restart after opponent score |");
             builder.AppendLine($"| Right serve spawn | {rimrushConstants.Width - rimrushObjectsData.IndentGeneralX} | {rimrushObjectsData.PlayerIndentY} | player restart after opponent score |");
+            builder.AppendLine($"| Left player preview root | {rimrushConstants.Width2 - rimrushObjectsData.PlayerIndentX} | {rimrushObjectsData.PlayerIndentY} | authored Stage 4 player container |");
+            builder.AppendLine($"| Right player preview root | {rimrushConstants.Width2 + rimrushObjectsData.PlayerIndentX} | {rimrushObjectsData.PlayerIndentY} | authored Stage 4 player container |");
+            builder.AppendLine($"| Left shield preview origin | {rimrushObjectsData.BasketCenter - 23f} | {rimrushObjectsData.BasketHeight - 62f} | authored Stage 4 basket shield view |");
+            builder.AppendLine($"| Right shield preview origin | {rimrushObjectsData.BasketCenter2 + 23f} | {rimrushObjectsData.BasketHeight - 62f} | authored Stage 4 basket shield view |");
+            builder.AppendLine("| Energy bar slot 0 | 45 | 45 | authored Stage 4 controller slot 0 |");
+            builder.AppendLine("| Energy bar slot 1 | 185 | 45 | authored Stage 4 controller slot 1 |");
+            builder.AppendLine("| Energy bar slot 2 | 614 | 45 | authored Stage 4 controller slot 2 |");
             builder.AppendLine($"| Floor Y | - | {rimrushObjectsData.FloorY} | player floor |");
             builder.AppendLine($"| Ball floor Y | - | {rimrushObjectsData.BallFloorY} | ball rest height |");
             builder.AppendLine($"| Ball pickup center Y | - | {rimrushObjectsData.BallIndentYPlayer} | carried ball baseline |");

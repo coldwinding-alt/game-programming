@@ -14,6 +14,8 @@ Updated: `2026-05-24`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-05-24 | Stage 4 player/FX scene authoring preparation | Pass | Extended `GameplayRoot` with authored `LeftPlayerView`, `RightPlayerView`, `EnergyBarSlot0`, `EnergyBarSlot1`, `EnergyBarSlot2`, `LeftTeleportFxView`, `RightTeleportFxView`, `LeftShieldView`, and `RightShieldView`, kept runtime gameplay as the default, and validated the new Stage 4 bindings in Unity batch with a passing `PreparePlayerSceneViewsAndRunSmoke` plus a clean `DumpGameplaySceneBindings` reload check |
+| 2026-05-24 | Stage 3 gameplay scene authoring preparation | Pass | Added authored `GameplayRoot`, `ArenaObject`, `BasketLeft`, `BasketRight`, `BallObject`, and four gameplay spawn anchors to `Main.unity`, kept runtime gameplay as the default, split scene-owned gameplay view scripts into dedicated files for stable Unity serialization, and validated the authored Stage 3 bindings in an isolated Unity clone with a passing `PrepareGameplaySceneViewsAndRunSmoke` plus a clean `DumpGameplaySceneBindings` reload check |
 | 2026-05-24 | Stage 2 menu/HUD scene authoring preparation | Pass | Added authored `MenuShell` and `HudSceneRoot` structures to `Main.unity`, kept the original runtime menu/gameplay path as the default, and validated the new scene-owned bindings plus authored page catalog in an isolated Unity clone with a passing `rimrushSmokeTest.Run` |
 | 2026-05-23 | Stage 0/1 migration stabilization | Pass | Restored the original runtime-created menu and gameplay path as the default, kept scene bindings behind explicit bootstrap flags, and added host-only scene migration plus golden baseline tooling for the next staged cutovers |
 | 2026-05-18 | Repository history wording cleanup | Pass | Preserved the incremental branch history while removing the old history-only planning file from the cleaned public branches and replacing an outdated implementation commit title with neutral wording |
@@ -34,6 +36,7 @@ Updated: `2026-05-24`
 
 - Do a full in-editor visual pass on the `8` playable characters and tighten any remaining head/body overlap issues.
 - Continue polishing menu spacing and tournament presentation so the overall UI reads as one cohesive game.
+- Run a Stage 3/4 in-editor layout pass on the authored court, baskets, ball, player containers, energy bars, teleport FX, shield FX, and spawn anchors, then compare gameplay visuals against the golden baseline before any runtime cutover.
 - Run a quick in-editor multi-match visual pass to confirm all configured Halloween ball themes appear cleanly during gameplay.
 - Run one longer manual playtest loop before final submission packaging.
 
