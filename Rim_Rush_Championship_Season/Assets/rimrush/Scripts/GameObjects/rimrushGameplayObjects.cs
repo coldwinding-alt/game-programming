@@ -45,21 +45,17 @@ namespace rimrush
         public GameObject Graphic { get; }
 
         public rimrushArenaObject(Transform parent)
-            : this(parent, null)
         {
-        }
-
-        public rimrushArenaObject(Transform parent, rimrushArenaView view)
-        {
-            if (view == null || view.GraphicRenderer == null)
-            {
-                view = rimrushArenaView.CreateRuntimeFallback(parent);
-            }
-
-            view.GraphicRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("0bg_gameplay0000", 0f, 0f);
-            view.GraphicRenderer.sortingOrder = 0;
-            rimrushRender.ApplyPixelTransform(view.GraphicRenderer.transform, -299f, 0f, view.GraphicRenderer.transform.localPosition.z);
-            Graphic = view.GraphicRenderer.gameObject;
+            Graphic = rimrushRender.Sprite(
+                "ArenaObject",
+                rimrushAtlasCache.Instance.Gameplay,
+                "0bg_gameplay0000",
+                -299f,
+                0f,
+                0f,
+                0f,
+                0,
+                parent);
         }
     }
 
@@ -76,15 +72,10 @@ namespace rimrush
         public float Height => rimrushObjectsData.BasketHeight;
 
         public rimrushBasketObject(int side, Transform parent)
-            : this(side, parent, null)
-        {
-        }
-
-        public rimrushBasketObject(int side, Transform parent, rimrushBasketView view)
         {
             this.side = side;
             Center = side == -1 ? rimrushObjectsData.BasketCenter : rimrushObjectsData.BasketCenter2;
-            CreateGraphic(parent, view);
+            CreateGraphic(parent);
         }
 
         public void Update(float dt)
@@ -114,35 +105,32 @@ namespace rimrush
             }
         }
 
-        private void CreateGraphic(Transform parent, rimrushBasketView view)
+        private void CreateGraphic(Transform parent)
         {
-            if (view == null || view.BasketRenderer == null || view.FrontEarRenderer == null || view.NetLines == null || view.NetLines.Count < 10)
-            {
-                view = rimrushBasketView.CreateRuntimeFallback(side, parent);
-            }
-
-            graphic = view.Root.gameObject;
+            graphic = new GameObject(side == -1 ? "BasketLeft" : "BasketRight");
+            graphic.transform.SetParent(parent, false);
             rimrushRender.ApplyPixelTransform(graphic.transform, Center, rimrushObjectsData.BasketHeight, 0.05f);
             graphic.transform.localScale = new Vector3(rimrushConstants.UnitsPerPixel * (side == -1 ? 1f : -1f), rimrushConstants.UnitsPerPixel, 1f);
 
-            view.BasketRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BasketGraphic0000", 0.7f, 0.93f);
-            view.BasketRenderer.sortingOrder = 4;
+            var basket = new GameObject("BasketGraphic");
+            basket.transform.SetParent(graphic.transform, false);
+            var renderer = basket.AddComponent<SpriteRenderer>();
+            renderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BasketGraphic0000", 0.7f, 0.93f);
+            renderer.sortingOrder = 4;
 
-            frontEar = view.FrontEarRenderer.gameObject;
-            view.FrontEarRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("FrontEar0000", 0.5f, 0.5f);
-            view.FrontEarRenderer.sortingOrder = 60;
-            rimrushRender.ApplyPixelTransform(frontEar.transform, Center, rimrushObjectsData.BasketHeight, frontEar.transform.localPosition.z);
+            frontEar = new GameObject(side == -1 ? "FrontEarLeft" : "FrontEarRight");
+            frontEar.transform.SetParent(parent, false);
+            var frontEarRenderer = frontEar.AddComponent<SpriteRenderer>();
+            frontEarRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("FrontEar0000", 0.5f, 0.5f);
+            frontEarRenderer.sortingOrder = 60;
+            rimrushRender.ApplyPixelTransform(frontEar.transform, Center, rimrushObjectsData.BasketHeight);
             frontEar.transform.localScale = new Vector3(rimrushConstants.UnitsPerPixel * (side == -1 ? 1f : -1f), rimrushConstants.UnitsPerPixel, 1f);
 
-            netLines.Clear();
-            for (var i = 0; i < view.NetLines.Count; i++)
+            for (var i = 0; i < 10; i++)
             {
-                var line = view.NetLines[i];
-                if (line == null)
-                {
-                    continue;
-                }
-
+                var lineObject = new GameObject($"NetLine{i}");
+                lineObject.transform.SetParent(parent, false);
+                var line = lineObject.AddComponent<LineRenderer>();
                 line.useWorldSpace = true;
                 line.positionCount = 2;
                 line.startWidth = 0.018f;
@@ -243,26 +231,16 @@ namespace rimrush
             State != "score";
 
         public rimrushBallObject(rimrushGameCore gameCore, Transform parent)
-            : this(gameCore, parent, null)
-        {
-        }
-
-        public rimrushBallObject(rimrushGameCore gameCore, Transform parent, rimrushBallView view)
         {
             this.gameCore = gameCore;
-            if (view == null || view.GraphicRenderer == null || view.ShadowRenderer == null)
-            {
-                view = rimrushBallView.CreateRuntimeFallback(parent);
-            }
-
-            graphic = view.Root.gameObject;
-            view.GraphicRenderer.sprite = ResolveBallSprite();
-            view.GraphicRenderer.sortingOrder = 50;
+            graphic = new GameObject("BallObject");
+            graphic.transform.SetParent(parent, false);
+            var graphicRenderer = graphic.AddComponent<SpriteRenderer>();
+            graphicRenderer.sprite = ResolveBallSprite();
+            graphicRenderer.sortingOrder = 50;
             rimrushRender.ApplyPixelTransform(graphic.transform, rimrushConstants.Width2, rimrushObjectsData.BallIndentYCenter, 0.2f);
-            shadow = view.ShadowRenderer.gameObject;
-            view.ShadowRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("ShadowMC0002", 0.5f, 0.5f);
-            view.ShadowRenderer.sortingOrder = 3;
-            shadow.transform.localScale = Vector3.one * 0.7f;
+            shadow = rimrushRender.Sprite("BallShadow", rimrushAtlasCache.Instance.Gameplay, "ShadowMC0002", rimrushConstants.Width2, rimrushObjectsData.FloorY, 0.5f, 0.5f, 3, parent);
+            shadow.transform.localScale *= 0.7f;
             Restart();
         }
 
@@ -976,28 +954,30 @@ namespace rimrush
         private float phaseTime;
 
         public rimrushTeleportFx(Transform parent)
-            : this(parent, null)
         {
-        }
+            graphic = new GameObject("TeleportFx");
+            graphic.transform.SetParent(parent, false);
 
-        public rimrushTeleportFx(Transform parent, rimrushTeleportFxView view)
-        {
-            if (view == null || view.Root == null || view.BlackNode == null || view.BlackRenderer == null || view.CenterRenderer == null || view.WhiteRenderer == null || view.AnimRenderer == null)
-            {
-                view = rimrushTeleportFxView.CreateRuntimeFallback(parent);
-            }
-
-            graphic = view.Root;
-            blackNode = view.BlackNode;
-            blackRenderer = view.BlackRenderer;
-            centerRenderer = view.CenterRenderer;
-            whiteRenderer = view.WhiteRenderer;
-            animRenderer = view.AnimRenderer;
+            blackNode = new GameObject("TeleportBlack").transform;
+            blackNode.SetParent(graphic.transform, false);
+            blackRenderer = blackNode.gameObject.AddComponent<SpriteRenderer>();
             blackRenderer.sortingOrder = 74;
             blackRenderer.sprite = rimrushAtlasCache.Instance.SkillFx.Sprite("teleport10000");
+
+            var centerNode = new GameObject("TeleportCenter");
+            centerNode.transform.SetParent(blackNode, false);
+            centerRenderer = centerNode.AddComponent<SpriteRenderer>();
             centerRenderer.sortingOrder = 75;
             centerRenderer.sprite = rimrushAtlasCache.Instance.SkillFx.Sprite("teleport20000");
+
+            var animNode = new GameObject("TeleportAnim");
+            animNode.transform.SetParent(graphic.transform, false);
+            animRenderer = animNode.AddComponent<SpriteRenderer>();
             animRenderer.sortingOrder = 76;
+
+            var whiteNode = new GameObject("TeleportWhite");
+            whiteNode.transform.SetParent(graphic.transform, false);
+            whiteRenderer = whiteNode.AddComponent<SpriteRenderer>();
             whiteRenderer.sortingOrder = 77;
             whiteRenderer.sprite = rimrushAtlasCache.Instance.SkillFx.Sprite("teleport40000");
 
@@ -1172,32 +1152,17 @@ namespace rimrush
         private float alpha = 1f;
 
         public rimrushShieldObject(int side, rimrushBasketObject basket, Transform parent)
-            : this(side, basket, parent, null)
-        {
-        }
-
-        public rimrushShieldObject(int side, rimrushBasketObject basket, Transform parent, rimrushShieldView view)
         {
             this.side = side;
             this.basket = basket;
 
-            if (view == null || view.Root == null || view.BlurRenderer == null || view.StartRenderer == null || view.AnimRenderer == null)
-            {
-                view = rimrushShieldView.CreateRuntimeFallback(side, parent);
-            }
-
-            graphic = view.Root;
+            graphic = new GameObject(side == -1 ? "ShieldLeft" : "ShieldRight");
+            graphic.transform.SetParent(parent, false);
 
             var shieldStartSprite = rimrushAtlasCache.Instance.SkillFx.Sprite("ShieldMC0000");
-            startRenderer = view.StartRenderer;
-            blurRenderer = view.BlurRenderer;
-            animRenderer = view.AnimRenderer;
-            startRenderer.sortingOrder = 63;
-            startRenderer.sprite = shieldStartSprite;
-            blurRenderer.sortingOrder = 64;
-            blurRenderer.sprite = shieldStartSprite;
-            animRenderer.sortingOrder = 65;
-            animRenderer.sprite = null;
+            startRenderer = CreateRenderer("ShieldStart", 63, shieldStartSprite);
+            blurRenderer = CreateRenderer("ShieldBlur", 64, shieldStartSprite);
+            animRenderer = CreateRenderer("ShieldAnim", 65, null);
 
             frames = new Sprite[21];
             for (var i = 0; i < frames.Length; i++)
@@ -1372,6 +1337,18 @@ namespace rimrush
             blurRenderer.color = new Color(1f, 1f, 1f, alpha * 0.85f);
             animRenderer.color = new Color(1f, 1f, 1f, alpha);
         }
+
+        private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
+        {
+            var child = new GameObject(name);
+            child.transform.SetParent(graphic.transform, false);
+            var renderer = child.AddComponent<SpriteRenderer>();
+            renderer.sortingOrder = sortingOrder;
+            renderer.sprite = sprite;
+            renderer.enabled = false;
+            return renderer;
+        }
+
         private static float EaseOutBack(float t)
         {
             const float overshoot = 1.70158f;
@@ -1464,10 +1441,6 @@ namespace rimrush
         private readonly GameObject graphic;
         private readonly GameObject shadow;
         private readonly DBLiteArmature armature;
-        private readonly rimrushGameplayBindings gameplayBindings;
-        private readonly rimrushPlayerView playerView;
-        private readonly Transform armatureMount;
-        private readonly SpriteRenderer fallbackRenderer;
         private readonly IBLPlayerController controller;
         private readonly int teamIndex;
         private readonly int playerNo;
@@ -1572,29 +1545,11 @@ namespace rimrush
         public bool CanThrow => canThrow;
 
         public rimrushPlayerObject(rimrushGameCore gameCore, int teamIndex, int characterId, int playerNo, string playerBrain, int skillLevel, Transform parent)
-            : this(gameCore, teamIndex, characterId, playerNo, playerBrain, skillLevel, parent, null, null, null, null, null)
-        {
-        }
-
-        public rimrushPlayerObject(
-            rimrushGameCore gameCore,
-            int teamIndex,
-            int characterId,
-            int playerNo,
-            string playerBrain,
-            int skillLevel,
-            Transform parent,
-            rimrushGameplayBindings gameplayBindings,
-            rimrushPlayerView playerView,
-            rimrushEnergyBarSceneView energyBarView,
-            rimrushTeleportFxView teleportFxView,
-            rimrushShieldView shieldView)
         {
             GameCore = gameCore;
             this.teamIndex = teamIndex;
             this.playerNo = playerNo;
             this.skillLevel = skillLevel;
-            this.gameplayBindings = gameplayBindings;
             Side = teamIndex == 0 ? -1 : 1;
             IsHuman = !playerBrain.StartsWith("B");
             brainSlot = rimrushControlsData.ParseControllerSlot(playerBrain);
@@ -1630,27 +1585,27 @@ namespace rimrush
             superDunkEndX = DunkTargetX() + 20f * Side;
             superDunkEndY = rimrushObjectsData.DunkY + 30f;
 
-            this.playerView = playerView;
-            if (this.playerView == null || this.playerView.Root == null || this.playerView.ShadowRenderer == null)
-            {
-                this.playerView = rimrushPlayerView.CreateRuntimeFallback($"Player_{teamIndex}_{playerNo}", playerNo, parent);
-            }
+            graphic = new GameObject($"Player_{teamIndex}_{playerNo}");
+            graphic.transform.SetParent(parent, false);
 
-            this.playerView.ClearRuntimeVisuals();
-            graphic = this.playerView.Root.gameObject;
-            shadow = this.playerView.ShadowRenderer.gameObject;
-            this.playerView.ShadowRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite(playerNo == 0 ? "ShadowMC0000" : "ShadowMC0001", 0.5f, 0.5f);
-            this.playerView.ShadowRenderer.sortingOrder = 2;
-            armatureMount = this.playerView.ArmatureMount;
-            fallbackRenderer = this.playerView.FallbackRenderer;
+            shadow = rimrushRender.Sprite(
+                $"PlayerShadow_{teamIndex}_{playerNo}",
+                rimrushAtlasCache.Instance.Gameplay,
+                playerNo == 0 ? "ShadowMC0000" : "ShadowMC0001",
+                0f,
+                0f,
+                0.5f,
+                0.5f,
+                2,
+                parent);
 
             armature = rimrushPlayersData.BuildGameplayArmature($"playerSmall_{teamIndex}_{playerNo}");
             if (armature != null)
             {
-                armature.transform.SetParent(armatureMount != null ? armatureMount : graphic.transform, false);
+                armature.transform.SetParent(graphic.transform, false);
                 armature.transform.localPosition = rimrushConstants.SnapLocalPositionToScreenPixels(
-                    armatureMount != null ? armatureMount : graphic.transform,
-                    Vector3.zero);
+                    graphic.transform,
+                    new Vector3(0f, -35f, 0f));
                 armature.transform.localScale = new Vector3(
                     rimrushConstants.PixelPerfectCharacterScale,
                     rimrushConstants.PixelPerfectCharacterScale,
@@ -1668,17 +1623,9 @@ namespace rimrush
                 ? new rimrushKeyboardController(playerBrain)
                 : rimrushAIController.CreateForBrain(this, playerBrain, skillLevel);
 
-            energyBar = IsHuman
-                ? (energyBarView != null
-                    ? new rimrushEnergyBarView(energyBarView, brainSlot, superId, superCoolDown)
-                    : new rimrushEnergyBarView(parent, brainSlot, superId, superCoolDown))
-                : null;
-            teleportFx = superId == 0 || superId == 2
-                ? new rimrushTeleportFx(parent, teleportFxView)
-                : null;
-            shield = superId == 1 || hellEnhanced
-                ? new rimrushShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent, shieldView)
-                : null;
+            energyBar = IsHuman ? new rimrushEnergyBarView(parent, brainSlot, superId, superCoolDown) : null;
+            teleportFx = superId == 0 || superId == 2 ? new rimrushTeleportFx(parent) : null;
+            shield = superId == 1 || hellEnhanced ? new rimrushShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent) : null;
 
             Restart(0);
         }
@@ -1686,7 +1633,6 @@ namespace rimrush
         public void ReleaseRuntimeResources()
         {
             energyBar?.ReleaseRuntimeResources();
-            playerView?.ClearRuntimeVisuals();
         }
 
         public void Restart(int startSide)
@@ -1740,19 +1686,12 @@ namespace rimrush
             shield?.Reset();
 
             var x = rimrushConstants.Width2 + Side * (playerNo == 0 ? rimrushObjectsData.PlayerIndentX : 200f);
-            var y = rimrushObjectsData.PlayerIndentY;
-            if (gameplayBindings != null)
-            {
-                var spawn = gameplayBindings.GetSpawnPosition(Side, startSide == Side);
-                x = spawn.x;
-                y = spawn.y;
-            }
-            else if (startSide == Side)
+            if (startSide == Side)
             {
                 x = Side == -1 ? rimrushObjectsData.IndentGeneralX : rimrushConstants.Width - rimrushObjectsData.IndentGeneralX;
             }
 
-            Position = new Vector2(x, y);
+            Position = new Vector2(x, rimrushObjectsData.PlayerIndentY);
             pointOfThrow = Position.x;
             IsGrounded = true;
             if (!hellOpeningChargeApplied && hellEnhanced && superCoolDown > 0f)
@@ -3008,17 +2947,6 @@ namespace rimrush
 
         private void CreateFallbackAvatar()
         {
-            if (fallbackRenderer != null)
-            {
-                fallbackRenderer.sprite = rimrushAtlasCache.Instance.Gameplay.Sprite("BallClipMsg0000", 0.5f, 0.5f);
-                fallbackRenderer.color = teamIndex == 0 ? new Color(0.95f, 0.25f, 0.2f) : new Color(0.2f, 0.45f, 1f);
-                fallbackRenderer.sortingOrder = 20;
-                fallbackRenderer.enabled = true;
-                fallbackRenderer.transform.localPosition = new Vector3(0f, -80f, 0f);
-                fallbackRenderer.transform.localScale = new Vector3(1.2f, 1.8f, 1f);
-                return;
-            }
-
             var body = new GameObject("FallbackBody");
             body.transform.SetParent(graphic.transform, false);
             var renderer = body.AddComponent<SpriteRenderer>();

@@ -6,7 +6,6 @@ namespace rimrush
     public sealed class rimrushGameCore
     {
         private readonly Transform root;
-        private readonly rimrushRuntimeContext runtimeContext;
         private readonly List<rimrushPlayerObject> playersLeft = new List<rimrushPlayerObject>();
         private readonly List<rimrushPlayerObject> playersRight = new List<rimrushPlayerObject>();
         private rimrushArenaObject arena;
@@ -43,30 +42,18 @@ namespace rimrush
         public rimrushBasketObject BasketRight => basketRight;
 
         public rimrushGameCore(Transform root)
-            : this(new rimrushRuntimeContext { Root = root })
         {
-        }
-
-        public rimrushGameCore(rimrushRuntimeContext runtimeContext)
-        {
-            this.runtimeContext = runtimeContext ?? new rimrushRuntimeContext();
-            root = this.runtimeContext.Root;
-            if (root == null && this.runtimeContext.GameplayBindings != null)
-            {
-                root = this.runtimeContext.GameplayBindings.Root;
-                this.runtimeContext.Root = root;
-            }
+            this.root = root;
         }
 
         public void Start()
         {
             rimrushPlayersData.SetupPlayers();
-            var gameplayBindings = runtimeContext.GameplayBindings;
-            arena = new rimrushArenaObject(root, gameplayBindings != null ? gameplayBindings.ArenaView : null);
-            basketLeft = new rimrushBasketObject(-1, root, gameplayBindings != null ? gameplayBindings.LeftBasketView : null);
-            basketRight = new rimrushBasketObject(1, root, gameplayBindings != null ? gameplayBindings.RightBasketView : null);
-            Ball = new rimrushBallObject(this, root, gameplayBindings != null ? gameplayBindings.BallView : null);
-            hud = new rimrushHudView(root, MatchData, runtimeContext.HudView);
+            arena = new rimrushArenaObject(root);
+            basketLeft = new rimrushBasketObject(-1, root);
+            basketRight = new rimrushBasketObject(1, root);
+            Ball = new rimrushBallObject(this, root);
+            hud = new rimrushHudView(root, MatchData);
 
             BuildPlayers();
             StartMatch(true);
@@ -514,14 +501,7 @@ namespace rimrush
                         playerNo,
                         brain,
                         skill,
-                        root,
-                        runtimeContext.GameplayBindings,
-                        runtimeContext.GameplayBindings != null ? runtimeContext.GameplayBindings.GetPlayerView(teamIndex == 0 ? -1 : 1) : null,
-                        runtimeContext.GameplayBindings != null && !brain.StartsWith("B")
-                            ? runtimeContext.GameplayBindings.GetEnergyBarView(rimrushControlsData.ParseControllerSlot(brain))
-                            : null,
-                        runtimeContext.GameplayBindings != null ? runtimeContext.GameplayBindings.GetTeleportFxView(teamIndex == 0 ? -1 : 1) : null,
-                        runtimeContext.GameplayBindings != null ? runtimeContext.GameplayBindings.GetShieldView(teamIndex == 0 ? -1 : 1) : null);
+                        root);
 
                     if (teamIndex == 0)
                     {
@@ -866,11 +846,6 @@ namespace rimrush
     {
         public rimrushGameCore Build(Transform root)
         {
-            return Build(new rimrushRuntimeContext { Root = root });
-        }
-
-        public rimrushGameCore Build(rimrushRuntimeContext runtimeContext)
-        {
             var inventory = rimrushInventory.Instance;
             if (inventory.MatchPrepared)
             {
@@ -902,7 +877,7 @@ namespace rimrush
                 inventory.MatchData.StartPlayers2Match(inventory.SelectedVersusBallSelection);
             }
 
-            var core = new rimrushGameCore(runtimeContext);
+            var core = new rimrushGameCore(root);
             core.Start();
             return core;
         }

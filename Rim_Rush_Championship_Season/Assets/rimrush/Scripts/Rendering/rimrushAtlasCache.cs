@@ -85,12 +85,7 @@ namespace rimrush
             var cacheKey = $"{frameName}|{anchorX:0.###}|{anchorY:0.###}";
             if (spriteCache.TryGetValue(cacheKey, out var cached))
             {
-                if (cached != null)
-                {
-                    return cached;
-                }
-
-                spriteCache.Remove(cacheKey);
+                return cached;
             }
 
             var rect = new Rect(frame.X, texture.height - frame.Y - frame.H, frame.W, frame.H);
