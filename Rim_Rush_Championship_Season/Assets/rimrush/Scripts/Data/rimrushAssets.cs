@@ -65,6 +65,18 @@ namespace rimrush
             }
         }
 
+        public static class Portraits
+        {
+            private const string Root = "rimrush/Portraits/";
+
+            public const string UiAtlas = "portraits_ui";
+
+            public static string ResourcePath(string portraitKey)
+            {
+                return string.IsNullOrEmpty(portraitKey) ? null : $"{Root}{portraitKey}";
+            }
+        }
+
         public static class Sounds
         {
             public const string MenuMusic = "24_TrackSnd";

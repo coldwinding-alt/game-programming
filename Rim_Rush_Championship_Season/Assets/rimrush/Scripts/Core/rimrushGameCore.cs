@@ -80,7 +80,10 @@ namespace rimrush
 
         public void Update(float dt)
         {
-            if (!pauseResumeCountdown && Input.GetKeyDown(KeyCode.P) && postMatchDelay <= 0f && !hud.IsPostMatchVisible)
+            if (!pauseResumeCountdown &&
+                (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape)) &&
+                postMatchDelay <= 0f &&
+                !hud.IsPostMatchVisible)
             {
                 HandlePauseCommand(rimrushPauseCommand.Toggle);
             }
