@@ -723,7 +723,9 @@ namespace rimrush
                     Start = start,
                     Duration = duration,
                     Transform = transform,
-                    Tween = Mathf.Abs(rimrushJson.Float(dict, "tweenEasing", 0f)) > 0.0001f
+                    // DragonBones treats missing tweenEasing and tweenEasing: 0 as linear tweening.
+                    // Only an explicit null disables interpolation between transform keyframes.
+                    Tween = !dict.ContainsKey("tweenEasing") || dict["tweenEasing"] != null
                 });
                 start += duration;
             }

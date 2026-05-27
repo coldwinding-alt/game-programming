@@ -48,7 +48,8 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
   - Super: `K`
 - Match flow:
   - Dash: double-tap left or right
-  - Return to menu: `Esc`
+  - Pause / resume: `P` or `Esc`
+  - Return to menu: pause first, then choose `MENU`
 
 ## Repository Guide
 

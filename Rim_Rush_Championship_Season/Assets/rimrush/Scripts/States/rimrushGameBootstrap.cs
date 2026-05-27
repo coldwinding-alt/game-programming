@@ -79,6 +79,7 @@ namespace rimrush
         private const float PreviewShadowScale = 0.42f;
         private const float PreviewArmatureYOffset = -24f;
         private const float PreviewArmatureScale = 0.82f;
+        private const float NativeUiAspect = rimrushConstants.DisplayW / (float)rimrushConstants.DisplayH;
         private const float MenuLogoScaleX = 0.78f;
         private const float MenuLogoScaleY = 0.68f;
         private const float TournamentBoardX = rimrushConstants.Width2;
@@ -190,6 +191,10 @@ namespace rimrush
         private string awardsCelebrationCupAnimation;
         private rimrushIconButton menuMusicButton;
         private rimrushIconButton menuHelpButton;
+        private rimrushNativeMenuTextLayer nativeMenuTextLayer;
+        private bool usingNativeUiPresentation;
+        private int viewportScreenWidth = -1;
+        private int viewportScreenHeight = -1;
 
         private void Awake()
         {
@@ -211,7 +216,8 @@ namespace rimrush
                 fixedResolutionPresenter = gameObject.AddComponent<rimrushFixedResolutionPresenter>();
             }
 
-            fixedResolutionPresenter.Attach(mainCamera);
+            mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
+            EnableNativeMenuPresentation();
 
             runtimeRoot = new GameObject("rimrushRuntime").transform;
             rimrushAudio.Create(transform);
@@ -241,7 +247,7 @@ namespace rimrush
                     return;
                 }
 
-                if (gameCore.ReturnToMenuRequested || Input.GetKeyDown(KeyCode.Escape))
+                if (gameCore.ReturnToMenuRequested)
                 {
                     rimrushInventory.Instance.AbandonTournament();
                     ClearRuntime();
@@ -252,6 +258,7 @@ namespace rimrush
             }
 
             UpdateTournamentAwardsSequence(Time.deltaTime);
+            RefreshNativeMenuViewport();
 
             for (var i = 0; i < menuButtons.Count; i++)
             {
@@ -583,7 +590,7 @@ namespace rimrush
                 398f);
 
             CreateOptionsPanel("Tournament", 575f);
-            rimrushRender.Text(
+            CreateMenuText(
                 "ModeFixed",
                 "FORMAT: 8 PLAYER / 2 DIVISIONS",
                 575f,
@@ -592,7 +599,6 @@ namespace rimrush
                 Color.white,
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentBody);
             CreateBallSelector(
                 "TournamentBall",
@@ -772,6 +778,7 @@ namespace rimrush
         private void StartGameplay()
         {
             ClearRuntime();
+            EnableGameplayPresentation();
             runtimeRoot = new GameObject("rimrushRuntime").transform;
             rimrushAudio.Create(transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
             menuButtons.Clear();
@@ -781,7 +788,10 @@ namespace rimrush
         private void BeginMenuScreen(bool showLogo, bool showControls, string backgroundFrame)
         {
             ClearRuntime();
+            EnableNativeMenuPresentation();
             runtimeRoot = new GameObject("rimrushRuntime").transform;
+            nativeMenuTextLayer = new rimrushNativeMenuTextLayer(runtimeRoot);
+            nativeMenuTextLayer.RefreshLayout(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height));
             rimrushAudio.Create(transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
 
             rimrushRender.Sprite(
@@ -835,7 +845,7 @@ namespace rimrush
 
             if (showControls)
             {
-                rimrushRender.Text(
+                CreateMenuText(
                     "Controls",
                     rimrushControlsData.MainMenuControlsText,
                     rimrushConstants.Width2,
@@ -844,16 +854,72 @@ namespace rimrush
                     Color.white,
                     TextAnchor.MiddleCenter,
                     30,
-                    runtimeRoot,
                     rimrushTextStyle.TournamentBody);
             }
 
             menuButtons.Clear();
         }
 
+        private void EnableGameplayPresentation()
+        {
+            usingNativeUiPresentation = false;
+            viewportScreenWidth = -1;
+            viewportScreenHeight = -1;
+            if (mainCamera == null)
+            {
+                return;
+            }
+
+            mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
+            fixedResolutionPresenter?.Attach(mainCamera);
+        }
+
+        private void EnableNativeMenuPresentation()
+        {
+            usingNativeUiPresentation = true;
+            fixedResolutionPresenter?.Detach();
+            RefreshNativeMenuViewport(force: true);
+        }
+
+        private void RefreshNativeMenuViewport(bool force = false)
+        {
+            if (!usingNativeUiPresentation || mainCamera == null)
+            {
+                return;
+            }
+
+            var screenWidth = Mathf.Max(1, Screen.width);
+            var screenHeight = Mathf.Max(1, Screen.height);
+            if (!force && screenWidth == viewportScreenWidth && screenHeight == viewportScreenHeight)
+            {
+                return;
+            }
+
+            viewportScreenWidth = screenWidth;
+            viewportScreenHeight = screenHeight;
+            nativeMenuTextLayer?.RefreshLayout(screenWidth, screenHeight);
+
+            var screenAspect = screenWidth / (float)screenHeight;
+            if (Mathf.Abs(screenAspect - NativeUiAspect) <= 0.0001f)
+            {
+                mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
+                return;
+            }
+
+            if (screenAspect > NativeUiAspect)
+            {
+                var normalizedWidth = NativeUiAspect / screenAspect;
+                mainCamera.rect = new Rect((1f - normalizedWidth) * 0.5f, 0f, normalizedWidth, 1f);
+                return;
+            }
+
+            var normalizedHeight = screenAspect / NativeUiAspect;
+            mainCamera.rect = new Rect(0f, (1f - normalizedHeight) * 0.5f, 1f, normalizedHeight);
+        }
+
         private void AddTitle(string title, float y, int fontSize, Color color)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{title}_Title",
                 title,
                 rimrushConstants.Width2,
@@ -862,13 +928,12 @@ namespace rimrush
                 color,
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.DisplayTitle);
         }
 
         private void AddSubtitle(string subtitle, float y, int fontSize = 18)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{subtitle}_Subtitle",
                 subtitle,
                 rimrushConstants.Width2,
@@ -877,8 +942,34 @@ namespace rimrush
                 Color.white,
                 TextAnchor.MiddleCenter,
                 19,
-                runtimeRoot,
                 rimrushTextStyle.Subtitle);
+        }
+
+        private void CreateMenuText(
+            string name,
+            string text,
+            float x,
+            float y,
+            int fontSize,
+            Color color,
+            TextAnchor anchor,
+            int sortingOrder,
+            rimrushTextStyle style,
+            Transform parent = null)
+        {
+            var resolvedParent = parent ?? runtimeRoot;
+            if (ShouldUseNativeMenuText(resolvedParent))
+            {
+                nativeMenuTextLayer?.CreateText(name, text, x, y, fontSize, color, anchor, style);
+                return;
+            }
+
+            rimrushRender.Text(name, text, x, y, fontSize, color, anchor, sortingOrder, resolvedParent, style);
+        }
+
+        private bool ShouldUseNativeMenuText(Transform parent)
+        {
+            return nativeMenuTextLayer != null && parent != null && nativeMenuTextLayer.Owns(parent);
         }
 
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint)
@@ -899,7 +990,7 @@ namespace rimrush
 
         private void CreateOptionsPanel(string prefix, float centerX)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{prefix}_OptionTitle",
                 "SETTINGS",
                 centerX,
@@ -908,7 +999,6 @@ namespace rimrush
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
         }
 
@@ -922,7 +1012,7 @@ namespace rimrush
             float previewY,
             float labelY)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{key}_Header",
                 "BALL",
                 centerX,
@@ -931,7 +1021,6 @@ namespace rimrush
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
 
             menuButtons.Add(new rimrushMenuButton("<", centerX - BallSelectorArrowOffsetX, previewY, BallSelectorArrowSize, BallSelectorArrowSize, previousBallAction, runtimeRoot));
@@ -945,7 +1034,7 @@ namespace rimrush
                 BallPreviewPixels,
                 19);
 
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{key}_Label",
                 rimrushBallCatalog.Label(selection),
                 centerX,
@@ -954,13 +1043,12 @@ namespace rimrush
                 Color.white,
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentBody);
         }
 
         private void CreateHellDifficultyWarning(float centerX, float y)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 "HellDifficultyWarning",
                 "UNFAIR CHALLENGE: CPU USES BONUS SUPERS",
                 centerX,
@@ -969,7 +1057,6 @@ namespace rimrush
                 new Color32(0xFF, 0x9C, 0x32, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
         }
 
@@ -984,7 +1071,7 @@ namespace rimrush
             float previewScale,
             float nameY)
         {
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{key}_Header",
                 header,
                 centerX,
@@ -993,14 +1080,13 @@ namespace rimrush
                 new Color32(0xCD, 0xF0, 0x0F, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
-                runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
 
             menuButtons.Add(new rimrushMenuButton("<", centerX - SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, previousCharacterAction, runtimeRoot));
             menuButtons.Add(new rimrushMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
 
             CreatePreviewPlayer(characterId, centerX, previewY, previewScale);
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{key}_CharacterName",
                 rimrushPlayersData.GetCharacterName(characterId),
                 centerX,
@@ -1009,7 +1095,6 @@ namespace rimrush
                 Color.white,
                 TextAnchor.MiddleCenter,
                 21,
-                runtimeRoot,
                 rimrushTextStyle.TournamentBody);
         }
 
@@ -1260,6 +1345,12 @@ namespace rimrush
             TextAnchor anchor,
             int sortingOrder)
         {
+            if (ShouldUseNativeMenuText(runtimeRoot))
+            {
+                CreateMenuText(name, text, x, y, fontSize, color, anchor, sortingOrder, rimrushTextStyle.TournamentBody);
+                return null;
+            }
+
             return rimrushRender.Text(
                 name,
                 text,
@@ -1285,6 +1376,12 @@ namespace rimrush
             TextAnchor anchor,
             int sortingOrder)
         {
+            if (ShouldUseNativeMenuText(runtimeRoot))
+            {
+                CreateMenuText(name, text, x, y, fontSize, color, anchor, sortingOrder, rimrushTextStyle.TournamentAccent);
+                return null;
+            }
+
             return rimrushRender.Text(
                 name,
                 text,
@@ -1376,7 +1473,7 @@ namespace rimrush
                 14,
                 new Color(0.03f, 0.05f, 0.08f, 0.3f));
 
-            rimrushRender.Text(
+            CreateMenuText(
                 $"{key}_Title",
                 title,
                 x,
@@ -1385,7 +1482,6 @@ namespace rimrush
                 current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                 TextAnchor.MiddleCenter,
                 15,
-                runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
 
             CreatePanel($"{key}_DividerHorizontal", x, y, panelWidth - 28f, 2f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
@@ -1417,7 +1513,7 @@ namespace rimrush
 
             if (!match.Completed)
             {
-                rimrushRender.Text(
+                CreateMenuText(
                     $"{key}_Versus",
                     "-",
                     x + scoreXOffset,
@@ -1426,7 +1522,6 @@ namespace rimrush
                     current ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : new Color32(0x42, 0xF1, 0xE6, 0xFF),
                     TextAnchor.MiddleCenter,
                     16,
-                    runtimeRoot,
                     rimrushTextStyle.TournamentAccent);
             }
         }
@@ -1501,7 +1596,7 @@ namespace rimrush
             if (summaryCompleted)
             {
                 CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 280f, summaryY, 16);
-                rimrushRender.Text(
+                CreateMenuText(
                     "ChampionLabel",
                     "CHAMPION",
                     312f,
@@ -1510,9 +1605,8 @@ namespace rimrush
                     new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                     TextAnchor.MiddleLeft,
                     17,
-                    runtimeRoot,
                     rimrushTextStyle.TournamentAccent);
-                rimrushRender.Text(
+                CreateMenuText(
                     "ChampionName",
                     CharacterNameOrTbd(tournament.ChampionCharacterId),
                     312f,
@@ -1521,9 +1615,8 @@ namespace rimrush
                     Color.white,
                     TextAnchor.MiddleLeft,
                     17,
-                    runtimeRoot,
                     rimrushTextStyle.TournamentBody);
-                rimrushRender.Text(
+                CreateMenuText(
                     "PlacementLabel",
                     $"YOU FINISHED #{tournament.PlayerPlacement}",
                     312f,
@@ -1532,7 +1625,6 @@ namespace rimrush
                     new Color32(0xFF, 0xD6, 0x6D, 0xFF),
                     TextAnchor.MiddleLeft,
                     17,
-                    runtimeRoot,
                     rimrushTextStyle.TournamentAccent);
                 return;
             }
@@ -2135,7 +2227,8 @@ namespace rimrush
 
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
-            var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId);
+            var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
+            var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId, targetSize);
             if (sprite == null)
             {
                 return null;
@@ -2147,13 +2240,12 @@ namespace rimrush
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
 
-            var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
             var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
             var scale = targetSize / Mathf.Max(1f, spritePixels);
             rimrushRender.ApplyPixelTransform(
                 portrait.transform,
                 x,
-                y + rimrushPlayersData.GetCharacterPortraitOffsetY(characterId) * scale,
+                y + rimrushPlayersData.GetCharacterPortraitOffsetY(characterId, sprite) * scale,
                 0f,
                 scale);
             return portrait;
@@ -2278,6 +2370,8 @@ namespace rimrush
             menuButtons.Clear();
             menuMusicButton = null;
             menuHelpButton = null;
+            nativeMenuTextLayer?.Dispose();
+            nativeMenuTextLayer = null;
             ResetTournamentAwardsState();
             if (runtimeRoot != null)
             {

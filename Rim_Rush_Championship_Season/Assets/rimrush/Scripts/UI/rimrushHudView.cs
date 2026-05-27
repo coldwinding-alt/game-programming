@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace rimrush
@@ -43,6 +44,22 @@ namespace rimrush
         private const float PauseActionButtonHeight = 40f;
         private const float PopupCenterY = 236f;
         private const float PopupBackdropWidth = 432f;
+        private const float PostMatchCardCenterY = 224f;
+        private const float PostMatchCardWidth = 456f;
+        private const float PostMatchCardHeight = 236f;
+        private const float PostMatchInnerWidth = 414f;
+        private const float PostMatchInnerHeight = 192f;
+        private const float PostMatchScorePlateWidth = 228f;
+        private const float PostMatchScorePlateHeight = 70f;
+        private const float PostMatchTitleY = 164f;
+        private const float PostMatchSubtitleY = 138f;
+        private const float PostMatchScoreY = 218f;
+        private const float PostMatchPortraitY = 220f;
+        private const float PostMatchPortraitOffsetX = 144f;
+        private const float PostMatchPortraitPixels = 46f;
+        private const float PostMatchWinnerTagY = 248f;
+        private const float PostMatchNameY = 274f;
+        private const float PostMatchPromptY = 316f;
         private const float MessageExitWindow = 0.18f;
         private const float CountdownPulseDuration = 0.42f;
         private const float BonusNoticeX = 676f;
@@ -53,6 +70,7 @@ namespace rimrush
         private const float HelpButtonX = 642f;
         private const float TopRightButtonSize = 60f;
         private const float TopRightIconPixels = 58f;
+        private readonly GameObject scoreboardRoot;
         private readonly TextMesh leftScore;
         private readonly TextMesh rightScore;
         private readonly TextMesh leftNameText;
@@ -85,9 +103,31 @@ namespace rimrush
         private readonly TextMesh countdownCaptionText;
         private readonly TextMesh countdownText;
         private readonly Vector3 countdownBaseScale;
+        private readonly string leftCharacterLabel;
+        private readonly string rightCharacterLabel;
+        private readonly GameObject postMatchOverlayRoot;
+        private readonly GameObject postMatchTopGlow;
+        private readonly GameObject postMatchBottomGlow;
+        private readonly GameObject postMatchCardRoot;
+        private readonly GameObject postMatchCardPanel;
+        private readonly GameObject postMatchCardFrame;
+        private readonly GameObject postMatchScorePlate;
+        private readonly GameObject postMatchLeftAura;
+        private readonly GameObject postMatchRightAura;
+        private readonly GameObject postMatchLeftPortrait;
+        private readonly GameObject postMatchRightPortrait;
+        private readonly GameObject postMatchPromptFrame;
         private readonly TextMesh postMatchTitleText;
+        private readonly TextMesh postMatchSubtitleText;
         private readonly TextMesh postMatchScoreText;
+        private readonly TextMesh postMatchLeftNameText;
+        private readonly TextMesh postMatchRightNameText;
+        private readonly TextMesh postMatchWinnerTagText;
         private readonly TextMesh postMatchPromptText;
+        private readonly Vector3 postMatchLeftAuraBaseScale;
+        private readonly Vector3 postMatchRightAuraBaseScale;
+        private readonly Vector3 postMatchLeftPortraitBaseScale;
+        private readonly Vector3 postMatchRightPortraitBaseScale;
         private float messageTime;
         private float messageDuration;
         private float messageVisualScale = 1f;
@@ -97,42 +137,46 @@ namespace rimrush
         private float countdownPulseTime;
         private rimrushPauseCommand pendingPauseCommand;
         private int lastCountdownTick = int.MinValue;
-        public bool IsPostMatchVisible => !string.IsNullOrEmpty(postMatchTitleText.text);
+        private float postMatchAnimTime;
+        private int postMatchWinnerSide;
+        private bool postMatchPlayerWon;
+        public bool IsPostMatchVisible => postMatchOverlayRoot != null && postMatchOverlayRoot.activeSelf;
         public bool IsPauseOverlayVisible { get; private set; }
 
         public rimrushHudView(Transform parent, rimrushMatchData matchData)
         {
             isTraining = rimrushInventory.Instance.GameMode == 3;
-            var leftCharacterName = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[0]);
-            var rightCharacterName = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[1]);
+            leftCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[0]);
+            rightCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[1]);
 
-            CreateScoreboardBackdrop(parent);
-            CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.235f, 81, parent);
-            CreatePortraitAura("RightPortraitAura", ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, 0.235f, 81, parent);
-            CreateCharacterPortrait("LeftPortrait", matchData.CharacterIds[0], ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, parent);
-            CreateCharacterPortrait("RightPortrait", matchData.CharacterIds[1], ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, parent);
+            scoreboardRoot = CreateHudRoot("ScoreboardRoot", parent);
+            CreateScoreboardBackdrop(scoreboardRoot.transform);
+            CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.235f, 81, scoreboardRoot.transform);
+            CreatePortraitAura("RightPortraitAura", ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, 0.235f, 81, scoreboardRoot.transform);
+            CreateCharacterPortrait("LeftPortrait", matchData.CharacterIds[0], ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, scoreboardRoot.transform);
+            CreateCharacterPortrait("RightPortrait", matchData.CharacterIds[1], ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, scoreboardRoot.transform);
 
             leftNameText = rimrushRender.Text(
                 "LeftName",
-                leftCharacterName,
+                leftCharacterLabel,
                 ScoreboardCenterX - NameOffsetX,
                 NameY,
                 18,
                 Color.white,
                 TextAnchor.MiddleRight,
                 85,
-                parent,
+                scoreboardRoot.transform,
                 rimrushTextStyle.HudName);
             rightNameText = rimrushRender.Text(
                 "RightName",
-                rightCharacterName,
+                rightCharacterLabel,
                 ScoreboardCenterX + NameOffsetX,
                 NameY,
                 18,
                 Color.white,
                 TextAnchor.MiddleLeft,
                 85,
-                parent,
+                scoreboardRoot.transform,
                 rimrushTextStyle.HudName);
 
             var scoreColor = new Color32(0xFF, 0xA7, 0x22, 0xFF);
@@ -145,7 +189,7 @@ namespace rimrush
                 scoreColor,
                 TextAnchor.MiddleCenter,
                 86,
-                parent,
+                scoreboardRoot.transform,
                 rimrushTextStyle.HudScore);
             rightScore = rimrushRender.Text(
                 "RightScore",
@@ -156,7 +200,7 @@ namespace rimrush
                 scoreColor,
                 TextAnchor.MiddleCenter,
                 86,
-                parent,
+                scoreboardRoot.transform,
                 rimrushTextStyle.HudScore);
             timerText = rimrushRender.Text(
                 "Timer",
@@ -167,7 +211,7 @@ namespace rimrush
                 new Color32(0xC6, 0xFF, 0x33, 0xFF),
                 TextAnchor.MiddleCenter,
                 87,
-                parent,
+                scoreboardRoot.transform,
                 rimrushTextStyle.HudTimer);
 
             pauseButton = new rimrushMenuButton(string.Empty, PauseButtonX, TopRightButtonY, TopRightButtonSize, TopRightButtonSize, () => pendingPauseCommand = rimrushPauseCommand.Toggle, parent);
@@ -260,39 +304,215 @@ namespace rimrush
             bonusNoticeText.transform.SetParent(bonusNoticeRoot.transform, true);
             bonusNoticeRoot.SetActive(false);
 
+            postMatchOverlayRoot = CreateHudRoot("PostMatchOverlayRoot", parent);
+            CreatePausePanel("PostMatchShade", rimrushConstants.Width2, ScreenCenterY, 800f, 480f, 128, postMatchOverlayRoot.transform, new Color(0.02f, 0.04f, 0.06f, 0.68f));
+            postMatchTopGlow = CreatePausePanel("PostMatchTopGlow", rimrushConstants.Width2, 120f, 760f, 92f, 129, postMatchOverlayRoot.transform, new Color(0.34f, 0.86f, 0.92f, 0.08f));
+            postMatchBottomGlow = CreatePausePanel("PostMatchBottomGlow", rimrushConstants.Width2, 358f, 700f, 116f, 129, postMatchOverlayRoot.transform, new Color(1f, 0.72f, 0.34f, 0.06f));
+            postMatchCardRoot = CreateHudAnchor("PostMatchCardRoot", rimrushConstants.Width2, PostMatchCardCenterY, postMatchOverlayRoot.transform);
+            postMatchCardPanel = CreatePausePanel(
+                "PostMatchCardPanel",
+                rimrushConstants.Width2,
+                PostMatchCardCenterY,
+                PostMatchCardWidth,
+                PostMatchCardHeight,
+                130,
+                postMatchCardRoot.transform,
+                new Color(0.03f, 0.06f, 0.1f, 0.94f));
+            postMatchCardFrame = CreatePauseFrame(
+                "PostMatchCardFrame",
+                "MatchBack0002",
+                rimrushConstants.Width2,
+                PostMatchCardCenterY,
+                PostMatchCardWidth + 34f,
+                PostMatchCardHeight + 16f,
+                131,
+                postMatchCardRoot.transform,
+                new Color(0.86f, 0.96f, 1f, 0.18f));
+            CreatePausePanel(
+                "PostMatchInnerPanel",
+                rimrushConstants.Width2,
+                PostMatchCardCenterY,
+                PostMatchInnerWidth,
+                PostMatchInnerHeight,
+                132,
+                postMatchCardRoot.transform,
+                new Color(0.08f, 0.11f, 0.16f, 0.84f));
+            CreatePausePanel(
+                "PostMatchTopAccent",
+                rimrushConstants.Width2,
+                PostMatchSubtitleY - 14f,
+                212f,
+                2f,
+                133,
+                postMatchCardRoot.transform,
+                new Color(0.35f, 0.88f, 0.93f, 0.28f));
+            CreatePausePanel(
+                "PostMatchBottomAccent",
+                rimrushConstants.Width2,
+                PostMatchPromptY - 18f,
+                244f,
+                2f,
+                133,
+                postMatchCardRoot.transform,
+                new Color(1f, 0.73f, 0.36f, 0.22f));
+            postMatchScorePlate = CreatePausePanel(
+                "PostMatchScorePlate",
+                rimrushConstants.Width2,
+                PostMatchScoreY + 2f,
+                PostMatchScorePlateWidth,
+                PostMatchScorePlateHeight,
+                133,
+                postMatchCardRoot.transform,
+                new Color(0.02f, 0.04f, 0.08f, 0.82f));
+            CreatePauseFrame(
+                "PostMatchScoreFrame",
+                "btn_bg0000",
+                rimrushConstants.Width2,
+                PostMatchScoreY + 2f,
+                PostMatchScorePlateWidth + 24f,
+                PostMatchScorePlateHeight + 14f,
+                134,
+                postMatchCardRoot.transform,
+                new Color(0.3f, 0.82f, 0.9f, 0.26f));
+
+            postMatchLeftAura = CreatePortraitAura(
+                "PostMatchLeftAura",
+                rimrushConstants.Width2 - PostMatchPortraitOffsetX,
+                PostMatchPortraitY,
+                0.24f,
+                134,
+                postMatchCardRoot.transform);
+            postMatchRightAura = CreatePortraitAura(
+                "PostMatchRightAura",
+                rimrushConstants.Width2 + PostMatchPortraitOffsetX,
+                PostMatchPortraitY,
+                0.24f,
+                134,
+                postMatchCardRoot.transform);
+            postMatchLeftPortrait = CreateCharacterPortrait(
+                "PostMatchLeftPortrait",
+                matchData.CharacterIds[0],
+                rimrushConstants.Width2 - PostMatchPortraitOffsetX,
+                PostMatchPortraitY,
+                PostMatchPortraitPixels,
+                135,
+                postMatchCardRoot.transform);
+            postMatchRightPortrait = CreateCharacterPortrait(
+                "PostMatchRightPortrait",
+                matchData.CharacterIds[1],
+                rimrushConstants.Width2 + PostMatchPortraitOffsetX,
+                PostMatchPortraitY,
+                PostMatchPortraitPixels,
+                135,
+                postMatchCardRoot.transform);
+
+            postMatchSubtitleText = rimrushRender.Text(
+                "PostMatchSubtitle",
+                string.Empty,
+                rimrushConstants.Width2,
+                PostMatchSubtitleY,
+                13,
+                new Color32(0xCB, 0xD9, 0xE4, 0xFF),
+                TextAnchor.MiddleCenter,
+                135,
+                postMatchCardRoot.transform,
+                rimrushFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.88f),
+                outlinePixels: 0.52f);
             postMatchTitleText = rimrushRender.Text(
                 "PostMatchTitle",
                 string.Empty,
                 rimrushConstants.Width2,
-                188f,
-                40,
-                new Color32(0xFF, 0x9C, 0x12, 0xFF),
+                PostMatchTitleY,
+                30,
+                new Color32(0xFF, 0xC7, 0x56, 0xFF),
                 TextAnchor.MiddleCenter,
-                130,
-                parent,
-                rimrushTextStyle.HudPopup);
+                136,
+                postMatchCardRoot.transform,
+                rimrushTextStyle.DisplayTitle);
             postMatchScoreText = rimrushRender.Text(
                 "PostMatchScore",
                 string.Empty,
                 rimrushConstants.Width2,
-                236f,
-                24,
+                PostMatchScoreY,
+                42,
+                new Color32(0xFF, 0xF3, 0xD8, 0xFF),
+                TextAnchor.MiddleCenter,
+                136,
+                postMatchCardRoot.transform,
+                rimrushTextStyle.HudScore);
+            postMatchWinnerTagText = rimrushRender.Text(
+                "PostMatchWinnerTag",
+                string.Empty,
+                rimrushConstants.Width2,
+                PostMatchWinnerTagY,
+                12,
+                new Color32(0xFF, 0xDE, 0x98, 0xFF),
+                TextAnchor.MiddleCenter,
+                136,
+                postMatchCardRoot.transform,
+                rimrushFontKind.RajdhaniBold,
+                outlineColor: new Color(0.02f, 0.05f, 0.08f, 0.92f),
+                outlinePixels: 0.56f);
+            postMatchLeftNameText = rimrushRender.Text(
+                "PostMatchLeftName",
+                leftCharacterLabel,
+                rimrushConstants.Width2 - PostMatchPortraitOffsetX,
+                PostMatchNameY,
+                ResolvePostMatchNameFontSize(leftCharacterLabel),
                 Color.white,
                 TextAnchor.MiddleCenter,
-                130,
-                parent,
-                rimrushTextStyle.HudScore);
+                136,
+                postMatchCardRoot.transform,
+                rimrushTextStyle.HudName);
+            postMatchRightNameText = rimrushRender.Text(
+                "PostMatchRightName",
+                rightCharacterLabel,
+                rimrushConstants.Width2 + PostMatchPortraitOffsetX,
+                PostMatchNameY,
+                ResolvePostMatchNameFontSize(rightCharacterLabel),
+                Color.white,
+                TextAnchor.MiddleCenter,
+                136,
+                postMatchCardRoot.transform,
+                rimrushTextStyle.HudName);
+            CreatePausePanel(
+                "PostMatchPromptTint",
+                rimrushConstants.Width2,
+                PostMatchPromptY,
+                216f,
+                20f,
+                133,
+                postMatchCardRoot.transform,
+                new Color(0.03f, 0.06f, 0.1f, 0.62f));
+            postMatchPromptFrame = CreatePauseFrame(
+                "PostMatchPromptFrame",
+                "btn_bg0000",
+                rimrushConstants.Width2,
+                PostMatchPromptY,
+                248f,
+                34f,
+                134,
+                postMatchCardRoot.transform,
+                new Color(0.3f, 0.82f, 0.9f, 0.34f));
             postMatchPromptText = rimrushRender.Text(
                 "PostMatchPrompt",
                 string.Empty,
                 rimrushConstants.Width2,
-                276f,
-                18,
-                new Color32(0xCD, 0xF0, 0x0F, 0xFF),
+                PostMatchPromptY,
+                15,
+                new Color32(0xEE, 0xF5, 0xD5, 0xFF),
                 TextAnchor.MiddleCenter,
-                130,
-                parent,
-                rimrushTextStyle.TournamentAccent);
+                135,
+                postMatchCardRoot.transform,
+                rimrushFontKind.RajdhaniBold,
+                outlineColor: new Color(0.03f, 0.05f, 0.1f, 0.9f),
+                outlinePixels: 0.52f);
+
+            postMatchLeftAuraBaseScale = postMatchLeftAura != null ? postMatchLeftAura.transform.localScale : Vector3.one;
+            postMatchRightAuraBaseScale = postMatchRightAura != null ? postMatchRightAura.transform.localScale : Vector3.one;
+            postMatchLeftPortraitBaseScale = postMatchLeftPortrait != null ? postMatchLeftPortrait.transform.localScale : Vector3.one;
+            postMatchRightPortraitBaseScale = postMatchRightPortrait != null ? postMatchRightPortrait.transform.localScale : Vector3.one;
 
             pauseOverlayRoot = CreateHudRoot("PauseOverlayRoot", parent);
             pauseShade = CreatePausePanel("PauseShade", rimrushConstants.Width2, ScreenCenterY, 800f, 480f, 140, pauseOverlayRoot.transform, new Color(0.01f, 0.03f, 0.05f, 0.78f));
@@ -324,7 +544,7 @@ namespace rimrush
                 rimrushTextStyle.DisplayTitle);
             pauseLeftNameText = rimrushRender.Text(
                 "PauseLeftName",
-                leftCharacterName,
+                leftCharacterLabel,
                 rimrushConstants.Width2 - PausePortraitOffsetX,
                 PauseNameY,
                 16,
@@ -337,7 +557,7 @@ namespace rimrush
                 outlinePixels: 0.68f);
             pauseRightNameText = rimrushRender.Text(
                 "PauseRightName",
-                rightCharacterName,
+                rightCharacterLabel,
                 rimrushConstants.Width2 + PausePortraitOffsetX,
                 PauseNameY,
                 16,
@@ -690,6 +910,11 @@ namespace rimrush
                 countdownText.transform.localScale = countdownBaseScale;
             }
 
+            if (IsPostMatchVisible)
+            {
+                UpdatePostMatchVisual(dt);
+            }
+
             if (countdownTime < 0f && !string.IsNullOrEmpty(countdownText.text))
             {
                 HideCountdown();
@@ -699,20 +924,60 @@ namespace rimrush
         public void ShowPostMatch(int winner, int leftScoreValue, int rightScoreValue)
         {
             var inventory = rimrushInventory.Instance;
+            postMatchWinnerSide = winner < 0 ? -1 : 1;
+            postMatchPlayerWon = postMatchWinnerSide == -1;
             if (inventory.IsTournamentActive || inventory.GameMode == 1 || inventory.GameMode == 2)
             {
-                SetText(postMatchTitleText, winner == -1 ? "YOU WIN!" : "YOU LOSE");
+                SetText(postMatchTitleText, postMatchWinnerSide == -1 ? "VICTORY" : "DEFEAT");
             }
             else
             {
-                SetText(postMatchTitleText, winner == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
+                SetText(postMatchTitleText, postMatchWinnerSide == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
             }
 
-            postMatchTitleText.color = winner == -1
-                ? new Color32(0xFF, 0xB3, 0x2A, 0xFF)
-                : new Color32(0x9C, 0x4B, 0xFF, 0xFF);
-            SetText(postMatchScoreText, $"{leftScoreValue} - {rightScoreValue}");
+            postMatchTitleText.color = postMatchWinnerSide == -1
+                ? new Color32(0xFF, 0xC4, 0x44, 0xFF)
+                : new Color32(0xC9, 0x92, 0xFF, 0xFF);
+            postMatchScoreText.color = postMatchWinnerSide == -1
+                ? new Color32(0xFF, 0xF1, 0xD0, 0xFF)
+                : new Color32(0xF0, 0xE7, 0xFF, 0xFF);
+            SetText(postMatchSubtitleText, inventory.IsTournamentActive ? "CHAMPIONSHIP RESULT" : "FINAL BUZZER");
+            SetText(postMatchWinnerTagText, "WINNER");
+            postMatchWinnerTagText.transform.position = rimrushConstants.PixelToWorldSnapped(
+                rimrushConstants.Width2 + (postMatchWinnerSide * PostMatchPortraitOffsetX),
+                PostMatchWinnerTagY);
+            postMatchLeftNameText.color = postMatchWinnerSide == -1
+                ? new Color32(0xFF, 0xDC, 0x8A, 0xFF)
+                : new Color32(0xE2, 0xEA, 0xF7, 0xFF);
+            postMatchRightNameText.color = postMatchWinnerSide == 1
+                ? new Color32(0xFF, 0xDC, 0x8A, 0xFF)
+                : new Color32(0xE2, 0xEA, 0xF7, 0xFF);
+            SetSpriteTint(
+                postMatchLeftAura,
+                postMatchWinnerSide == -1
+                    ? new Color(1f, 0.8f, 0.36f, 0.95f)
+                    : new Color(0.46f, 1f, 0.94f, 0.42f));
+            SetSpriteTint(
+                postMatchRightAura,
+                postMatchWinnerSide == 1
+                    ? new Color(1f, 0.8f, 0.36f, 0.95f)
+                    : new Color(0.46f, 1f, 0.94f, 0.42f));
+            SetSpriteTint(postMatchLeftPortrait, postMatchWinnerSide == -1 ? Color.white : new Color(0.8f, 0.77f, 0.9f, 0.78f));
+            SetSpriteTint(postMatchRightPortrait, postMatchWinnerSide == 1 ? Color.white : new Color(0.8f, 0.77f, 0.9f, 0.78f));
+            SetText(postMatchScoreText, $"{leftScoreValue}  :  {rightScoreValue}");
             SetText(postMatchPromptText, inventory.IsTournamentActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER");
+            postMatchAnimTime = 0f;
+            if (postMatchCardRoot != null)
+            {
+                postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PostMatchCardCenterY + 10f);
+                postMatchCardRoot.transform.localScale = Vector3.one * 0.94f;
+            }
+
+            SetGameObjectVisible(postMatchOverlayRoot, true);
+            pauseButton.SetVisible(false);
+            SetGameObjectVisible(pauseButtonIcon, false);
+            musicButton?.SetVisible(false);
+            helpButton?.SetVisible(false);
             HideMessage();
             HideBonusNotice();
             HideCountdown();
@@ -721,8 +986,105 @@ namespace rimrush
         public void HidePostMatch()
         {
             SetText(postMatchTitleText, string.Empty);
+            SetText(postMatchSubtitleText, string.Empty);
             SetText(postMatchScoreText, string.Empty);
+            SetText(postMatchWinnerTagText, string.Empty);
             SetText(postMatchPromptText, string.Empty);
+            postMatchAnimTime = 0f;
+            postMatchWinnerSide = 0;
+            postMatchPlayerWon = false;
+            postMatchLeftNameText.color = Color.white;
+            postMatchRightNameText.color = Color.white;
+            SetSpriteTint(postMatchLeftAura, new Color32(0x46, 0xFF, 0xF0, 0x95));
+            SetSpriteTint(postMatchRightAura, new Color32(0x46, 0xFF, 0xF0, 0x95));
+            SetSpriteTint(postMatchLeftPortrait, Color.white);
+            SetSpriteTint(postMatchRightPortrait, Color.white);
+            SetSpriteTint(postMatchTopGlow, new Color(0.25f, 0.92f, 0.97f, 0.12f));
+            SetSpriteTint(postMatchBottomGlow, new Color(0.97f, 0.52f, 0.22f, 0.11f));
+            SetSpriteTint(postMatchPromptFrame, new Color(0.24f, 0.9f, 0.96f, 0.92f));
+            if (postMatchLeftAura != null)
+            {
+                postMatchLeftAura.transform.localScale = postMatchLeftAuraBaseScale;
+            }
+
+            if (postMatchRightAura != null)
+            {
+                postMatchRightAura.transform.localScale = postMatchRightAuraBaseScale;
+            }
+
+            if (postMatchLeftPortrait != null)
+            {
+                postMatchLeftPortrait.transform.localScale = postMatchLeftPortraitBaseScale;
+            }
+
+            if (postMatchRightPortrait != null)
+            {
+                postMatchRightPortrait.transform.localScale = postMatchRightPortraitBaseScale;
+            }
+
+            if (postMatchCardRoot != null)
+            {
+                postMatchCardRoot.transform.localScale = Vector3.one;
+                postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PostMatchCardCenterY);
+            }
+
+            SetGameObjectVisible(postMatchOverlayRoot, false);
+        }
+
+        private void UpdatePostMatchVisual(float dt)
+        {
+            postMatchAnimTime += dt;
+            var intro = Mathf.Clamp01(postMatchAnimTime / 0.34f);
+            var eased = 1f - Mathf.Pow(1f - intro, 3f);
+            var pulse = 0.5f + (0.5f * Mathf.Sin(postMatchAnimTime * 3.4f));
+            if (postMatchCardRoot != null)
+            {
+                postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(
+                    rimrushConstants.Width2,
+                    Mathf.Lerp(PostMatchCardCenterY + 10f, PostMatchCardCenterY, eased));
+                postMatchCardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, eased);
+            }
+
+            var winnerAuraScale = 1.02f + (0.06f * pulse);
+            var loserAuraScale = 0.92f;
+            var winnerPortraitScale = 1.01f + (0.025f * pulse);
+            var loserPortraitScale = 0.94f;
+            if (postMatchLeftAura != null)
+            {
+                postMatchLeftAura.transform.localScale = postMatchLeftAuraBaseScale * (postMatchWinnerSide == -1 ? winnerAuraScale : loserAuraScale);
+            }
+
+            if (postMatchRightAura != null)
+            {
+                postMatchRightAura.transform.localScale = postMatchRightAuraBaseScale * (postMatchWinnerSide == 1 ? winnerAuraScale : loserAuraScale);
+            }
+
+            if (postMatchLeftPortrait != null)
+            {
+                postMatchLeftPortrait.transform.localScale = postMatchLeftPortraitBaseScale * (postMatchWinnerSide == -1 ? winnerPortraitScale : loserPortraitScale);
+            }
+
+            if (postMatchRightPortrait != null)
+            {
+                postMatchRightPortrait.transform.localScale = postMatchRightPortraitBaseScale * (postMatchWinnerSide == 1 ? winnerPortraitScale : loserPortraitScale);
+            }
+
+            postMatchPromptText.color = postMatchPlayerWon
+                ? new Color(0.95f, 1f, 0.66f, Mathf.Lerp(0.7f, 1f, pulse))
+                : new Color(0.95f, 0.88f, 1f, Mathf.Lerp(0.72f, 1f, pulse));
+            SetSpriteTint(
+                postMatchPromptFrame,
+                postMatchPlayerWon
+                    ? new Color(0.24f, 0.9f, 0.96f, Mathf.Lerp(0.75f, 0.98f, pulse))
+                    : new Color(0.67f, 0.46f, 0.98f, Mathf.Lerp(0.72f, 0.96f, pulse)));
+            SetSpriteTint(
+                postMatchTopGlow,
+                new Color(0.25f, 0.92f, 0.97f, Mathf.Lerp(0.08f, 0.16f, pulse)));
+            SetSpriteTint(
+                postMatchBottomGlow,
+                postMatchPlayerWon
+                    ? new Color(0.97f, 0.52f, 0.22f, Mathf.Lerp(0.08f, 0.16f, 1f - pulse))
+                    : new Color(0.68f, 0.42f, 0.98f, Mathf.Lerp(0.08f, 0.15f, 1f - pulse)));
         }
 
         private void UpdateMessageVisual()
@@ -846,6 +1208,21 @@ namespace rimrush
             }
 
             return message.Length >= 8 ? 0.94f : 1f;
+        }
+
+        private static int ResolvePostMatchNameFontSize(string characterName)
+        {
+            if (string.IsNullOrEmpty(characterName))
+            {
+                return 15;
+            }
+
+            if (characterName.Length >= 12)
+            {
+                return 12;
+            }
+
+            return characterName.Length >= 9 ? 13 : 15;
         }
 
         private static GameObject CreatePausePanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
@@ -983,22 +1360,24 @@ namespace rimrush
             return anchor;
         }
 
-        private static void CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
+        private static GameObject CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
         {
             var interfaceAtlas = rimrushAtlasCache.Instance.Interface;
             if (interfaceAtlas == null || !interfaceAtlas.HasFrame("EmblemsBg0000"))
             {
-                return;
+                return null;
             }
 
             var aura = rimrushRender.Sprite(name, interfaceAtlas, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
             aura.transform.localScale *= scale;
             aura.GetComponent<SpriteRenderer>().color = new Color32(0x46, 0xFF, 0xF0, 0x95);
+            return aura;
         }
 
         private static GameObject CreateCharacterPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
-            var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId);
+            var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
+            var sprite = rimrushPlayersData.GetCharacterPortraitSprite(characterId, targetSize);
             if (sprite == null)
             {
                 return null;
@@ -1010,12 +1389,25 @@ namespace rimrush
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
 
-            var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
             var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
             var scale = targetSize / Mathf.Max(1f, spritePixels);
-            var adjustedY = y + rimrushPlayersData.GetCharacterPortraitOffsetY(characterId) * scale;
+            var adjustedY = y + rimrushPlayersData.GetCharacterPortraitOffsetY(characterId, sprite) * scale;
             rimrushRender.ApplyPixelTransform(portrait.transform, x, adjustedY, 0f, scale);
             return portrait;
+        }
+
+        private static void SetSpriteTint(GameObject target, Color tint)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var renderer = target.GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                renderer.color = tint;
+            }
         }
 
         private static string FormatTime(float secondsLeft)
@@ -1039,7 +1431,10 @@ namespace rimrush
         private readonly System.Action action;
         private readonly GameObject sprite;
         private readonly TextMesh label;
+        private readonly TMP_Text nativeLabel;
+        private readonly Transform labelTransform;
         private readonly Vector3 baseScale;
+        private readonly Vector3 labelBaseScale;
         private bool visible = true;
         private bool backgroundVisible = true;
         private bool labelVisible = true;
@@ -1062,17 +1457,36 @@ namespace rimrush
 
             baseScale = sprite.transform.localScale;
             var fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
-            label = rimrushRender.Text(
-                $"ButtonText_{text}",
-                text,
-                x,
-                y + 1f,
-                fontSize,
-                Color.white,
-                TextAnchor.MiddleCenter,
-                sortingOrder + 30,
-                parent,
-                rimrushTextStyle.ButtonLabel);
+            if (rimrushNativeMenuTextLayer.Active != null && rimrushNativeMenuTextLayer.Active.Owns(parent))
+            {
+                nativeLabel = rimrushNativeMenuTextLayer.Active.CreateText(
+                    $"ButtonText_{text}",
+                    text,
+                    x,
+                    y + 1f,
+                    fontSize,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    rimrushTextStyle.ButtonLabel);
+                labelTransform = nativeLabel.rectTransform;
+            }
+            else
+            {
+                label = rimrushRender.Text(
+                    $"ButtonText_{text}",
+                    text,
+                    x,
+                    y + 1f,
+                    fontSize,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    sortingOrder + 30,
+                    parent,
+                    rimrushTextStyle.ButtonLabel);
+                labelTransform = label.transform;
+            }
+
+            labelBaseScale = labelTransform != null ? labelTransform.localScale : Vector3.one;
         }
 
         public void Update(Camera camera)
@@ -1098,13 +1512,35 @@ namespace rimrush
             }
             else
             {
-                var world = camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -camera.transform.position.z));
-                pixel = rimrushConstants.WorldToPixel(world);
-                inside = rect.Contains(pixel);
+                var screenPoint = new Vector2(mouse.x, mouse.y);
+                if (!camera.pixelRect.Contains(screenPoint))
+                {
+                    pixel = default;
+                    inside = false;
+                }
+                else
+                {
+                    var world = camera.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -camera.transform.position.z));
+                    pixel = rimrushConstants.WorldToPixel(world);
+                    inside = rect.Contains(pixel);
+                }
             }
 
             sprite.transform.localScale = inside ? baseScale * 1.035f : baseScale;
-            label.color = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
+            if (labelTransform != null)
+            {
+                labelTransform.localScale = inside ? labelBaseScale * 1.035f : labelBaseScale;
+            }
+
+            var labelColor = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
+            if (label != null)
+            {
+                label.color = labelColor;
+            }
+            else if (nativeLabel != null)
+            {
+                nativeLabel.color = labelColor;
+            }
 
             if (inside && Input.GetMouseButtonDown(0))
             {
@@ -1124,14 +1560,28 @@ namespace rimrush
 
         public void SetText(string text)
         {
-            label.text = text;
+            if (label != null)
+            {
+                label.text = text;
+            }
+            else if (nativeLabel != null)
+            {
+                nativeLabel.text = text;
+            }
         }
 
         public void SetVisible(bool isVisible)
         {
             visible = isVisible;
             sprite.SetActive(isVisible && backgroundVisible);
-            label.gameObject.SetActive(isVisible && labelVisible);
+            if (label != null)
+            {
+                label.gameObject.SetActive(isVisible && labelVisible);
+            }
+            else if (nativeLabel != null)
+            {
+                nativeLabel.gameObject.SetActive(isVisible && labelVisible);
+            }
         }
 
         public void SetBackgroundVisible(bool isVisible)
@@ -1143,7 +1593,14 @@ namespace rimrush
         public void SetLabelVisible(bool isVisible)
         {
             labelVisible = isVisible;
-            label.gameObject.SetActive(visible && labelVisible);
+            if (label != null)
+            {
+                label.gameObject.SetActive(visible && labelVisible);
+            }
+            else if (nativeLabel != null)
+            {
+                nativeLabel.gameObject.SetActive(visible && labelVisible);
+            }
         }
     }
 

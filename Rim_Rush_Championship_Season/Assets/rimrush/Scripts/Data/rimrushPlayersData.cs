@@ -6,6 +6,8 @@ namespace rimrush
     public static class rimrushPlayersData
     {
         private const int ActiveCharacterSkinCount = 8;
+        private const float PortraitAtlasSourceScale = 4f;
+        private const int PortraitVariantSampleGrid = 4;
 
         private sealed class rimrushCharacterDefinition
         {
@@ -26,6 +28,8 @@ namespace rimrush
         }
 
         private static DBLiteTextureAtlas portraitAtlas;
+        private static readonly Dictionary<string, Sprite> PortraitVariantSprites = new Dictionary<string, Sprite>();
+        private static readonly Dictionary<string, Texture2D> PortraitVariantTextures = new Dictionary<string, Texture2D>();
 
         private static readonly rimrushCharacterDefinition[] CharacterDefinitions =
         {
@@ -147,11 +151,28 @@ namespace rimrush
             return GetCharacterDefinition(characterId).PreviewOffsetY;
         }
 
-        public static Sprite GetCharacterPortraitSprite(int characterId)
+        public static Sprite GetCharacterPortraitSprite(int characterId, float desiredMaxPixels = 0f)
         {
             var definition = GetCharacterDefinition(characterId);
-            var atlas = GetPortraitAtlas();
-            return atlas?.Sprite(definition.PortraitSpriteName);
+            var baseSprite = GetPortraitBaseSprite(definition);
+            if (baseSprite == null)
+            {
+                return null;
+            }
+
+            var requestedMaxPixels = Mathf.RoundToInt(desiredMaxPixels);
+            if (requestedMaxPixels <= 0)
+            {
+                return baseSprite;
+            }
+
+            var baseMaxPixels = Mathf.RoundToInt(Mathf.Max(baseSprite.rect.width, baseSprite.rect.height));
+            if (requestedMaxPixels >= baseMaxPixels)
+            {
+                return baseSprite;
+            }
+
+            return GetOrCreatePortraitVariantSprite(definition.PortraitSpriteName, baseSprite, requestedMaxPixels);
         }
 
         public static float GetCharacterPortraitScaleMultiplier(int characterId)
@@ -159,9 +180,29 @@ namespace rimrush
             return GetCharacterDefinition(characterId).PortraitScaleMultiplier;
         }
 
-        public static float GetCharacterPortraitOffsetY(int characterId)
+        public static float GetCharacterPortraitOffsetY(int characterId, Sprite portraitSprite = null)
         {
-            return GetCharacterDefinition(characterId).PortraitOffsetY;
+            var definition = GetCharacterDefinition(characterId);
+            var baseOffset = definition.PortraitOffsetY * PortraitAtlasSourceScale;
+            if (portraitSprite == null)
+            {
+                return baseOffset;
+            }
+
+            var baseSprite = GetPortraitBaseSprite(definition);
+            if (baseSprite == null)
+            {
+                return baseOffset;
+            }
+
+            var baseMaxPixels = Mathf.Max(baseSprite.rect.width, baseSprite.rect.height);
+            var spriteMaxPixels = Mathf.Max(portraitSprite.rect.width, portraitSprite.rect.height);
+            if (baseMaxPixels <= 0.0001f || spriteMaxPixels <= 0.0001f)
+            {
+                return baseOffset;
+            }
+
+            return baseOffset * (spriteMaxPixels / baseMaxPixels);
         }
 
         public static void ApplyCharacter(DBLiteArmature armature, int characterId)
@@ -226,6 +267,12 @@ namespace rimrush
             return CharacterDefinitions[SanitizeCharacterId(characterId)];
         }
 
+        private static Sprite GetPortraitBaseSprite(rimrushCharacterDefinition definition)
+        {
+            var atlas = GetPortraitAtlas();
+            return atlas?.Sprite(definition.PortraitSpriteName);
+        }
+
         private static DBLiteTextureAtlas GetPortraitAtlas()
         {
             if (portraitAtlas != null)
@@ -233,16 +280,128 @@ namespace rimrush
                 return portraitAtlas;
             }
 
-            var textureJsonAsset = Resources.Load<TextAsset>("rimrush/DragonBones/texture2");
-            var texture = Resources.Load<Texture2D>("rimrush/DragonBones/texture2");
+            var portraitAtlasPath = rimrushAssets.Portraits.ResourcePath(rimrushAssets.Portraits.UiAtlas);
+            var textureJsonAsset = Resources.Load<TextAsset>(portraitAtlasPath);
+            var texture = Resources.Load<Texture2D>(portraitAtlasPath);
             if (textureJsonAsset == null || texture == null)
             {
-                Debug.LogWarning("Missing DragonBones portrait atlas resources.");
+                Debug.LogWarning("Missing UI portrait atlas resources.");
                 return null;
             }
 
-            portraitAtlas = DBLiteTextureAtlas.Parse("texture2_portraits", texture, textureJsonAsset.text);
+            portraitAtlas = DBLiteTextureAtlas.Parse(rimrushAssets.Portraits.UiAtlas, texture, textureJsonAsset.text);
             return portraitAtlas;
+        }
+
+        private static Sprite GetOrCreatePortraitVariantSprite(string portraitSpriteName, Sprite baseSprite, int maxPixels)
+        {
+            var safeMaxPixels = Mathf.Max(1, maxPixels);
+            var cacheKey = $"{portraitSpriteName}@{safeMaxPixels}";
+            if (PortraitVariantSprites.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
+            var texture = baseSprite.texture;
+            if (texture == null || !texture.isReadable)
+            {
+                Debug.LogWarning($"Portrait atlas texture must be readable to build portrait variants: {portraitSpriteName}");
+                return baseSprite;
+            }
+
+            var variantTexture = BuildPortraitVariantTexture(texture, baseSprite.rect, safeMaxPixels, cacheKey);
+            if (variantTexture == null)
+            {
+                return baseSprite;
+            }
+
+            var sprite = UnityEngine.Sprite.Create(
+                variantTexture,
+                new Rect(0f, 0f, variantTexture.width, variantTexture.height),
+                new Vector2(0.5f, 0.5f),
+                1f,
+                0,
+                SpriteMeshType.FullRect);
+            sprite.name = cacheKey;
+
+            PortraitVariantTextures[cacheKey] = variantTexture;
+            PortraitVariantSprites[cacheKey] = sprite;
+            return sprite;
+        }
+
+        private static Texture2D BuildPortraitVariantTexture(Texture2D sourceTexture, Rect sourceRect, int maxPixels, string textureName)
+        {
+            var sourceMaxPixels = Mathf.Max(sourceRect.width, sourceRect.height);
+            if (sourceMaxPixels <= 0.0001f)
+            {
+                return null;
+            }
+
+            var scale = Mathf.Min(1f, maxPixels / sourceMaxPixels);
+            var width = Mathf.Max(1, Mathf.RoundToInt(sourceRect.width * scale));
+            var height = Mathf.Max(1, Mathf.RoundToInt(sourceRect.height * scale));
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, false)
+            {
+                name = textureName,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            texture.SetPixels32(DownsamplePortraitPixels(sourceTexture, sourceRect, width, height));
+            texture.Apply(false, true);
+            return texture;
+        }
+
+        private static Color32[] DownsamplePortraitPixels(Texture2D sourceTexture, Rect sourceRect, int width, int height)
+        {
+            var output = new Color32[width * height];
+            var sampleCount = PortraitVariantSampleGrid * PortraitVariantSampleGrid;
+            var inverseSampleCount = 1f / sampleCount;
+
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    var accumulatedAlpha = 0f;
+                    var accumulatedRed = 0f;
+                    var accumulatedGreen = 0f;
+                    var accumulatedBlue = 0f;
+
+                    for (var sampleY = 0; sampleY < PortraitVariantSampleGrid; sampleY++)
+                    {
+                        var v = (y + (sampleY + 0.5f) / PortraitVariantSampleGrid) / height;
+                        for (var sampleX = 0; sampleX < PortraitVariantSampleGrid; sampleX++)
+                        {
+                            var u = (x + (sampleX + 0.5f) / PortraitVariantSampleGrid) / width;
+                            var sourceU = (sourceRect.x + u * sourceRect.width) / sourceTexture.width;
+                            var sourceV = (sourceRect.y + v * sourceRect.height) / sourceTexture.height;
+                            var color = sourceTexture.GetPixelBilinear(sourceU, sourceV);
+                            accumulatedAlpha += color.a;
+                            accumulatedRed += color.r * color.a;
+                            accumulatedGreen += color.g * color.a;
+                            accumulatedBlue += color.b * color.a;
+                        }
+                    }
+
+                    var alpha = accumulatedAlpha * inverseSampleCount;
+                    var index = y * width + x;
+                    if (alpha <= 0.0001f)
+                    {
+                        output[index] = new Color32(0, 0, 0, 0);
+                        continue;
+                    }
+
+                    var normalizedAlpha = Mathf.Clamp01(alpha);
+                    var rgbDivisor = Mathf.Max(accumulatedAlpha, 0.0001f);
+                    output[index] = new Color(
+                        Mathf.Clamp01(accumulatedRed / rgbDivisor),
+                        Mathf.Clamp01(accumulatedGreen / rgbDivisor),
+                        Mathf.Clamp01(accumulatedBlue / rgbDivisor),
+                        normalizedAlpha);
+                }
+            }
+
+            return output;
         }
 
         private static void ApplyCharacterTuning(DBLiteArmature armature, rimrushCharacterDefinition definition)
