@@ -139,7 +139,6 @@ namespace rimrush
         private int lastCountdownTick = int.MinValue;
         private float postMatchAnimTime;
         private int postMatchWinnerSide;
-        private bool postMatchPlayerWon;
         public bool IsPostMatchVisible => postMatchOverlayRoot != null && postMatchOverlayRoot.activeSelf;
         public bool IsPauseOverlayVisible { get; private set; }
 
@@ -924,9 +923,11 @@ namespace rimrush
         public void ShowPostMatch(int winner, int leftScoreValue, int rightScoreValue)
         {
             var inventory = rimrushInventory.Instance;
+            var isPlayerFacingMode = inventory.IsTournamentActive || inventory.GameMode == 1 || inventory.GameMode == 2;
+            var titleUsesWarmAccent = !isPlayerFacingMode || winner < 0;
+            var winnerName = winner < 0 ? leftCharacterLabel : rightCharacterLabel;
             postMatchWinnerSide = winner < 0 ? -1 : 1;
-            postMatchPlayerWon = postMatchWinnerSide == -1;
-            if (inventory.IsTournamentActive || inventory.GameMode == 1 || inventory.GameMode == 2)
+            if (isPlayerFacingMode)
             {
                 SetText(postMatchTitleText, postMatchWinnerSide == -1 ? "VICTORY" : "DEFEAT");
             }
@@ -935,44 +936,49 @@ namespace rimrush
                 SetText(postMatchTitleText, postMatchWinnerSide == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
             }
 
-            postMatchTitleText.color = postMatchWinnerSide == -1
-                ? new Color32(0xFF, 0xC4, 0x44, 0xFF)
-                : new Color32(0xC9, 0x92, 0xFF, 0xFF);
-            postMatchScoreText.color = postMatchWinnerSide == -1
-                ? new Color32(0xFF, 0xF1, 0xD0, 0xFF)
-                : new Color32(0xF0, 0xE7, 0xFF, 0xFF);
-            SetText(postMatchSubtitleText, inventory.IsTournamentActive ? "CHAMPIONSHIP RESULT" : "FINAL BUZZER");
-            SetText(postMatchWinnerTagText, "WINNER");
-            postMatchWinnerTagText.transform.position = rimrushConstants.PixelToWorldSnapped(
-                rimrushConstants.Width2 + (postMatchWinnerSide * PostMatchPortraitOffsetX),
-                PostMatchWinnerTagY);
+            postMatchTitleText.color = titleUsesWarmAccent
+                ? new Color32(0xFF, 0xC7, 0x56, 0xFF)
+                : new Color32(0xDB, 0xE4, 0xF1, 0xFF);
+            postMatchSubtitleText.color = new Color32(0xCB, 0xD9, 0xE4, 0xFF);
+            postMatchScoreText.color = new Color32(0xFF, 0xF3, 0xD8, 0xFF);
+            postMatchWinnerTagText.color = new Color32(0xFF, 0xDE, 0x98, 0xFF);
+            SetText(postMatchSubtitleText, inventory.IsTournamentActive ? "CHAMPIONSHIP RESULT" : "FINAL SCORE");
+            SetText(postMatchWinnerTagText, $"WINNER: {winnerName}");
             postMatchLeftNameText.color = postMatchWinnerSide == -1
-                ? new Color32(0xFF, 0xDC, 0x8A, 0xFF)
-                : new Color32(0xE2, 0xEA, 0xF7, 0xFF);
+                ? new Color32(0xFF, 0xDE, 0x99, 0xFF)
+                : new Color32(0xD8, 0xE0, 0xEC, 0xFF);
             postMatchRightNameText.color = postMatchWinnerSide == 1
-                ? new Color32(0xFF, 0xDC, 0x8A, 0xFF)
-                : new Color32(0xE2, 0xEA, 0xF7, 0xFF);
+                ? new Color32(0xFF, 0xDE, 0x99, 0xFF)
+                : new Color32(0xD8, 0xE0, 0xEC, 0xFF);
+            SetSpriteTint(postMatchCardPanel, new Color(0.03f, 0.06f, 0.1f, 0.94f));
+            SetSpriteTint(
+                postMatchCardFrame,
+                titleUsesWarmAccent
+                    ? new Color(1f, 0.82f, 0.55f, 0.2f)
+                    : new Color(0.86f, 0.96f, 1f, 0.18f));
+            SetSpriteTint(postMatchScorePlate, new Color(0.02f, 0.04f, 0.08f, 0.82f));
             SetSpriteTint(
                 postMatchLeftAura,
                 postMatchWinnerSide == -1
-                    ? new Color(1f, 0.8f, 0.36f, 0.95f)
-                    : new Color(0.46f, 1f, 0.94f, 0.42f));
+                    ? new Color(1f, 0.79f, 0.37f, 0.6f)
+                    : new Color(0.52f, 0.71f, 0.8f, 0.18f));
             SetSpriteTint(
                 postMatchRightAura,
                 postMatchWinnerSide == 1
-                    ? new Color(1f, 0.8f, 0.36f, 0.95f)
-                    : new Color(0.46f, 1f, 0.94f, 0.42f));
-            SetSpriteTint(postMatchLeftPortrait, postMatchWinnerSide == -1 ? Color.white : new Color(0.8f, 0.77f, 0.9f, 0.78f));
-            SetSpriteTint(postMatchRightPortrait, postMatchWinnerSide == 1 ? Color.white : new Color(0.8f, 0.77f, 0.9f, 0.78f));
-            SetText(postMatchScoreText, $"{leftScoreValue}  :  {rightScoreValue}");
+                    ? new Color(1f, 0.79f, 0.37f, 0.6f)
+                    : new Color(0.52f, 0.71f, 0.8f, 0.18f));
+            SetSpriteTint(postMatchLeftPortrait, postMatchWinnerSide == -1 ? Color.white : new Color(0.73f, 0.77f, 0.84f, 0.62f));
+            SetSpriteTint(postMatchRightPortrait, postMatchWinnerSide == 1 ? Color.white : new Color(0.73f, 0.77f, 0.84f, 0.62f));
+            SetText(postMatchScoreText, $"{leftScoreValue} - {rightScoreValue}");
             SetText(postMatchPromptText, inventory.IsTournamentActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER");
             postMatchAnimTime = 0f;
             if (postMatchCardRoot != null)
             {
-                postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PostMatchCardCenterY + 10f);
-                postMatchCardRoot.transform.localScale = Vector3.one * 0.94f;
+                postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PostMatchCardCenterY + 12f);
+                postMatchCardRoot.transform.localScale = Vector3.one * 0.96f;
             }
 
+            SetScoreboardVisible(false);
             SetGameObjectVisible(postMatchOverlayRoot, true);
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
@@ -992,16 +998,23 @@ namespace rimrush
             SetText(postMatchPromptText, string.Empty);
             postMatchAnimTime = 0f;
             postMatchWinnerSide = 0;
-            postMatchPlayerWon = false;
+            postMatchTitleText.color = new Color32(0xFF, 0xC7, 0x56, 0xFF);
+            postMatchSubtitleText.color = new Color32(0xCB, 0xD9, 0xE4, 0xFF);
+            postMatchScoreText.color = new Color32(0xFF, 0xF3, 0xD8, 0xFF);
+            postMatchWinnerTagText.color = new Color32(0xFF, 0xDE, 0x98, 0xFF);
             postMatchLeftNameText.color = Color.white;
             postMatchRightNameText.color = Color.white;
-            SetSpriteTint(postMatchLeftAura, new Color32(0x46, 0xFF, 0xF0, 0x95));
-            SetSpriteTint(postMatchRightAura, new Color32(0x46, 0xFF, 0xF0, 0x95));
+            SetSpriteTint(postMatchCardPanel, new Color(0.03f, 0.06f, 0.1f, 0.94f));
+            SetSpriteTint(postMatchCardFrame, new Color(0.86f, 0.96f, 1f, 0.18f));
+            SetSpriteTint(postMatchScorePlate, new Color(0.02f, 0.04f, 0.08f, 0.82f));
+            SetSpriteTint(postMatchLeftAura, new Color(0.52f, 0.71f, 0.8f, 0.18f));
+            SetSpriteTint(postMatchRightAura, new Color(0.52f, 0.71f, 0.8f, 0.18f));
             SetSpriteTint(postMatchLeftPortrait, Color.white);
             SetSpriteTint(postMatchRightPortrait, Color.white);
-            SetSpriteTint(postMatchTopGlow, new Color(0.25f, 0.92f, 0.97f, 0.12f));
-            SetSpriteTint(postMatchBottomGlow, new Color(0.97f, 0.52f, 0.22f, 0.11f));
-            SetSpriteTint(postMatchPromptFrame, new Color(0.24f, 0.9f, 0.96f, 0.92f));
+            postMatchPromptText.color = new Color32(0xEE, 0xF5, 0xD5, 0xFF);
+            SetSpriteTint(postMatchTopGlow, new Color(0.34f, 0.86f, 0.92f, 0.08f));
+            SetSpriteTint(postMatchBottomGlow, new Color(1f, 0.72f, 0.34f, 0.06f));
+            SetSpriteTint(postMatchPromptFrame, new Color(0.3f, 0.82f, 0.9f, 0.34f));
             if (postMatchLeftAura != null)
             {
                 postMatchLeftAura.transform.localScale = postMatchLeftAuraBaseScale;
@@ -1028,6 +1041,7 @@ namespace rimrush
                 postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PostMatchCardCenterY);
             }
 
+            SetScoreboardVisible(true);
             SetGameObjectVisible(postMatchOverlayRoot, false);
         }
 
@@ -1036,19 +1050,19 @@ namespace rimrush
             postMatchAnimTime += dt;
             var intro = Mathf.Clamp01(postMatchAnimTime / 0.34f);
             var eased = 1f - Mathf.Pow(1f - intro, 3f);
-            var pulse = 0.5f + (0.5f * Mathf.Sin(postMatchAnimTime * 3.4f));
+            var pulse = 0.5f + (0.5f * Mathf.Sin(postMatchAnimTime * 2.4f));
             if (postMatchCardRoot != null)
             {
                 postMatchCardRoot.transform.position = rimrushConstants.PixelToWorldSnapped(
                     rimrushConstants.Width2,
-                    Mathf.Lerp(PostMatchCardCenterY + 10f, PostMatchCardCenterY, eased));
-                postMatchCardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, eased);
+                    Mathf.Lerp(PostMatchCardCenterY + 12f, PostMatchCardCenterY, eased));
+                postMatchCardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0.96f, 1f, eased);
             }
 
-            var winnerAuraScale = 1.02f + (0.06f * pulse);
+            var winnerAuraScale = 1f + (0.035f * pulse);
             var loserAuraScale = 0.92f;
-            var winnerPortraitScale = 1.01f + (0.025f * pulse);
-            var loserPortraitScale = 0.94f;
+            var winnerPortraitScale = 1f + (0.014f * pulse);
+            var loserPortraitScale = 0.98f;
             if (postMatchLeftAura != null)
             {
                 postMatchLeftAura.transform.localScale = postMatchLeftAuraBaseScale * (postMatchWinnerSide == -1 ? winnerAuraScale : loserAuraScale);
@@ -1069,22 +1083,16 @@ namespace rimrush
                 postMatchRightPortrait.transform.localScale = postMatchRightPortraitBaseScale * (postMatchWinnerSide == 1 ? winnerPortraitScale : loserPortraitScale);
             }
 
-            postMatchPromptText.color = postMatchPlayerWon
-                ? new Color(0.95f, 1f, 0.66f, Mathf.Lerp(0.7f, 1f, pulse))
-                : new Color(0.95f, 0.88f, 1f, Mathf.Lerp(0.72f, 1f, pulse));
+            postMatchPromptText.color = new Color(0.93f, 0.96f, 0.84f, Mathf.Lerp(0.72f, 1f, pulse));
             SetSpriteTint(
                 postMatchPromptFrame,
-                postMatchPlayerWon
-                    ? new Color(0.24f, 0.9f, 0.96f, Mathf.Lerp(0.75f, 0.98f, pulse))
-                    : new Color(0.67f, 0.46f, 0.98f, Mathf.Lerp(0.72f, 0.96f, pulse)));
+                new Color(0.3f, 0.82f, 0.9f, Mathf.Lerp(0.24f, 0.42f, pulse)));
             SetSpriteTint(
                 postMatchTopGlow,
-                new Color(0.25f, 0.92f, 0.97f, Mathf.Lerp(0.08f, 0.16f, pulse)));
+                new Color(0.34f, 0.86f, 0.92f, Mathf.Lerp(0.05f, 0.09f, pulse)));
             SetSpriteTint(
                 postMatchBottomGlow,
-                postMatchPlayerWon
-                    ? new Color(0.97f, 0.52f, 0.22f, Mathf.Lerp(0.08f, 0.16f, 1f - pulse))
-                    : new Color(0.68f, 0.42f, 0.98f, Mathf.Lerp(0.08f, 0.15f, 1f - pulse)));
+                new Color(1f, 0.72f, 0.34f, Mathf.Lerp(0.04f, 0.08f, 1f - pulse)));
         }
 
         private void UpdateMessageVisual()
@@ -1214,7 +1222,7 @@ namespace rimrush
         {
             if (string.IsNullOrEmpty(characterName))
             {
-                return 15;
+                return 14;
             }
 
             if (characterName.Length >= 12)
@@ -1222,7 +1230,7 @@ namespace rimrush
                 return 12;
             }
 
-            return characterName.Length >= 9 ? 13 : 15;
+            return characterName.Length >= 9 ? 13 : 14;
         }
 
         private static GameObject CreatePausePanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
@@ -1278,6 +1286,11 @@ namespace rimrush
             SetGameObjectVisible(pauseOverlayRoot, visible);
             pauseMenuButton.SetVisible(visible);
             pauseResumeButton.SetVisible(visible);
+        }
+
+        private void SetScoreboardVisible(bool visible)
+        {
+            SetGameObjectVisible(scoreboardRoot, visible);
         }
 
         private GameObject CreatePauseButtonIcon(Transform parent)
