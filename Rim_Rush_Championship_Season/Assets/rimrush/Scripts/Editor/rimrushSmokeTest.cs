@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,12 +30,16 @@ namespace rimrush.EditorTools
                 CheckResource<Font>("rimrush/Fonts/Rajdhani-SemiBold", errors);
                 CheckResource<Font>("rimrush/Fonts/Rajdhani-Bold", errors);
                 CheckResource<Font>("rimrush/Fonts/Griffy-Regular", errors);
+                EnsureTextMeshProEssentialResources(errors);
+                ValidateNativeMenuTextLayer(errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.PauseButton), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton), errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Scoreboard), errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), errors);
+                CheckResource<TextAsset>(rimrushAssets.Portraits.ResourcePath(rimrushAssets.Portraits.UiAtlas), errors);
+                CheckResource<Texture2D>(rimrushAssets.Portraits.ResourcePath(rimrushAssets.Portraits.UiAtlas), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameplayImages.BallGhoulGreen), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameplayImages.BallPumpkinEmber), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameplayImages.BallMoonlitViolet), errors);
@@ -88,6 +93,15 @@ namespace rimrush.EditorTools
                     foreach (var characterId in rimrushPlayersData.GetActiveCharacterIds())
                     {
                         rimrushPlayersData.ApplyCharacter(armature, characterId);
+                        if (rimrushPlayersData.GetCharacterPortraitSprite(characterId) == null)
+                        {
+                            errors.Add($"Missing UI portrait sprite for active character {characterId}.");
+                        }
+
+                        if (rimrushPlayersData.GetCharacterPortraitSprite(characterId, 28f) == null)
+                        {
+                            errors.Add($"Missing small UI portrait sprite variant for active character {characterId}.");
+                        }
                     }
 
                     UnityEngine.Object.DestroyImmediate(armature.gameObject);
@@ -150,6 +164,84 @@ namespace rimrush.EditorTools
             if (Resources.Load<T>(path) == null)
             {
                 errors.Add($"Missing resource: {path}");
+            }
+        }
+
+        private static void ValidateNativeMenuTextLayer(List<string> errors)
+        {
+            var root = new GameObject("NativeMenuTextSmokeRoot");
+            rimrushNativeMenuTextLayer layer = null;
+
+            try
+            {
+                layer = new rimrushNativeMenuTextLayer(root.transform);
+                layer.RefreshLayout(rimrushConstants.Width, 480);
+
+                var heading = layer.CreateText(
+                    "SmokeHeading",
+                    "TOURNAMENT",
+                    rimrushConstants.Width2,
+                    80f,
+                    20,
+                    Color.white,
+                    TextAnchor.MiddleCenter,
+                    rimrushTextStyle.TournamentAccent);
+                if (heading == null || heading.font == null)
+                {
+                    errors.Add("Native menu TMP text layer could not create a heading with a font asset.");
+                }
+
+                var button = new rimrushMenuButton("PLAY", rimrushConstants.Width2, 440f, 150f, 42f, null, root.transform);
+                var tmpTexts = root.GetComponentsInChildren<TMP_Text>(true);
+                var legacyTexts = root.GetComponentsInChildren<TextMesh>(true);
+                if (tmpTexts.Length < 2)
+                {
+                    errors.Add("Native menu TMP text layer did not create the expected TMP heading and button label.");
+                }
+
+                if (legacyTexts.Length > 0)
+                {
+                    errors.Add("Native menu button labels still created legacy TextMesh components while the TMP menu layer was active.");
+                }
+
+                button.SetVisible(false);
+            }
+            finally
+            {
+                layer?.Dispose();
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        private static void EnsureTextMeshProEssentialResources(List<string> errors)
+        {
+            var hasSettings = AssetDatabase.FindAssets("t:TMP_Settings").Length > 0;
+            var hasShader = Shader.Find("TextMeshPro/Mobile/Distance Field") != null;
+            if (hasSettings && hasShader)
+            {
+                return;
+            }
+
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(TMP_Text).Assembly);
+            if (packageInfo == null)
+            {
+                errors.Add("Could not resolve the TextMeshPro package path needed to import essential resources.");
+                return;
+            }
+
+            var packagePath = Path.Combine(packageInfo.resolvedPath, "Package Resources", "TMP Essential Resources.unitypackage");
+            if (!File.Exists(packagePath))
+            {
+                errors.Add($"TMP essential resources package was missing at {packagePath}.");
+                return;
+            }
+
+            AssetDatabase.ImportPackage(packagePath, false);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+
+            if (AssetDatabase.FindAssets("t:TMP_Settings").Length == 0 || Shader.Find("TextMeshPro/Mobile/Distance Field") == null)
+            {
+                errors.Add("TMP essential resources could not be imported into the project.");
             }
         }
 

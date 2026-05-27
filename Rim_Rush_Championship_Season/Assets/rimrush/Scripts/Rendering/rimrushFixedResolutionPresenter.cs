@@ -49,10 +49,21 @@ namespace rimrush
             EnsureOutputCamera();
             EnsureCanvas();
             EnsureRenderTexture();
+            SetPresenterVisible(true);
             sourceCamera.targetTexture = renderTexture;
             configured = true;
             activePresenter = this;
             RefreshLayout(force: true);
+        }
+
+        public void Detach()
+        {
+            DetachCurrentCamera();
+            SetPresenterVisible(false);
+            if (activePresenter == this)
+            {
+                activePresenter = null;
+            }
         }
 
         public static bool TryMapScreenToGamePixel(Vector2 screenPosition, out Vector2 gamePixel)
@@ -254,6 +265,19 @@ namespace rimrush
             sourceCamera.allowMSAA = originalAllowMsaa;
             sourceCamera = null;
             configured = false;
+        }
+
+        private void SetPresenterVisible(bool visible)
+        {
+            if (canvas != null)
+            {
+                canvas.gameObject.SetActive(visible);
+            }
+
+            if (outputCamera != null)
+            {
+                outputCamera.enabled = visible;
+            }
         }
 
         private bool TryMapScreenToGamePixelInternal(Vector2 screenPosition, out Vector2 gamePixel)
