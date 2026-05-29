@@ -39,6 +39,8 @@ unity-*.log
 _asset_backup_*/
 新图/
 tmp_*
+Rim_Rush_Championship_Season/tmp/
+_smoke_*/
 gitshow_*.tmp
 PROJECT_CONTEXT.md
 **/DOCS/HALLOWEEN_CHARACTER_REPLACEMENT_HANDOFF_ZH.md

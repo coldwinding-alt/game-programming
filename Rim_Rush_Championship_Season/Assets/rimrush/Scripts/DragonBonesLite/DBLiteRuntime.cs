@@ -74,6 +74,7 @@ namespace rimrush
         private DBLiteFactory factory;
         private DBLiteArmatureData data;
         private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>();
+        private readonly HashSet<string> hiddenSlots = new HashSet<string>();
         private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>();
         private DBLiteAnimationData currentAnimation;
         private float elapsedFrames;
@@ -103,6 +104,37 @@ namespace rimrush
         public DBLiteArmature GetChildArmature(string slotName)
         {
             return slots.TryGetValue(slotName, out var slot) ? slot.ChildArmature : null;
+        }
+
+        public void SetSlotHidden(string slotName, bool hidden)
+        {
+            if (string.IsNullOrEmpty(slotName))
+            {
+                return;
+            }
+
+            if (hidden)
+            {
+                hiddenSlots.Add(slotName);
+            }
+            else
+            {
+                hiddenSlots.Remove(slotName);
+            }
+
+            if (!slots.TryGetValue(slotName, out var slot))
+            {
+                return;
+            }
+
+            if (hidden)
+            {
+                slot.SetAlpha(0f);
+            }
+            else
+            {
+                RefreshPose();
+            }
         }
 
         public void Play(string animationName, bool restart = true)
@@ -309,6 +341,11 @@ namespace rimrush
                     }
 
                     pair.Value.SetAlpha(slotTrack.SampleAlpha(animFrame));
+                }
+
+                if (hiddenSlots.Contains(pair.Key))
+                {
+                    pair.Value.SetAlpha(0f);
                 }
             }
         }
@@ -888,7 +925,17 @@ namespace rimrush
             currentDisplay = index;
             if (currentDisplayObject != null)
             {
-                UnityEngine.Object.Destroy(currentDisplayObject);
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                {
+                    UnityEngine.Object.DestroyImmediate(currentDisplayObject);
+                }
+                else
+#endif
+                {
+                    UnityEngine.Object.Destroy(currentDisplayObject);
+                }
+
                 currentDisplayObject = null;
                 ChildArmature = null;
             }

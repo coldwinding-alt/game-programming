@@ -257,6 +257,13 @@ namespace rimrush
                 return;
             }
 
+            var helpVisible = rimrushHelpPanel.IsAnyOpen;
+            nativeMenuTextLayer?.SetVisible(!helpVisible);
+            if (helpVisible)
+            {
+                return;
+            }
+
             UpdateTournamentAwardsSequence(Time.deltaTime);
             RefreshNativeMenuViewport();
 
@@ -837,7 +844,7 @@ namespace rimrush
                 MenuTopButtonY,
                 MenuTopButtonSize,
                 MenuTopButtonSize,
-                NoOpAction,
+                rimrushHelpPanel.ShowKeyboardPage,
                 runtimeRoot,
                 32,
                 MenuTopIconPixels,

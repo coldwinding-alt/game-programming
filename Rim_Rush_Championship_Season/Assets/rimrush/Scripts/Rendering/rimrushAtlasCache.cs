@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace rimrush
@@ -683,6 +684,65 @@ public static class rimrushRender
         return mesh;
     }
 
+    public static TMP_Text TmpText(
+        string name,
+        string text,
+        float x,
+        float y,
+        int fontSize,
+        Color color,
+        TextAnchor anchor,
+        int sortingOrder,
+        Transform parent,
+        rimrushTextStyle style)
+    {
+        var resolvedStyle = rimrushTextStyles.Resolve(style, fontSize);
+        var go = new GameObject(name);
+        if (parent != null)
+        {
+            go.transform.SetParent(parent, false);
+        }
+
+        var textComponent = go.AddComponent<TextMeshPro>();
+        textComponent.text = text;
+        textComponent.richText = false;
+        textComponent.enableWordWrapping = false;
+        textComponent.overflowMode = TextOverflowModes.Overflow;
+        textComponent.extraPadding = true;
+        textComponent.alignment = AnchorToTmpAlignment(anchor);
+        textComponent.color = color;
+        var worldFontSize = fontSize * 10f;
+        textComponent.fontSize = worldFontSize;
+        textComponent.fontSizeMin = worldFontSize;
+        textComponent.fontSizeMax = worldFontSize;
+        textComponent.lineSpacing = -4f;
+
+        var fontAsset = rimrushTmpFontCache.Get(resolvedStyle.FontKind);
+        if (fontAsset != null)
+        {
+            textComponent.font = fontAsset;
+            if (fontAsset.material != null)
+            {
+                textComponent.fontSharedMaterial = fontAsset.material;
+            }
+        }
+
+        textComponent.outlineWidth = resolvedStyle.OutlineColor.HasValue && resolvedStyle.OutlinePixels > 0f
+            ? Mathf.Clamp01(resolvedStyle.OutlinePixels * 0.08f)
+            : 0f;
+        textComponent.outlineColor = resolvedStyle.OutlineColor ?? Color.clear;
+        textComponent.ForceMeshUpdate();
+
+        var renderer = go.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            renderer.sortingOrder = sortingOrder;
+        }
+
+        ApplyPixelTransform(go.transform, x, y);
+        return textComponent;
+    }
+
         public static void ApplyPixelTransform(Transform transform, float x, float y, float z = 0f, float scale = 1f, float rotationDegrees = 0f)
         {
             transform.position = rimrushConstants.PixelToWorldSnapped(x, y, z);
@@ -757,6 +817,31 @@ public static class rimrushRender
                     return TextAlignment.Right;
                 default:
                     return TextAlignment.Center;
+            }
+        }
+
+        private static TextAlignmentOptions AnchorToTmpAlignment(TextAnchor anchor)
+        {
+            switch (anchor)
+            {
+                case TextAnchor.UpperLeft:
+                    return TextAlignmentOptions.TopLeft;
+                case TextAnchor.UpperCenter:
+                    return TextAlignmentOptions.Top;
+                case TextAnchor.UpperRight:
+                    return TextAlignmentOptions.TopRight;
+                case TextAnchor.MiddleLeft:
+                    return TextAlignmentOptions.MidlineLeft;
+                case TextAnchor.MiddleRight:
+                    return TextAlignmentOptions.MidlineRight;
+                case TextAnchor.LowerLeft:
+                    return TextAlignmentOptions.BottomLeft;
+                case TextAnchor.LowerCenter:
+                    return TextAlignmentOptions.Bottom;
+                case TextAnchor.LowerRight:
+                    return TextAlignmentOptions.BottomRight;
+                default:
+                    return TextAlignmentOptions.Center;
             }
         }
     }
