@@ -80,6 +80,12 @@ namespace rimrush
 
         public void Update(float dt)
         {
+            if (rimrushHelpPanel.IsAnyOpen)
+            {
+                hud.Update(dt);
+                return;
+            }
+
             if (!pauseResumeCountdown &&
                 (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape)) &&
                 postMatchDelay <= 0f &&
@@ -90,6 +96,11 @@ namespace rimrush
 
             hud.Update(dt);
             HandlePauseCommand(hud.ConsumePauseCommand());
+            if (rimrushHelpPanel.IsAnyOpen)
+            {
+                return;
+            }
+
             if (ReturnToMenuRequested)
             {
                 return;

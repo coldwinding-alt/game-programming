@@ -236,7 +236,7 @@ namespace rimrush
                 TopRightButtonY,
                 TopRightButtonSize,
                 TopRightButtonSize,
-                NoOpAction,
+                rimrushHelpPanel.ShowKeyboardPage,
                 parent,
                 82,
                 TopRightIconPixels,
@@ -854,6 +854,11 @@ namespace rimrush
 
         public void Update(float dt)
         {
+            if (rimrushHelpPanel.IsAnyOpen)
+            {
+                return;
+            }
+
             if (IsPauseOverlayVisible)
             {
                 musicButton?.SetActiveIconIndex(GetMusicIconIndex());
