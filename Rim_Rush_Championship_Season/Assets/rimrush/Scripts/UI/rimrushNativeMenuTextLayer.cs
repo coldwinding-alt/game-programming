@@ -66,6 +66,14 @@ namespace rimrush
             viewportRoot.anchoredPosition = Vector2.zero;
         }
 
+        public void SetVisible(bool visible)
+        {
+            if (canvas != null)
+            {
+                canvas.gameObject.SetActive(visible);
+            }
+        }
+
         public TMP_Text CreateText(
             string name,
             string text,
@@ -221,6 +229,13 @@ namespace rimrush
                 return cached;
             }
 
+            var bundledFontAsset = Resources.Load<TMP_FontAsset>(GetBundledFontAssetPath(fontKind));
+            if (bundledFontAsset != null)
+            {
+                FontAssets[fontKind] = bundledFontAsset;
+                return bundledFontAsset;
+            }
+
             var sourceFont = rimrushFontCache.Get(fontKind, 96);
             if (sourceFont == null)
             {
@@ -244,6 +259,27 @@ namespace rimrush
 
             FontAssets[fontKind] = fontAsset;
             return fontAsset;
+        }
+
+        private static string GetBundledFontAssetPath(rimrushFontKind fontKind)
+        {
+            switch (fontKind)
+            {
+                case rimrushFontKind.AgencyBold:
+                    return "rimrush/Fonts/TMP/AgencyBold SDF";
+                case rimrushFontKind.CfCrackBold:
+                    return "rimrush/Fonts/TMP/CfCrackBold SDF";
+                case rimrushFontKind.Griffy:
+                    return "rimrush/Fonts/TMP/Griffy-Regular SDF";
+                case rimrushFontKind.Impact2:
+                    return "rimrush/Fonts/TMP/Impact2 SDF";
+                case rimrushFontKind.RajdhaniBold:
+                    return "rimrush/Fonts/TMP/Rajdhani-Bold SDF";
+                case rimrushFontKind.RajdhaniSemiBold:
+                    return "rimrush/Fonts/TMP/Rajdhani-SemiBold SDF";
+                default:
+                    return "rimrush/Fonts/TMP/Impact SDF";
+            }
         }
     }
 }
