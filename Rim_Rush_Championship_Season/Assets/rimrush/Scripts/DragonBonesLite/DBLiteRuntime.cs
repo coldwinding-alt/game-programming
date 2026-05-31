@@ -454,6 +454,7 @@ namespace rimrush
     public sealed class DBLiteTextureAtlas
     {
         private readonly Texture2D texture;
+        private readonly float pixelsPerUnit;
         private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>();
         private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
@@ -462,9 +463,10 @@ namespace rimrush
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
         /// <param name="texture">Input value used by this step of the workflow.</param>
-        private DBLiteTextureAtlas(Texture2D texture)
+        private DBLiteTextureAtlas(Texture2D texture, float pixelsPerUnit)
         {
             this.texture = texture;
+            this.pixelsPerUnit = Mathf.Max(0.0001f, pixelsPerUnit);
         }
 
         /// <summary>
@@ -477,8 +479,8 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteTextureAtlas Parse(string name, Texture2D texture, string json)
         {
-            var atlas = new DBLiteTextureAtlas(texture);
             var root = rimrushJson.AsDict(rimrushJson.Parse(json));
+            var atlas = new DBLiteTextureAtlas(texture, rimrushJson.Float(root, "pixelsPerUnit", 1f));
             var list = rimrushJson.List(root, "SubTexture");
             if (list == null)
             {
@@ -531,7 +533,7 @@ namespace rimrush
             }
 
             var rect = new Rect(sub.X, texture.height - sub.Y - sub.Height, sub.Width, sub.Height);
-            var sprite = UnityEngine.Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), 1f, 0, SpriteMeshType.FullRect);
+            var sprite = UnityEngine.Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
             sprite.name = name;
             sprites[name] = sprite;
             return sprite;
