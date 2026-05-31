@@ -5,9 +5,9 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 ## Current Playable Scope
 
 - Character-based roster with `8` playable characters:
-  - `PUMPKIN`
-  - `FRANKENSTEIN`
-  - `MUMMY`
+  - `REAPER ACOLYTE`
+  - `GHOST CLOWN`
+  - `SKULL PIRATE`
   - `VAMPIRE`
   - `CANDLEMAN`
   - `SCARECROW`
