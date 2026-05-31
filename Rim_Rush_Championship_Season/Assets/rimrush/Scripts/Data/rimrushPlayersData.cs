@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushPlayersData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -58,17 +61,32 @@ namespace rimrush
 
         public static int CharacterCount => CharacterDefinitions.Length;
 
+        /// <summary>
+        /// Executes Setup Players for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public static void SetupPlayers()
         {
             // Active Halloween characters now use an explicit 8-character DragonBones set.
         }
 
+        /// <summary>
+        /// Executes Build Gameplay Armature for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteArmature BuildGameplayArmature(string name)
         {
             DBLiteFactory.Instance.EnsureLoaded();
             return DBLiteFactory.Instance.BuildArmature("playerSmall", name);
         }
 
+        /// <summary>
+        /// Executes Get Active Character Ids for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int[] GetActiveCharacterIds()
         {
             var active = new List<int>(CharacterDefinitions.Length);
@@ -83,6 +101,13 @@ namespace rimrush
             return active.ToArray();
         }
 
+        /// <summary>
+        /// Executes Sanitize Character Id for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="requestedCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="fallbackCharacterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int SanitizeCharacterId(int requestedCharacterId, int fallbackCharacterId = 0)
         {
             if (IsCharacterEnabled(requestedCharacterId))
@@ -99,6 +124,13 @@ namespace rimrush
             return active.Length > 0 ? active[0] : 0;
         }
 
+        /// <summary>
+        /// Executes Step Character Id for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="currentCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="direction">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int StepCharacterId(int currentCharacterId, int direction)
         {
             var active = GetActiveCharacterIds();
@@ -126,31 +158,68 @@ namespace rimrush
             return active[nextIndex];
         }
 
+        /// <summary>
+        /// Executes Get Character Name for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static string GetCharacterName(int characterId)
         {
             return GetCharacterDefinition(characterId).DisplayName;
         }
 
+        /// <summary>
+        /// Executes Get Character Form Index for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int GetCharacterFormIndex(int characterId)
         {
             return GetCharacterDefinition(characterId).FormIndex;
         }
 
+        /// <summary>
+        /// Executes Get Character Super Id for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int GetCharacterSuperId(int characterId)
         {
             return GetCharacterDefinition(characterId).SuperId;
         }
 
+        /// <summary>
+        /// Executes Get Character Preview Scale Multiplier for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static float GetCharacterPreviewScaleMultiplier(int characterId)
         {
             return GetCharacterDefinition(characterId).PreviewScaleMultiplier;
         }
 
+        /// <summary>
+        /// Executes Get Character Preview Offset Y for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static float GetCharacterPreviewOffsetY(int characterId)
         {
             return GetCharacterDefinition(characterId).PreviewOffsetY;
         }
 
+        /// <summary>
+        /// Executes Get Character Portrait Sprite for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="desiredMaxPixels">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Sprite GetCharacterPortraitSprite(int characterId, float desiredMaxPixels = 0f)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -175,11 +244,24 @@ namespace rimrush
             return GetOrCreatePortraitVariantSprite(definition.PortraitSpriteName, baseSprite, requestedMaxPixels);
         }
 
+        /// <summary>
+        /// Executes Get Character Portrait Scale Multiplier for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static float GetCharacterPortraitScaleMultiplier(int characterId)
         {
             return GetCharacterDefinition(characterId).PortraitScaleMultiplier;
         }
 
+        /// <summary>
+        /// Executes Get Character Portrait Offset Y for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="portraitSprite">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static float GetCharacterPortraitOffsetY(int characterId, Sprite portraitSprite = null)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -205,6 +287,12 @@ namespace rimrush
             return baseOffset * (spriteMaxPixels / baseMaxPixels);
         }
 
+        /// <summary>
+        /// Executes Apply Character for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armature">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
         public static void ApplyCharacter(DBLiteArmature armature, int characterId)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -212,6 +300,12 @@ namespace rimrush
             ApplyCharacterTuning(armature, definition);
         }
 
+        /// <summary>
+        /// Executes Get Random Character Id for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="excludedCharacterIds">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int GetRandomCharacterId(IList<int> excludedCharacterIds = null)
         {
             var candidates = new List<int>(CharacterDefinitions.Length);
@@ -238,6 +332,13 @@ namespace rimrush
             return candidates[Random.Range(0, candidates.Count)];
         }
 
+        /// <summary>
+        /// Executes Switch Player for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armature">Input value used by this step of the workflow.</param>
+        /// <param name="skinId">Input value used by this step of the workflow.</param>
+        /// <param name="formId">Input value used by this step of the workflow.</param>
         public static void SwitchPlayer(DBLiteArmature armature, int skinId, int formId)
         {
             if (armature == null)
@@ -262,17 +363,34 @@ namespace rimrush
             armature.Play("idle");
         }
 
+        /// <summary>
+        /// Executes Get Character Definition for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushCharacterDefinition GetCharacterDefinition(int characterId)
         {
             return CharacterDefinitions[SanitizeCharacterId(characterId)];
         }
 
+        /// <summary>
+        /// Executes Get Portrait Base Sprite for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="definition">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Sprite GetPortraitBaseSprite(rimrushCharacterDefinition definition)
         {
             var atlas = GetPortraitAtlas();
             return atlas?.Sprite(definition.PortraitSpriteName);
         }
 
+        /// <summary>
+        /// Executes Get Portrait Atlas for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static DBLiteTextureAtlas GetPortraitAtlas()
         {
             if (portraitAtlas != null)
@@ -293,6 +411,14 @@ namespace rimrush
             return portraitAtlas;
         }
 
+        /// <summary>
+        /// Executes Get Or Create Portrait Variant Sprite for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="portraitSpriteName">Input value used by this step of the workflow.</param>
+        /// <param name="baseSprite">Input value used by this step of the workflow.</param>
+        /// <param name="maxPixels">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Sprite GetOrCreatePortraitVariantSprite(string portraitSpriteName, Sprite baseSprite, int maxPixels)
         {
             var safeMaxPixels = Mathf.Max(1, maxPixels);
@@ -329,6 +455,15 @@ namespace rimrush
             return sprite;
         }
 
+        /// <summary>
+        /// Executes Build Portrait Variant Texture for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="sourceTexture">Input value used by this step of the workflow.</param>
+        /// <param name="sourceRect">Input value used by this step of the workflow.</param>
+        /// <param name="maxPixels">Input value used by this step of the workflow.</param>
+        /// <param name="textureName">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Texture2D BuildPortraitVariantTexture(Texture2D sourceTexture, Rect sourceRect, int maxPixels, string textureName)
         {
             var sourceMaxPixels = Mathf.Max(sourceRect.width, sourceRect.height);
@@ -352,6 +487,15 @@ namespace rimrush
             return texture;
         }
 
+        /// <summary>
+        /// Executes Downsample Portrait Pixels for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="sourceTexture">Input value used by this step of the workflow.</param>
+        /// <param name="sourceRect">Input value used by this step of the workflow.</param>
+        /// <param name="width">Input value used by this step of the workflow.</param>
+        /// <param name="height">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Color32[] DownsamplePortraitPixels(Texture2D sourceTexture, Rect sourceRect, int width, int height)
         {
             var output = new Color32[width * height];
@@ -404,6 +548,12 @@ namespace rimrush
             return output;
         }
 
+        /// <summary>
+        /// Executes Apply Character Tuning for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armature">Input value used by this step of the workflow.</param>
+        /// <param name="definition">Input value used by this step of the workflow.</param>
         private static void ApplyCharacterTuning(DBLiteArmature armature, rimrushCharacterDefinition definition)
         {
             if (armature == null)
@@ -433,6 +583,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Is Character Enabled for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool IsCharacterEnabled(int characterId)
         {
             return characterId >= 0

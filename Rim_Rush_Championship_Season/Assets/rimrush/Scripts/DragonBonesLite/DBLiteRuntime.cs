@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：DBLiteRuntime 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,11 +17,22 @@ namespace rimrush
 
         public static DBLiteFactory Instance => instance ?? (instance = new DBLiteFactory());
 
+        /// <summary>
+        /// Executes Ensure Loaded for the DBLiteFactory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void EnsureLoaded()
         {
             Load("sk2", "texture2", "texture2");
         }
 
+        /// <summary>
+        /// Executes Load for the DBLiteFactory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="skeletonKey">Input value used by this step of the workflow.</param>
+        /// <param name="textureJsonKey">Input value used by this step of the workflow.</param>
+        /// <param name="textureImageKey">Input value used by this step of the workflow.</param>
         public void Load(string skeletonKey, string textureJsonKey, string textureImageKey)
         {
             if (skeletons.ContainsKey(skeletonKey))
@@ -46,6 +60,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Build Armature for the DBLiteFactory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armatureName">Input value used by this step of the workflow.</param>
+        /// <param name="objectName">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public DBLiteArmature BuildArmature(string armatureName, string objectName = null)
         {
             EnsureLoaded();
@@ -61,6 +82,13 @@ namespace rimrush
             return armature;
         }
 
+        /// <summary>
+        /// Executes Try Get Armature for the DBLiteFactory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armatureName">Input value used by this step of the workflow.</param>
+        /// <param name="data">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryGetArmature(string armatureName, out DBLiteArmatureData data)
         {
             EnsureLoaded();
@@ -85,6 +113,12 @@ namespace rimrush
         public event Action<string> AnimationComplete;
         public event Action<string, string> FrameEvent;
 
+        /// <summary>
+        /// Executes Init for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="factory">Input value used by this step of the workflow.</param>
+        /// <param name="data">Input value used by this step of the workflow.</param>
         public void Init(DBLiteFactory factory, DBLiteArmatureData data)
         {
             this.factory = factory;
@@ -101,11 +135,23 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Get Child Armature for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="slotName">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public DBLiteArmature GetChildArmature(string slotName)
         {
             return slots.TryGetValue(slotName, out var slot) ? slot.ChildArmature : null;
         }
 
+        /// <summary>
+        /// Executes Set Slot Hidden for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="slotName">Input value used by this step of the workflow.</param>
+        /// <param name="hidden">Input value used by this step of the workflow.</param>
         public void SetSlotHidden(string slotName, bool hidden)
         {
             if (string.IsNullOrEmpty(slotName))
@@ -137,6 +183,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Play for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="animationName">Input value used by this step of the workflow.</param>
+        /// <param name="restart">Input value used by this step of the workflow.</param>
         public void Play(string animationName, bool restart = true)
         {
             if (data == null)
@@ -160,6 +212,11 @@ namespace rimrush
             ApplyPose(elapsedFrames);
         }
 
+        /// <summary>
+        /// Executes Stop At Start for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="animationName">Input value used by this step of the workflow.</param>
         public void StopAtStart(string animationName)
         {
             Play(animationName);
@@ -169,11 +226,19 @@ namespace rimrush
             ApplyPose(0f);
         }
 
+        /// <summary>
+        /// Executes Refresh Pose for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void RefreshPose()
         {
             ApplyPose(elapsedFrames);
         }
 
+        /// <summary>
+        /// Executes Update for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void Update()
         {
             if (currentAnimation == null)
@@ -192,6 +257,12 @@ namespace rimrush
             ApplyPose(elapsedFrames);
         }
 
+        /// <summary>
+        /// Executes Dispatch Frame Events for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="previousFrame">Input value used by this step of the workflow.</param>
+        /// <param name="currentFrame">Input value used by this step of the workflow.</param>
         private void DispatchFrameEvents(float previousFrame, float currentFrame)
         {
             if (currentAnimation == null || currentAnimation.FrameEvents.Count == 0)
@@ -225,6 +296,12 @@ namespace rimrush
             EmitFrameEventsInRange(start, end, duration);
         }
 
+        /// <summary>
+        /// Executes Try Dispatch Animation Complete for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="previousFrame">Input value used by this step of the workflow.</param>
+        /// <param name="currentFrame">Input value used by this step of the workflow.</param>
         private void TryDispatchAnimationComplete(float previousFrame, float currentFrame)
         {
             if (currentAnimation == null || currentAnimation.Loops || animationCompleteSent)
@@ -240,6 +317,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Emit Frame Events In Range for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="start">Input value used by this step of the workflow.</param>
+        /// <param name="end">Input value used by this step of the workflow.</param>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         private void EmitFrameEventsInRange(float start, float end, float duration)
         {
             if (end <= start)
@@ -258,11 +342,22 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Mod for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="value">Input value used by this step of the workflow.</param>
+        /// <param name="divisor">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float Mod(float value, float divisor)
         {
             return (value % divisor + divisor) % divisor;
         }
 
+        /// <summary>
+        /// Executes Build Bones And Slots for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BuildBonesAndSlots()
         {
             foreach (var boneData in data.Bones)
@@ -295,6 +390,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Apply Pose for the DBLiteArmature workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
         private void ApplyPose(float frame)
         {
             if (data == null)
@@ -357,11 +457,24 @@ namespace rimrush
         private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>();
         private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
+        /// <summary>
+        /// Executes DBLite Texture Atlas for the DBLiteTextureAtlas workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="texture">Input value used by this step of the workflow.</param>
         private DBLiteTextureAtlas(Texture2D texture)
         {
             this.texture = texture;
         }
 
+        /// <summary>
+        /// Executes Parse for the DBLiteTextureAtlas workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="texture">Input value used by this step of the workflow.</param>
+        /// <param name="json">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteTextureAtlas Parse(string name, Texture2D texture, string json)
         {
             var atlas = new DBLiteTextureAtlas(texture);
@@ -394,6 +507,12 @@ namespace rimrush
             return atlas;
         }
 
+        /// <summary>
+        /// Executes Sprite for the DBLiteTextureAtlas workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public Sprite Sprite(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -423,6 +542,13 @@ namespace rimrush
     {
         public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>();
 
+        /// <summary>
+        /// Executes Parse for the DBLiteSkeleton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="json">Input value used by this step of the workflow.</param>
+        /// <param name="textureAtlas">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteSkeleton Parse(string json, DBLiteTextureAtlas textureAtlas)
         {
             var skeleton = new DBLiteSkeleton();
@@ -461,11 +587,25 @@ namespace rimrush
         public DBLiteTextureAtlas TextureAtlas;
         public string FirstAnimationName;
 
+        /// <summary>
+        /// Executes Get Displays for the DBLiteArmatureData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="slotName">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public List<DBLiteDisplayData> GetDisplays(string slotName)
         {
             return DisplaysBySlot.TryGetValue(slotName, out var displays) ? displays : null;
         }
 
+        /// <summary>
+        /// Executes Parse for the DBLiteArmatureData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <param name="atlas">Input value used by this step of the workflow.</param>
+        /// <param name="frameRate">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteArmatureData Parse(Dictionary<string, object> dict, DBLiteTextureAtlas atlas, int frameRate)
         {
             var data = new DBLiteArmatureData
@@ -522,6 +662,12 @@ namespace rimrush
             return data;
         }
 
+        /// <summary>
+        /// Executes Parse Skin for the DBLiteArmatureData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <param name="data">Input value used by this step of the workflow.</param>
         private static void ParseSkin(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
             var skins = rimrushJson.List(dict, "skin");
@@ -571,6 +717,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Parse Animations for the DBLiteArmatureData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <param name="data">Input value used by this step of the workflow.</param>
         private static void ParseAnimations(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
             var animationList = rimrushJson.List(dict, "animation");
@@ -606,6 +758,12 @@ namespace rimrush
         public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>();
         public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>();
 
+        /// <summary>
+        /// Executes Parse for the DBLiteAnimationData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteAnimationData Parse(Dictionary<string, object> dict)
         {
             var animation = new DBLiteAnimationData
@@ -687,6 +845,12 @@ namespace rimrush
         private readonly List<DBLiteTimedTransform> rotate = new List<DBLiteTimedTransform>();
         private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>();
 
+        /// <summary>
+        /// Executes Parse for the DBLiteBoneTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteBoneTrack Parse(Dictionary<string, object> dict)
         {
             var track = new DBLiteBoneTrack();
@@ -696,6 +860,12 @@ namespace rimrush
             return track;
         }
 
+        /// <summary>
+        /// Executes Sample for the DBLiteBoneTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public DBLiteTransform Sample(float frame)
         {
             var result = DBLiteTransform.Identity;
@@ -711,6 +881,13 @@ namespace rimrush
             return result;
         }
 
+        /// <summary>
+        /// Executes Parse Transform Frames for the DBLiteBoneTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="list">Input value used by this step of the workflow.</param>
+        /// <param name="output">Input value used by this step of the workflow.</param>
+        /// <param name="kind">Input value used by this step of the workflow.</param>
         private static void ParseTransformFrames(List<object> list, List<DBLiteTimedTransform> output, FrameKind kind)
         {
             if (list == null)
@@ -768,6 +945,14 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Sample List for the DBLiteBoneTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="list">Input value used by this step of the workflow.</param>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
+        /// <param name="kind">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static DBLiteTransform SampleList(List<DBLiteTimedTransform> list, float frame, FrameKind kind)
         {
             if (list.Count == 0)
@@ -801,6 +986,12 @@ namespace rimrush
         private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>();
         private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>();
 
+        /// <summary>
+        /// Executes Parse for the DBLiteSlotTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteSlotTrack Parse(Dictionary<string, object> dict)
         {
             var track = new DBLiteSlotTrack();
@@ -855,6 +1046,12 @@ namespace rimrush
             return track;
         }
 
+        /// <summary>
+        /// Executes Sample Display for the DBLiteSlotTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public int SampleDisplay(float frame)
         {
             if (displayFrames.Count == 0)
@@ -874,6 +1071,12 @@ namespace rimrush
             return current.Value;
         }
 
+        /// <summary>
+        /// Executes Sample Alpha for the DBLiteSlotTrack workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float SampleAlpha(float frame)
         {
             if (colorFrames.Count == 0)
@@ -906,6 +1109,14 @@ namespace rimrush
 
         public DBLiteArmature ChildArmature { get; private set; }
 
+        /// <summary>
+        /// Executes DBLite Slot Instance for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="slotData">Input value used by this step of the workflow.</param>
+        /// <param name="displays">Input value used by this step of the workflow.</param>
+        /// <param name="slotTransform">Input value used by this step of the workflow.</param>
+        /// <param name="factory">Input value used by this step of the workflow.</param>
         public DBLiteSlotInstance(DBLiteSlotData slotData, List<DBLiteDisplayData> displays, Transform slotTransform, DBLiteFactory factory)
         {
             this.slotData = slotData;
@@ -915,6 +1126,11 @@ namespace rimrush
             SetDisplay(slotData.DisplayIndex);
         }
 
+        /// <summary>
+        /// Executes Set Display for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="index">Input value used by this step of the workflow.</param>
         public void SetDisplay(int index)
         {
             if (index == currentDisplay)
@@ -973,6 +1189,11 @@ namespace rimrush
             ApplyAlphaToCurrentDisplay(currentAlpha);
         }
 
+        /// <summary>
+        /// Executes Set Alpha for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="alpha">Input value used by this step of the workflow.</param>
         public void SetAlpha(float alpha)
         {
             alpha = Mathf.Clamp01(alpha);
@@ -985,12 +1206,22 @@ namespace rimrush
             ApplyAlphaToCurrentDisplay(currentAlpha);
         }
 
+        /// <summary>
+        /// Executes Reset To Setup Pose for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ResetToSetupPose()
         {
             SetDisplay(slotData.DisplayIndex);
             SetAlpha(1f);
         }
 
+        /// <summary>
+        /// Executes Find Texture Atlas Sprite for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="display">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
         {
             if (display != null && display.Name == ".Game/ball/BallClip")
@@ -1011,6 +1242,12 @@ namespace rimrush
             return armatureData != null ? armatureData.TextureAtlas.Sprite(display.Name) : null;
         }
 
+        /// <summary>
+        /// Executes Apply Display Transform for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="transform">Input value used by this step of the workflow.</param>
+        /// <param name="displayTransform">Input value used by this step of the workflow.</param>
         private static void ApplyDisplayTransform(Transform transform, DBLiteTransform displayTransform)
         {
             transform.localPosition = rimrushConstants.SnapLocalPositionToScreenPixels(
@@ -1020,6 +1257,11 @@ namespace rimrush
             transform.localScale = new Vector3(displayTransform.ScaleX, displayTransform.ScaleY, 1f);
         }
 
+        /// <summary>
+        /// Executes Apply Alpha To Current Display for the DBLiteSlotInstance workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="alpha">Input value used by this step of the workflow.</param>
         private void ApplyAlphaToCurrentDisplay(float alpha)
         {
             if (currentDisplayObject == null)
@@ -1089,6 +1331,12 @@ namespace rimrush
             ScaleY = 1f
         };
 
+        /// <summary>
+        /// Executes From Json for the DBLiteDisplayData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dict">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteTransform FromJson(Dictionary<string, object> dict)
         {
             var transform = Identity;
@@ -1105,6 +1353,12 @@ namespace rimrush
             return transform;
         }
 
+        /// <summary>
+        /// Executes Combine for the DBLiteDisplayData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="animation">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public DBLiteTransform Combine(DBLiteTransform animation)
         {
             return new DBLiteTransform
@@ -1117,6 +1371,15 @@ namespace rimrush
             };
         }
 
+        /// <summary>
+        /// Executes Lerp for the DBLiteDisplayData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="a">Input value used by this step of the workflow.</param>
+        /// <param name="b">Input value used by this step of the workflow.</param>
+        /// <param name="t">Input value used by this step of the workflow.</param>
+        /// <param name="kind">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static DBLiteTransform Lerp(DBLiteTransform a, DBLiteTransform b, float t, FrameKind kind)
         {
             var result = Identity;

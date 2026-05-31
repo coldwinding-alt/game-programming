@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushNativeMenuTextLayer 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,6 +21,11 @@ namespace rimrush
 
         public static rimrushNativeMenuTextLayer Active { get; private set; }
 
+        /// <summary>
+        /// Executes rimrush Native Menu Text Layer for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="menuRoot">Input value used by this step of the workflow.</param>
         public rimrushNativeMenuTextLayer(Transform menuRoot)
         {
             this.menuRoot = menuRoot;
@@ -46,11 +54,23 @@ namespace rimrush
             Active = this;
         }
 
+        /// <summary>
+        /// Executes Owns for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool Owns(Transform parent)
         {
             return parent != null && parent == menuRoot;
         }
 
+        /// <summary>
+        /// Executes Refresh Layout for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="screenWidth">Input value used by this step of the workflow.</param>
+        /// <param name="screenHeight">Input value used by this step of the workflow.</param>
         public void RefreshLayout(int screenWidth, int screenHeight)
         {
             if (viewportRoot == null)
@@ -66,6 +86,11 @@ namespace rimrush
             viewportRoot.anchoredPosition = Vector2.zero;
         }
 
+        /// <summary>
+        /// Executes Set Visible for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         public void SetVisible(bool visible)
         {
             if (canvas != null)
@@ -74,6 +99,19 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Create Text for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="text">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="fontSize">Input value used by this step of the workflow.</param>
+        /// <param name="color">Input value used by this step of the workflow.</param>
+        /// <param name="anchor">Input value used by this step of the workflow.</param>
+        /// <param name="style">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public TMP_Text CreateText(
             string name,
             string text,
@@ -108,6 +146,10 @@ namespace rimrush
             return textComponent;
         }
 
+        /// <summary>
+        /// Executes Dispose for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Dispose()
         {
             if (Active == this)
@@ -128,6 +170,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Apply Style for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="textComponent">Input value used by this step of the workflow.</param>
+        /// <param name="style">Input value used by this step of the workflow.</param>
+        /// <param name="fontSize">Input value used by this step of the workflow.</param>
         private static void ApplyStyle(TMP_Text textComponent, rimrushTextStyle style, int fontSize)
         {
             var resolvedStyle = rimrushTextStyles.Resolve(style, fontSize);
@@ -143,6 +192,13 @@ namespace rimrush
             textComponent.outlineColor = resolvedStyle.OutlineColor ?? Color.clear;
         }
 
+        /// <summary>
+        /// Executes Pixel To Viewport Position for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Vector2 PixelToViewportPosition(float x, float y)
         {
             return new Vector2(
@@ -150,6 +206,13 @@ namespace rimrush
                 ReferenceHeight * 0.5f - y);
         }
 
+        /// <summary>
+        /// Executes Estimate Height for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="text">Input value used by this step of the workflow.</param>
+        /// <param name="fontSize">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float EstimateHeight(string text, int fontSize)
         {
             var lineCount = 1;
@@ -167,6 +230,12 @@ namespace rimrush
             return Mathf.Max(fontSize * 2.2f, fontSize * 1.45f * lineCount + 8f);
         }
 
+        /// <summary>
+        /// Executes Anchor To Pivot for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="anchor">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Vector2 AnchorToPivot(TextAnchor anchor)
         {
             switch (anchor)
@@ -192,6 +261,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Anchor To Alignment for the rimrushNativeMenuTextLayer workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="anchor">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TextAlignmentOptions AnchorToAlignment(TextAnchor anchor)
         {
             switch (anchor)
@@ -222,6 +297,12 @@ namespace rimrush
     {
         private static readonly Dictionary<rimrushFontKind, TMP_FontAsset> FontAssets = new Dictionary<rimrushFontKind, TMP_FontAsset>();
 
+        /// <summary>
+        /// Executes Get for the rimrushTmpFontCache workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="fontKind">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static TMP_FontAsset Get(rimrushFontKind fontKind)
         {
             if (FontAssets.TryGetValue(fontKind, out var cached) && cached != null)
@@ -261,6 +342,12 @@ namespace rimrush
             return fontAsset;
         }
 
+        /// <summary>
+        /// Executes Get Bundled Font Asset Path for the rimrushTmpFontCache workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="fontKind">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetBundledFontAssetPath(rimrushFontKind fontKind)
         {
             switch (fontKind)

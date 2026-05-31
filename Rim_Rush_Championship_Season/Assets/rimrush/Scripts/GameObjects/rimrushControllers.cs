@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushControllers 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,11 +42,21 @@ namespace rimrush
         public bool CurrentSuper { get; private set; }
         public int CurrentDash { get; private set; }
 
+        /// <summary>
+        /// Executes rimrush Keyboard Controller for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="brain">Input value used by this step of the workflow.</param>
         public rimrushKeyboardController(string brain)
         {
             controls = rimrushControlsData.ProfileForBrain(brain);
         }
 
+        /// <summary>
+        /// Executes Update Controller for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void UpdateController(float dt)
         {
             CurrentMove = 0;
@@ -87,48 +100,100 @@ namespace rimrush
             CurrentSuper = Input.GetKey(controls.SuperKey);
         }
 
+        /// <summary>
+        /// Executes Ready For Action for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool ReadyForAction()
         {
             return !Input.GetKey(controls.ActionKey);
         }
 
+        /// <summary>
+        /// Executes Ball In Own Hands for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public void BallInOwnHands(int holderPlayerNo)
         {
         }
 
+        /// <summary>
+        /// Executes Ball In Opponents Hands for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public void BallInOpponentsHands(int holderPlayerNo)
         {
         }
 
+        /// <summary>
+        /// Executes Ball Own Shoot for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public void BallOwnShoot(int shooterPlayerNo)
         {
         }
 
+        /// <summary>
+        /// Executes Ball Opponent Shoot for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public void BallOpponentShoot(int shooterPlayerNo)
         {
         }
 
+        /// <summary>
+        /// Executes Ball Others for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void BallOthers()
         {
         }
 
+        /// <summary>
+        /// Executes Release Block Or Pump for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool ReleaseBlockOrPump(float dt)
         {
             return !Input.GetKey(controls.BlockKey);
         }
 
+        /// <summary>
+        /// Executes Restart for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="startSide">Input value used by this step of the workflow.</param>
         public void Restart(int startSide)
         {
         }
 
+        /// <summary>
+        /// Executes Player On Ground for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void PlayerOnGround()
         {
         }
 
+        /// <summary>
+        /// Executes Player On Dash End for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void PlayerOnDashEnd()
         {
         }
 
+        /// <summary>
+        /// Executes Player On Block for the rimrushKeyboardController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void PlayerOnBlock()
         {
         }
@@ -136,22 +201,48 @@ namespace rimrush
 
     public class rimrushAIController : rimrushBaseAIController
     {
+        /// <summary>
+        /// Executes rimrush AIController for the rimrushAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="player">Input value used by this step of the workflow.</param>
+        /// <param name="skillLevel">Input value used by this step of the workflow.</param>
         public rimrushAIController(rimrushPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
         }
 
+        /// <summary>
+        /// Executes Create For Brain for the rimrushAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="player">Input value used by this step of the workflow.</param>
+        /// <param name="brain">Input value used by this step of the workflow.</param>
+        /// <param name="skillLevel">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static IBLPlayerController CreateForBrain(rimrushPlayerObject player, string brain, int skillLevel)
         {
             var index = ParseBrainIndex(brain);
             return index == 1 ? new rimrushAIController2(player, skillLevel) : new rimrushAIController(player, skillLevel);
         }
 
+        /// <summary>
+        /// Executes Use Defence2 for the rimrushAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holder">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected override bool UseDefence2(rimrushPlayerObject holder)
         {
             return false;
         }
 
+        /// <summary>
+        /// Executes Parse Brain Index for the rimrushAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="brain">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int ParseBrainIndex(string brain)
         {
             if (string.IsNullOrEmpty(brain) || brain.Length < 2 || !brain.StartsWith("B", StringComparison.OrdinalIgnoreCase))
@@ -165,16 +256,33 @@ namespace rimrush
 
     public sealed class rimrushAIController2 : rimrushBaseAIController
     {
+        /// <summary>
+        /// Executes rimrush AIController2 for the rimrushAIController2 workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="player">Input value used by this step of the workflow.</param>
+        /// <param name="skillLevel">Input value used by this step of the workflow.</param>
         public rimrushAIController2(rimrushPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
         }
 
+        /// <summary>
+        /// Executes Use Defence2 for the rimrushAIController2 workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holder">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected override bool UseDefence2(rimrushPlayerObject holder)
         {
             return holder != null && holder.PlayerNo != player.PlayerNo;
         }
 
+        /// <summary>
+        /// Executes Strategy Defence2 for the rimrushAIController2 workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected override void StrategyDefence2(float dt)
         {
             if (opponent == null)
@@ -252,6 +360,12 @@ namespace rimrush
         public bool CurrentSuper { get; protected set; }
         public int CurrentDash { get; protected set; }
 
+        /// <summary>
+        /// Executes rimrush Base AIController for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="player">Input value used by this step of the workflow.</param>
+        /// <param name="skillLevel">Input value used by this step of the workflow.</param>
         protected rimrushBaseAIController(rimrushPlayerObject player, int skillLevel)
         {
             this.player = player;
@@ -275,6 +389,11 @@ namespace rimrush
             ResetForRestart();
         }
 
+        /// <summary>
+        /// Executes Update Controller for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public virtual void UpdateController(float dt)
         {
             EnsureRuntimeLinks();
@@ -368,6 +487,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Ball In Own Hands for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public virtual void BallInOwnHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -379,6 +503,11 @@ namespace rimrush
             HandleBallInOwnHands();
         }
 
+        /// <summary>
+        /// Executes Ball In Opponents Hands for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public virtual void BallInOpponentsHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -386,6 +515,11 @@ namespace rimrush
             HandleBallInOpponentsHands();
         }
 
+        /// <summary>
+        /// Executes Ball Own Shoot for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public virtual void BallOwnShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -396,6 +530,11 @@ namespace rimrush
             superDashDelay.Reset();
         }
 
+        /// <summary>
+        /// Executes Ball Opponent Shoot for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public virtual void BallOpponentShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -416,27 +555,51 @@ namespace rimrush
                                 UnityEngine.Random.value <= profile.JumpThrow;
         }
 
+        /// <summary>
+        /// Executes Ball Others for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public virtual void BallOthers()
         {
             EnsureRuntimeLinks();
             HandleBallOthers();
         }
 
+        /// <summary>
+        /// Executes Ready For Action for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public virtual bool ReadyForAction()
         {
             return true;
         }
 
+        /// <summary>
+        /// Executes Release Block Or Pump for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public virtual bool ReleaseBlockOrPump(float dt)
         {
             return blockDelay.Update(dt) == 1;
         }
 
+        /// <summary>
+        /// Executes Restart for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="startSide">Input value used by this step of the workflow.</param>
         public virtual void Restart(int startSide)
         {
             ResetForRestart();
         }
 
+        /// <summary>
+        /// Executes Player On Ground for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public virtual void PlayerOnGround()
         {
             isPumped = false;
@@ -448,6 +611,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Player On Dash End for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public virtual void PlayerOnDashEnd()
         {
             if ((player.Position.x - attackPoint) * player.Side < 0f)
@@ -456,17 +623,32 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Player On Block for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public virtual void PlayerOnBlock()
         {
             CurrentBlockOrPump = false;
             blockDelay.Activate();
         }
 
+        /// <summary>
+        /// Executes Use Defence2 for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holder">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected virtual bool UseDefence2(rimrushPlayerObject holder)
         {
             return false;
         }
 
+        /// <summary>
+        /// Executes Strategy Defence for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyDefence(float dt)
         {
             if (opponent == null)
@@ -529,11 +711,21 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Strategy Defence2 for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyDefence2(float dt)
         {
             StrategyDefence(dt);
         }
 
+        /// <summary>
+        /// Executes Strategy Ball Fight for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyBallFight(float dt)
         {
             var ballX = GetTechnicalLooseBallTargetX();
@@ -569,6 +761,11 @@ namespace rimrush
             CurrentAction = false;
         }
 
+        /// <summary>
+        /// Executes Strategy Attack for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyAttack(float dt)
         {
             if (!player.WithBall)
@@ -676,6 +873,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Strategy Jump Ball for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyJumpBall(float dt)
         {
             CurrentMove = 0;
@@ -683,6 +885,11 @@ namespace rimrush
             CurrentAction = false;
         }
 
+        /// <summary>
+        /// Executes Strategy Rebound for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         protected virtual void StrategyRebound(float dt)
         {
             if (TryUseDelayedSuperDash(dt, ball != null && ball.State == "basket" && ShouldUseSuperDashForBall()))
@@ -702,6 +909,10 @@ namespace rimrush
             CurrentAction = false;
         }
 
+        /// <summary>
+        /// Executes Try To Steal for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void TryToSteal()
         {
             if (difficulty == rimrushAiDifficulty.Easy || opponent == null || !opponent.IsGrounded)
@@ -733,6 +944,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try Use Delayed Super Dash for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
+        /// <param name="shouldUse">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
         {
             var canUseNativeSuperDash = player.SuperId == 3 && player.ReadyForSuper;
@@ -772,6 +990,10 @@ namespace rimrush
             return false;
         }
 
+        /// <summary>
+        /// Executes Trigger Super Input for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void TriggerSuperInput()
         {
             ResetCurrents();
@@ -779,6 +1001,11 @@ namespace rimrush
             CurrentBlockOrPump = false;
         }
 
+        /// <summary>
+        /// Executes Should Use Super Dash Against Holder for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldUseSuperDashAgainstHolder()
         {
             if (opponent == null || !opponent.WithBall || !player.IsGrounded)
@@ -790,6 +1017,11 @@ namespace rimrush
             return distance >= GetHolderSuperDashMinDistance() && distance <= GetHolderSuperDashMaxDistance();
         }
 
+        /// <summary>
+        /// Executes Should Use Super Dash For Ball for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldUseSuperDashForBall()
         {
             if (ball == null || !ball.IsInGame || !player.IsGrounded)
@@ -806,6 +1038,11 @@ namespace rimrush
                    Mathf.Abs(DeltaBallX()) >= GetLooseBallSuperDashDistance();
         }
 
+        /// <summary>
+        /// Executes Should Use Super Dash In Attack for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldUseSuperDashInAttack()
         {
             if (!player.WithBall || !player.IsGrounded)
@@ -822,6 +1059,10 @@ namespace rimrush
                    InDashingZone();
         }
 
+        /// <summary>
+        /// Executes Handle Ball In Own Hands for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void HandleBallInOwnHands()
         {
             ResetBaseDelays();
@@ -849,6 +1090,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Handle Ball In Opponents Hands for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void HandleBallInOpponentsHands()
         {
             strategy = 0;
@@ -861,6 +1106,10 @@ namespace rimrush
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
 
+        /// <summary>
+        /// Executes Handle Ball Others for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void HandleBallOthers()
         {
             strategy = 1;
@@ -869,6 +1118,13 @@ namespace rimrush
             superDashDelay.Reset();
         }
 
+        /// <summary>
+        /// Executes Process Player Signal for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="signal">Input value used by this step of the workflow.</param>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="signalPlayerNo">Input value used by this step of the workflow.</param>
         protected void ProcessPlayerSignal(rimrushPlayerSignalType signal, int side, int signalPlayerNo)
         {
             if (signal == rimrushPlayerSignalType.StartSteal)
@@ -956,6 +1212,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Player Start Steal for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
         protected void PlayerStartSteal(int side)
         {
             if (side == -player.Side)
@@ -971,6 +1232,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try To Avoid for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void TryToAvoid()
         {
             if (UnityEngine.Random.value > profile.AvoidSteal || player.Position.x > 600f)
@@ -995,51 +1260,100 @@ namespace rimrush
             avoidStealMove = player.Side;
         }
 
+        /// <summary>
+        /// Executes Get Defence Contest Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetDefenceContestDistance()
         {
             return tuning.DefenceContestDistance;
         }
 
+        /// <summary>
+        /// Executes Get Steal Behind Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetStealBehindDistance()
         {
             return tuning.StealBehindDistance;
         }
 
+        /// <summary>
+        /// Executes Get Steal Basket Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetStealBasketDistance()
         {
             return tuning.StealBasketDistance;
         }
 
+        /// <summary>
+        /// Executes Get Holder Super Dash Min Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetHolderSuperDashMinDistance()
         {
             return tuning.HolderSuperDashMinDistance;
         }
 
+        /// <summary>
+        /// Executes Get Holder Super Dash Max Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetHolderSuperDashMaxDistance()
         {
             return tuning.HolderSuperDashMaxDistance;
         }
 
+        /// <summary>
+        /// Executes Get Loose Ball Super Dash Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetLooseBallSuperDashDistance()
         {
             return tuning.LooseBallSuperDashDistance;
         }
 
+        /// <summary>
+        /// Executes Get Attack Pressure Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetAttackPressureDistance()
         {
             return tuning.AttackPressureDistance;
         }
 
+        /// <summary>
+        /// Executes Get Attack Super Dash Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetAttackSuperDashDistance()
         {
             return tuning.AttackSuperDashDistance;
         }
 
+        /// <summary>
+        /// Executes Get Dash Block Range Max Distance for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetDashBlockRangeMaxDistance()
         {
             return tuning.DashBlockRangeMaxDistance;
         }
 
+        /// <summary>
+        /// Executes Try Use Hell Bonus Shield Against Human Shot for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void TryUseHellBonusShieldAgainstHumanShot()
         {
             if (difficulty != rimrushAiDifficulty.Hell || opponent == null || !opponent.IsHuman)
@@ -1058,6 +1372,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Init Zones for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void InitZones()
         {
             if (player.Side == 1)
@@ -1103,6 +1421,10 @@ namespace rimrush
             endPoint = baseEndPoint;
         }
 
+        /// <summary>
+        /// Executes Ensure Runtime Links for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void EnsureRuntimeLinks()
         {
             if (initialized)
@@ -1118,6 +1440,10 @@ namespace rimrush
             initialized = true;
         }
 
+        /// <summary>
+        /// Executes Reset For Restart for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void ResetForRestart()
         {
             strategy = 3;
@@ -1136,6 +1462,10 @@ namespace rimrush
             ResetAvoidSteal();
         }
 
+        /// <summary>
+        /// Executes Reset Currents for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void ResetCurrents()
         {
             CurrentMove = 0;
@@ -1144,6 +1474,10 @@ namespace rimrush
             CurrentDash = 0;
         }
 
+        /// <summary>
+        /// Executes Reset Base Delays for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void ResetBaseDelays()
         {
             attackJumpDelay.Reset();
@@ -1154,6 +1488,10 @@ namespace rimrush
             ResetAvoidSteal();
         }
 
+        /// <summary>
+        /// Executes Reset All Delays for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void ResetAllDelays()
         {
             dashDecisionDelay.Reset();
@@ -1161,12 +1499,22 @@ namespace rimrush
             ResetBaseDelays();
         }
 
+        /// <summary>
+        /// Executes Reset Avoid Steal for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         protected void ResetAvoidSteal()
         {
             avoidStealJump = false;
             avoidStealMove = 0;
         }
 
+        /// <summary>
+        /// Executes Find Opponent By Player No for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="targetPlayerNo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected rimrushPlayerObject FindOpponentByPlayerNo(int targetPlayerNo)
         {
             if (opponents == null)
@@ -1185,6 +1533,12 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Set Attack Point for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="point">Input value used by this step of the workflow.</param>
+        /// <param name="jump">Input value used by this step of the workflow.</param>
         protected void SetAttackPoint(float point, float jump)
         {
             if (!Mathf.Approximately(point, 0f))
@@ -1225,11 +1579,21 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Should Use Technical Prediction for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldUseTechnicalPrediction()
         {
             return difficulty == rimrushAiDifficulty.Hell;
         }
 
+        /// <summary>
+        /// Executes Get Technical Loose Ball Target X for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetTechnicalLooseBallTargetX()
         {
             if (!ShouldUseTechnicalPrediction() || ball == null)
@@ -1245,6 +1609,11 @@ namespace rimrush
             return ball.PredictFloorLandingX();
         }
 
+        /// <summary>
+        /// Executes Get Technical Rebound Target X for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float GetTechnicalReboundTargetX()
         {
             if (!ShouldUseTechnicalPrediction() || ball == null)
@@ -1260,6 +1629,11 @@ namespace rimrush
             return reboundPoint;
         }
 
+        /// <summary>
+        /// Executes Should Force Clutch Three for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldForceClutchThree()
         {
             return SupportsClutchShotSelection() &&
@@ -1267,6 +1641,11 @@ namespace rimrush
                    player.GameCore.GetScoreLeadForSide(player.Side) <= -2;
         }
 
+        /// <summary>
+        /// Executes Should Prefer Safe Clutch Two for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldPreferSafeClutchTwo()
         {
             return SupportsClutchShotSelection() &&
@@ -1274,11 +1653,21 @@ namespace rimrush
                    player.GameCore.GetScoreLeadForSide(player.Side) >= 3;
         }
 
+        /// <summary>
+        /// Executes Supports Clutch Shot Selection for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool SupportsClutchShotSelection()
         {
             return difficulty == rimrushAiDifficulty.Hard || difficulty == rimrushAiDifficulty.Hell;
         }
 
+        /// <summary>
+        /// Executes Should Use Perfect Contest On Jump for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldUsePerfectContestOnJump()
         {
             return difficulty == rimrushAiDifficulty.Hell &&
@@ -1286,6 +1675,11 @@ namespace rimrush
                    IsOpponentCloseAbs(GetDefenceContestDistance() + 24f);
         }
 
+        /// <summary>
+        /// Executes Should Ignore Pump Fake for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool ShouldIgnorePumpFake()
         {
             if (difficulty != rimrushAiDifficulty.Hell)
@@ -1301,6 +1695,11 @@ namespace rimrush
             return !IsOpponentImmediateShotThreat();
         }
 
+        /// <summary>
+        /// Executes Is Opponent Immediate Shot Threat for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsOpponentImmediateShotThreat()
         {
             if (opponent == null || !opponent.WithBall)
@@ -1318,6 +1717,11 @@ namespace rimrush
                    player.GameCore.GetScoreLeadForSide(opponent.Side) <= 0;
         }
 
+        /// <summary>
+        /// Executes Is Rebound In Attack Zone for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected int IsReboundInAttackZone()
         {
             var playerX = player.Position.x;
@@ -1334,12 +1738,23 @@ namespace rimrush
             return zone;
         }
 
+        /// <summary>
+        /// Executes Move To for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected int MoveTo(float x)
         {
             var delta = player.Position.x - x;
             return Mathf.Abs(delta) <= DeltaDistance ? 0 : delta > 0f ? -1 : 1;
         }
 
+        /// <summary>
+        /// Executes Move In Attack for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected int MoveInAttack()
         {
             var move = MoveTo(jumpPoint);
@@ -1357,21 +1772,42 @@ namespace rimrush
             return move;
         }
 
+        /// <summary>
+        /// Executes Delta Ball X for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float DeltaBallX()
         {
             return player.Position.x - ball.Position.x;
         }
 
+        /// <summary>
+        /// Executes Delta Ball Y for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         protected float DeltaBallY()
         {
             return player.Position.y - ball.Position.y;
         }
 
+        /// <summary>
+        /// Executes Is Ball In Rebound Zone for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsBallInReboundZone()
         {
             return Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f;
         }
 
+        /// <summary>
+        /// Executes Is Opponent Close Behind for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="distance">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsOpponentCloseBehind(float distance = 100f)
         {
             if (opponent == null)
@@ -1383,6 +1819,13 @@ namespace rimrush
             return delta > 0f && delta <= distance;
         }
 
+        /// <summary>
+        /// Executes Is Opponent In Range Behind for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="min">Input value used by this step of the workflow.</param>
+        /// <param name="max">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsOpponentInRangeBehind(float min = 40f, float max = 180f)
         {
             if (opponent == null)
@@ -1394,6 +1837,12 @@ namespace rimrush
             return delta > 0f && delta >= min && delta <= max;
         }
 
+        /// <summary>
+        /// Executes Is Opponent Close To Basket for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="distance">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsOpponentCloseToBasket(float distance = 30f)
         {
             if (opponent == null)
@@ -1405,6 +1854,11 @@ namespace rimrush
             return delta < 0f && delta + distance >= 0f;
         }
 
+        /// <summary>
+        /// Executes Is AICloser For Basket for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsAICloserForBasket()
         {
             if (opponent == null)
@@ -1415,16 +1869,32 @@ namespace rimrush
             return (player.Position.x - opponent.Position.x) * player.Side < 0f;
         }
 
+        /// <summary>
+        /// Executes Is Under Own Basket for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsUnderOwnBasket()
         {
             return player.Side == 1 ? player.Position.x > 700f : player.Position.x < 100f;
         }
 
+        /// <summary>
+        /// Executes In Dashing Zone for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool InDashingZone()
         {
             return player.Position.x >= dashZoneStart && player.Position.x <= dashZoneEnd;
         }
 
+        /// <summary>
+        /// Executes Is Opponent Close Abs for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="distance">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsOpponentCloseAbs(float distance = 100f)
         {
             if (opponent == null)
@@ -1435,6 +1905,11 @@ namespace rimrush
             return Mathf.Abs(player.Position.x - opponent.Position.x) <= distance;
         }
 
+        /// <summary>
+        /// Executes Is In Attack Zone for the rimrushBaseAIController workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool IsInAttackZone()
         {
             return player.Side == 1 ? player.Position.x < 600f : player.Position.x > 200f;

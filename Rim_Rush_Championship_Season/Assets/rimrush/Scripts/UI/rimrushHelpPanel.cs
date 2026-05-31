@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushHelpPanel 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using TMPro;
 using UnityEngine;
 
@@ -91,6 +94,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Show Keyboard Page for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public static void ShowKeyboardPage()
         {
             var panel = FindActivePanel(createFallback: true);
@@ -100,6 +107,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide Active for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public static void HideActive()
         {
             var panel = activePanel != null ? activePanel : FindScenePanel();
@@ -109,6 +120,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Awake for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void Awake()
         {
             if (Application.isPlaying)
@@ -131,6 +146,10 @@ namespace rimrush
 #endif
         }
 
+        /// <summary>
+        /// Executes On Enable for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnEnable()
         {
 #if UNITY_EDITOR
@@ -142,6 +161,10 @@ namespace rimrush
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Executes On Validate for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnValidate()
         {
             if (Application.isPlaying)
@@ -154,6 +177,10 @@ namespace rimrush
         }
 #endif
 
+        /// <summary>
+        /// Executes On Destroy for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnDestroy()
         {
             if (activePanel == this)
@@ -162,6 +189,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void Update()
         {
 #if UNITY_EDITOR
@@ -187,6 +218,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Late Update for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void LateUpdate()
         {
 #if UNITY_EDITOR
@@ -204,6 +239,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Show for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="page">Input value used by this step of the workflow.</param>
         public void Show(rimrushHelpPage page)
         {
             if (panelRoot == null)
@@ -221,6 +261,11 @@ namespace rimrush
             SelectDemo(rimrushHelpDemo.Block, forceRestart: true);
         }
 
+        /// <summary>
+        /// Executes Hide for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playSound">Input value used by this step of the workflow.</param>
         public void Hide(bool playSound = true)
         {
             if (!visible)
@@ -240,6 +285,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide Immediate for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void HideImmediate()
         {
             visible = false;
@@ -249,6 +298,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Ensure Initialized for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureInitialized()
         {
             if (initialized)
@@ -262,6 +315,10 @@ namespace rimrush
             SelectDemo(currentDemo, forceRestart: true);
         }
 
+        /// <summary>
+        /// Executes Build Witch Preview for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BuildWitchPreview()
         {
             if (witchMount == null || witchArmature != null)
@@ -294,6 +351,10 @@ namespace rimrush
             ApplyWitchSortingOrder();
         }
 
+        /// <summary>
+        /// Executes Update Panel Entrance for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdatePanelEntrance()
         {
             var t = Mathf.Clamp01(panelTime / 0.12f);
@@ -307,6 +368,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Buttons for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateButtons()
         {
             var camera = Camera.main;
@@ -328,6 +393,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Handle Button for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="action">Input value used by this step of the workflow.</param>
         private void HandleButton(rimrushHelpButtonAction action)
         {
             switch (action)
@@ -365,6 +435,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Page for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="page">Input value used by this step of the workflow.</param>
         private void SetPage(rimrushHelpPage page)
         {
             currentPage = page;
@@ -399,6 +474,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Tab Visual for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="plate">Input value used by this step of the workflow.</param>
+        /// <param name="label">Input value used by this step of the workflow.</param>
+        /// <param name="selected">Input value used by this step of the workflow.</param>
         private static void SetTabVisual(SpriteRenderer plate, TMP_Text label, bool selected)
         {
             if (plate != null)
@@ -416,6 +498,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Select Demo for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="demo">Input value used by this step of the workflow.</param>
+        /// <param name="forceRestart">Input value used by this step of the workflow.</param>
         private void SelectDemo(rimrushHelpDemo demo, bool forceRestart = false)
         {
             if (!forceRestart && currentDemo == demo)
@@ -432,6 +520,11 @@ namespace rimrush
             RestartDemoAnimation();
         }
 
+        /// <summary>
+        /// Executes Update Demo for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateDemo(float dt)
         {
             if (witchArmature == null || currentPage != rimrushHelpPage.Keyboard)
@@ -447,6 +540,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Restart Demo Animation for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void RestartDemoAnimation()
         {
             if (witchArmature == null)
@@ -486,6 +583,12 @@ namespace rimrush
             ApplyWitchSortingOrder();
         }
 
+        /// <summary>
+        /// Executes Demo Repeat For for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="demo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float DemoRepeatFor(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -507,6 +610,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Demo Copy for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateDemoCopy()
         {
             SetText(demoTitleText, DemoTitle(currentDemo));
@@ -514,6 +621,12 @@ namespace rimrush
             SetText(demoCoachText, DemoCoachNote(currentDemo));
         }
 
+        /// <summary>
+        /// Executes Demo Title for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="demo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoTitle(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -535,6 +648,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Demo Description for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="demo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoDescription(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -556,6 +675,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Demo Coach Note for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="demo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoCoachNote(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -577,6 +702,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Demo Selections for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateDemoSelections()
         {
             if (demoRowPlates != null)
@@ -611,6 +740,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Is Demo Button Selected for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="action">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool IsDemoButtonSelected(rimrushHelpButtonAction action)
         {
             return action == rimrushHelpButtonAction.DemoMove && currentDemo == rimrushHelpDemo.Move ||
@@ -622,11 +757,20 @@ namespace rimrush
                    action == rimrushHelpButtonAction.DemoBlock && currentDemo == rimrushHelpDemo.Block;
         }
 
+        /// <summary>
+        /// Executes Apply Witch Sorting Order for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ApplyWitchSortingOrder()
         {
             ApplyWitchSortingOrder(witchArmature);
         }
 
+        /// <summary>
+        /// Executes Apply Witch Sorting Order for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armature">Input value used by this step of the workflow.</param>
         private static void ApplyWitchSortingOrder(DBLiteArmature armature)
         {
             if (armature == null)
@@ -645,6 +789,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide Preview Ball for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armature">Input value used by this step of the workflow.</param>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
             if (armature == null)
@@ -656,6 +805,12 @@ namespace rimrush
             armature.SetSlotHidden("ball_front", true);
         }
 
+        /// <summary>
+        /// Executes Set Text for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="textMesh">Input value used by this step of the workflow.</param>
+        /// <param name="value">Input value used by this step of the workflow.</param>
         private static void SetText(TMP_Text textMesh, string value)
         {
             if (textMesh == null)
@@ -667,6 +822,12 @@ namespace rimrush
             textMesh.ForceMeshUpdate();
         }
 
+        /// <summary>
+        /// Executes Find Active Panel for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="createFallback">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushHelpPanel FindActivePanel(bool createFallback)
         {
             if (activePanel != null)
@@ -692,6 +853,11 @@ namespace rimrush
             return activePanel;
         }
 
+        /// <summary>
+        /// Executes Find Scene Panel for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushHelpPanel FindScenePanel()
         {
             var panels = Resources.FindObjectsOfTypeAll<rimrushHelpPanel>();
@@ -708,6 +874,24 @@ namespace rimrush
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Executes Editor Configure for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="panelRootObject">Input value used by this step of the workflow.</param>
+        /// <param name="keyboardPage">Input value used by this step of the workflow.</param>
+        /// <param name="rulesPage">Input value used by this step of the workflow.</param>
+        /// <param name="configuredButtons">Input value used by this step of the workflow.</param>
+        /// <param name="keyboardTab">Input value used by this step of the workflow.</param>
+        /// <param name="rulesTab">Input value used by this step of the workflow.</param>
+        /// <param name="keyboardLabel">Input value used by this step of the workflow.</param>
+        /// <param name="rulesLabel">Input value used by this step of the workflow.</param>
+        /// <param name="demoRows">Input value used by this step of the workflow.</param>
+        /// <param name="demoTitle">Input value used by this step of the workflow.</param>
+        /// <param name="demoDescription">Input value used by this step of the workflow.</param>
+        /// <param name="demoCoach">Input value used by this step of the workflow.</param>
+        /// <param name="configuredWitchMount">Input value used by this step of the workflow.</param>
+        /// <param name="configuredWitchSpotlight">Input value used by this step of the workflow.</param>
         public void EditorConfigure(
             GameObject panelRootObject,
             GameObject keyboardPage,
@@ -740,6 +924,10 @@ namespace rimrush
             witchSpotlight = configuredWitchSpotlight;
         }
 
+        /// <summary>
+        /// Executes Apply Editor Preview State for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ApplyEditorPreviewState()
         {
             if (this == null || Application.isPlaying || !gameObject.scene.IsValid())
@@ -779,6 +967,10 @@ namespace rimrush
             EnsureEditorWitchPreview();
         }
 
+        /// <summary>
+        /// Executes Ensure Editor Witch Preview for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureEditorWitchPreview()
         {
             if (Application.isPlaying || witchMount == null || !gameObject.scene.IsValid())
@@ -827,6 +1019,10 @@ namespace rimrush
             ApplyWitchSortingOrder(armature);
         }
 
+        /// <summary>
+        /// Executes Destroy Editor Witch Preview for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void DestroyEditorWitchPreview()
         {
             if (editorWitchPreviewRoot == null && witchMount != null)
@@ -856,6 +1052,11 @@ namespace rimrush
             editorWitchPreviewRoot = null;
         }
 
+        /// <summary>
+        /// Executes Set Editor Preview Hide Flags for the rimrushHelpPanel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="root">Input value used by this step of the workflow.</param>
         private static void SetEditorPreviewHideFlags(GameObject root)
         {
             if (root == null)
