@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushMatchData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -79,6 +82,13 @@ namespace rimrush
             rimrushBallTheme.CandySwirl
         };
 
+        /// <summary>
+        /// Executes Step Selection for the rimrushBallCatalog workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="current">Input value used by this step of the workflow.</param>
+        /// <param name="direction">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushBallSelection StepSelection(rimrushBallSelection current, int direction)
         {
             var index = Array.IndexOf(OrderedSelections, current);
@@ -100,6 +110,12 @@ namespace rimrush
             return OrderedSelections[index];
         }
 
+        /// <summary>
+        /// Executes Resolve Theme for the rimrushBallCatalog workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushBallTheme ResolveTheme(rimrushBallSelection selection)
         {
             return selection == rimrushBallSelection.Random
@@ -107,6 +123,12 @@ namespace rimrush
                 : ToTheme(selection);
         }
 
+        /// <summary>
+        /// Executes Preview Theme for the rimrushBallCatalog workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushBallTheme PreviewTheme(rimrushBallSelection selection)
         {
             return selection == rimrushBallSelection.Random
@@ -114,6 +136,12 @@ namespace rimrush
                 : ToTheme(selection);
         }
 
+        /// <summary>
+        /// Executes To Theme for the rimrushBallCatalog workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushBallTheme ToTheme(rimrushBallSelection selection)
         {
             return selection switch
@@ -129,6 +157,12 @@ namespace rimrush
             };
         }
 
+        /// <summary>
+        /// Executes Label for the rimrushBallCatalog workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static string Label(rimrushBallSelection selection)
         {
             return selection switch
@@ -157,6 +191,11 @@ namespace rimrush
         public int[][] Skills = { new int[0], new int[0] };
         public int[] MatchScore = { 0, 0 };
 
+        /// <summary>
+        /// Executes rimrush Match Data for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="local">Input value used by this step of the workflow.</param>
         public rimrushMatchData(bool local)
         {
             FirstCharacterId = rimrushPlayersData.SanitizeCharacterId(local ? 0 : 1);
@@ -165,11 +204,19 @@ namespace rimrush
             RollBallTheme();
         }
 
+        /// <summary>
+        /// Executes Reset Data for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ResetData()
         {
             CharacterIds = new[] { rimrushPlayersData.SanitizeCharacterId(0), rimrushPlayersData.SanitizeCharacterId(1, 0) };
         }
 
+        /// <summary>
+        /// Executes Reset Partly for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ResetPartly()
         {
             MatchMode = 0;
@@ -178,12 +225,20 @@ namespace rimrush
             MatchScore = new[] { 0, 0 };
         }
 
+        /// <summary>
+        /// Executes Reset All for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ResetAll()
         {
             ResetData();
             ResetPartly();
         }
 
+        /// <summary>
+        /// Executes Base Init for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void BaseInit()
         {
             MatchMode = 0;
@@ -196,11 +251,22 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { GetQuickMatchOpponentSkill(rimrushAiDifficulty.Normal) } };
         }
 
+        /// <summary>
+        /// Executes Reset Score for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ResetScore()
         {
             MatchScore = new[] { 0, 0 };
         }
 
+        /// <summary>
+        /// Executes Start Quick Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="difficulty">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartQuickMatch(int playerCharacterId, rimrushAiDifficulty difficulty, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -215,6 +281,11 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
+        /// <summary>
+        /// Executes Start Quick Local Versus Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartQuickLocalVersusMatch(rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -227,6 +298,12 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
 
+        /// <summary>
+        /// Executes Start Training for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartTraining(int characterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -238,11 +315,23 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new int[0] };
         }
 
+        /// <summary>
+        /// Executes Start Random Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="difficulty">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartRandomMatch(int playerCharacterId, rimrushAiDifficulty difficulty, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             StartQuickMatch(playerCharacterId, difficulty, ballSelection);
         }
 
+        /// <summary>
+        /// Executes Start Players2 Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartPlayers2Match(rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             MatchMode = 0;
@@ -255,6 +344,12 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
 
+        /// <summary>
+        /// Executes Start Tournament Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="tournament">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartTournamentMatch(rimrushTournamentData tournament, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -277,6 +372,13 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
+        /// <summary>
+        /// Executes Start Selected Two Player Match for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="leftCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="rightCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -291,11 +393,22 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
 
+        /// <summary>
+        /// Executes Who Wins for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public int WhoWins()
         {
             return MatchScore[0] > MatchScore[1] ? -1 : MatchScore[0] < MatchScore[1] ? 1 : 0;
         }
 
+        /// <summary>
+        /// Executes Get Quick Match Opponent Skill for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="difficulty">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetQuickMatchOpponentSkill(rimrushAiDifficulty difficulty)
         {
             switch (difficulty)
@@ -311,6 +424,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Get Tournament Opponent Skill for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="tournament">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetTournamentOpponentSkill(rimrushTournamentData tournament)
         {
             if (tournament == null)
@@ -364,11 +483,20 @@ namespace rimrush
             return Mathf.Clamp(skill, 0, rimrushAISkillsData.MaxSkillIndex);
         }
 
+        /// <summary>
+        /// Executes Roll Ball Theme for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void RollBallTheme()
         {
             BallTheme = rimrushBallCatalog.ResolveTheme(rimrushBallSelection.Random);
         }
 
+        /// <summary>
+        /// Executes Resolve Ball Selection for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
         private void ResolveBallSelection(rimrushBallSelection ballSelection)
         {
             BallTheme = rimrushBallCatalog.ResolveTheme(ballSelection);
@@ -398,6 +526,10 @@ namespace rimrush
         public rimrushBallSelection SelectedTrainingBallSelection;
         public rimrushBallSelection SelectedVersusBallSelection;
 
+        /// <summary>
+        /// Executes rimrush Inventory for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private rimrushInventory()
         {
             GameMode = 1;
@@ -426,6 +558,10 @@ namespace rimrush
 
         public bool IsTournamentActive => SessionMode == rimrushSessionMode.Tournament && Tournament.Active;
 
+        /// <summary>
+        /// Executes Toggle Difficulty for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ToggleDifficulty()
         {
             Difficulty = Difficulty switch
@@ -437,6 +573,11 @@ namespace rimrush
             };
         }
 
+        /// <summary>
+        /// Executes Set Participant Mode for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="participantMode">Input value used by this step of the workflow.</param>
         public void SetParticipantMode(rimrushParticipantMode participantMode)
         {
             ParticipantMode = participantMode;
@@ -446,41 +587,80 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Quick Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
         public void SetQuickSelection(int characterId)
         {
             SelectedQuickCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
+        /// <summary>
+        /// Executes Set Tournament Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
         public void SetTournamentSelection(int characterId)
         {
             SelectedTournamentCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
+        /// <summary>
+        /// Executes Set Training Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
         public void SetTrainingSelection(int characterId)
         {
             SelectedTrainingCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
+        /// <summary>
+        /// Executes Set Quick Ball Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
         public void SetQuickBallSelection(rimrushBallSelection selection)
         {
             SelectedQuickBallSelection = selection;
         }
 
+        /// <summary>
+        /// Executes Set Tournament Ball Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
         public void SetTournamentBallSelection(rimrushBallSelection selection)
         {
             SelectedTournamentBallSelection = selection;
         }
 
+        /// <summary>
+        /// Executes Set Training Ball Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
         public void SetTrainingBallSelection(rimrushBallSelection selection)
         {
             SelectedTrainingBallSelection = selection;
         }
 
+        /// <summary>
+        /// Executes Set Versus Ball Selection for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="selection">Input value used by this step of the workflow.</param>
         public void SetVersusBallSelection(rimrushBallSelection selection)
         {
             SelectedVersusBallSelection = selection;
         }
 
+        /// <summary>
+        /// Executes Start Quick Game for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void StartQuickGame()
         {
             Tournament.Reset();
@@ -492,6 +672,10 @@ namespace rimrush
             MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
         }
 
+        /// <summary>
+        /// Executes Start One Player for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void StartOnePlayer()
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
@@ -503,6 +687,10 @@ namespace rimrush
             MatchPrepared = true;
         }
 
+        /// <summary>
+        /// Executes Start Two Players for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void StartTwoPlayers()
         {
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
@@ -514,6 +702,12 @@ namespace rimrush
             MatchPrepared = true;
         }
 
+        /// <summary>
+        /// Executes Start Two Player Versus for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="leftCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="rightCharacterId">Input value used by this step of the workflow.</param>
         public void StartTwoPlayerVersus(int leftCharacterId, int rightCharacterId)
         {
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
@@ -524,6 +718,10 @@ namespace rimrush
             MatchPrepared = true;
         }
 
+        /// <summary>
+        /// Executes Start Training for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void StartTraining()
         {
             ParticipantMode = rimrushParticipantMode.Training;
@@ -534,6 +732,11 @@ namespace rimrush
             MatchPrepared = true;
         }
 
+        /// <summary>
+        /// Executes Begin Tournament for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool BeginTournament()
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
@@ -555,6 +758,11 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Begin Tournament Finals for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool BeginTournamentFinals()
         {
             if (!IsTournamentActive)
@@ -573,6 +781,11 @@ namespace rimrush
             return Tournament.HasPendingPlayerMatch;
         }
 
+        /// <summary>
+        /// Executes Advance Tournament for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool AdvanceTournament()
         {
             if (!IsTournamentActive)
@@ -591,6 +804,10 @@ namespace rimrush
             return Tournament.Completed;
         }
 
+        /// <summary>
+        /// Executes Abandon Tournament for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void AbandonTournament()
         {
             Tournament.Reset();

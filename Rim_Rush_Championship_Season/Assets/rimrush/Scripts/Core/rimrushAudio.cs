@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushAudio 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,6 +17,12 @@ namespace rimrush
 
         public static rimrushAudio Instance { get; private set; }
 
+        /// <summary>
+        /// Executes Create for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushAudio Create(Transform parent)
         {
             if (Instance != null)
@@ -36,6 +45,10 @@ namespace rimrush
             return Instance;
         }
 
+        /// <summary>
+        /// Executes On Destroy for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnDestroy()
         {
             if (Instance == this)
@@ -44,6 +57,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Play Music for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="key">Input value used by this step of the workflow.</param>
         public void PlayMusic(string key)
         {
             if (!MusicEnabled)
@@ -66,11 +84,21 @@ namespace rimrush
             musicSource.Play();
         }
 
+        /// <summary>
+        /// Executes Stop Music for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void StopMusic()
         {
             musicSource.Stop();
         }
 
+        /// <summary>
+        /// Executes Play for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="key">Input value used by this step of the workflow.</param>
+        /// <param name="volume">Input value used by this step of the workflow.</param>
         public void Play(string key, float volume = 1f)
         {
             if (!SfxEnabled)
@@ -85,17 +113,31 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Toggle Music for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ToggleMusic()
         {
             MusicEnabled = !MusicEnabled;
             musicSource.mute = !MusicEnabled;
         }
 
+        /// <summary>
+        /// Executes Toggle Sfx for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ToggleSfx()
         {
             SfxEnabled = !SfxEnabled;
         }
 
+        /// <summary>
+        /// Executes Load for the rimrushAudio workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="key">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private AudioClip Load(string key)
         {
             if (!clips.TryGetValue(key, out var clip))

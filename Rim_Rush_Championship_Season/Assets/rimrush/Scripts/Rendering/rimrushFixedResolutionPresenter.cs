@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushFixedResolutionPresenter 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,6 +29,11 @@ namespace rimrush
 
         public static bool HasActivePresenter => activePresenter != null && activePresenter.configured;
 
+        /// <summary>
+        /// Executes Attach for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="camera">Input value used by this step of the workflow.</param>
         public void Attach(Camera camera)
         {
             if (camera == null)
@@ -56,6 +64,10 @@ namespace rimrush
             RefreshLayout(force: true);
         }
 
+        /// <summary>
+        /// Executes Detach for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Detach()
         {
             DetachCurrentCamera();
@@ -66,6 +78,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try Map Screen To Game Pixel for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="screenPosition">Input value used by this step of the workflow.</param>
+        /// <param name="gamePixel">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public static bool TryMapScreenToGamePixel(Vector2 screenPosition, out Vector2 gamePixel)
         {
             if (activePresenter != null)
@@ -77,6 +96,10 @@ namespace rimrush
             return false;
         }
 
+        /// <summary>
+        /// Executes Late Update for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void LateUpdate()
         {
             if (!configured)
@@ -87,6 +110,10 @@ namespace rimrush
             RefreshLayout(force: false);
         }
 
+        /// <summary>
+        /// Executes On Destroy for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnDestroy()
         {
             DetachCurrentCamera();
@@ -119,6 +146,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Ensure Canvas for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureCanvas()
         {
             if (canvas != null)
@@ -168,6 +199,10 @@ namespace rimrush
             outputImage.raycastTarget = false;
         }
 
+        /// <summary>
+        /// Executes Ensure Output Camera for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureOutputCamera()
         {
             if (outputCamera != null)
@@ -193,6 +228,10 @@ namespace rimrush
             outputCamera.transform.localPosition = new Vector3(0f, 0f, -5f);
         }
 
+        /// <summary>
+        /// Executes Ensure Render Texture for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureRenderTexture()
         {
             if (renderTexture != null)
@@ -213,6 +252,11 @@ namespace rimrush
             outputImage.texture = renderTexture;
         }
 
+        /// <summary>
+        /// Executes Refresh Layout for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="force">Input value used by this step of the workflow.</param>
         private void RefreshLayout(bool force)
         {
             var screenWidth = Mathf.Max(1, Screen.width);
@@ -238,6 +282,11 @@ namespace rimrush
                 height);
         }
 
+        /// <summary>
+        /// Executes Apply Presenter Layer for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="root">Input value used by this step of the workflow.</param>
         private static void ApplyPresenterLayer(Transform root)
         {
             var uiLayer = LayerMask.NameToLayer("UI");
@@ -253,6 +302,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Detach Current Camera for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void DetachCurrentCamera()
         {
             if (sourceCamera == null)
@@ -267,6 +320,11 @@ namespace rimrush
             configured = false;
         }
 
+        /// <summary>
+        /// Executes Set Presenter Visible for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         private void SetPresenterVisible(bool visible)
         {
             if (canvas != null)
@@ -280,6 +338,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try Map Screen To Game Pixel Internal for the rimrushFixedResolutionPresenter workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="screenPosition">Input value used by this step of the workflow.</param>
+        /// <param name="gamePixel">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool TryMapScreenToGamePixelInternal(Vector2 screenPosition, out Vector2 gamePixel)
         {
             if (!configured || outputRect == null || outputScreenRect.width <= 0f || outputScreenRect.height <= 0f)

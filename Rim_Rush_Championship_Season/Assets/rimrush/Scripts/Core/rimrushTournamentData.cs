@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushTournamentData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,6 +25,12 @@ namespace rimrush
         public int WinnerCharacterId { get; private set; } = -1;
         public bool Completed { get; private set; }
 
+        /// <summary>
+        /// Executes Reset for the rimrushTournamentMatchResult workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="leftCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="rightCharacterId">Input value used by this step of the workflow.</param>
         public void Reset(int leftCharacterId = -1, int rightCharacterId = -1)
         {
             LeftCharacterId = leftCharacterId;
@@ -32,6 +41,12 @@ namespace rimrush
             Completed = false;
         }
 
+        /// <summary>
+        /// Executes Complete for the rimrushTournamentMatchResult workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="leftScore">Input value used by this step of the workflow.</param>
+        /// <param name="rightScore">Input value used by this step of the workflow.</param>
         public void Complete(int leftScore, int rightScore)
         {
             if (LeftCharacterId < 0 || RightCharacterId < 0)
@@ -64,6 +79,13 @@ namespace rimrush
         public int PointDiff => PointsFor - PointsAgainst;
         public float Percentage => GamesPlayed > 0 ? Wins / (float)GamesPlayed : 0f;
 
+        /// <summary>
+        /// Executes Reset for the rimrushTournamentStandingEntry workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="divisionIndex">Input value used by this step of the workflow.</param>
+        /// <param name="divisionSlot">Input value used by this step of the workflow.</param>
         public void Reset(int characterId, int divisionIndex, int divisionSlot)
         {
             CharacterId = characterId;
@@ -75,6 +97,12 @@ namespace rimrush
             PointsAgainst = 0;
         }
 
+        /// <summary>
+        /// Executes Apply Result for the rimrushTournamentStandingEntry workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="scored">Input value used by this step of the workflow.</param>
+        /// <param name="allowed">Input value used by this step of the workflow.</param>
         public void ApplyResult(int scored, int allowed)
         {
             PointsFor += scored;
@@ -175,6 +203,10 @@ namespace rimrush
         public rimrushTournamentMatchResult ThirdPlaceResult { get; } = new rimrushTournamentMatchResult();
         public rimrushTournamentMatchResult FinalResult { get; } = new rimrushTournamentMatchResult();
 
+        /// <summary>
+        /// Executes Reset for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Reset()
         {
             Active = false;
@@ -212,6 +244,13 @@ namespace rimrush
             FinalResult.Reset();
         }
 
+        /// <summary>
+        /// Executes Create for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="difficulty">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool Create(int playerCharacterId, rimrushAiDifficulty difficulty)
         {
             Reset();
@@ -267,6 +306,10 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Begin Finals for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void BeginFinals()
         {
             if (!Active || Completed || !RegularSeasonCompleted || !PlayerQualifiedForPlayoffs)
@@ -283,6 +326,12 @@ namespace rimrush
             CurrentOpponentCharacterId = GetPlayerOpponentForMatchSet(SemiFinalResults);
         }
 
+        /// <summary>
+        /// Executes Apply Current Match Result for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerScore">Input value used by this step of the workflow.</param>
+        /// <param name="opponentScore">Input value used by this step of the workflow.</param>
         public void ApplyCurrentMatchResult(int playerScore, int opponentScore)
         {
             if (!Active || Completed)
@@ -307,6 +356,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Get Division Standings for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="divisionIndex">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushTournamentStandingEntry[] GetDivisionStandings(int divisionIndex)
         {
             if (divisionIndex < 0 || divisionIndex >= DivisionCount)
@@ -324,6 +379,12 @@ namespace rimrush
             return standings;
         }
 
+        /// <summary>
+        /// Executes Apply Regular Season Result for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerScore">Input value used by this step of the workflow.</param>
+        /// <param name="opponentScore">Input value used by this step of the workflow.</param>
         private void ApplyRegularSeasonResult(int playerScore, int opponentScore)
         {
             if (RegularSeasonCompleted || CurrentRegularSeasonRoundIndex < 0 || CurrentRegularSeasonRoundIndex >= RegularSeasonRoundCount)
@@ -370,6 +431,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Apply Semi Final Result for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerScore">Input value used by this step of the workflow.</param>
+        /// <param name="opponentScore">Input value used by this step of the workflow.</param>
         private void ApplySemiFinalResult(int playerScore, int opponentScore)
         {
             var playerSemi = GetPlayerMatchFromSet(SemiFinalResults);
@@ -404,6 +471,13 @@ namespace rimrush
             CurrentOpponentCharacterId = GetOpponentCharacterId(ThirdPlaceResult, PlayerCharacterId);
         }
 
+        /// <summary>
+        /// Executes Apply Placement Result for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="match">Input value used by this step of the workflow.</param>
+        /// <param name="playerScore">Input value used by this step of the workflow.</param>
+        /// <param name="opponentScore">Input value used by this step of the workflow.</param>
         private void ApplyPlacementResult(rimrushTournamentMatchResult match, int playerScore, int opponentScore)
         {
             if (match == null || match.Completed)
@@ -415,6 +489,10 @@ namespace rimrush
             FinalizeTournament();
         }
 
+        /// <summary>
+        /// Executes Finalize Tournament for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void FinalizeTournament()
         {
             if (!FinalResult.Completed || !ThirdPlaceResult.Completed)
@@ -429,6 +507,11 @@ namespace rimrush
             Completed = true;
         }
 
+        /// <summary>
+        /// Executes Resolve Player Placement for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private int ResolvePlayerPlacement()
         {
             var champion = FinalResult.WinnerCharacterId;
@@ -482,6 +565,10 @@ namespace rimrush
             return 8;
         }
 
+        /// <summary>
+        /// Executes Build Regular Season Schedule for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BuildRegularSeasonSchedule()
         {
             for (var round = 0; round < RegularSeasonRoundCount; round++)
@@ -501,6 +588,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Build Playoff Bracket for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BuildPlayoffBracket()
         {
             var divisionA = GetDivisionStandings(0);
@@ -518,6 +609,10 @@ namespace rimrush
                 SemiFinalResults[1].RightCharacterId == PlayerCharacterId;
         }
 
+        /// <summary>
+        /// Executes Configure Placement Matches From Semi Finals for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ConfigurePlacementMatchesFromSemiFinals()
         {
             FinalResult.Reset(
@@ -528,6 +623,10 @@ namespace rimrush
                 GetMatchLoserCharacterId(SemiFinalResults[1]));
         }
 
+        /// <summary>
+        /// Executes Simulate Entire Playoffs for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void SimulateEntirePlayoffs()
         {
             for (var i = 0; i < SemiFinalResults.Length; i++)
@@ -540,6 +639,12 @@ namespace rimrush
             SimulateMatch(FinalResult);
         }
 
+        /// <summary>
+        /// Executes Get Player Match For Round for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="roundIndex">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private rimrushTournamentMatchResult GetPlayerMatchForRound(int roundIndex)
         {
             if (roundIndex < 0 || roundIndex >= RegularSeasonRounds.Length)
@@ -559,6 +664,12 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Get Player Match From Set for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="matches">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private rimrushTournamentMatchResult GetPlayerMatchFromSet(rimrushTournamentMatchResult[] matches)
         {
             if (matches == null)
@@ -577,16 +688,33 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Get Player Opponent For Round for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="roundIndex">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private int GetPlayerOpponentForRound(int roundIndex)
         {
             return GetOpponentCharacterId(GetPlayerMatchForRound(roundIndex), PlayerCharacterId);
         }
 
+        /// <summary>
+        /// Executes Get Player Opponent For Match Set for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="matches">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private int GetPlayerOpponentForMatchSet(rimrushTournamentMatchResult[] matches)
         {
             return GetOpponentCharacterId(GetPlayerMatchFromSet(matches), PlayerCharacterId);
         }
 
+        /// <summary>
+        /// Executes Apply Standing Update for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="match">Input value used by this step of the workflow.</param>
         private void ApplyStandingUpdate(rimrushTournamentMatchResult match)
         {
             var leftEntry = GetStandingEntry(match.LeftCharacterId);
@@ -600,6 +728,12 @@ namespace rimrush
             rightEntry.ApplyResult(match.RightScore, match.LeftScore);
         }
 
+        /// <summary>
+        /// Executes Get Standing Entry for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private rimrushTournamentStandingEntry GetStandingEntry(int characterId)
         {
             for (var division = 0; division < DivisionCount; division++)
@@ -617,6 +751,13 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Compare Division Standings for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="left">Input value used by this step of the workflow.</param>
+        /// <param name="right">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int CompareDivisionStandings(rimrushTournamentStandingEntry left, rimrushTournamentStandingEntry right)
         {
             var winCompare = right.Wins.CompareTo(left.Wins);
@@ -640,6 +781,13 @@ namespace rimrush
             return left.DivisionSlot.CompareTo(right.DivisionSlot);
         }
 
+        /// <summary>
+        /// Executes Compare Overall Standings for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="left">Input value used by this step of the workflow.</param>
+        /// <param name="right">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int CompareOverallStandings(rimrushTournamentStandingEntry left, rimrushTournamentStandingEntry right)
         {
             var compare = CompareDivisionStandings(left, right);
@@ -657,6 +805,13 @@ namespace rimrush
             return left.DivisionSlot.CompareTo(right.DivisionSlot);
         }
 
+        /// <summary>
+        /// Executes Get Opponent Character Id for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="match">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetOpponentCharacterId(rimrushTournamentMatchResult match, int characterId)
         {
             if (match == null)
@@ -677,6 +832,12 @@ namespace rimrush
             return -1;
         }
 
+        /// <summary>
+        /// Executes Get Match Loser Character Id for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="match">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetMatchLoserCharacterId(rimrushTournamentMatchResult match)
         {
             if (match == null || !match.Completed)
@@ -697,6 +858,11 @@ namespace rimrush
             return -1;
         }
 
+        /// <summary>
+        /// Executes Simulate Match for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="match">Input value used by this step of the workflow.</param>
         private static void SimulateMatch(rimrushTournamentMatchResult match)
         {
             if (match == null || match.Completed)
@@ -709,6 +875,11 @@ namespace rimrush
             match.Complete(leftScore, rightScore);
         }
 
+        /// <summary>
+        /// Executes Shuffle for the rimrushTournamentData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="values">Input value used by this step of the workflow.</param>
         private static void Shuffle(List<int> values)
         {
             for (var i = values.Count - 1; i > 0; i--)

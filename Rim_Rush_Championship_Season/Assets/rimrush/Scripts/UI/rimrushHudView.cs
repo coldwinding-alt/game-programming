@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushHudView 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using TMPro;
 using UnityEngine;
 
@@ -142,6 +145,12 @@ namespace rimrush
         public bool IsPostMatchVisible => postMatchOverlayRoot != null && postMatchOverlayRoot.activeSelf;
         public bool IsPauseOverlayVisible { get; private set; }
 
+        /// <summary>
+        /// Executes rimrush Hud View for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="matchData">Input value used by this step of the workflow.</param>
         public rimrushHudView(Transform parent, rimrushMatchData matchData)
         {
             isTraining = rimrushInventory.Instance.GameMode == 3;
@@ -637,6 +646,12 @@ namespace rimrush
             UpdateScore(matchData.MatchScore[0], matchData.MatchScore[1]);
         }
 
+        /// <summary>
+        /// Executes Update Score for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="left">Input value used by this step of the workflow.</param>
+        /// <param name="right">Input value used by this step of the workflow.</param>
         public void UpdateScore(int left, int right)
         {
             SetText(leftScore, left.ToString());
@@ -645,6 +660,11 @@ namespace rimrush
             SetText(pauseRightScoreText, right.ToString());
         }
 
+        /// <summary>
+        /// Executes Update Timer for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="secondsLeft">Input value used by this step of the workflow.</param>
         public void UpdateTimer(float secondsLeft)
         {
             var timeText = FormatTime(secondsLeft);
@@ -655,11 +675,21 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Timer Visible for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         public void SetTimerVisible(bool visible)
         {
             timerText.gameObject.SetActive(visible);
         }
 
+        /// <summary>
+        /// Executes Consume Pause Command for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushPauseCommand ConsumePauseCommand()
         {
             var command = pendingPauseCommand;
@@ -667,6 +697,10 @@ namespace rimrush
             return command;
         }
 
+        /// <summary>
+        /// Executes Toggle Pause Overlay for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void TogglePauseOverlay()
         {
             if (IsPauseOverlayVisible)
@@ -679,6 +713,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Show Pause Overlay for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ShowPauseOverlay()
         {
             HideMessage();
@@ -692,6 +730,10 @@ namespace rimrush
             helpButton?.SetVisible(false);
         }
 
+        /// <summary>
+        /// Executes Hide Pause Overlay for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HidePauseOverlay()
         {
             IsPauseOverlayVisible = false;
@@ -702,6 +744,11 @@ namespace rimrush
             helpButton?.SetVisible(true);
         }
 
+        /// <summary>
+        /// Executes Begin Resume Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void BeginResumeCountdown(float duration)
         {
             IsPauseOverlayVisible = false;
@@ -713,6 +760,10 @@ namespace rimrush
             StartCountdown(duration, "RESUMING IN");
         }
 
+        /// <summary>
+        /// Executes End Resume Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void EndResumeCountdown()
         {
             pauseButton.SetVisible(true);
@@ -721,6 +772,12 @@ namespace rimrush
             helpButton?.SetVisible(true);
         }
 
+        /// <summary>
+        /// Executes Show Message for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void ShowMessage(string message, float duration = 1.2f)
         {
             if (messageRoot == null)
@@ -741,6 +798,12 @@ namespace rimrush
             messageRoot.SetActive(true);
         }
 
+        /// <summary>
+        /// Executes Show Bonus Notice for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void ShowBonusNotice(string message, float duration = 0.9f)
         {
             if (bonusNoticeRoot == null)
@@ -757,6 +820,10 @@ namespace rimrush
             bonusNoticeRoot.SetActive(true);
         }
 
+        /// <summary>
+        /// Executes Hide Message for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HideMessage()
         {
             SetText(messageText, string.Empty);
@@ -771,6 +838,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide Bonus Notice for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HideBonusNotice()
         {
             SetText(bonusNoticeText, string.Empty);
@@ -784,6 +855,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HideCountdown()
         {
             SetText(countdownText, string.Empty);
@@ -796,11 +871,22 @@ namespace rimrush
             SetGameObjectVisible(countdownCaptionText.gameObject, false);
         }
 
+        /// <summary>
+        /// Executes Start Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void StartCountdown(float duration)
         {
             StartCountdown(duration, string.Empty);
         }
 
+        /// <summary>
+        /// Executes Start Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
+        /// <param name="caption">Input value used by this step of the workflow.</param>
         public void StartCountdown(float duration, string caption)
         {
             countdownTime = duration;
@@ -817,6 +903,12 @@ namespace rimrush
             HidePostMatch();
         }
 
+        /// <summary>
+        /// Executes Update Countdown for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool UpdateCountdown(float dt)
         {
             if (countdownTime < 0f)
@@ -852,6 +944,11 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             if (rimrushHelpPanel.IsAnyOpen)
@@ -925,6 +1022,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Show Post Match for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="winner">Input value used by this step of the workflow.</param>
+        /// <param name="leftScoreValue">Input value used by this step of the workflow.</param>
+        /// <param name="rightScoreValue">Input value used by this step of the workflow.</param>
         public void ShowPostMatch(int winner, int leftScoreValue, int rightScoreValue)
         {
             var inventory = rimrushInventory.Instance;
@@ -994,6 +1098,10 @@ namespace rimrush
             HideCountdown();
         }
 
+        /// <summary>
+        /// Executes Hide Post Match for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HidePostMatch()
         {
             SetText(postMatchTitleText, string.Empty);
@@ -1050,6 +1158,11 @@ namespace rimrush
             SetGameObjectVisible(postMatchOverlayRoot, false);
         }
 
+        /// <summary>
+        /// Executes Update Post Match Visual for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdatePostMatchVisual(float dt)
         {
             postMatchAnimTime += dt;
@@ -1100,6 +1213,10 @@ namespace rimrush
                 new Color(1f, 0.72f, 0.34f, Mathf.Lerp(0.04f, 0.08f, 1f - pulse)));
         }
 
+        /// <summary>
+        /// Executes Update Message Visual for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateMessageVisual()
         {
             if (messageRoot == null || !messageRoot.activeSelf)
@@ -1132,6 +1249,10 @@ namespace rimrush
             messageRoot.transform.localScale = Vector3.one * (scale * messageVisualScale);
         }
 
+        /// <summary>
+        /// Executes Update Bonus Notice Visual for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateBonusNoticeVisual()
         {
             if (bonusNoticeRoot == null || !bonusNoticeRoot.activeSelf)
@@ -1148,6 +1269,10 @@ namespace rimrush
             bonusNoticeRoot.transform.localScale = Vector3.one * scale;
         }
 
+        /// <summary>
+        /// Executes Update Countdown Visual for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateCountdownVisual()
         {
             var progress = 1f - Mathf.Clamp01(countdownPulseTime / CountdownPulseDuration);
@@ -1164,6 +1289,11 @@ namespace rimrush
             countdownText.transform.localScale = countdownBaseScale * scale;
         }
 
+        /// <summary>
+        /// Executes Apply Message Theme for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
         private void ApplyMessageTheme(string message)
         {
             switch (message)
@@ -1192,6 +1322,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Apply Bonus Notice Theme for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
         private void ApplyBonusNoticeTheme(string message)
         {
             switch (message)
@@ -1208,6 +1343,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Resolve Message Scale for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float ResolveMessageScale(string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -1223,6 +1364,12 @@ namespace rimrush
             return message.Length >= 8 ? 0.94f : 1f;
         }
 
+        /// <summary>
+        /// Executes Resolve Post Match Name Font Size for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterName">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int ResolvePostMatchNameFontSize(string characterName)
         {
             if (string.IsNullOrEmpty(characterName))
@@ -1238,6 +1385,19 @@ namespace rimrush
             return characterName.Length >= 9 ? 13 : 14;
         }
 
+        /// <summary>
+        /// Executes Create Pause Panel for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="width">Input value used by this step of the workflow.</param>
+        /// <param name="height">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="tint">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePausePanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, "bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
@@ -1249,6 +1409,20 @@ namespace rimrush
             return panel;
         }
 
+        /// <summary>
+        /// Executes Create Pause Frame for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="frame">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="width">Input value used by this step of the workflow.</param>
+        /// <param name="height">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="tint">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePauseFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, frame, x, y, 0.5f, 0.5f, sortingOrder, parent);
@@ -1267,6 +1441,12 @@ namespace rimrush
             return panel;
         }
 
+        /// <summary>
+        /// Executes Set Game Object Visible for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="target">Input value used by this step of the workflow.</param>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         private static void SetGameObjectVisible(GameObject target, bool visible)
         {
             if (target != null)
@@ -1275,6 +1455,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Text for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="target">Input value used by this step of the workflow.</param>
+        /// <param name="value">Input value used by this step of the workflow.</param>
         private static void SetText(TextMesh target, string value)
         {
             if (target == null)
@@ -1286,6 +1472,11 @@ namespace rimrush
             target.font?.RequestCharactersInTexture(value, target.fontSize, FontStyle.Normal);
         }
 
+        /// <summary>
+        /// Executes Set Pause Overlay Visible for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         private void SetPauseOverlayVisible(bool visible)
         {
             SetGameObjectVisible(pauseOverlayRoot, visible);
@@ -1293,11 +1484,22 @@ namespace rimrush
             pauseResumeButton.SetVisible(visible);
         }
 
+        /// <summary>
+        /// Executes Set Scoreboard Visible for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="visible">Input value used by this step of the workflow.</param>
         private void SetScoreboardVisible(bool visible)
         {
             SetGameObjectVisible(scoreboardRoot, visible);
         }
 
+        /// <summary>
+        /// Executes Create Pause Button Icon for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreatePauseButtonIcon(Transform parent)
         {
             var resourcePath = rimrushAssets.Images.ResourcePath(rimrushAssets.Images.PauseButton);
@@ -1312,20 +1514,38 @@ namespace rimrush
             return icon;
         }
 
+        /// <summary>
+        /// Executes Toggle Background Music for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private static void ToggleBackgroundMusic()
         {
             rimrushAudio.Instance?.ToggleMusic();
         }
 
+        /// <summary>
+        /// Executes No Op Action for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private static void NoOpAction()
         {
         }
 
+        /// <summary>
+        /// Executes Get Music Icon Index for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetMusicIconIndex()
         {
             return rimrushAudio.Instance != null && rimrushAudio.Instance.MusicEnabled ? 0 : 1;
         }
 
+        /// <summary>
+        /// Executes Create Scoreboard Backdrop for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         private static void CreateScoreboardBackdrop(Transform parent)
         {
             var image = CreateHudImage("ScoreboardBackdrop", rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Scoreboard), ScoreboardCenterX, ScoreboardCenterY, ScoreboardTargetWidth, 80, parent);
@@ -1337,11 +1557,29 @@ namespace rimrush
             rimrushRender.Sprite("InfoPanel", rimrushAtlasCache.Instance.Gameplay, "infoPanel0000", rimrushConstants.Width2, 60f, 0.5f, 0.5f, 80, parent);
         }
 
+        /// <summary>
+        /// Executes Create Popup Backdrop for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePopupBackdrop(Transform parent)
         {
             return CreateHudImage("MessageBackdrop", rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), rimrushConstants.Width2, PopupCenterY + 1f, PopupBackdropWidth, 118, parent);
         }
 
+        /// <summary>
+        /// Executes Create Hud Image for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="targetWidth">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreateHudImage(string name, string resourcePath, float x, float y, float targetWidth, int sortingOrder, Transform parent)
         {
             var texture = Resources.Load<Texture2D>(resourcePath);
@@ -1355,6 +1593,13 @@ namespace rimrush
             return image;
         }
 
+        /// <summary>
+        /// Executes Create Hud Root for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreateHudRoot(string name, Transform parent)
         {
             var root = new GameObject(name);
@@ -1366,6 +1611,15 @@ namespace rimrush
             return root;
         }
 
+        /// <summary>
+        /// Executes Create Hud Anchor for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreateHudAnchor(string name, float x, float y, Transform parent)
         {
             var anchor = new GameObject(name);
@@ -1378,6 +1632,17 @@ namespace rimrush
             return anchor;
         }
 
+        /// <summary>
+        /// Executes Create Portrait Aura for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="scale">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
         {
             var interfaceAtlas = rimrushAtlasCache.Instance.Interface;
@@ -1392,6 +1657,18 @@ namespace rimrush
             return aura;
         }
 
+        /// <summary>
+        /// Executes Create Character Portrait for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreateCharacterPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
             var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
@@ -1414,6 +1691,12 @@ namespace rimrush
             return portrait;
         }
 
+        /// <summary>
+        /// Executes Set Sprite Tint for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="target">Input value used by this step of the workflow.</param>
+        /// <param name="tint">Input value used by this step of the workflow.</param>
         private static void SetSpriteTint(GameObject target, Color tint)
         {
             if (target == null)
@@ -1428,6 +1711,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Format Time for the rimrushHudView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="secondsLeft">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string FormatTime(float secondsLeft)
         {
             var clamped = Mathf.Max(0f, secondsLeft);
@@ -1459,6 +1748,18 @@ namespace rimrush
         private bool pressed;
         public GameObject Root => sprite;
 
+        /// <summary>
+        /// Executes rimrush Menu Button for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="text">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="width">Input value used by this step of the workflow.</param>
+        /// <param name="height">Input value used by this step of the workflow.</param>
+        /// <param name="action">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
         public rimrushMenuButton(string text, float x, float y, float width, float height, System.Action action, Transform parent, int sortingOrder = 50)
         {
             this.action = action;
@@ -1507,6 +1808,11 @@ namespace rimrush
             labelBaseScale = labelTransform != null ? labelTransform.localScale : Vector3.one;
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="camera">Input value used by this step of the workflow.</param>
         public void Update(Camera camera)
         {
             if (!visible)
@@ -1576,6 +1882,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Text for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="text">Input value used by this step of the workflow.</param>
         public void SetText(string text)
         {
             if (label != null)
@@ -1588,6 +1899,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Visible for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="isVisible">Input value used by this step of the workflow.</param>
         public void SetVisible(bool isVisible)
         {
             visible = isVisible;
@@ -1602,12 +1918,22 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Set Background Visible for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="isVisible">Input value used by this step of the workflow.</param>
         public void SetBackgroundVisible(bool isVisible)
         {
             backgroundVisible = isVisible;
             sprite.SetActive(visible && backgroundVisible);
         }
 
+        /// <summary>
+        /// Executes Set Label Visible for the rimrushMenuButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="isVisible">Input value used by this step of the workflow.</param>
         public void SetLabelVisible(bool isVisible)
         {
             labelVisible = isVisible;
@@ -1629,6 +1955,20 @@ namespace rimrush
         private bool visible = true;
         private int activeIconIndex;
 
+        /// <summary>
+        /// Executes rimrush Icon Button for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="width">Input value used by this step of the workflow.</param>
+        /// <param name="height">Input value used by this step of the workflow.</param>
+        /// <param name="action">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
+        /// <param name="resourcePaths">Input value used by this step of the workflow.</param>
         public rimrushIconButton(
             string name,
             float x,
@@ -1654,11 +1994,21 @@ namespace rimrush
             RefreshIcons();
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="camera">Input value used by this step of the workflow.</param>
         public void Update(Camera camera)
         {
             button.Update(camera);
         }
 
+        /// <summary>
+        /// Executes Set Visible for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="isVisible">Input value used by this step of the workflow.</param>
         public void SetVisible(bool isVisible)
         {
             visible = isVisible;
@@ -1666,12 +2016,29 @@ namespace rimrush
             RefreshIcons();
         }
 
+        /// <summary>
+        /// Executes Set Active Icon Index for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="iconIndex">Input value used by this step of the workflow.</param>
         public void SetActiveIconIndex(int iconIndex)
         {
             activeIconIndex = Mathf.Clamp(iconIndex, 0, Mathf.Max(0, icons.Length - 1));
             RefreshIcons();
         }
 
+        /// <summary>
+        /// Executes Create Image Icon for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static GameObject CreateImageIcon(string name, string resourcePath, float x, float y, int sortingOrder, float targetPixels, Transform parent)
         {
             var texture = Resources.Load<Texture2D>(resourcePath);
@@ -1686,6 +2053,10 @@ namespace rimrush
             return icon;
         }
 
+        /// <summary>
+        /// Executes Refresh Icons for the rimrushIconButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void RefreshIcons()
         {
             for (var i = 0; i < icons.Length; i++)
@@ -1702,6 +2073,14 @@ namespace rimrush
     {
         private readonly rimrushRadialIconMesh overlay;
 
+        /// <summary>
+        /// Executes rimrush Energy Bar View for the rimrushEnergyBarView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="controllerSlot">Input value used by this step of the workflow.</param>
+        /// <param name="superId">Input value used by this step of the workflow.</param>
+        /// <param name="fullTime">Input value used by this step of the workflow.</param>
         public rimrushEnergyBarView(Transform parent, int controllerSlot, int superId, float fullTime)
         {
             var profile = rimrushControlsData.ProfileForSlot(controllerSlot);
@@ -1737,11 +2116,20 @@ namespace rimrush
             SetCharge(fullTime <= 0f ? 1f : 0f);
         }
 
+        /// <summary>
+        /// Executes Set Charge for the rimrushEnergyBarView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="progress">Input value used by this step of the workflow.</param>
         public void SetCharge(float progress)
         {
             overlay.SetProgress(progress);
         }
 
+        /// <summary>
+        /// Executes Release Runtime Resources for the rimrushEnergyBarView workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ReleaseRuntimeResources()
         {
             overlay?.ReleaseRuntimeResources();
@@ -1759,6 +2147,17 @@ namespace rimrush
         private readonly Vector2 uvMin;
         private readonly Vector2 uvMax;
 
+        /// <summary>
+        /// Executes rimrush Radial Icon Mesh for the rimrushRadialIconMesh workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="atlas">Input value used by this step of the workflow.</param>
+        /// <param name="frameName">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushRadialIconMesh(string name, rimrushAtlas atlas, string frameName, float x, float y, int sortingOrder, Transform parent)
         {
             graphic = new GameObject(name);
@@ -1785,6 +2184,11 @@ namespace rimrush
             SetProgress(0f);
         }
 
+        /// <summary>
+        /// Executes Set Progress for the rimrushRadialIconMesh workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="progress">Input value used by this step of the workflow.</param>
         public void SetProgress(float progress)
         {
             progress = Mathf.Clamp01(progress);
@@ -1799,6 +2203,11 @@ namespace rimrush
             BuildSector((RadialSteps - hiddenSteps) * DegreesPerStep);
         }
 
+        /// <summary>
+        /// Executes Build Sector for the rimrushRadialIconMesh workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="degrees">Input value used by this step of the workflow.</param>
         private void BuildSector(float degrees)
         {
             var segmentCount = Mathf.Max(1, Mathf.CeilToInt(RadialSteps * Mathf.Clamp01(degrees / 360f)));
@@ -1836,6 +2245,10 @@ namespace rimrush
             mesh.RecalculateBounds();
         }
 
+        /// <summary>
+        /// Executes Release Runtime Resources for the rimrushRadialIconMesh workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ReleaseRuntimeResources()
         {
             if (mesh == null)
