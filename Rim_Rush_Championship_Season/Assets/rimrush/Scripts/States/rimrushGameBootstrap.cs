@@ -1280,7 +1280,7 @@ namespace rimrush
             menuButtons.Add(new rimrushMenuButton("<", centerX - SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, previousCharacterAction, runtimeRoot));
             menuButtons.Add(new rimrushMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
 
-            CreatePreviewPlayer(characterId, centerX, previewY, previewScale);
+            CreatePreviewPlayer(key, characterId, centerX, previewY, previewScale);
             CreateMenuText(
                 $"{key}_CharacterName",
                 rimrushPlayersData.GetCharacterName(characterId),
@@ -1328,22 +1328,23 @@ namespace rimrush
         /// Executes Create Preview Player for the TournamentStandingsRowViewModel workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
+        /// <param name="key">Input value used by this step of the workflow.</param>
         /// <param name="characterId">Input value used by this step of the workflow.</param>
         /// <param name="x">Input value used by this step of the workflow.</param>
         /// <param name="y">Input value used by this step of the workflow.</param>
         /// <param name="scale">Input value used by this step of the workflow.</param>
-        private void CreatePreviewPlayer(int characterId, float x, float y, float scale)
+        private void CreatePreviewPlayer(string key, int characterId, float x, float y, float scale)
         {
             var previewScale = scale * PreviewScaleFactor * rimrushPlayersData.GetCharacterPreviewScaleMultiplier(characterId);
-            var shadow = rimrushRender.Sprite("PreviewShadow", rimrushAtlasCache.Instance.Interface, "loginSelect0000", x, y + PreviewShadowYOffset, 0.5f, 0.5f, 18, runtimeRoot);
+            var shadow = rimrushRender.Sprite($"{key}_PreviewShadow", rimrushAtlasCache.Instance.Interface, "loginSelect0000", x, y + PreviewShadowYOffset, 0.5f, 0.5f, 18, runtimeRoot);
             shadow.transform.localScale *= PreviewShadowScale;
             shadow.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.55f);
 
-            var previewRoot = new GameObject($"Preview_{characterId}");
+            var previewRoot = new GameObject($"{key}_Preview");
             previewRoot.transform.SetParent(runtimeRoot, false);
             rimrushRender.ApplyPixelTransform(previewRoot.transform, x, y, 0f, previewScale);
 
-            var armature = rimrushPlayersData.BuildGameplayArmature($"PreviewArmature_{characterId}");
+            var armature = rimrushPlayersData.BuildGameplayArmature($"{key}_PreviewArmature");
             if (armature == null)
             {
                 return;

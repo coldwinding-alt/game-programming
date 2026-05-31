@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,13 +21,15 @@ PORTRAITS_PATH = PORTRAITS_DIR / "portraits_ui.png"
 PORTRAITS_JSON_PATH = PORTRAITS_DIR / "portraits_ui.json"
 
 OUTLINE_COLOR = (17, 14, 18)
+DRAGON_BONES_TARGET_PIXELS_PER_UNIT = 2.0
 
 
 @dataclass(frozen=True)
 class CharacterRefresh:
     internal_id: str
     visible_name: str
-    source_cutout: str
+    portrait_source: str
+    gameplay_source: str
     body_theme: str
     portrait_scale: float
     portrait_anchor_y: float
@@ -40,37 +43,40 @@ REPLACEMENTS = (
     CharacterRefresh(
         internal_id="pumpkin",
         visible_name="REAPER ACOLYTE",
-        source_cutout="reaper_acolyte_cutout.png",
+        portrait_source="reaper_acolyte_icon_source.png",
+        gameplay_source="reaper_acolyte_icon_source.png",
         body_theme="reaper",
-        portrait_scale=1.0,
-        portrait_anchor_y=0.53,
-        portrait_anchor_x=0.5,
-        gameplay_scale=1.04,
-        gameplay_anchor_y=0.54,
-        gameplay_anchor_x=0.5,
+        portrait_scale=0.99,
+        portrait_anchor_y=0.56,
+        portrait_anchor_x=0.55,
+        gameplay_scale=1.02,
+        gameplay_anchor_y=0.72,
+        gameplay_anchor_x=0.54,
     ),
     CharacterRefresh(
         internal_id="frankenstein",
         visible_name="GHOST CLOWN",
-        source_cutout="ghost_clown_cutout.png",
+        portrait_source="ghost_clown_icon_source.png",
+        gameplay_source="ghost_clown_icon_source.png",
         body_theme="clown",
         portrait_scale=0.98,
-        portrait_anchor_y=0.5,
+        portrait_anchor_y=0.58,
         portrait_anchor_x=0.5,
-        gameplay_scale=0.94,
-        gameplay_anchor_y=0.5,
-        gameplay_anchor_x=0.5,
+        gameplay_scale=1.0,
+        gameplay_anchor_y=0.75,
+        gameplay_anchor_x=0.51,
     ),
     CharacterRefresh(
         internal_id="mummy",
         visible_name="SKULL PIRATE",
-        source_cutout="skull_pirate_cutout.png",
+        portrait_source="skull_pirate_icon_source.png",
+        gameplay_source="skull_pirate_icon_source.png",
         body_theme="pirate",
-        portrait_scale=0.92,
-        portrait_anchor_y=0.5,
+        portrait_scale=0.97,
+        portrait_anchor_y=0.58,
         portrait_anchor_x=0.5,
-        gameplay_scale=0.9,
-        gameplay_anchor_y=0.5,
+        gameplay_scale=1.0,
+        gameplay_anchor_y=0.76,
         gameplay_anchor_x=0.5,
     ),
 )
@@ -91,6 +97,76 @@ def atlas_lookup(atlas_json: dict) -> dict[str, dict]:
 def trim_alpha(image: Image.Image) -> Image.Image:
     bbox = image.getchannel("A").getbbox()
     return image.crop(bbox) if bbox else image.copy()
+
+
+def border_key_color(image: Image.Image) -> tuple[int, int, int]:
+    src = image.convert("RGBA")
+    pixels = src.load()
+    samples: list[tuple[int, int, int]] = []
+
+    for x in range(src.width):
+        samples.append(pixels[x, 0][:3])
+        samples.append(pixels[x, src.height - 1][:3])
+
+    for y in range(1, src.height - 1):
+        samples.append(pixels[0, y][:3])
+        samples.append(pixels[src.width - 1, y][:3])
+
+    return Counter(samples).most_common(1)[0][0]
+
+
+def remove_chroma_background(
+    image: Image.Image,
+    *,
+    transparent_threshold: float = 16.0,
+    opaque_threshold: float = 84.0,
+) -> Image.Image:
+    src = image.convert("RGBA")
+    key = border_key_color(src)
+    pixels = src.load()
+    out = Image.new("RGBA", src.size, (0, 0, 0, 0))
+    out_pixels = out.load()
+    span = max(0.0001, opaque_threshold - transparent_threshold)
+
+    for y in range(src.height):
+        for x in range(src.width):
+            r, g, b, a = pixels[x, y]
+            if a <= 0:
+                continue
+
+            distance = ((r - key[0]) ** 2 + (g - key[1]) ** 2 + (b - key[2]) ** 2) ** 0.5
+            if distance <= transparent_threshold:
+                continue
+
+            if distance >= opaque_threshold:
+                out_pixels[x, y] = (r, g, b, a)
+                continue
+
+            alpha_scale = (distance - transparent_threshold) / span
+            out_alpha = int(round(a * alpha_scale))
+            if out_alpha <= 0:
+                continue
+
+            # Light despill keeps the contour clean against neon key colors.
+            despill = 0.42 * (1.0 - alpha_scale)
+            out_pixels[x, y] = (
+                int(round(r * (1.0 - despill) + key[0] * despill * 0.18)),
+                int(round(g * (1.0 - despill) + key[1] * despill * 0.18)),
+                int(round(b * (1.0 - despill) + key[2] * despill * 0.18)),
+                out_alpha,
+            )
+
+    return trim_alpha(out)
+
+
+def prepare_source_image(source_name: str) -> Image.Image:
+    source_path = CHARACTER_SOURCE_DIR / source_name
+    source = Image.open(source_path).convert("RGBA")
+    alpha_min, alpha_max = source.getchannel("A").getextrema()
+    if alpha_min == 255 and alpha_max == 255:
+        return remove_chroma_background(source)
+
+    return trim_alpha(source)
 
 
 def premultiplied_resize(image: Image.Image, size: tuple[int, int]) -> Image.Image:
@@ -163,6 +239,26 @@ def fit_subject_to_canvas(
     paste_y = min_y if max_y <= min_y else int(round(min_y + (max_y - min_y) * anchor_y))
     canvas.alpha_composite(fitted, (paste_x, paste_y))
     return canvas
+
+
+def ensure_dragon_bones_resolution(texture: Image.Image, texture_json: dict) -> tuple[Image.Image, dict]:
+    current_pixels_per_unit = float(texture_json.get("pixelsPerUnit", 1.0))
+    scale_factor = DRAGON_BONES_TARGET_PIXELS_PER_UNIT / max(0.0001, current_pixels_per_unit)
+    if abs(scale_factor - 1.0) <= 0.0001:
+        texture_json["pixelsPerUnit"] = DRAGON_BONES_TARGET_PIXELS_PER_UNIT
+        return texture, texture_json
+
+    texture = premultiplied_resize(
+        texture,
+        (int(round(texture.width * scale_factor)), int(round(texture.height * scale_factor))),
+    )
+
+    for sub in texture_json["SubTexture"]:
+        for key in ("x", "y", "width", "height"):
+            sub[key] = int(round(sub[key] * scale_factor))
+
+    texture_json["pixelsPerUnit"] = DRAGON_BONES_TARGET_PIXELS_PER_UNIT
+    return texture, texture_json
 
 
 def crop_subtexture(texture: Image.Image, sub: dict) -> Image.Image:
@@ -361,8 +457,7 @@ def update_portraits() -> tuple[Image.Image, dict[str, dict]]:
     lookup = atlas_lookup(portrait_json)
 
     for replacement in REPLACEMENTS:
-        source_path = CHARACTER_SOURCE_DIR / replacement.source_cutout
-        source = Image.open(source_path).convert("RGBA")
+        source = prepare_source_image(replacement.portrait_source)
         target_name = f"custom_head_{replacement.internal_id}"
         sub = lookup[target_name]
         rendered = fit_subject_to_canvas(
@@ -382,11 +477,11 @@ def update_portraits() -> tuple[Image.Image, dict[str, dict]]:
 def update_dragon_bones() -> tuple[Image.Image, dict[str, dict]]:
     texture = Image.open(TEXTURE_PATH).convert("RGBA")
     texture_json = load_json(TEXTURE_JSON_PATH)
+    texture, texture_json = ensure_dragon_bones_resolution(texture, texture_json)
     lookup = atlas_lookup(texture_json)
 
     for replacement in REPLACEMENTS:
-        source_path = CHARACTER_SOURCE_DIR / replacement.source_cutout
-        source = Image.open(source_path).convert("RGBA")
+        source = prepare_source_image(replacement.gameplay_source)
         head_name = f"custom_head_{replacement.internal_id}"
         head_sub = lookup[head_name]
         rendered_head = fit_subject_to_canvas(
