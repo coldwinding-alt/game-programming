@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushAIDifficultyTuning 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 namespace rimrush
 {
     public readonly struct rimrushAIDifficultyTuningProfile
@@ -22,6 +25,29 @@ namespace rimrush
         public readonly float BonusShieldBossCooldown;
         public readonly bool HasBonusSupers;
 
+        /// <summary>
+        /// Executes rimrush AIDifficulty Tuning Profile for the rimrushAIDifficultyTuning workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="defenceContestDistance">Input value used by this step of the workflow.</param>
+        /// <param name="stealBehindDistance">Input value used by this step of the workflow.</param>
+        /// <param name="stealBasketDistance">Input value used by this step of the workflow.</param>
+        /// <param name="holderSuperDashMinDistance">Input value used by this step of the workflow.</param>
+        /// <param name="holderSuperDashMaxDistance">Input value used by this step of the workflow.</param>
+        /// <param name="looseBallSuperDashDistance">Input value used by this step of the workflow.</param>
+        /// <param name="attackPressureDistance">Input value used by this step of the workflow.</param>
+        /// <param name="attackSuperDashDistance">Input value used by this step of the workflow.</param>
+        /// <param name="dashBlockRangeMaxDistance">Input value used by this step of the workflow.</param>
+        /// <param name="dashCooldownMultiplier">Input value used by this step of the workflow.</param>
+        /// <param name="stealRangeBonus">Input value used by this step of the workflow.</param>
+        /// <param name="stunDurationMultiplier">Input value used by this step of the workflow.</param>
+        /// <param name="openingSuperChargeFraction">Input value used by this step of the workflow.</param>
+        /// <param name="nativeSuperRefundFraction">Input value used by this step of the workflow.</param>
+        /// <param name="bonusSuperDashCooldown">Input value used by this step of the workflow.</param>
+        /// <param name="bonusSuperDashBossCooldown">Input value used by this step of the workflow.</param>
+        /// <param name="bonusShieldCooldown">Input value used by this step of the workflow.</param>
+        /// <param name="bonusShieldBossCooldown">Input value used by this step of the workflow.</param>
+        /// <param name="hasBonusSupers">Input value used by this step of the workflow.</param>
         public rimrushAIDifficultyTuningProfile(
             float defenceContestDistance,
             float stealBehindDistance,
@@ -121,6 +147,12 @@ namespace rimrush
             bonusShieldBossCooldown: 18f,
             hasBonusSupers: true);
 
+        /// <summary>
+        /// Executes Get for the rimrushAIDifficultyTuning workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="difficulty">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushAIDifficultyTuningProfile Get(rimrushAiDifficulty difficulty)
         {
             switch (difficulty)

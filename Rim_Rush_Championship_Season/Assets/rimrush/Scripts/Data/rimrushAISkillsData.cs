@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushAISkillsData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using UnityEngine;
 
 namespace rimrush
@@ -346,6 +349,12 @@ namespace rimrush
 
         public static int MaxSkillIndex => Profiles.Length - 1;
 
+        /// <summary>
+        /// Executes Get for the rimrushAISkillsData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="skillIndex">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushAISkillProfile Get(int skillIndex)
         {
             var index = Mathf.Clamp(skillIndex, 0, Profiles.Length - 1);

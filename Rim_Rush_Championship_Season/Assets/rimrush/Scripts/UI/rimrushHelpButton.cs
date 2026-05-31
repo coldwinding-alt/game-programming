@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushHelpButton 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using TMPro;
 using UnityEngine;
 
@@ -28,12 +31,20 @@ namespace rimrush
 
         public rimrushHelpButtonAction Action => action;
 
+        /// <summary>
+        /// Executes Awake for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void Awake()
         {
             EnsureInitialized();
             RefreshVisuals();
         }
 
+        /// <summary>
+        /// Executes On Disable for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void OnDisable()
         {
             pressed = false;
@@ -41,6 +52,12 @@ namespace rimrush
             RefreshVisuals();
         }
 
+        /// <summary>
+        /// Executes Tick for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="camera">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool Tick(Camera camera)
         {
             if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
@@ -67,6 +84,11 @@ namespace rimrush
             return inside;
         }
 
+        /// <summary>
+        /// Executes Set Selected for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="isSelected">Input value used by this step of the workflow.</param>
         public void SetSelected(bool isSelected)
         {
             EnsureInitialized();
@@ -74,6 +96,10 @@ namespace rimrush
             RefreshVisuals();
         }
 
+        /// <summary>
+        /// Executes Ensure Initialized for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EnsureInitialized()
         {
             if (initialized)
@@ -91,6 +117,10 @@ namespace rimrush
                 pixelSize.y);
         }
 
+        /// <summary>
+        /// Executes Refresh Visuals for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void RefreshVisuals()
         {
             if (!initialized)
@@ -129,6 +159,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try Get Mouse Pixel for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="camera">Input value used by this step of the workflow.</param>
+        /// <param name="pixel">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool TryGetMousePixel(Camera camera, out Vector2 pixel)
         {
             var mouse = Input.mousePosition;
@@ -156,6 +193,23 @@ namespace rimrush
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// Executes Editor Configure for the rimrushHelpButton workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="configuredAction">Input value used by this step of the workflow.</param>
+        /// <param name="center">Input value used by this step of the workflow.</param>
+        /// <param name="size">Input value used by this step of the workflow.</param>
+        /// <param name="configuredVisualRoot">Input value used by this step of the workflow.</param>
+        /// <param name="configuredTintTargets">Input value used by this step of the workflow.</param>
+        /// <param name="configuredLabelTargets">Input value used by this step of the workflow.</param>
+        /// <param name="configuredNormalTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredHoverTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredSelectedTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredNormalLabelTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredHoverLabelTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredSelectedLabelTint">Input value used by this step of the workflow.</param>
+        /// <param name="configuredHoverScale">Input value used by this step of the workflow.</param>
         public void EditorConfigure(
             rimrushHelpButtonAction configuredAction,
             Vector2 center,

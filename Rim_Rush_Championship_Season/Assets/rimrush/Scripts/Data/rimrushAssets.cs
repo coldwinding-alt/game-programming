@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushAssets 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 namespace rimrush
 {
     public static class rimrushAssets
@@ -19,6 +22,12 @@ namespace rimrush
             public const string MusicButtonOff = "music_button_off";
             public const string HelpButton = "help_button";
 
+            /// <summary>
+            /// Executes Resource Path for the Images workflow.
+            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// </summary>
+            /// <param name="imageKey">Input value used by this step of the workflow.</param>
+            /// <returns>Result produced for downstream logic in the current frame.</returns>
             public static string ResourcePath(string imageKey)
             {
                 return string.IsNullOrEmpty(imageKey) ? null : $"{Root}{imageKey}";
@@ -36,6 +45,12 @@ namespace rimrush
                 public const string BallCandySwirl = "Gameplay/ball_halloween_candy_swirl";
             }
 
+            /// <summary>
+            /// Executes Ball Theme for the GameplayImages workflow.
+            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// </summary>
+            /// <param name="theme">Input value used by this step of the workflow.</param>
+            /// <returns>Result produced for downstream logic in the current frame.</returns>
             public static string BallTheme(rimrushBallTheme theme)
             {
                 return theme switch
@@ -59,6 +74,12 @@ namespace rimrush
             public const string Scoreboard = "scoreboard_halloween";
             public const string Popup = "popup_halloween";
 
+            /// <summary>
+            /// Executes Resource Path for the Hud workflow.
+            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// </summary>
+            /// <param name="hudKey">Input value used by this step of the workflow.</param>
+            /// <returns>Result produced for downstream logic in the current frame.</returns>
             public static string ResourcePath(string hudKey)
             {
                 return string.IsNullOrEmpty(hudKey) ? null : $"{Root}{hudKey}";
@@ -71,6 +92,12 @@ namespace rimrush
 
             public const string UiAtlas = "portraits_ui";
 
+            /// <summary>
+            /// Executes Resource Path for the Portraits workflow.
+            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// </summary>
+            /// <param name="portraitKey">Input value used by this step of the workflow.</param>
+            /// <returns>Result produced for downstream logic in the current frame.</returns>
             public static string ResourcePath(string portraitKey)
             {
                 return string.IsNullOrEmpty(portraitKey) ? null : $"{Root}{portraitKey}";

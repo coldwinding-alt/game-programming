@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushGameplayObjects 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,11 +10,27 @@ namespace rimrush
     {
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
 
+        /// <summary>
+        /// Executes Load Ball Theme Sprite for the rimrushGameplaySpriteLoader workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="theme">Input value used by this step of the workflow.</param>
+        /// <param name="anchorX">Input value used by this step of the workflow.</param>
+        /// <param name="anchorY">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Sprite LoadBallThemeSprite(rimrushBallTheme theme, float anchorX, float anchorY)
         {
             return LoadImageSprite(rimrushAssets.Images.BallTheme(theme), anchorX, anchorY);
         }
 
+        /// <summary>
+        /// Executes Load Image Sprite for the rimrushGameplaySpriteLoader workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
+        /// <param name="anchorX">Input value used by this step of the workflow.</param>
+        /// <param name="anchorY">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Sprite LoadImageSprite(string resourcePath, float anchorX, float anchorY)
         {
             if (string.IsNullOrEmpty(resourcePath))
@@ -44,6 +63,11 @@ namespace rimrush
     {
         public GameObject Graphic { get; }
 
+        /// <summary>
+        /// Executes rimrush Arena Object for the rimrushArenaObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushArenaObject(Transform parent)
         {
             Graphic = rimrushRender.Sprite(
@@ -71,6 +95,12 @@ namespace rimrush
         public float Center { get; }
         public float Height => rimrushObjectsData.BasketHeight;
 
+        /// <summary>
+        /// Executes rimrush Basket Object for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushBasketObject(int side, Transform parent)
         {
             this.side = side;
@@ -78,17 +108,30 @@ namespace rimrush
             CreateGraphic(parent);
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             netPulse = Mathf.Max(0f, netPulse - dt * 2f);
             UpdateNetLines();
         }
 
+        /// <summary>
+        /// Executes Hit Net for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HitNet()
         {
             netPulse = 1f;
         }
 
+        /// <summary>
+        /// Executes Hide Ear for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void HideEar()
         {
             if (frontEar != null)
@@ -97,6 +140,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Show Ear for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ShowEar()
         {
             if (frontEar != null)
@@ -105,6 +152,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Create Graphic for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateGraphic(Transform parent)
         {
             graphic = new GameObject(side == -1 ? "BasketLeft" : "BasketRight");
@@ -145,6 +197,10 @@ namespace rimrush
             UpdateNetLines();
         }
 
+        /// <summary>
+        /// Executes Update Net Lines for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateNetLines()
         {
             var left = Center - rimrushObjectsData.BasketRadius + 2f;
@@ -184,6 +240,13 @@ namespace rimrush
             SetLine(9, pointsBot[2], pointsBot[1]);
         }
 
+        /// <summary>
+        /// Executes Set Line for the rimrushBasketObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="index">Input value used by this step of the workflow.</param>
+        /// <param name="a">Input value used by this step of the workflow.</param>
+        /// <param name="b">Input value used by this step of the workflow.</param>
         private void SetLine(int index, Vector2 a, Vector2 b)
         {
             netLines[index].SetPosition(0, rimrushConstants.PixelToWorld(a.x, a.y, 0.03f));
@@ -230,6 +293,12 @@ namespace rimrush
             State != "inHands" &&
             State != "score";
 
+        /// <summary>
+        /// Executes rimrush Ball Object for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="gameCore">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushBallObject(rimrushGameCore gameCore, Transform parent)
         {
             this.gameCore = gameCore;
@@ -244,6 +313,10 @@ namespace rimrush
             Restart();
         }
 
+        /// <summary>
+        /// Executes Restart for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Restart()
         {
             Position = new Vector2(rimrushConstants.Width2, rimrushObjectsData.BallIndentYCenter);
@@ -258,6 +331,11 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Take In Hands for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
         public void TakeInHands(int side)
         {
             Side = side;
@@ -271,6 +349,12 @@ namespace rimrush
             shadow.SetActive(false);
         }
 
+        /// <summary>
+        /// Executes From Hands for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerPosition">Input value used by this step of the workflow.</param>
+        /// <param name="direction">Input value used by this step of the workflow.</param>
         public void FromHands(Vector2 playerPosition, float direction)
         {
             Position = playerPosition;
@@ -284,6 +368,15 @@ namespace rimrush
             gameCore.NotifyBallOthers();
         }
 
+        /// <summary>
+        /// Executes Shoot for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="playerVelocityX">Input value used by this step of the workflow.</param>
+        /// <param name="accuracy">Input value used by this step of the workflow.</param>
         public void Shoot(int side, float x, float y, float playerVelocityX, float accuracy)
         {
             Side = side;
@@ -316,6 +409,12 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PSwoosh);
         }
 
+        /// <summary>
+        /// Executes Dunk for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="completed">Input value used by this step of the workflow.</param>
         public void Dunk(int side, bool completed)
         {
             Side = side;
@@ -342,6 +441,13 @@ namespace rimrush
             Show();
         }
 
+        /// <summary>
+        /// Executes Apply Steal for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerPosition">Input value used by this step of the workflow.</param>
+        /// <param name="distanceFactor">Input value used by this step of the workflow.</param>
+        /// <param name="direction">Input value used by this step of the workflow.</param>
         public void ApplySteal(Vector2 playerPosition, float distanceFactor, int direction)
         {
             Position = playerPosition;
@@ -358,6 +464,11 @@ namespace rimrush
             gameCore.NotifyBallOthers();
         }
 
+        /// <summary>
+        /// Executes Predict Floor Landing X for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float PredictFloorLandingX()
         {
             if (!IsInGame)
@@ -392,6 +503,11 @@ namespace rimrush
             return Mathf.Clamp(Position.x + Velocity.x * timeToFloor, 20f, rimrushConstants.Width - 20f);
         }
 
+        /// <summary>
+        /// Executes Apply Block for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="blocker">Input value used by this step of the workflow.</param>
         public void ApplyBlock(rimrushPlayerObject blocker)
         {
             var direction = Position.x >= blocker.Position.x ? 1f : -1f;
@@ -412,6 +528,14 @@ namespace rimrush
             gameCore.NotifyBallOthers();
         }
 
+        /// <summary>
+        /// Executes Alley Oop for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="player">Input value used by this step of the workflow.</param>
         public void AlleyOop(int side, float x, float y, rimrushPlayerObject player)
         {
             Side = side;
@@ -432,6 +556,10 @@ namespace rimrush
             gameCore.IsAlleyOop = true;
         }
 
+        /// <summary>
+        /// Executes Remove From Physics for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void RemoveFromPhysics()
         {
             physicsRemoved = true;
@@ -440,6 +568,10 @@ namespace rimrush
             shadow.SetActive(false);
         }
 
+        /// <summary>
+        /// Executes Return To Physics for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ReturnToPhysics()
         {
             physicsRemoved = false;
@@ -447,6 +579,11 @@ namespace rimrush
             Show();
         }
 
+        /// <summary>
+        /// Executes On Shield Collision for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
         public void OnShieldCollision(int side)
         {
             if (State == "score")
@@ -461,6 +598,13 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.BSteel, 0.85f);
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
+        /// <param name="basketLeft">Input value used by this step of the workflow.</param>
+        /// <param name="basketRight">Input value used by this step of the workflow.</param>
         public void Update(float dt, rimrushBasketObject basketLeft, rimrushBasketObject basketRight)
         {
             if (State == "inHands" || physicsRemoved)
@@ -513,6 +657,10 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Resolve Floor Bounce for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ResolveFloorBounce()
         {
             if (Position.y > rimrushObjectsData.BallFloorY)
@@ -528,6 +676,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Resolve Wall Bounce for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ResolveWallBounce()
         {
             if (Position.x < 5f || Position.x > rimrushConstants.Width - 5f)
@@ -537,6 +689,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Resolve Basket for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="basket">Input value used by this step of the workflow.</param>
+        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
         private void ResolveBasket(rimrushBasketObject basket, int scoringSide)
         {
             if (basket == null)
@@ -550,6 +708,11 @@ namespace rimrush
             ProcessScoreSensors(basket, scoringSide);
         }
 
+        /// <summary>
+        /// Executes Resolve Backboard Collision for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="basket">Input value used by this step of the workflow.</param>
         private void ResolveBackboardCollision(rimrushBasketObject basket)
         {
             var glassTop = basket.Height + rimrushObjectsData.GlassY;
@@ -585,6 +748,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Resolve Rim Collision for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="rimCenter">Input value used by this step of the workflow.</param>
+        /// <param name="basket">Input value used by this step of the workflow.</param>
         private void ResolveRimCollision(Vector2 rimCenter, rimrushBasketObject basket)
         {
             var combinedRadius = rimrushObjectsData.BallRadius + rimrushObjectsData.BasketPartRadius;
@@ -619,6 +788,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Process Score Sensors for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="basket">Input value used by this step of the workflow.</param>
+        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
         private void ProcessScoreSensors(rimrushBasketObject basket, int scoringSide)
         {
             if (!canScore)
@@ -653,6 +828,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Try Resolve Guaranteed Dunk Score for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="basketLeft">Input value used by this step of the workflow.</param>
+        /// <param name="basketRight">Input value used by this step of the workflow.</param>
         private void TryResolveGuaranteedDunkScore(rimrushBasketObject basketLeft, rimrushBasketObject basketRight)
         {
             if (!canScore || !guaranteedDunkScore || scoreArmedSide == 0)
@@ -678,6 +859,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Commit Score for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
         private void CommitScore(int scoringSide)
         {
             CancelScoreAttempt();
@@ -686,6 +872,10 @@ namespace rimrush
             gameCore.OnBallScored(scoringSide);
         }
 
+        /// <summary>
+        /// Executes Cancel Score Attempt for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void CancelScoreAttempt()
         {
             canScore = false;
@@ -694,6 +884,15 @@ namespace rimrush
             scoreArmedSide = 0;
         }
 
+        /// <summary>
+        /// Executes Touches Sensor for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="start">Input value used by this step of the workflow.</param>
+        /// <param name="end">Input value used by this step of the workflow.</param>
+        /// <param name="centerX">Input value used by this step of the workflow.</param>
+        /// <param name="topY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool TouchesSensor(Vector2 start, Vector2 end, float centerX, float topY)
         {
             var minX = centerX - rimrushObjectsData.SensorHalf - rimrushObjectsData.BallRadius;
@@ -703,6 +902,17 @@ namespace rimrush
             return SweptPointIntersectsRect(start, end, minX, maxX, minY, maxY);
         }
 
+        /// <summary>
+        /// Executes Swept Point Intersects Rect for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="start">Input value used by this step of the workflow.</param>
+        /// <param name="end">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -719,11 +929,30 @@ namespace rimrush
                    ClipSegment(direction.y, maxY - start.y, ref tMin, ref tMax);
         }
 
+        /// <summary>
+        /// Executes Point Inside Rect for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="point">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
+        /// <summary>
+        /// Executes Clip Segment for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="p">Input value used by this step of the workflow.</param>
+        /// <param name="q">Input value used by this step of the workflow.</param>
+        /// <param name="tMin">Input value used by this step of the workflow.</param>
+        /// <param name="tMax">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))
@@ -760,6 +989,10 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Set Basket State for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void SetBasketState()
         {
             if (State != "score")
@@ -768,6 +1001,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Play Basket Sound for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="type">Input value used by this step of the workflow.</param>
         private void PlayBasketSound(int type)
         {
             if (type != 0 && collisionSoundCooldown > 0f)
@@ -794,6 +1032,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Reset Scoring for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="armed">Input value used by this step of the workflow.</param>
         private void ResetScoring(bool armed)
         {
             canScore = armed;
@@ -803,6 +1046,14 @@ namespace rimrush
             collisionSoundCooldown = 0f;
         }
 
+        /// <summary>
+        /// Executes Calc Throw Vel for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="offset">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private Vector2 CalcThrowVel(float x, float y, float offset)
         {
             float targetX;
@@ -845,6 +1096,16 @@ namespace rimrush
             return CalcVel(x, y, targetX, rimrushObjectsData.BasketHeight, arc);
         }
 
+        /// <summary>
+        /// Executes Calc Vel for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="targetX">Input value used by this step of the workflow.</param>
+        /// <param name="targetY">Input value used by this step of the workflow.</param>
+        /// <param name="arc">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private Vector2 CalcVel(float x, float y, float targetX, float targetY, float arc)
         {
             var gravity = rimrushObjectsData.Gravity.y * rimrushObjectsData.BallGravMass;
@@ -855,6 +1116,15 @@ namespace rimrush
             return new Vector2((targetX - x) / (upTime + downTime) * 1.035f, vy);
         }
 
+        /// <summary>
+        /// Executes Calc Dispersion for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="distance">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="running">Input value used by this step of the workflow.</param>
+        /// <param name="accuracy">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private float CalcDispersion(float distance, float y, float running, float accuracy)
         {
             float vertical;
@@ -899,17 +1169,30 @@ namespace rimrush
             return 1f + value;
         }
 
+        /// <summary>
+        /// Executes Show for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void Show()
         {
             visibleNextFrame = true;
         }
 
+        /// <summary>
+        /// Executes Resolve Ball Sprite for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private Sprite ResolveBallSprite()
         {
             var themedSprite = rimrushGameplaySpriteLoader.LoadBallThemeSprite(gameCore.MatchData.BallTheme, 0.5f, 0.5f);
             return themedSprite ?? rimrushAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
         }
 
+        /// <summary>
+        /// Executes Update Graphic for the rimrushBallObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateGraphic()
         {
             if (visibleNextFrame)
@@ -953,6 +1236,11 @@ namespace rimrush
         private TeleportPhase phase = TeleportPhase.Hidden;
         private float phaseTime;
 
+        /// <summary>
+        /// Executes rimrush Teleport Fx for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushTeleportFx(Transform parent)
         {
             graphic = new GameObject("TeleportFx");
@@ -992,6 +1280,12 @@ namespace rimrush
             Hide();
         }
 
+        /// <summary>
+        /// Executes Start Play for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
         public void StartPlay(float x, float y)
         {
             phase = TeleportPhase.BlackExpand;
@@ -1009,6 +1303,11 @@ namespace rimrush
             whiteRenderer.transform.localRotation = Quaternion.identity;
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             if (phase == TeleportPhase.Hidden)
@@ -1050,6 +1349,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Hide for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Hide()
         {
             phase = TeleportPhase.Hidden;
@@ -1062,6 +1365,10 @@ namespace rimrush
             graphic.SetActive(false);
         }
 
+        /// <summary>
+        /// Executes Update Black Expand for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateBlackExpand()
         {
             var t = Mathf.Clamp01(phaseTime / BlackExpandDuration);
@@ -1070,6 +1377,10 @@ namespace rimrush
             blackNode.localRotation = Quaternion.Euler(0f, 0f, -180f * t);
         }
 
+        /// <summary>
+        /// Executes Update Black Collapse for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateBlackCollapse()
         {
             var scaleT = Mathf.Clamp01(phaseTime / BlackCollapseScaleDuration);
@@ -1083,6 +1394,10 @@ namespace rimrush
             animRenderer.sprite = frames[frameIndex];
         }
 
+        /// <summary>
+        /// Executes Update White Flash for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateWhiteFlash()
         {
             var time1 = WhiteFlashDuration1;
@@ -1105,6 +1420,12 @@ namespace rimrush
             whiteRenderer.transform.localScale = new Vector3(scale.x, scale.y, 1f);
         }
 
+        /// <summary>
+        /// Executes Ease In Back for the rimrushTeleportFx workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="t">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float EaseInBack(float t)
         {
             const float overshoot = 1.70158f;
@@ -1151,6 +1472,13 @@ namespace rimrush
         private float phaseTime;
         private float alpha = 1f;
 
+        /// <summary>
+        /// Executes rimrush Shield Object for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="basket">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushShieldObject(int side, rimrushBasketObject basket, Transform parent)
         {
             this.side = side;
@@ -1181,6 +1509,10 @@ namespace rimrush
         public bool IsBlocking => phase == ShieldPhase.Active && phaseTime < AnimationDuration + ShowTime;
         public bool CanActivate => phase == ShieldPhase.Hidden;
 
+        /// <summary>
+        /// Executes Activate for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Activate()
         {
             phase = ShieldPhase.Intro;
@@ -1200,6 +1532,11 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PShield);
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             if (phase == ShieldPhase.Hidden)
@@ -1245,6 +1582,10 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Reset for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Reset()
         {
             phase = ShieldPhase.Hidden;
@@ -1258,6 +1599,12 @@ namespace rimrush
             basket?.ShowEar();
         }
 
+        /// <summary>
+        /// Executes Try Block Ball for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ball">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryBlockBall(rimrushBallObject ball)
         {
             if (!IsBlocking || ball == null || ball.State == "score")
@@ -1280,6 +1627,10 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Update Graphic for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateGraphic()
         {
             if (!graphic.activeSelf)
@@ -1300,6 +1651,10 @@ namespace rimrush
 
         private float AnimationDuration => frames.Length / AnimationFps;
 
+        /// <summary>
+        /// Executes Update Intro for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateIntro()
         {
             var t = Mathf.Clamp01(phaseTime / IntroDropTime);
@@ -1313,6 +1668,10 @@ namespace rimrush
                 1f);
         }
 
+        /// <summary>
+        /// Executes Update Active for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateActive()
         {
             startRenderer.enabled = true;
@@ -1331,6 +1690,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Apply Alpha for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ApplyAlpha()
         {
             startRenderer.color = new Color(1f, 1f, 1f, alpha);
@@ -1338,6 +1701,14 @@ namespace rimrush
             animRenderer.color = new Color(1f, 1f, 1f, alpha);
         }
 
+        /// <summary>
+        /// Executes Create Renderer for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="sprite">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
         {
             var child = new GameObject(name);
@@ -1349,6 +1720,12 @@ namespace rimrush
             return renderer;
         }
 
+        /// <summary>
+        /// Executes Ease Out Back for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="t">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float EaseOutBack(float t)
         {
             const float overshoot = 1.70158f;
@@ -1356,6 +1733,17 @@ namespace rimrush
             return 1f + (overshoot + 1f) * x * x * x + overshoot * x * x;
         }
 
+        /// <summary>
+        /// Executes Swept Point Intersects Rect for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="start">Input value used by this step of the workflow.</param>
+        /// <param name="end">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -1372,11 +1760,30 @@ namespace rimrush
                    ClipSegment(direction.y, maxY - start.y, ref tMin, ref tMax);
         }
 
+        /// <summary>
+        /// Executes Point Inside Rect for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="point">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
+        /// <summary>
+        /// Executes Clip Segment for the rimrushShieldObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="p">Input value used by this step of the workflow.</param>
+        /// <param name="q">Input value used by this step of the workflow.</param>
+        /// <param name="tMin">Input value used by this step of the workflow.</param>
+        /// <param name="tMax">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))
@@ -1544,6 +1951,17 @@ namespace rimrush
         public bool NeedBlock => needBlock;
         public bool CanThrow => canThrow;
 
+        /// <summary>
+        /// Executes rimrush Player Object for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="gameCore">Input value used by this step of the workflow.</param>
+        /// <param name="teamIndex">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="playerNo">Input value used by this step of the workflow.</param>
+        /// <param name="playerBrain">Input value used by this step of the workflow.</param>
+        /// <param name="skillLevel">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
         public rimrushPlayerObject(rimrushGameCore gameCore, int teamIndex, int characterId, int playerNo, string playerBrain, int skillLevel, Transform parent)
         {
             GameCore = gameCore;
@@ -1630,11 +2048,20 @@ namespace rimrush
             Restart(0);
         }
 
+        /// <summary>
+        /// Executes Release Runtime Resources for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ReleaseRuntimeResources()
         {
             energyBar?.ReleaseRuntimeResources();
         }
 
+        /// <summary>
+        /// Executes Restart for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="startSide">Input value used by this step of the workflow.</param>
         public void Restart(int startSide)
         {
             WithBall = false;
@@ -1717,6 +2144,11 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             teleportFx?.Update(dt);
@@ -1957,6 +2389,11 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Tick Pre Match for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void TickPreMatch(float dt)
         {
             teleportFx?.Update(dt);
@@ -1978,6 +2415,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Take Ball In Hands for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void TakeBallInHands()
         {
             WithBall = true;
@@ -2001,6 +2442,10 @@ namespace rimrush
             PlayState(IsGrounded ? "idle_wb" : "fly1_wb");
         }
 
+        /// <summary>
+        /// Executes Free Ball for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void FreeBall()
         {
             if (!WithBall)
@@ -2024,6 +2469,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Notify Ball Loose for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void NotifyBallLoose()
         {
             WithBall = false;
@@ -2037,6 +2486,12 @@ namespace rimrush
             controller.BallOthers();
         }
 
+        /// <summary>
+        /// Executes Notify Ball In Hands for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderSide">Input value used by this step of the workflow.</param>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
             if (holderSide == Side)
@@ -2051,6 +2506,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Notify Ball Shot for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shotSide">Input value used by this step of the workflow.</param>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyBallShot(int shotSide, int shooterPlayerNo)
         {
             if (shotSide == Side)
@@ -2065,6 +2526,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Notify Ball Others for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void NotifyBallOthers()
         {
             needBlock = false;
@@ -2072,11 +2537,20 @@ namespace rimrush
             controller.BallOthers();
         }
 
+        /// <summary>
+        /// Executes Super Shot for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool SuperShot()
         {
             return TryStartSuper(true);
         }
 
+        /// <summary>
+        /// Executes Continue Alley Oop for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void ContinueAlleyOop()
         {
             if (!isSuperShot || superPhase != SuperPhase.None)
@@ -2092,21 +2566,43 @@ namespace rimrush
             superDuration = 0.4f;
         }
 
+        /// <summary>
+        /// Executes Try Shield Ball for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ball">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryShieldBall(rimrushBallObject ball)
         {
             return shield != null && shield.TryBlockBall(ball);
         }
 
+        /// <summary>
+        /// Executes Get Steal Distance Bonus for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float GetStealDistanceBonus()
         {
             return hellEnhanced ? aiDifficultyTuning.StealRangeBonus : 0f;
         }
 
+        /// <summary>
+        /// Executes Get Collision Mass for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float GetCollisionMass()
         {
             return HasGroundBlockBody ? GroundBlockCollisionMass : GroundCollisionMass;
         }
 
+        /// <summary>
+        /// Executes Is Moving Toward for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="other">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool IsMovingToward(rimrushPlayerObject other)
         {
             if (other == null)
@@ -2123,6 +2619,12 @@ namespace rimrush
             return Velocity.x * Mathf.Sign(delta) > GroundCollisionSpeedEpsilon;
         }
 
+        /// <summary>
+        /// Executes Is Dashing Into for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="other">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool IsDashingInto(rimrushPlayerObject other)
         {
             if (!IsDashing || other == null)
@@ -2139,6 +2641,10 @@ namespace rimrush
             return dashDirection * Mathf.Sign(delta) > 0f;
         }
 
+        /// <summary>
+        /// Executes Interrupt Dash By Block for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void InterruptDashByBlock()
         {
             if (!IsDashing)
@@ -2163,6 +2669,11 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Apply Horizontal Separation for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="delta">Input value used by this step of the workflow.</param>
         public void ApplyHorizontalSeparation(float delta)
         {
             if (Mathf.Abs(delta) <= 0.001f)
@@ -2174,11 +2685,23 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes On Stolen for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void OnStolen()
         {
             GetBeStolen(Position.x, false);
         }
 
+        /// <summary>
+        /// Executes Check To Be Stolen for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="thiefX">Input value used by this step of the workflow.</param>
+        /// <param name="thiefFacingScaleX">Input value used by this step of the workflow.</param>
+        /// <param name="stealDistance">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float CheckToBeStolen(float thiefX, float thiefFacingScaleX, float stealDistance)
         {
             if (!IsGrounded || stunTimer > 0f || removedFromPlay || isSuperShot)
@@ -2198,6 +2721,13 @@ namespace rimrush
                 : -1f;
         }
 
+        /// <summary>
+        /// Executes Get Be Stolen for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="thiefX">Input value used by this step of the workflow.</param>
+        /// <param name="applyBallSteal">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool GetBeStolen(float thiefX, bool applyBallSteal = true)
         {
             if (removedFromPlay)
@@ -2235,6 +2765,12 @@ namespace rimrush
             return hadBall;
         }
 
+        /// <summary>
+        /// Executes Check Loose Ball Pickup for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ball">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public float CheckLooseBallPickup(rimrushBallObject ball)
         {
             if (ball == null || !ball.CanBeTakenInHands || !CanTakeInHands)
@@ -2253,6 +2789,12 @@ namespace rimrush
             return delta.sqrMagnitude;
         }
 
+        /// <summary>
+        /// Executes Try Block Ball for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="ball">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryBlockBall(rimrushBallObject ball)
         {
             if (!jumpBlockActive || ball == null || !ball.IsBlockable || ball.Side == Side || removedFromPlay || isSuperShot)
@@ -2281,6 +2823,12 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Try Start Super for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="pressed">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool TryStartSuper(bool pressed)
         {
             if (!pressed || !readyForSuper || GameCore.IsSuperShot)
@@ -2329,6 +2877,11 @@ namespace rimrush
             return false;
         }
 
+        /// <summary>
+        /// Executes Try Use Hell Bonus Super Dash for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryUseHellBonusSuperDash()
         {
             if (!CanUseHellBonusSuperDash || GameCore.IsSuperShot || isSuperShot || removedFromPlay || !IsGrounded || stunTimer > 0f || isDunking)
@@ -2343,6 +2896,11 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Try Use Hell Bonus Shield for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryUseHellBonusShield()
         {
             if (!CanUseHellBonusShield || GameCore.IsSuperShot || isSuperShot || removedFromPlay || stunTimer > 0f || isDunking)
@@ -2357,6 +2915,11 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Start Super for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="consumeNativeCharge">Input value used by this step of the workflow.</param>
         private void StartSuper(bool consumeNativeCharge)
         {
             isSuperShot = true;
@@ -2380,6 +2943,10 @@ namespace rimrush
             dashTimer = 0f;
         }
 
+        /// <summary>
+        /// Executes End Super for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EndSuper()
         {
             isSuperShot = false;
@@ -2397,6 +2964,10 @@ namespace rimrush
             hellNativeSuperRefundPending = false;
         }
 
+        /// <summary>
+        /// Executes Make Mega Dunk for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void MakeMegaDunk()
         {
             canDoAction = false;
@@ -2413,6 +2984,10 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PMegaStart);
         }
 
+        /// <summary>
+        /// Executes Continue Super Dunk for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ContinueSuperDunk()
         {
             superPhase = SuperPhase.MegaRecover;
@@ -2423,6 +2998,10 @@ namespace rimrush
             PlayState("megadunk_end");
         }
 
+        /// <summary>
+        /// Executes End Super Dunk for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void EndSuperDunk()
         {
             if (!isSuperShot)
@@ -2443,12 +3022,20 @@ namespace rimrush
             EndSuper();
         }
 
+        /// <summary>
+        /// Executes Make Shield for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void MakeShield()
         {
             shield?.Activate();
             EndSuper();
         }
 
+        /// <summary>
+        /// Executes Make Alley Oop for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void MakeAlleyOop()
         {
             canDoAction = false;
@@ -2467,6 +3054,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Start Alley Oop for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void StartAlleyOop()
         {
             alleyOopPendingThrow = false;
@@ -2481,6 +3072,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Finish Alley Teleport Out for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void FinishAlleyTeleportOut()
         {
             Position = new Vector2(superDunkX, rimrushObjectsData.AlleyOopY);
@@ -2500,6 +3095,10 @@ namespace rimrush
             superDuration = 0.4f;
         }
 
+        /// <summary>
+        /// Executes Make Super Dash for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void MakeSuperDash()
         {
             var targetX = -1f;
@@ -2559,6 +3158,10 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PSuperDash);
         }
 
+        /// <summary>
+        /// Executes Continue Super Dash for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ContinueSuperDash()
         {
             Position = superTargetPosition;
@@ -2571,6 +3174,11 @@ namespace rimrush
             EndSuper();
         }
 
+        /// <summary>
+        /// Executes Update Super for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateSuper(float dt)
         {
             switch (superPhase)
@@ -2617,6 +3225,10 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Update Super Dash Travel for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateSuperDashTravel()
         {
             var opponents = Side == -1 ? GameCore.PlayersRight : GameCore.PlayersLeft;
@@ -2661,6 +3273,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Acquire Ball During Super Dash for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void AcquireBallDuringSuperDash()
         {
             if (WithBall || GameCore.Ball == null)
@@ -2675,6 +3291,10 @@ namespace rimrush
             GameCore.NotifyBallInHands(Side, playerNo);
         }
 
+        /// <summary>
+        /// Executes Make Throw for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void MakeThrow()
         {
             canDoAction = false;
@@ -2704,6 +3324,10 @@ namespace rimrush
             PlayState(IsGrounded ? "throw_land" : "fly1");
         }
 
+        /// <summary>
+        /// Executes Begin Floor Throw for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BeginFloorThrow()
         {
             pendingGroundThrow = true;
@@ -2715,6 +3339,10 @@ namespace rimrush
             PlayState("throw_land");
         }
 
+        /// <summary>
+        /// Executes Begin Steal for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BeginSteal()
         {
             if (stealAnimationActive)
@@ -2737,6 +3365,10 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PSwoosh, 0.7f);
         }
 
+        /// <summary>
+        /// Executes Resolve Steal Attempt for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ResolveStealAttempt()
         {
             if (!pendingStealAction)
@@ -2754,6 +3386,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Steal Animation for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateStealAnimation(float dt)
         {
             facingDirection = stealFacingDirection;
@@ -2778,6 +3415,10 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Finish Steal Animation for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void FinishStealAnimation()
         {
             if (!stealAnimationActive)
@@ -2799,6 +3440,11 @@ namespace rimrush
             PlayState(WithBall ? "idle_wb" : "idle");
         }
 
+        /// <summary>
+        /// Executes Cancel Steal Animation for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="restorePickup">Input value used by this step of the workflow.</param>
         private void CancelStealAnimation(bool restorePickup)
         {
             stealAnimationActive = false;
@@ -2811,6 +3457,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Facing for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateFacing()
         {
             var ballHolder = GameCore.FindBallHolder();
@@ -2831,6 +3481,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Play State for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="state">Input value used by this step of the workflow.</param>
         private void PlayState(string state)
         {
             if (visualState == state)
@@ -2842,12 +3497,23 @@ namespace rimrush
             armature?.Play(state);
         }
 
+        /// <summary>
+        /// Executes Set State At Start for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="state">Input value used by this step of the workflow.</param>
         private void SetStateAtStart(string state)
         {
             visualState = state;
             armature?.StopAtStart(state);
         }
 
+        /// <summary>
+        /// Executes On Animation Frame Event for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="animationName">Input value used by this step of the workflow.</param>
+        /// <param name="eventName">Input value used by this step of the workflow.</param>
         private void OnAnimationFrameEvent(string animationName, string eventName)
         {
             armature?.RefreshPose();
@@ -2885,6 +3551,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes On Animation Complete for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="animationName">Input value used by this step of the workflow.</param>
         private void OnAnimationComplete(string animationName)
         {
             switch (animationName)
@@ -2928,6 +3599,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Graphic for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateGraphic()
         {
             graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, 0.12f + playerNo * 0.01f);
@@ -2945,6 +3620,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Create Fallback Avatar for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void CreateFallbackAvatar()
         {
             var body = new GameObject("FallbackBody");
@@ -2957,6 +3636,11 @@ namespace rimrush
             body.transform.localScale = new Vector3(1.2f, 1.8f, 1f);
         }
 
+        /// <summary>
+        /// Executes Start Dash for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="direction">Input value used by this step of the workflow.</param>
         private void StartDash(int direction)
         {
             dashDirection = direction;
@@ -2970,6 +3654,11 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PDash);
         }
 
+        /// <summary>
+        /// Executes Update Dash Buffer for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateDashBuffer(float dt)
         {
             if (controller.CurrentDash != 0)
@@ -2992,6 +3681,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Begin Block Or Pump for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BeginBlockOrPump()
         {
             blockPumpIsPump = WithBall;
@@ -3013,12 +3706,21 @@ namespace rimrush
             PlayState(blockPumpIsPump ? "pumpStart" : "blockStart");
         }
 
+        /// <summary>
+        /// Executes Activate Jump Block for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ActivateJumpBlock()
         {
             jumpBlockActive = true;
             canTakeInHands = false;
         }
 
+        /// <summary>
+        /// Executes Should Prime Jump Block for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool ShouldPrimeJumpBlock()
         {
             if (!needBlock)
@@ -3036,6 +3738,10 @@ namespace rimrush
             return ball != null && ball.State == "shooting" && ball.Side != Side;
         }
 
+        /// <summary>
+        /// Executes Update Jump Block Threat for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void UpdateJumpBlockThreat()
         {
             if (jumpBlockActive && !ShouldPrimeJumpBlock())
@@ -3044,6 +3750,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update Block Or Pump for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateBlockOrPump(float dt)
         {
             Velocity.x = 0f;
@@ -3105,6 +3816,11 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        /// <summary>
+        /// Executes Try Start Dunk for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool TryStartDunk()
         {
             var dunkType = GetDunkType();
@@ -3131,6 +3847,11 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Get Dunk Type for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private int GetDunkType()
         {
             var paintStart = Side == 1 ? rimrushObjectsData.PaintStartX : rimrushConstants.Width - rimrushObjectsData.PaintMiddleX;
@@ -3148,11 +3869,22 @@ namespace rimrush
             return 0;
         }
 
+        /// <summary>
+        /// Executes Dunk Target X for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private float DunkTargetX()
         {
             return Side == 1 ? rimrushObjectsData.DunkX : rimrushConstants.Width - rimrushObjectsData.DunkX;
         }
 
+        /// <summary>
+        /// Executes Dunk Duration for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dunkType">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float DunkDuration(int dunkType)
         {
             return dunkType == 2
@@ -3162,6 +3894,11 @@ namespace rimrush
                     : rimrushObjectsData.Dunk1Duration;
         }
 
+        /// <summary>
+        /// Executes Update Dunk for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateDunk(float dt)
         {
             dunkTimer += dt;
@@ -3184,6 +3921,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Release Dunk Ball for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ReleaseDunkBall()
         {
             if (dunkReleased)
@@ -3202,6 +3943,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Restore Ball Pickup If Ready for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void RestoreBallPickupIfReady()
         {
             if (canTakeInHands || stunTimer > 0f || stealAnimationActive || stealAttemptTimer >= 0f || actionLatch > 0f)
@@ -3212,6 +3957,11 @@ namespace rimrush
             canTakeInHands = true;
         }
 
+        /// <summary>
+        /// Executes Is Under Glass for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool IsUnderGlass()
         {
             return Side == -1
@@ -3219,6 +3969,17 @@ namespace rimrush
                 : Position.x > 100f && Position.x < 200f;
         }
 
+        /// <summary>
+        /// Executes Swept Point Intersects Rect for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="start">Input value used by this step of the workflow.</param>
+        /// <param name="end">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -3235,11 +3996,30 @@ namespace rimrush
                    ClipSegment(direction.y, maxY - start.y, ref tMin, ref tMax);
         }
 
+        /// <summary>
+        /// Executes Point Inside Rect for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="point">Input value used by this step of the workflow.</param>
+        /// <param name="minX">Input value used by this step of the workflow.</param>
+        /// <param name="maxX">Input value used by this step of the workflow.</param>
+        /// <param name="minY">Input value used by this step of the workflow.</param>
+        /// <param name="maxY">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
+        /// <summary>
+        /// Executes Clip Segment for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="p">Input value used by this step of the workflow.</param>
+        /// <param name="q">Input value used by this step of the workflow.</param>
+        /// <param name="tMin">Input value used by this step of the workflow.</param>
+        /// <param name="tMax">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))

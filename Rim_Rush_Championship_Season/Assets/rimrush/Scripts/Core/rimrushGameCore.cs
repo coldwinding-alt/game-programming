@@ -1,3 +1,6 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushGameCore 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,11 +44,20 @@ namespace rimrush
         public rimrushBasketObject BasketLeft => basketLeft;
         public rimrushBasketObject BasketRight => basketRight;
 
+        /// <summary>
+        /// Executes rimrush Game Core for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="root">Input value used by this step of the workflow.</param>
         public rimrushGameCore(Transform root)
         {
             this.root = root;
         }
 
+        /// <summary>
+        /// Executes Start for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Start()
         {
             rimrushPlayersData.SetupPlayers();
@@ -59,6 +71,10 @@ namespace rimrush
             StartMatch(true);
         }
 
+        /// <summary>
+        /// Executes Shutdown for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void Shutdown()
         {
             if (runtimeResourcesReleased)
@@ -78,6 +94,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Update for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="dt">Input value used by this step of the workflow.</param>
         public void Update(float dt)
         {
             if (rimrushHelpPanel.IsAnyOpen)
@@ -231,6 +252,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes On Ball Scored for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
         public void OnBallScored(int scoringSide)
         {
             if (restartDelay > 0f)
@@ -269,6 +295,12 @@ namespace rimrush
             restartDelay = 1.15f;
         }
 
+        /// <summary>
+        /// Executes Find Ball Holder for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushPlayerObject FindBallHolder(int side = 0)
         {
             foreach (var player in playersLeft)
@@ -290,6 +322,12 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Find Closest Opponent for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="source">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushPlayerObject FindClosestOpponent(rimrushPlayerObject source)
         {
             if (source == null)
@@ -313,6 +351,12 @@ namespace rimrush
             return closest;
         }
 
+        /// <summary>
+        /// Executes Notify Ball In Hands for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="holderSide">Input value used by this step of the workflow.</param>
+        /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
             foreach (var player in playersLeft)
@@ -326,6 +370,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Notify Players Ball Shot for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shotSide">Input value used by this step of the workflow.</param>
+        /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyPlayersBallShot(int shotSide, int shooterPlayerNo)
         {
             foreach (var player in playersLeft)
@@ -339,6 +389,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Notify Ball Others for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         public void NotifyBallOthers()
         {
             foreach (var player in playersLeft)
@@ -352,6 +406,13 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Get Team Mate for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <param name="playerNo">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushPlayerObject GetTeamMate(int side, int playerNo)
         {
             var team = side == -1 ? playersLeft : playersRight;
@@ -366,6 +427,12 @@ namespace rimrush
             return null;
         }
 
+        /// <summary>
+        /// Executes Get Score For Side for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public int GetScoreForSide(int side)
         {
             var teamIndex = side == -1 ? 0 : 1;
@@ -374,26 +441,57 @@ namespace rimrush
                 : 0;
         }
 
+        /// <summary>
+        /// Executes Get Score Lead For Side for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public int GetScoreLeadForSide(int side)
         {
             return GetScoreForSide(side) - GetScoreForSide(-side);
         }
 
+        /// <summary>
+        /// Executes Is Current Shot Three Pointer for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="shotSide">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool IsCurrentShotThreePointer(int shotSide)
         {
             return Ball != null && IsThreePointer(shotSide);
         }
 
+        /// <summary>
+        /// Executes Show Hud Message for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void ShowHudMessage(string message, float duration = 1.2f)
         {
             hud?.ShowMessage(message, duration);
         }
 
+        /// <summary>
+        /// Executes Show Hud Bonus Notice for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="message">Input value used by this step of the workflow.</param>
+        /// <param name="duration">Input value used by this step of the workflow.</param>
         public void ShowHudBonusNotice(string message, float duration = 0.9f)
         {
             hud?.ShowBonusNotice(message, duration);
         }
 
+        /// <summary>
+        /// Executes Try Steal Ball for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="thief">Input value used by this step of the workflow.</param>
+        /// <param name="facingDirection">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool TryStealBall(rimrushPlayerObject thief, float facingDirection)
         {
             if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying || IsSuperShot)
@@ -429,6 +527,10 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Executes Resolve Player Blocking for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ResolvePlayerBlocking()
         {
             if (playersLeft.Count == 0 || playersRight.Count == 0 || IsSuperShot)
@@ -486,6 +588,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Is Three Pointer for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool IsThreePointer(int scoringSide)
         {
             if (scoringSide == -1)
@@ -496,6 +604,10 @@ namespace rimrush
             return Ball.LastShotX > rimrushObjectsData.ThreePointsDistance;
         }
 
+        /// <summary>
+        /// Executes Build Players for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BuildPlayers()
         {
             var match = MatchData;
@@ -529,6 +641,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Start Match for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="regularTime">Input value used by this step of the workflow.</param>
         private void StartMatch(bool regularTime)
         {
             isTraining = rimrushInventory.Instance.GameMode == 3;
@@ -567,6 +684,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Handle Pause Command for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="command">Input value used by this step of the workflow.</param>
         private void HandlePauseCommand(rimrushPauseCommand command)
         {
             if (command == rimrushPauseCommand.None || pauseResumeCountdown || postMatchDelay > 0f || hud.IsPostMatchVisible)
@@ -596,6 +718,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Begin Pause Resume Countdown for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BeginPauseResumeCountdown()
         {
             if (!isPaused || pauseResumeCountdown)
@@ -607,6 +733,11 @@ namespace rimrush
             hud.BeginResumeCountdown(3f);
         }
 
+        /// <summary>
+        /// Executes Set Paused for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="paused">Input value used by this step of the workflow.</param>
         private void SetPaused(bool paused)
         {
             if (isPaused == paused)
@@ -637,6 +768,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Restart for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="side">Input value used by this step of the workflow.</param>
         private void Restart(int side)
         {
             Ball.Restart();
@@ -666,6 +802,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Restart After Score for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void RestartAfterScore()
         {
             MatchProcessor.Reset();
@@ -682,6 +822,10 @@ namespace rimrush
             Restart(restartSide);
         }
 
+        /// <summary>
+        /// Executes Begin End Of Time for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void BeginEndOfTime()
         {
             matchTime = endTime;
@@ -700,6 +844,10 @@ namespace rimrush
             FinalizeEndMatch();
         }
 
+        /// <summary>
+        /// Executes Finalize End Match for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void FinalizeEndMatch()
         {
             isPlaying = false;
@@ -720,6 +868,10 @@ namespace rimrush
             hud.ShowMessage("TIME!!!", 1.05f);
         }
 
+        /// <summary>
+        /// Executes Resolve Post Match Delay for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void ResolvePostMatchDelay()
         {
             postMatchDelay = 0f;
@@ -736,6 +888,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Start Overtime for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void StartOvertime()
         {
             matchTime = 0f;
@@ -751,6 +907,11 @@ namespace rimrush
             hud.StartCountdown(3f, "OVERTIME IN");
         }
 
+        /// <summary>
+        /// Executes Is Ball In Game for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool IsBallInGame()
         {
             return Ball != null &&
@@ -760,11 +921,20 @@ namespace rimrush
                     Ball.State == "block");
         }
 
+        /// <summary>
+        /// Executes Has Waiting Ball Resolved for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool HasWaitingBallResolved()
         {
             return Ball == null || Ball.State == "bounce" || Ball.State == "score";
         }
 
+        /// <summary>
+        /// Executes Try Pickup Loose Ball for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
         private void TryPickupLooseBall()
         {
             if (Ball == null || !Ball.CanBeTakenInHands)
@@ -803,6 +973,11 @@ namespace rimrush
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.BSteel);
         }
 
+        /// <summary>
+        /// Executes Try Block Ball for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         internal bool TryBlockBall()
         {
             if (Ball == null || !Ball.IsBlockable)
@@ -829,6 +1004,11 @@ namespace rimrush
             return false;
         }
 
+        /// <summary>
+        /// Executes Try Shield Ball for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         internal bool TryShieldBall()
         {
             if (Ball == null)
@@ -858,6 +1038,12 @@ namespace rimrush
 
     public sealed class rimrushGameBuilder
     {
+        /// <summary>
+        /// Executes Build for the rimrushGameBuilder workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="root">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushGameCore Build(Transform root)
         {
             var inventory = rimrushInventory.Instance;

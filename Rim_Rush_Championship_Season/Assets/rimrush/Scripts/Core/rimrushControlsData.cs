@@ -1,9 +1,28 @@
+// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
+// 概括：rimrushControlsData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+
 using UnityEngine;
 
 namespace rimrush
 {
     public readonly struct rimrushControlProfile
     {
+        /// <summary>
+        /// Executes rimrush Control Profile for the rimrushControlsData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="controllerSlot">Input value used by this step of the workflow.</param>
+        /// <param name="moveHint">Input value used by this step of the workflow.</param>
+        /// <param name="jumpHint">Input value used by this step of the workflow.</param>
+        /// <param name="blockHint">Input value used by this step of the workflow.</param>
+        /// <param name="actionHint">Input value used by this step of the workflow.</param>
+        /// <param name="superHint">Input value used by this step of the workflow.</param>
+        /// <param name="moveLeftKey">Input value used by this step of the workflow.</param>
+        /// <param name="moveRightKey">Input value used by this step of the workflow.</param>
+        /// <param name="jumpKey">Input value used by this step of the workflow.</param>
+        /// <param name="blockKey">Input value used by this step of the workflow.</param>
+        /// <param name="actionKey">Input value used by this step of the workflow.</param>
+        /// <param name="superKey">Input value used by this step of the workflow.</param>
         public rimrushControlProfile(
             int controllerSlot,
             string moveHint,
@@ -95,11 +114,23 @@ namespace rimrush
             $"2P  P1 {playerOneProfile.MoveHint} MOVE  {playerOneProfile.JumpHint} JUMP  {playerOneProfile.BlockHint} BLOCK  {playerOneProfile.ActionHint} SHOOT  {playerOneProfile.SuperHint} SUPER\n" +
             $"2P  P2 {playerTwoProfile.MoveHint} MOVE  {playerTwoProfile.JumpHint} JUMP  {playerTwoProfile.BlockHint} BLOCK  {playerTwoProfile.ActionHint} SHOOT  {playerTwoProfile.SuperHint} SUPER";
 
+        /// <summary>
+        /// Executes Profile For Brain for the rimrushControlsData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="brain">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushControlProfile ProfileForBrain(string brain)
         {
             return ProfileForSlot(ParseControllerSlot(brain));
         }
 
+        /// <summary>
+        /// Executes Profile For Slot for the rimrushControlsData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="controllerSlot">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushControlProfile ProfileForSlot(int controllerSlot)
         {
             switch (controllerSlot)
@@ -113,6 +144,12 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Executes Parse Controller Slot for the rimrushControlsData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="brain">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static int ParseControllerSlot(string brain)
         {
             if (string.IsNullOrEmpty(brain) || brain.Length < 2)
