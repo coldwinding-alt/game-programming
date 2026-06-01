@@ -17,6 +17,7 @@ namespace rimrush
     {
         private const int WitchCharacterId = 6;
         private const int PreviewSortingOrderBase = 990;
+        private const string PrefabResourcePath = "rimrush/Prefabs/UI/RimrushTutorialOverlay";
 
         private static rimrushTutorialOverlay activeOverlay;
 
@@ -59,13 +60,7 @@ namespace rimrush
         {
             get
             {
-                if (activeOverlay != null)
-                {
-                    return activeOverlay;
-                }
-
-                activeOverlay = FindSceneOverlay();
-                return activeOverlay;
+                return FindActiveOverlay(true);
             }
         }
 
@@ -458,6 +453,31 @@ namespace rimrush
             }
 
             return null;
+        }
+
+        private static rimrushTutorialOverlay FindActiveOverlay(bool createFallback)
+        {
+            if (activeOverlay != null)
+            {
+                return activeOverlay;
+            }
+
+            activeOverlay = FindSceneOverlay();
+            if (activeOverlay != null || !createFallback)
+            {
+                return activeOverlay;
+            }
+
+            var prefab = Resources.Load<rimrushTutorialOverlay>(PrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"Missing tutorial overlay prefab at Resources/{PrefabResourcePath}.");
+                return null;
+            }
+
+            activeOverlay = Object.Instantiate(prefab);
+            activeOverlay.name = "RimrushTutorialOverlay_RuntimeFallback";
+            return activeOverlay;
         }
 
         private void EnsureCanvasCamera()

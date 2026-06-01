@@ -29,6 +29,7 @@ namespace rimrush
     {
         private const int WitchCharacterId = 6;
         private const int PreviewSortingOrderBase = 980;
+        private const string PrefabResourcePath = "rimrush/Prefabs/UI/RimrushTutorialMenuPanel";
 
         private static rimrushTutorialMenuPanel activePanel;
 
@@ -76,14 +77,14 @@ namespace rimrush
         {
             get
             {
-                var panel = activePanel != null ? activePanel : FindScenePanel();
+                var panel = FindActivePanel(false);
                 return panel != null && panel.visible;
             }
         }
 
         public static void ShowOverview(int characterId, rimrushBallSelection ballSelection)
         {
-            var panel = FindScenePanel();
+            var panel = FindActivePanel(true);
             if (panel != null)
             {
                 panel.Show(rimrushTutorialMenuPage.Overview, characterId, ballSelection);
@@ -92,7 +93,7 @@ namespace rimrush
 
         public static void ShowControls(int characterId, rimrushBallSelection ballSelection)
         {
-            var panel = FindScenePanel();
+            var panel = FindActivePanel(true);
             if (panel != null)
             {
                 panel.Show(rimrushTutorialMenuPage.Controls, characterId, ballSelection);
@@ -101,7 +102,7 @@ namespace rimrush
 
         public static void HideActive()
         {
-            var panel = activePanel != null ? activePanel : FindScenePanel();
+            var panel = FindActivePanel(false);
             panel?.Hide();
         }
 
@@ -109,20 +110,20 @@ namespace rimrush
         {
             get
             {
-                var panel = activePanel != null ? activePanel : FindScenePanel();
+                var panel = FindActivePanel(false);
                 return panel != null ? panel.currentPage : rimrushTutorialMenuPage.Overview;
             }
         }
 
         public static rimrushTutorialMenuCommand ConsumeActiveCommand()
         {
-            var panel = activePanel != null ? activePanel : FindScenePanel();
+            var panel = FindActivePanel(false);
             return panel != null ? panel.ConsumeCommand() : rimrushTutorialMenuCommand.None;
         }
 
         public static void RefreshActiveSelection(int characterId, rimrushBallSelection ballSelection)
         {
-            var panel = activePanel != null ? activePanel : FindScenePanel();
+            var panel = FindActivePanel(false);
             panel?.RefreshSelection(characterId, ballSelection);
         }
 
@@ -473,6 +474,31 @@ namespace rimrush
             }
 
             return null;
+        }
+
+        private static rimrushTutorialMenuPanel FindActivePanel(bool createFallback)
+        {
+            if (activePanel != null)
+            {
+                return activePanel;
+            }
+
+            activePanel = FindScenePanel();
+            if (activePanel != null || !createFallback)
+            {
+                return activePanel;
+            }
+
+            var prefab = Resources.Load<rimrushTutorialMenuPanel>(PrefabResourcePath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"Missing tutorial menu panel prefab at Resources/{PrefabResourcePath}.");
+                return null;
+            }
+
+            activePanel = Object.Instantiate(prefab);
+            activePanel.name = "RimrushTutorialMenuPanel_RuntimeFallback";
+            return activePanel;
         }
 
         private void EnsureCanvasCamera()
