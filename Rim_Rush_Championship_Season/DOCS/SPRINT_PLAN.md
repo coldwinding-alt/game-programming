@@ -21,7 +21,7 @@
 
 - 每张卡尽量控制在 `0.5-2` 天
 - 优先从 `Ready` 拉任务，不直接从 `Backlog` 开做
-- `In Progress` 同时不超过 `3` 张
+- `In Progress` 同时不超过 `4` 张
 - `Testing` 同时不超过 `2` 张
 - 如果测试发现新问题，拆成新的跟进卡片
 
@@ -71,6 +71,10 @@
 - `#7` Restructure menu flow, match setup, and HUD around character-based play
 - `#15` Verify roster asset integration across selection, match flow, and tournament draws
 - `#35` Build help page
+- `#37` Add Halloween HUD, skill FX, and gameplay art pass
+- `#38` Restore classic ball selection flow
+- `#39` Polish fixed-resolution presentation and character clarity
+- `#40` Polish post-match results screen
 
 ## 现在最值得讲给老师听的主线
 
