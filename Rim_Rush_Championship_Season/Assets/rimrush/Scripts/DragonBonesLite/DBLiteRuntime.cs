@@ -94,6 +94,21 @@ namespace rimrush
             EnsureLoaded();
             return armatures.TryGetValue(armatureName, out data);
         }
+
+        /// <summary>
+        /// Executes Get Texture Sprite for the DBLiteFactory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="spriteName">Input value used by this step of the workflow.</param>
+        /// <param name="textureAtlasKey">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        public Sprite GetTextureSprite(string spriteName, string textureAtlasKey = "texture2")
+        {
+            EnsureLoaded();
+            return textureAtlases.TryGetValue(textureAtlasKey, out var atlas)
+                ? atlas.Sprite(spriteName)
+                : null;
+        }
     }
 
     public sealed class DBLiteArmature : MonoBehaviour

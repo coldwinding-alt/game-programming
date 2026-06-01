@@ -11,11 +11,13 @@ namespace rimrush
         private int shotSide;
         private bool isHuman;
         private int throwType;
+        private int shotPlayerNo = -1;
         private int blockSide;
         private bool blockIsHuman;
 
         public int ThrowType => throwType;
         public int ShotSide => shotSide;
+        public int ShotPlayerNo => shotPlayerNo;
         public int BlockSide => blockSide;
         public bool IsHuman => isHuman;
 
@@ -27,6 +29,7 @@ namespace rimrush
         {
             canScore = true;
             upperSensorPassed = false;
+            shotPlayerNo = -1;
             blockSide = 0;
             blockIsHuman = false;
         }
@@ -38,12 +41,13 @@ namespace rimrush
         /// <param name="side">Input value used by this step of the workflow.</param>
         /// <param name="shotByHuman">Input value used by this step of the workflow.</param>
         /// <param name="shotThrowType">Input value used by this step of the workflow.</param>
-        public void Shoot(int side, bool shotByHuman, int shotThrowType)
+        public void Shoot(int side, bool shotByHuman, int shotThrowType, int shooterPlayerNo = -1)
         {
             Reset();
             shotSide = side;
             isHuman = shotByHuman;
             throwType = shotThrowType;
+            shotPlayerNo = shooterPlayerNo;
         }
 
         /// <summary>
