@@ -19,7 +19,8 @@ namespace rimrush
     {
         OnePlayer,
         TwoPlayers,
-        Training
+        Training,
+        Tutorial
     }
 
     public enum rimrushSessionMode
@@ -27,7 +28,8 @@ namespace rimrush
         None,
         QuickMatch,
         Tournament,
-        Training
+        Training,
+        Tutorial
     }
 
     public enum rimrushBallTheme
@@ -316,6 +318,24 @@ namespace rimrush
         }
 
         /// <summary>
+        /// Executes Start Tutorial for the rimrushMatchData workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        public void StartTutorial(int characterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
+        {
+            ResetAll();
+            ResolveBallSelection(ballSelection);
+            var resolvedCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
+            var opponentCharacterId = rimrushPlayersData.SanitizeCharacterId(7, resolvedCharacterId);
+
+            CharacterIds = new[] { resolvedCharacterId, opponentCharacterId };
+            Pb = new[] { new[] { "P0" }, new[] { "T0" } };
+            Skills = new[] { new[] { 0 }, new[] { 0 } };
+        }
+
+        /// <summary>
         /// Executes Start Random Match for the rimrushMatchData workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
@@ -518,6 +538,7 @@ namespace rimrush
         public rimrushAiDifficulty Difficulty;
         public rimrushParticipantMode ParticipantMode;
         public rimrushSessionMode SessionMode;
+        public rimrushTutorialNextAction PendingTutorialNextAction;
         public int SelectedQuickCharacterId;
         public int SelectedTournamentCharacterId;
         public int SelectedTrainingCharacterId;
@@ -539,6 +560,7 @@ namespace rimrush
             Tournament = new rimrushTournamentData();
             MatchData.MatchMode = 0;
             Difficulty = rimrushAiDifficulty.Normal;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             SelectedQuickCharacterId = MatchData.FirstCharacterId;
             SelectedTournamentCharacterId = MatchData.FirstCharacterId;
             SelectedTrainingCharacterId = MatchData.FirstCharacterId;
@@ -584,6 +606,10 @@ namespace rimrush
             if (participantMode == rimrushParticipantMode.Training)
             {
                 SessionMode = rimrushSessionMode.Training;
+            }
+            else if (participantMode == rimrushParticipantMode.Tutorial)
+            {
+                SessionMode = rimrushSessionMode.Tutorial;
             }
         }
 
@@ -667,7 +693,8 @@ namespace rimrush
             SessionMode = rimrushSessionMode.QuickMatch;
             MatchPrepared = true;
             ParticipantMode = rimrushParticipantMode.OnePlayer;
-            GameMode = 2;
+            GameMode = rimrushGameModeIds.QuickMatch;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             MatchData.MatchMode = 0;
             MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
         }
@@ -681,7 +708,8 @@ namespace rimrush
             ParticipantMode = rimrushParticipantMode.OnePlayer;
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
-            GameMode = 1;
+            GameMode = rimrushGameModeIds.RandomQuick;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             MatchData.MatchMode = 0;
             MatchData.StartRandomMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
             MatchPrepared = true;
@@ -696,7 +724,8 @@ namespace rimrush
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
-            GameMode = 4;
+            GameMode = rimrushGameModeIds.TwoPlayers;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             MatchData.MatchMode = 0;
             MatchData.StartPlayers2Match(SelectedVersusBallSelection);
             MatchPrepared = true;
@@ -713,7 +742,8 @@ namespace rimrush
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
-            GameMode = 4;
+            GameMode = rimrushGameModeIds.TwoPlayers;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             MatchData.StartSelectedTwoPlayerMatch(leftCharacterId, rightCharacterId, SelectedVersusBallSelection);
             MatchPrepared = true;
         }
@@ -727,8 +757,24 @@ namespace rimrush
             ParticipantMode = rimrushParticipantMode.Training;
             Tournament.Reset();
             SessionMode = rimrushSessionMode.Training;
-            GameMode = 3;
+            GameMode = rimrushGameModeIds.Training;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             MatchData.StartTraining(SelectedTrainingCharacterId, SelectedTrainingBallSelection);
+            MatchPrepared = true;
+        }
+
+        /// <summary>
+        /// Executes Start Tutorial for the rimrushInventory workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        public void StartTutorial()
+        {
+            ParticipantMode = rimrushParticipantMode.Tutorial;
+            Tournament.Reset();
+            SessionMode = rimrushSessionMode.Tutorial;
+            GameMode = rimrushGameModeIds.Tutorial;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
+            MatchData.StartTutorial(SelectedTrainingCharacterId, SelectedTrainingBallSelection);
             MatchPrepared = true;
         }
 
@@ -741,7 +787,8 @@ namespace rimrush
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
             SessionMode = rimrushSessionMode.Tournament;
-            GameMode = 1;
+            GameMode = rimrushGameModeIds.RandomQuick;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
             if (!Tournament.Create(SelectedTournamentCharacterId, Difficulty))
             {
                 MatchPrepared = false;
@@ -813,6 +860,7 @@ namespace rimrush
             Tournament.Reset();
             SessionMode = rimrushSessionMode.None;
             MatchPrepared = false;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
         }
     }
 }

@@ -99,10 +99,10 @@ namespace rimrush
         private readonly rimrushMenuButton pauseResumeButton;
         private readonly bool isTraining;
         private readonly GameObject messageRoot;
+        private readonly GameObject messageBackdrop;
         private readonly TextMesh messageText;
         private readonly GameObject bonusNoticeRoot;
         private readonly TextMesh bonusNoticeText;
-        private readonly GameObject countdownBackdrop;
         private readonly TextMesh countdownCaptionText;
         private readonly TextMesh countdownText;
         private readonly Vector3 countdownBaseScale;
@@ -153,7 +153,8 @@ namespace rimrush
         /// <param name="matchData">Input value used by this step of the workflow.</param>
         public rimrushHudView(Transform parent, rimrushMatchData matchData)
         {
-            isTraining = rimrushInventory.Instance.GameMode == 3;
+            var gameMode = rimrushInventory.Instance.GameMode;
+            isTraining = gameMode == rimrushGameModeIds.Training || gameMode == rimrushGameModeIds.Tutorial;
             leftCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[0]);
             rightCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[1]);
 
@@ -251,7 +252,6 @@ namespace rimrush
                 TopRightIconPixels,
                 rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton));
 
-            countdownBackdrop = CreateHudImage("CountdownBackdrop", rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), rimrushConstants.Width2, CountdownY + 4f, 360f, 119, parent);
             countdownCaptionText = rimrushRender.Text(
                 "CountdownCaption",
                 string.Empty,
@@ -277,7 +277,7 @@ namespace rimrush
             countdownBaseScale = countdownText.transform.localScale;
 
             messageRoot = CreateHudAnchor("MessageRoot", rimrushConstants.Width2, PopupCenterY, parent);
-            var messageBackdrop = CreatePopupBackdrop(parent);
+            messageBackdrop = CreatePopupBackdrop(parent);
             if (messageBackdrop != null)
             {
                 messageBackdrop.transform.SetParent(messageRoot.transform, true);
@@ -778,7 +778,7 @@ namespace rimrush
         /// </summary>
         /// <param name="message">Input value used by this step of the workflow.</param>
         /// <param name="duration">Input value used by this step of the workflow.</param>
-        public void ShowMessage(string message, float duration = 1.2f)
+        public void ShowMessage(string message, float duration = 1.2f, bool showBackdrop = true)
         {
             if (messageRoot == null)
             {
@@ -793,6 +793,7 @@ namespace rimrush
             messageDuration = Mathf.Max(0.01f, duration);
             messageTime = messageDuration;
             messageVisualScale = ResolveMessageScale(message);
+            SetGameObjectVisible(messageBackdrop, showBackdrop);
             messageRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PopupCenterY);
             messageRoot.transform.localScale = Vector3.one * (0.78f * messageVisualScale);
             messageRoot.SetActive(true);
@@ -836,6 +837,8 @@ namespace rimrush
                 messageRoot.transform.position = rimrushConstants.PixelToWorldSnapped(rimrushConstants.Width2, PopupCenterY);
                 messageRoot.SetActive(false);
             }
+
+            SetGameObjectVisible(messageBackdrop, true);
         }
 
         /// <summary>
@@ -867,7 +870,6 @@ namespace rimrush
             countdownPulseTime = 0f;
             lastCountdownTick = int.MinValue;
             countdownText.transform.localScale = countdownBaseScale;
-            SetGameObjectVisible(countdownBackdrop, false);
             SetGameObjectVisible(countdownCaptionText.gameObject, false);
         }
 
@@ -896,7 +898,6 @@ namespace rimrush
             SetText(countdownCaptionText, caption ?? string.Empty);
             countdownText.color = new Color32(0xFF, 0xB8, 0x2E, 0xFF);
             countdownText.transform.localScale = countdownBaseScale * 0.82f;
-            SetGameObjectVisible(countdownBackdrop, true);
             SetGameObjectVisible(countdownCaptionText.gameObject, !string.IsNullOrEmpty(caption));
             HideMessage();
             HideBonusNotice();
@@ -1032,7 +1033,10 @@ namespace rimrush
         public void ShowPostMatch(int winner, int leftScoreValue, int rightScoreValue)
         {
             var inventory = rimrushInventory.Instance;
-            var isPlayerFacingMode = inventory.IsTournamentActive || inventory.GameMode == 1 || inventory.GameMode == 2;
+            var isPlayerFacingMode = inventory.IsTournamentActive ||
+                                     inventory.GameMode == rimrushGameModeIds.RandomQuick ||
+                                     inventory.GameMode == rimrushGameModeIds.QuickMatch ||
+                                     inventory.GameMode == rimrushGameModeIds.Tutorial;
             var titleUsesWarmAccent = !isPlayerFacingMode || winner < 0;
             var winnerName = winner < 0 ? leftCharacterLabel : rightCharacterLabel;
             postMatchWinnerSide = winner < 0 ? -1 : 1;
@@ -1298,8 +1302,11 @@ namespace rimrush
         {
             switch (message)
             {
-                case "3 POINTS!":
+                case "3 POINT":
                     messageText.color = new Color32(0xFF, 0x98, 0x10, 0xFF);
+                    break;
+                case "BASKET":
+                    messageText.color = new Color32(0xFF, 0xC5, 0x57, 0xFF);
                     break;
                 case "GO!!!":
                     messageText.color = new Color32(0x9C, 0xFF, 0x4A, 0xFF);
@@ -1400,6 +1407,12 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePausePanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
+            var standalonePanel = TryCreateStandaloneTintPanel(name, x, y, width, height, sortingOrder, parent, tint);
+            if (standalonePanel != null)
+            {
+                return standalonePanel;
+            }
+
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, "bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
             panel.transform.localScale = new Vector3(
                 rimrushConstants.UnitsPerPixel * width / 10f,
@@ -1425,6 +1438,12 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePauseFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
+            var standalonePanel = TryCreateStandalonePauseFrame(name, frame, x, y, width, height, sortingOrder, parent, tint);
+            if (standalonePanel != null)
+            {
+                return standalonePanel;
+            }
+
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, frame, x, y, 0.5f, 0.5f, sortingOrder, parent);
             var atlasFrame = rimrushAtlasCache.Instance.Interface.Frame(frame);
             if (atlasFrame != null)
@@ -1439,6 +1458,57 @@ namespace rimrush
 
             panel.GetComponent<SpriteRenderer>().color = tint;
             return panel;
+        }
+
+        private static GameObject TryCreateStandaloneTintPanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
+        {
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.PanelFillSoft));
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var panel = rimrushRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            panel.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
+                1f);
+            panel.GetComponent<SpriteRenderer>().color = tint;
+            return panel;
+        }
+
+        private static GameObject TryCreateStandalonePauseFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
+        {
+            var imageKey = ResolveStandalonePauseFrameImage(frame);
+            if (string.IsNullOrEmpty(imageKey))
+            {
+                return null;
+            }
+
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(imageKey));
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var panel = rimrushRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            panel.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
+                1f);
+            panel.GetComponent<SpriteRenderer>().color = tint;
+            return panel;
+        }
+
+        private static string ResolveStandalonePauseFrameImage(string frame)
+        {
+            return frame switch
+            {
+                "MatchBack0001" => rimrushAssets.Images.Ui.FrameMatchCardIdle,
+                "MatchBack0002" => rimrushAssets.Images.Ui.FrameMatchCardActive,
+                "btn_bg0000" => rimrushAssets.Images.Ui.MenuButtonPlate,
+                _ => null
+            };
         }
 
         /// <summary>
@@ -1568,7 +1638,6 @@ namespace rimrush
             return CreateHudImage("MessageBackdrop", rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), rimrushConstants.Width2, PopupCenterY + 1f, PopupBackdropWidth, 118, parent);
         }
 
-        /// <summary>
         /// Executes Create Hud Image for the rimrushHudView workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
@@ -1645,6 +1714,19 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
         {
+            const float legacyAuraPixels = 150f;
+            var auraTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EmblemOrb));
+            if (auraTexture != null)
+            {
+                var standaloneAura = rimrushRender.Image(name, auraTexture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+                standaloneAura.transform.localScale = new Vector3(
+                    rimrushConstants.UnitsPerPixel * legacyAuraPixels * scale / Mathf.Max(1f, auraTexture.width),
+                    rimrushConstants.UnitsPerPixel * legacyAuraPixels * scale / Mathf.Max(1f, auraTexture.height),
+                    1f);
+                standaloneAura.GetComponent<SpriteRenderer>().color = new Color32(0x46, 0xFF, 0xF0, 0x95);
+                return standaloneAura;
+            }
+
             var interfaceAtlas = rimrushAtlasCache.Instance.Interface;
             if (interfaceAtlas == null || !interfaceAtlas.HasFrame("EmblemsBg0000"))
             {
@@ -1764,15 +1846,27 @@ namespace rimrush
         {
             this.action = action;
             rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
-            sprite = rimrushRender.Sprite($"Button_{text}", rimrushAtlasCache.Instance.Interface, "btn_bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
-            var frame = rimrushAtlasCache.Instance.Interface.Frame("btn_bg0000");
-            if (frame != null)
+            var buttonTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.MenuButtonPlate));
+            float sourceWidth;
+            float sourceHeight;
+            if (buttonTexture != null)
             {
-                sprite.transform.localScale = new Vector3(
-                    rimrushConstants.UnitsPerPixel * width / frame.W,
-                    rimrushConstants.UnitsPerPixel * height / frame.H,
-                    1f);
+                sprite = rimrushRender.Image($"Button_{text}", buttonTexture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+                sourceWidth = Mathf.Max(1f, buttonTexture.width);
+                sourceHeight = Mathf.Max(1f, buttonTexture.height);
             }
+            else
+            {
+                sprite = rimrushRender.Sprite($"Button_{text}", rimrushAtlasCache.Instance.Interface, "btn_bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
+                var frame = rimrushAtlasCache.Instance.Interface.Frame("btn_bg0000");
+                sourceWidth = frame != null ? Mathf.Max(1f, frame.W) : 1f;
+                sourceHeight = frame != null ? Mathf.Max(1f, frame.H) : 1f;
+            }
+
+            sprite.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / sourceWidth,
+                rimrushConstants.UnitsPerPixel * height / sourceHeight,
+                1f);
 
             baseScale = sprite.transform.localScale;
             var fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
@@ -2095,8 +2189,24 @@ namespace rimrush
             }
 
             var y = 45f;
-            var bg = rimrushRender.Sprite($"EnergyBg_{controllerSlot}", rimrushAtlasCache.Instance.Gameplay, "btn_bg20000", x, y + 1f, 0.5f, 0.5f, 83, parent);
-            bg.transform.localScale *= 1.1f;
+            const float legacyEnergyBgWidth = 95f;
+            const float legacyEnergyBgHeight = 89f;
+            var energyTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EnergyButtonPlate));
+            GameObject bg;
+            if (energyTexture != null)
+            {
+                bg = rimrushRender.Image($"EnergyBg_{controllerSlot}", energyTexture, x, y + 1f, 0.5f, 0.5f, 83, parent);
+                bg.transform.localScale = new Vector3(
+                    rimrushConstants.UnitsPerPixel * legacyEnergyBgWidth * 1.1f / Mathf.Max(1f, energyTexture.width),
+                    rimrushConstants.UnitsPerPixel * legacyEnergyBgHeight * 1.1f / Mathf.Max(1f, energyTexture.height),
+                    1f);
+            }
+            else
+            {
+                bg = rimrushRender.Sprite($"EnergyBg_{controllerSlot}", rimrushAtlasCache.Instance.Gameplay, "btn_bg20000", x, y + 1f, 0.5f, 0.5f, 83, parent);
+                bg.transform.localScale *= 1.1f;
+            }
+
             rimrushRender.Sprite($"EnergyBase_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball000{superId}", x, y, 0.5f, 0.5f, 84, parent);
             overlay = new rimrushRadialIconMesh($"EnergyFill_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball2000{superId}", x, y, 85, parent);
 

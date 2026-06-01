@@ -43,6 +43,15 @@ namespace rimrush.EditorTools
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.HelpButton), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.FramePanelLarge), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.FrameMatchCardIdle), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.FrameMatchCardActive), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.MenuButtonPlate), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EnergyButtonPlate), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EmblemOrb), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsShowcasePanel), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsResultPlaque), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsPodiumBase), errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Scoreboard), errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), errors);
                 CheckResource<TextAsset>(rimrushAssets.Portraits.ResourcePath(rimrushAssets.Portraits.UiAtlas), errors);

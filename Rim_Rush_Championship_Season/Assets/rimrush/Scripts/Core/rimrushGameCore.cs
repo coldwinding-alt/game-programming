@@ -29,6 +29,7 @@ namespace rimrush
         private int postMatchWinner;
         private bool overtimePending;
         private bool runtimeResourcesReleased;
+        private rimrushTutorialFlow tutorialFlow;
 
         public rimrushBallObject Ball { get; private set; }
         public rimrushMatchData MatchData => rimrushInventory.Instance.MatchData;
@@ -43,6 +44,7 @@ namespace rimrush
         public IReadOnlyList<rimrushPlayerObject> PlayersRight => playersRight;
         public rimrushBasketObject BasketLeft => basketLeft;
         public rimrushBasketObject BasketRight => basketRight;
+        public rimrushTutorialFlow TutorialFlow => tutorialFlow;
 
         /// <summary>
         /// Executes rimrush Game Core for the rimrushGameCore workflow.
@@ -66,9 +68,14 @@ namespace rimrush
             basketRight = new rimrushBasketObject(1, root);
             Ball = new rimrushBallObject(this, root);
             hud = new rimrushHudView(root, MatchData);
+            if (rimrushInventory.Instance.GameMode == rimrushGameModeIds.Tutorial)
+            {
+                tutorialFlow = new rimrushTutorialFlow(this);
+            }
 
             BuildPlayers();
             StartMatch(true);
+            tutorialFlow?.Start();
         }
 
         /// <summary>
@@ -82,6 +89,7 @@ namespace rimrush
                 return;
             }
 
+            tutorialFlow?.Shutdown();
             runtimeResourcesReleased = true;
             foreach (var player in playersLeft)
             {
@@ -104,6 +112,7 @@ namespace rimrush
             if (rimrushHelpPanel.IsAnyOpen)
             {
                 hud.Update(dt);
+                tutorialFlow?.UpdateFrame(dt);
                 return;
             }
 
@@ -116,6 +125,7 @@ namespace rimrush
             }
 
             hud.Update(dt);
+            tutorialFlow?.UpdateFrame(dt);
             HandlePauseCommand(hud.ConsumePauseCommand());
             if (rimrushHelpPanel.IsAnyOpen)
             {
@@ -148,12 +158,19 @@ namespace rimrush
                 return;
             }
 
-            basketLeft.Update(dt);
-            basketRight.Update(dt);
+            if (tutorialFlow != null && tutorialFlow.FreezeGameplay)
+            {
+                return;
+            }
+
+            var gameplayDt = tutorialFlow != null ? dt * tutorialFlow.GameplayTimeScale : dt;
+
+            basketLeft.Update(gameplayDt);
+            basketRight.Update(gameplayDt);
 
             if (postMatchDelay > 0f)
             {
-                postMatchDelay -= dt;
+                postMatchDelay -= gameplayDt;
                 if (postMatchDelay <= 0f)
                 {
                     ResolvePostMatchDelay();
@@ -181,15 +198,15 @@ namespace rimrush
             {
                 foreach (var player in playersLeft)
                 {
-                    player.TickPreMatch(dt);
+                    player.TickPreMatch(gameplayDt);
                 }
 
                 foreach (var player in playersRight)
                 {
-                    player.TickPreMatch(dt);
+                    player.TickPreMatch(gameplayDt);
                 }
 
-                preMatchCountdown = hud.UpdateCountdown(dt);
+                preMatchCountdown = hud.UpdateCountdown(gameplayDt);
                 if (!preMatchCountdown)
                 {
                     isPlaying = true;
@@ -201,7 +218,7 @@ namespace rimrush
 
             if (restartDelay > 0f)
             {
-                restartDelay -= dt;
+                restartDelay -= gameplayDt;
                 if (restartDelay <= 0f)
                 {
                     RestartAfterScore();
@@ -216,7 +233,7 @@ namespace rimrush
 
             if (waitingForBallAfterBuzzer)
             {
-                Ball.Update(dt, basketLeft, basketRight);
+                Ball.Update(gameplayDt, basketLeft, basketRight);
                 TryBlockBall();
                 if (HasWaitingBallResolved())
                 {
@@ -226,24 +243,26 @@ namespace rimrush
                 return;
             }
 
-            Ball.Update(dt, basketLeft, basketRight);
+            Ball.Update(gameplayDt, basketLeft, basketRight);
             foreach (var player in playersLeft)
             {
-                player.Update(dt);
+                player.Update(gameplayDt);
             }
 
             foreach (var player in playersRight)
             {
-                player.Update(dt);
+                player.Update(gameplayDt);
             }
 
             ResolvePlayerBlocking();
             TryBlockBall();
             TryPickupLooseBall();
 
+            tutorialFlow?.UpdateAfterGameplay(dt);
+
             if (!isTraining && !IsSuperShot)
             {
-                matchTime += dt;
+                matchTime += gameplayDt;
                 hud.UpdateTimer(Mathf.Max(0f, endTime - matchTime));
                 if (matchTime >= endTime)
                 {
@@ -267,12 +286,34 @@ namespace rimrush
             var teamIndex = scoringSide == -1 ? 0 : 1;
             var fallbackPoints = IsThreePointer(scoringSide) ? 3 : 2;
             var points = MatchProcessor.ResolvePointsForScore(scoringSide, fallbackPoints);
+            var scoringPlayer = FindPlayerBySideAndPlayerNo(MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
+            string scoreNotice = null;
+            if (scoringPlayer != null)
+            {
+                points = scoringPlayer.ResolveScorePoints(points, out scoreNotice);
+            }
+
             MatchData.MatchScore[teamIndex] += points;
             hud.UpdateScore(MatchData.MatchScore[0], MatchData.MatchScore[1]);
+            if (MatchProcessor.ShotPlayerNo >= 0)
+            {
+                PlayerSignals.Dispatch(rimrushPlayerSignalType.Score, MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
+            }
             hud.HideCountdown();
             if (!waitingForBallAfterBuzzer)
             {
-                hud.ShowMessage(points == 3 ? "3 POINTS!" : "BASKET!");
+                if (!string.IsNullOrEmpty(scoreNotice))
+                {
+                    hud.ShowMessage($"{scoreNotice} {points}!", 1.28f, false);
+                }
+                else if (points >= 4)
+                {
+                    hud.ShowMessage($"{points} POINT", 1.2f, false);
+                }
+                else
+                {
+                    hud.ShowMessage(points == 3 ? "3 POINT" : "BASKET", 1.2f, false);
+                }
             }
 
             if (scoringSide == -1)
@@ -285,6 +326,7 @@ namespace rimrush
             }
 
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.BBasket);
+            scoringPlayer?.OnScoreConfirmed();
             if (waitingForBallAfterBuzzer)
             {
                 restartDelay = 0f;
@@ -316,6 +358,20 @@ namespace rimrush
                 if (player.WithBall && (side == 0 || player.Side == side))
                 {
                     return player;
+                }
+            }
+
+            return null;
+        }
+
+        public rimrushPlayerObject FindPlayerBySideAndPlayerNo(int side, int playerNo)
+        {
+            var team = side == -1 ? playersLeft : playersRight;
+            for (var i = 0; i < team.Count; i++)
+            {
+                if (team[i] != null && team[i].PlayerNo == playerNo)
+                {
+                    return team[i];
                 }
             }
 
@@ -486,6 +542,77 @@ namespace rimrush
         }
 
         /// <summary>
+        /// Executes Request Return To Menu for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        public void RequestReturnToMenu()
+        {
+            SetPaused(false);
+            ReturnToMenuRequested = true;
+        }
+
+        /// <summary>
+        /// Executes Tutorial Reset Scenario for the rimrushGameCore workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="playerPosition">Input value used by this step of the workflow.</param>
+        /// <param name="opponentPosition">Input value used by this step of the workflow.</param>
+        /// <param name="givePlayerBall">Input value used by this step of the workflow.</param>
+        /// <param name="giveOpponentBall">Input value used by this step of the workflow.</param>
+        /// <param name="playerFacing">Input value used by this step of the workflow.</param>
+        /// <param name="opponentFacing">Input value used by this step of the workflow.</param>
+        public void TutorialResetScenario(
+            Vector2 playerPosition,
+            Vector2 opponentPosition,
+            bool givePlayerBall,
+            bool giveOpponentBall,
+            float playerFacing,
+            float opponentFacing)
+        {
+            MatchProcessor.Reset();
+            IsSuperShot = false;
+            IsAlleyOop = false;
+            restartDelay = 0f;
+            waitingForBallAfterBuzzer = false;
+
+            Ball.Restart();
+            foreach (var leftPlayer in playersLeft)
+            {
+                leftPlayer.Restart(0);
+            }
+
+            foreach (var rightPlayer in playersRight)
+            {
+                rightPlayer.Restart(0);
+            }
+
+            if (playersLeft.Count == 0 || playersRight.Count == 0)
+            {
+                return;
+            }
+
+            var left = playersLeft[0];
+            var right = playersRight[0];
+            left.TutorialSnapTo(playerPosition, playerFacing);
+            right.TutorialSnapTo(opponentPosition, opponentFacing);
+
+            if (givePlayerBall)
+            {
+                left.TakeBallInHands();
+            }
+            else if (giveOpponentBall)
+            {
+                right.TakeBallInHands();
+            }
+            else
+            {
+                Ball.TutorialSnapTo(new Vector2((playerPosition.x + opponentPosition.x) * 0.5f, rimrushObjectsData.BallIndentYCenter));
+                left.NotifyBallLoose();
+                right.NotifyBallLoose();
+            }
+        }
+
+        /// <summary>
         /// Executes Try Steal Ball for the rimrushGameCore workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
@@ -521,6 +648,7 @@ namespace rimrush
             var stoleBall = target.GetBeStolen(thief.Position.x);
             if (stoleBall)
             {
+                PlayerSignals.Dispatch(rimrushPlayerSignalType.StealSuccess, thief.Side, thief.PlayerNo);
                 rimrushAudio.Instance?.Play(rimrushAssets.Sounds.BSteel);
             }
 
@@ -612,7 +740,7 @@ namespace rimrush
         {
             var match = MatchData;
             const int playersPerTeam = 1;
-            var teamCount = rimrushInventory.Instance.GameMode == 3 ? 1 : 2;
+            var teamCount = rimrushInventory.Instance.GameMode == rimrushGameModeIds.Training ? 1 : 2;
 
             for (var teamIndex = 0; teamIndex < teamCount; teamIndex++)
             {
@@ -648,7 +776,8 @@ namespace rimrush
         /// <param name="regularTime">Input value used by this step of the workflow.</param>
         private void StartMatch(bool regularTime)
         {
-            isTraining = rimrushInventory.Instance.GameMode == 3;
+            var gameMode = rimrushInventory.Instance.GameMode;
+            isTraining = gameMode == rimrushGameModeIds.Training || gameMode == rimrushGameModeIds.Tutorial;
             isPlaying = isTraining;
             isPaused = false;
             matchTime = 0f;
@@ -679,7 +808,7 @@ namespace rimrush
             }
             else
             {
-                hud.ShowMessage("TRAINING", 0.85f);
+                hud.ShowMessage(gameMode == rimrushGameModeIds.Tutorial ? "TUTORIAL" : "TRAINING", 0.85f);
                 rimrushAudio.Instance?.Play(rimrushAssets.Sounds.MWhistle);
             }
         }
@@ -1051,9 +1180,13 @@ namespace rimrush
             {
                 inventory.MatchPrepared = false;
             }
-            else if (inventory.GameMode == 3)
+            else if (inventory.GameMode == rimrushGameModeIds.Training)
             {
                 inventory.MatchData.StartTraining(inventory.SelectedTrainingCharacterId, inventory.SelectedTrainingBallSelection);
+            }
+            else if (inventory.GameMode == rimrushGameModeIds.Tutorial)
+            {
+                inventory.MatchData.StartTutorial(inventory.SelectedTrainingCharacterId, inventory.SelectedTrainingBallSelection);
             }
             else if (inventory.MatchData.Restarted)
             {
@@ -1064,15 +1197,15 @@ namespace rimrush
             {
                 inventory.MatchData.StartTournamentMatch(inventory.Tournament, inventory.SelectedTournamentBallSelection);
             }
-            else if (inventory.GameMode == 2)
+            else if (inventory.GameMode == rimrushGameModeIds.QuickMatch)
             {
                 inventory.MatchData.StartQuickMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
-            else if (inventory.GameMode == 1)
+            else if (inventory.GameMode == rimrushGameModeIds.RandomQuick)
             {
                 inventory.MatchData.StartRandomMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
-            else if (inventory.GameMode == 4)
+            else if (inventory.GameMode == rimrushGameModeIds.TwoPlayers)
             {
                 inventory.MatchData.StartPlayers2Match(inventory.SelectedVersusBallSelection);
             }

@@ -110,7 +110,7 @@ namespace rimrush
             KeyCode.K);
 
         public static string MainMenuControlsText =>
-            $"1P/TRAINING  {soloProfile.MoveHint} MOVE  {soloProfile.JumpHint} JUMP  {soloProfile.BlockHint} BLOCK  {soloProfile.ActionHint} SHOOT  {soloProfile.SuperHint} SUPER\n" +
+            $"1P/TUTORIAL/TRAINING  {soloProfile.MoveHint} MOVE  {soloProfile.JumpHint} JUMP  {soloProfile.BlockHint} BLOCK  {soloProfile.ActionHint} SHOOT  {soloProfile.SuperHint} SUPER\n" +
             $"2P  P1 {playerOneProfile.MoveHint} MOVE  {playerOneProfile.JumpHint} JUMP  {playerOneProfile.BlockHint} BLOCK  {playerOneProfile.ActionHint} SHOOT  {playerOneProfile.SuperHint} SUPER\n" +
             $"2P  P2 {playerTwoProfile.MoveHint} MOVE  {playerTwoProfile.JumpHint} JUMP  {playerTwoProfile.BlockHint} BLOCK  {playerTwoProfile.ActionHint} SHOOT  {playerTwoProfile.SuperHint} SUPER";
 

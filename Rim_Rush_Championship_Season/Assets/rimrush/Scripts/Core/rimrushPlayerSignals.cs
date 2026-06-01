@@ -9,9 +9,14 @@ namespace rimrush
     {
         StartSteal,
         Steal,
+        StealSuccess,
         JumpA,
         Pump,
         Dash,
+        Shoot,
+        Block,
+        Score,
+        Super,
         Stun
     }
 
