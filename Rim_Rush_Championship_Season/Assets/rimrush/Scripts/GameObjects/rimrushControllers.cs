@@ -495,7 +495,7 @@ namespace rimrush
         public virtual void BallInOwnHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
-            if ((player.SuperId == 0 || player.SuperId == 2) && player.ReadyForSuper)
+            if (player.UsesPossessionSkill && player.ReadyForSuper)
             {
                 megaDunkDelay.Activate();
             }
@@ -512,6 +512,11 @@ namespace rimrush
         {
             EnsureRuntimeLinks();
             opponent = FindOpponentByPlayerNo(holderPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
+            if (player.UsesCurseSkill && player.ReadyForSuper && opponent != null && Mathf.Abs(player.Position.x - opponent.Position.x) <= 220f)
+            {
+                player.SuperShot();
+            }
+
             HandleBallInOpponentsHands();
         }
 
@@ -539,7 +544,7 @@ namespace rimrush
         {
             EnsureRuntimeLinks();
             opponent = FindOpponentByPlayerNo(shooterPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
-            if (player.SuperId == 1 && player.ReadyForSuper)
+            if (player.UsesShieldSkill && player.ReadyForSuper)
             {
                 player.SuperShot();
             }
@@ -773,7 +778,7 @@ namespace rimrush
                 return;
             }
 
-            if ((player.SuperId == 0 || player.SuperId == 2) && megaDunkDelay.Update(dt) == 1)
+            if (player.UsesPossessionSkill && megaDunkDelay.Update(dt) == 1)
             {
                 TriggerSuperInput();
                 return;
@@ -953,7 +958,7 @@ namespace rimrush
         /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
         {
-            var canUseNativeSuperDash = player.SuperId == 3 && player.ReadyForSuper;
+            var canUseNativeSuperDash = player.UsesDashSkill && player.ReadyForSuper;
             var canUseHellBonusSuperDash = player.CanUseHellBonusSuperDash;
             if ((!canUseNativeSuperDash && !canUseHellBonusSuperDash) || !shouldUse)
             {

@@ -1,164 +1,87 @@
 # 开发看板
 
-更新时间：2026-05-28
+更新时间：2026-06-01
 
-## 项目定位
+## 对齐来源
 
-- 项目类型：万圣节风格 `1v1` 篮球游戏
-- 当前目标：把界面展示、帮助页、模式调整先整理清楚
-- 当前重点：让老师能直接从看板看懂我做了什么、现在在做什么、接下来做什么
+- 本文件现在按 GitHub Project 实际看板同步整理
+- GitHub Project：`Halloween Arcade Basketball - Development Board`
+- Project 地址：`https://github.com/users/coldwinding-alt/projects/1`
 
-## 当前版本
+## 看板列说明
 
-- 已有 `8` 个角色
-- 已有模式：
-  - `QUICK MATCH`
-  - `2 PLAYERS`
-  - `TRAINING`
-  - `TOURNAMENT`
-- 已完成：
-  - 主菜单流程
-  - 比赛 HUD
-  - 帮助页基础功能
-  - 角色接入与基础回归
+- `Backlog`：已经记录，但还没有准备现在开始
+- `Ready`：范围清楚，可以开始做
+- `In Progress`：正在做
+- `Testing`：功能已做，正在验证
+- `Blocked`：被卡住，等外部条件
+- `Done`：已经完成并验证
 
 ## 看板规则
 
-- 每张卡尽量控制在 `0.5-2 天`
+- 每张卡尽量控制在 `0.5-2` 天
+- 优先从 `Ready` 拉任务，不直接从 `Backlog` 开做
 - `In Progress` 同时不超过 `3` 张
 - `Testing` 同时不超过 `2` 张
-- 做完就更新状态，不把旧任务留在当前迭代里
+- 如果测试发现新问题，拆成新的跟进卡片
 
-## 当前迭代目标
+## 当前 GitHub Project 状态
 
-- 让主要 UI 在未运行时也能看布局
-- 把帮助页继续测完并收口
-- 把 `TOURNAMENT` 改成更好解释的 `LEVEL MODE`
-- 先规划新的创新模式，不一次做太多
+### Backlog
 
-## Backlog
+- `#8` First 8-character balance pass
+- `#9` Character visual polish
+- `#11` Audio feedback polish
+- `#12` Prepare submission pack
+- `#14` Training tips
+- `#17` Menu text cleanup
+- `#19` Review asset provenance
+- `#20` Ball theme check
+- `#25` Drive player visual containers, animation mounts, and spawn anchors from prefab or scene references
 
-### K-08 8 角色平衡首轮（GitHub `#8`）
+### Ready
 
-- 看 8 个角色有没有明显强弱错觉
+- `#13` Change tournament to level mode
+- `#22` Add editor preview for runtime UI
+- `#23` Preview main UI before Play
+- `#34` Plan new game modes
 
-### K-09 角色视觉微调（GitHub `#9`）
+### In Progress
 
-- 继续调角色比例和遮挡
+- `#31` Cover all gameplay and features in the tutorial
+- `#32` Turn the help page into a first-screen tutorial level
+- `#33` Guide players from tutorial completion into the main game
+- `#36` Make tutorial the main first-screen entry
 
-### K-10 角色接入流程整理（GitHub `#10`）
+### Testing
 
-- 把以后加角色的步骤整理清楚
+- 当前没有卡片
 
-### K-11 音效反馈微调（GitHub `#11`）
+### Blocked
 
-- 补一点得分和操作反馈
+- 当前没有卡片
 
-### K-12 提交包整理（GitHub `#12`）
+### Done
 
-- 最后整理截图、说明和展示材料
+- `#2` Establish Unity project baseline and repository workflow
+- `#3` Ship a playable 1v1 match loop, controls, scoring, and AI baseline
+- `#4` Polish possession flow, score feedback, and key on-court responses
+- `#5` Integrate runtime content loading and the DragonBones character pipeline
+- `#6` Run a full regression pass across the 8-character build
+- `#7` Restructure menu flow, match setup, and HUD around character-based play
+- `#15` Verify roster asset integration across selection, match flow, and tournament draws
+- `#35` Build help page
 
-### K-14 训练模式提示（GitHub `#14`）
+## 现在最值得讲给老师听的主线
 
-- 让训练模式入口更容易看懂
+- 现在正在做的重点是 `#31`、`#32`、`#33`、`#36`
+- 也就是：
+- 把原来藏在 `help` 里的内容改成首屏教程入口
+- 把帮助页升级成真正的教程关卡流程
+- 让教程覆盖主要玩法和主要特性
+- 让玩家完成教程后知道下一步去哪里正式开始游戏
 
-### K-16 重复进入比赛烟测（GitHub `#16`）
+## 说明
 
-- 检查多次进出比赛是否稳定
-
-### K-17 菜单文案整理（GitHub `#17`）
-
-- 统一菜单和界面上的说法
-
-### K-19 资源来源检查（GitHub `#19`）
-
-- 检查素材来源和说明
-
-### K-20 篮球主题检查（GitHub `#20`）
-
-- 检查不同篮球外观是否正常
-
-### K-34 新模式想法整理（GitHub `#34`）
-
-- 先定 `1-2` 个小的新模式方向
-
-## Ready
-
-### K-22 运行时 UI 编辑器预览（GitHub `#22`）
-
-- 给运行时生成的 UI 补一个编辑器预览方案
-
-### K-33 帮助页重复使用复测（GitHub `#33`）
-
-- 连续打开关闭帮助页，确认演示时稳定
-
-## In Progress
-
-### K-13 锦标赛改为闯关模式（GitHub `#13`）
-
-- 把 `TOURNAMENT` 方向改成 `LEVEL MODE`
-
-### K-23 未运行时预览主 UI（GitHub `#23`）
-
-- 在 `Main.unity` 里先看到主要按钮、面板和布局
-
-### K-32 帮助页收口（GitHub `#32`）
-
-- 调整帮助页排版、按钮状态和可读性
-
-## Testing
-
-### K-24 检查未运行时预览效果（GitHub `#24`）
-
-- 检查编辑器里能不能看清主要 UI 和布局
-
-### K-31 帮助页流程测试（GitHub `#31`）
-
-- 测菜单和比赛里的帮助页打开、切换、关闭
-
-## Done
-
-### K-01 项目基础搭建（GitHub `#2`）
-
-- 项目能打开，仓库结构已整理
-
-### K-02 核心比赛流程（GitHub `#3`）
-
-- 比赛、得分、结算已跑通
-
-### K-03 比赛表现基础优化（GitHub `#4`）
-
-- 关键比赛反馈已做过一轮整理
-
-### K-04 资源与角色管线接入（GitHub `#5`）
-
-- 基础资源和角色动画链路已接好
-
-### K-05 菜单和 HUD 改成角色流程（GitHub `#7`）
-
-- 菜单、选人和 HUD 已按角色展示
-
-### K-06 八角色版本整体回归（GitHub `#6`）
-
-- 8 角色版本已做过一轮整体检查
-
-### K-07 角色资源接入检查（GitHub `#15`）
-
-- 角色在主要流程里的资源显示已检查
-
-### K-35 帮助页制作完成（GitHub `#35`）
-
-- 帮助页已经做出来并接到菜单和比赛里
-
-## 现在的解释口径
-
-- 我先把已经完成的内容放进 `Done`，避免旧任务混在当前迭代里
-- 我现在主要做 `编辑器预览`、`帮助页测试和收口`、`锦标赛改闯关`
-- 新模式先做想法整理，不会一次开太多实现任务
-- 我不是追求 `Scene View` 和 `Game View` 完全一样，只希望未运行时能先看到主要 UI 和布局；如果有运行时加载内容，就补编辑器预览方案
-
-## 下一次更新优先看
-
-- `K-23` 和 `K-24` 能不能把编辑器预览这条线收口
-- `K-31` 和 `K-32` 能不能把帮助页做成稳定可展示状态
-- `K-13` 能不能把 `LEVEL MODE` 的入口和说明先定下来
+- 如果 GitHub Project 看板后面有移动卡片，本文件也应该跟着同步
+- 这份文件现在不再自己定义一套新卡片，而是直接跟 GitHub Project 对齐

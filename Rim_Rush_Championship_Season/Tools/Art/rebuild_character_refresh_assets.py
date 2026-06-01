@@ -31,12 +31,16 @@ class CharacterRefresh:
     portrait_source: str
     gameplay_source: str
     body_theme: str
+    body_style_source: str
+    leg_style_source: str
+    hand_style_source: str
     portrait_scale: float
     portrait_anchor_y: float
     portrait_anchor_x: float
     gameplay_scale: float
     gameplay_anchor_y: float
     gameplay_anchor_x: float
+    gameplay_allow_overflow: bool = False
 
 
 REPLACEMENTS = (
@@ -46,12 +50,16 @@ REPLACEMENTS = (
         portrait_source="reaper_acolyte_icon_source.png",
         gameplay_source="reaper_acolyte_icon_source.png",
         body_theme="reaper",
+        body_style_source="blackcat",
+        leg_style_source="blackcat",
+        hand_style_source="blackcat",
         portrait_scale=0.99,
         portrait_anchor_y=0.56,
         portrait_anchor_x=0.55,
-        gameplay_scale=1.02,
+        gameplay_scale=1.18,
         gameplay_anchor_y=0.72,
         gameplay_anchor_x=0.54,
+        gameplay_allow_overflow=True,
     ),
     CharacterRefresh(
         internal_id="frankenstein",
@@ -59,12 +67,16 @@ REPLACEMENTS = (
         portrait_source="ghost_clown_icon_source.png",
         gameplay_source="ghost_clown_icon_source.png",
         body_theme="clown",
+        body_style_source="scarecrow",
+        leg_style_source="scarecrow",
+        hand_style_source="scarecrow",
         portrait_scale=0.98,
         portrait_anchor_y=0.58,
         portrait_anchor_x=0.5,
-        gameplay_scale=1.0,
-        gameplay_anchor_y=0.75,
+        gameplay_scale=1.2,
+        gameplay_anchor_y=0.74,
         gameplay_anchor_x=0.51,
+        gameplay_allow_overflow=True,
     ),
     CharacterRefresh(
         internal_id="mummy",
@@ -72,12 +84,16 @@ REPLACEMENTS = (
         portrait_source="skull_pirate_icon_source.png",
         gameplay_source="skull_pirate_icon_source.png",
         body_theme="pirate",
+        body_style_source="witch",
+        leg_style_source="scarecrow",
+        hand_style_source="scarecrow",
         portrait_scale=0.97,
         portrait_anchor_y=0.58,
         portrait_anchor_x=0.5,
-        gameplay_scale=1.0,
-        gameplay_anchor_y=0.76,
+        gameplay_scale=1.4,
+        gameplay_anchor_y=0.74,
         gameplay_anchor_x=0.5,
+        gameplay_allow_overflow=True,
     ),
 )
 
@@ -219,6 +235,7 @@ def fit_subject_to_canvas(
     margin: float = 0.06,
     anchor_x: float = 0.5,
     anchor_y: float = 0.5,
+    allow_overflow: bool = False,
 ) -> Image.Image:
     source = trim_alpha(source.convert("RGBA"))
     available_width = max(1, int(round(canvas_size[0] * (1.0 - margin * 2.0))))
@@ -231,12 +248,16 @@ def fit_subject_to_canvas(
 
     fitted = premultiplied_resize(source, target_size)
     canvas = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
-    min_x = int(round(canvas_size[0] * margin))
-    max_x = canvas_size[0] - fitted.width - min_x
-    min_y = int(round(canvas_size[1] * margin))
-    max_y = canvas_size[1] - fitted.height - min_y
-    paste_x = min_x if max_x <= min_x else int(round(min_x + (max_x - min_x) * anchor_x))
-    paste_y = min_y if max_y <= min_y else int(round(min_y + (max_y - min_y) * anchor_y))
+    if allow_overflow:
+        paste_x = int(round((canvas_size[0] - fitted.width) * anchor_x))
+        paste_y = int(round((canvas_size[1] - fitted.height) * anchor_y))
+    else:
+        min_x = int(round(canvas_size[0] * margin))
+        max_x = canvas_size[0] - fitted.width - min_x
+        min_y = int(round(canvas_size[1] * margin))
+        max_y = canvas_size[1] - fitted.height - min_y
+        paste_x = min_x if max_x <= min_x else int(round(min_x + (max_x - min_x) * anchor_x))
+        paste_y = min_y if max_y <= min_y else int(round(min_y + (max_y - min_y) * anchor_y))
     canvas.alpha_composite(fitted, (paste_x, paste_y))
     return canvas
 
@@ -479,6 +500,7 @@ def update_dragon_bones() -> tuple[Image.Image, dict[str, dict]]:
     texture_json = load_json(TEXTURE_JSON_PATH)
     texture, texture_json = ensure_dragon_bones_resolution(texture, texture_json)
     lookup = atlas_lookup(texture_json)
+    source_texture = texture.copy()
 
     for replacement in REPLACEMENTS:
         source = prepare_source_image(replacement.gameplay_source)
@@ -491,13 +513,22 @@ def update_dragon_bones() -> tuple[Image.Image, dict[str, dict]]:
             margin=0.02,
             anchor_x=replacement.gameplay_anchor_x,
             anchor_y=replacement.gameplay_anchor_y,
+            allow_overflow=replacement.gameplay_allow_overflow,
         )
         paste_subtexture(texture, head_sub, rendered_head)
 
         for part in ("body", "leg", "left_hand", "right_hand", "dig_hand"):
             part_name = f"custom_{part}_{replacement.internal_id}"
             sub = lookup[part_name]
-            template = crop_subtexture(texture, sub)
+            if part == "body":
+                style_source = replacement.body_style_source
+            elif part == "leg":
+                style_source = replacement.leg_style_source
+            else:
+                style_source = replacement.hand_style_source
+
+            template_name = f"custom_{part}_{style_source}"
+            template = crop_subtexture(source_texture, lookup[template_name])
             themed = build_thematic_part(template, replacement.body_theme, "leg" if part == "leg" else part)
             paste_subtexture(texture, sub, themed)
 

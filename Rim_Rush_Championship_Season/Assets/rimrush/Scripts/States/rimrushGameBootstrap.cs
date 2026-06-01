@@ -140,27 +140,32 @@ namespace rimrush
         private const float TournamentBracketBadgeScale = 0.2f;
         private const float TournamentBracketGlowScale = 0.26f;
         private const float TournamentBracketPortraitPixels = 24f;
-        private const float TournamentAwardsBadgeY = 114f;
-        private const float TournamentAwardsBannerY = 172f;
-        private const float TournamentAwardsPodiumY = 382f;
-        private const float TournamentAwardsBadgeSideOffsetX = 106f;
+        private const float TournamentAwardsShowcaseY = 244f;
+        private const float TournamentAwardsShowcaseWidth = 560f;
+        private const float TournamentAwardsShowcaseHeight = 322f;
+        private const float TournamentAwardsPlaqueY = 132f;
+        private const float TournamentAwardsPodiumY = 376f;
+        private const float TournamentAwardsPodiumWidth = 428f;
+        private const float TournamentAwardsPodiumHeight = 170f;
         private const float TournamentAwardsChampionX = rimrushConstants.Width2;
-        private const float TournamentAwardsChampionY = 302f;
-        private const float TournamentAwardsLeftX = rimrushConstants.Width2 - 106f;
-        private const float TournamentAwardsLeftY = 316f;
-        private const float TournamentAwardsRightX = rimrushConstants.Width2 + 106f;
-        private const float TournamentAwardsRightY = 324f;
-        private const float TournamentAwardsChampionScale = 0.84f;
-        private const float TournamentAwardsSideScale = 0.8f;
+        private const float TournamentAwardsChampionY = 296f;
+        private const float TournamentAwardsLeftX = rimrushConstants.Width2 - 114f;
+        private const float TournamentAwardsLeftY = 314f;
+        private const float TournamentAwardsRightX = rimrushConstants.Width2 + 114f;
+        private const float TournamentAwardsRightY = 320f;
+        private const float TournamentAwardsChampionScale = 0.82f;
+        private const float TournamentAwardsSideScale = 0.78f;
         private const float TournamentAwardsArmatureScale = 0.82f;
         private const float TournamentAwardsArmatureYOffset = -18f;
-        private const float TournamentAwardsPodiumScale = 0.98f;
         private const float TournamentAwardsCelebrationDelay = 0.66f;
         private const float MenuTopButtonY = 44f;
         private const float MenuMusicButtonX = 770f;
         private const float MenuHelpButtonX = 706f;
         private const float MenuTopButtonSize = 60f;
         private const float MenuTopIconPixels = 58f;
+        private const float LegacyMenuBackgroundWidth = 1398f;
+        private const float LegacyMenuBackgroundHeight = 480f;
+        private const float LegacyTintPanelSourcePixels = 10f;
         private const float OptionBallHeaderY = 208f;
         private const float OptionBallPreviewY = 232f;
         private const float OptionBallLabelY = 260f;
@@ -260,8 +265,21 @@ namespace rimrush
 
                 if (gameCore.ReturnToMenuRequested)
                 {
-                    rimrushInventory.Instance.AbandonTournament();
+                    var inventory = rimrushInventory.Instance;
+                    var tournamentWasActive = inventory.IsTournamentActive;
                     ClearRuntime();
+                    if (tournamentWasActive)
+                    {
+                        inventory.AbandonTournament();
+                        ShowPlayerCountMenu();
+                        return;
+                    }
+
+                    if (HandlePendingTutorialAction())
+                    {
+                        return;
+                    }
+
                     ShowPlayerCountMenu();
                 }
 
@@ -269,7 +287,14 @@ namespace rimrush
             }
 
             var helpVisible = rimrushHelpPanel.IsAnyOpen;
-            nativeMenuTextLayer?.SetVisible(!helpVisible);
+            var tutorialVisible = rimrushTutorialMenuPanel.IsAnyOpen;
+            nativeMenuTextLayer?.SetVisible(!helpVisible && !tutorialVisible);
+            if (tutorialVisible)
+            {
+                HandleTutorialMenuCommand();
+                return;
+            }
+
             if (helpVisible)
             {
                 return;
@@ -349,25 +374,26 @@ namespace rimrush
         {
             currentScreen = rimrushBootstrapScreen.PlayerCount;
             BeginMenuScreen(true, false, "bg2blue0000");
-            AddTitle("SELECT PLAYERS", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            CreatePanel("PlayersPanel", rimrushConstants.Width2, 330f, 304f, 230f, 8, new Color(0.05f, 0.08f, 0.1f, 0.72f));
+            AddTitle("SELECT MODE", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            CreatePanel("PlayersPanel", rimrushConstants.Width2, 336f, 304f, 286f, 8, new Color(0.05f, 0.08f, 0.1f, 0.72f));
 
             var inventory = rimrushInventory.Instance;
-            menuButtons.Add(new rimrushMenuButton("1 PLAYER", rimrushConstants.Width2, 274f, 228f, 52f, () =>
+            menuButtons.Add(new rimrushMenuButton("1 PLAYER", rimrushConstants.Width2, 246f, 228f, 52f, () =>
             {
                 pendingParticipantMode = rimrushParticipantMode.OnePlayer;
                 inventory.SetParticipantMode(pendingParticipantMode);
                 ShowMatchTypeMenu();
             }, runtimeRoot));
 
-            menuButtons.Add(new rimrushMenuButton("2 PLAYER", rimrushConstants.Width2, 334f, 228f, 52f, () =>
+            menuButtons.Add(new rimrushMenuButton("2 PLAYER", rimrushConstants.Width2, 306f, 228f, 52f, () =>
             {
                 pendingParticipantMode = rimrushParticipantMode.TwoPlayers;
                 inventory.SetParticipantMode(pendingParticipantMode);
                 ShowTwoPlayerSetup();
             }, runtimeRoot));
 
-            menuButtons.Add(new rimrushMenuButton("TRAINING", rimrushConstants.Width2, 394f, 228f, 52f, ShowTrainingSetup, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("TUTORIAL", rimrushConstants.Width2, 366f, 228f, 52f, ShowTutorialPanel, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("TRAINING", rimrushConstants.Width2, 426f, 228f, 52f, ShowTrainingSetup, runtimeRoot));
         }
 
         /// <summary>
@@ -712,6 +738,24 @@ namespace rimrush
             inventory.SetTrainingSelection(trainingCharacterId);
             inventory.SetTrainingBallSelection(trainingBallSelection);
             inventory.StartTraining();
+            rimrushTutorialMenuPanel.HideActive();
+            inventory.PendingTutorialNextAction = rimrushTutorialNextAction.None;
+            StartGameplay();
+        }
+
+        /// <summary>
+        /// Executes Start Tutorial Flow for the TournamentStandingsRowViewModel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        private void StartTutorialFlow()
+        {
+            var inventory = rimrushInventory.Instance;
+            inventory.SetParticipantMode(rimrushParticipantMode.Tutorial);
+            inventory.SetTrainingSelection(trainingCharacterId);
+            inventory.SetTrainingBallSelection(trainingBallSelection);
+            inventory.StartTutorial();
+            rimrushTutorialMenuPanel.HideActive();
+            inventory.PendingTutorialNextAction = rimrushTutorialNextAction.None;
             StartGameplay();
         }
 
@@ -732,6 +776,96 @@ namespace rimrush
             }
 
             ShowTournamentBracket();
+        }
+
+        /// <summary>
+        /// Executes Show Tutorial Panel for the TournamentStandingsRowViewModel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        private void ShowTutorialPanel()
+        {
+            rimrushHelpPanel.HideActive();
+            rimrushTutorialMenuPanel.ShowOverview(trainingCharacterId, trainingBallSelection);
+        }
+
+        /// <summary>
+        /// Executes Show Menu Controls Panel for the TournamentStandingsRowViewModel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        private void ShowMenuControlsPanel()
+        {
+            rimrushHelpPanel.HideActive();
+            rimrushTutorialMenuPanel.ShowControls(trainingCharacterId, trainingBallSelection);
+        }
+
+        /// <summary>
+        /// Executes Handle Tutorial Menu Command for the TournamentStandingsRowViewModel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        private void HandleTutorialMenuCommand()
+        {
+            switch (rimrushTutorialMenuPanel.ConsumeActiveCommand())
+            {
+                case rimrushTutorialMenuCommand.Close:
+                    rimrushTutorialMenuPanel.HideActive();
+                    break;
+                case rimrushTutorialMenuCommand.StartTutorial:
+                    StartTutorialFlow();
+                    break;
+                case rimrushTutorialMenuCommand.StartTraining:
+                    StartTrainingFlow();
+                    break;
+                case rimrushTutorialMenuCommand.PreviousCharacter:
+                    trainingCharacterId = WrapCharacter(trainingCharacterId, -1);
+                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
+                    break;
+                case rimrushTutorialMenuCommand.NextCharacter:
+                    trainingCharacterId = WrapCharacter(trainingCharacterId, 1);
+                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
+                    break;
+                case rimrushTutorialMenuCommand.PreviousBall:
+                    trainingBallSelection = rimrushBallCatalog.StepSelection(trainingBallSelection, -1);
+                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
+                    break;
+                case rimrushTutorialMenuCommand.NextBall:
+                    trainingBallSelection = rimrushBallCatalog.StepSelection(trainingBallSelection, 1);
+                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
+                    break;
+                case rimrushTutorialMenuCommand.OverviewTab:
+                    rimrushTutorialMenuPanel.ShowOverview(trainingCharacterId, trainingBallSelection);
+                    break;
+                case rimrushTutorialMenuCommand.ControlsTab:
+                    rimrushTutorialMenuPanel.ShowControls(trainingCharacterId, trainingBallSelection);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Executes Handle Pending Tutorial Action for the TournamentStandingsRowViewModel workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        private bool HandlePendingTutorialAction()
+        {
+            var inventory = rimrushInventory.Instance;
+            var action = inventory.PendingTutorialNextAction;
+            inventory.PendingTutorialNextAction = rimrushTutorialNextAction.None;
+            switch (action)
+            {
+                case rimrushTutorialNextAction.ReplayTutorial:
+                    StartTutorialFlow();
+                    return true;
+                case rimrushTutorialNextAction.StartTraining:
+                    StartTrainingFlow();
+                    return true;
+                case rimrushTutorialNextAction.StartQuickMatch:
+                    quickCharacterId = trainingCharacterId;
+                    quickBallSelection = trainingBallSelection;
+                    StartQuickMatchFlow();
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -837,8 +971,7 @@ namespace rimrush
 
             currentScreen = rimrushBootstrapScreen.TournamentAwards;
             BeginMenuScreen(false, false, "bg10000");
-            AddTitle("AWARDS", 48f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            AddSubtitle("TOURNAMENT CEREMONY", 82f, 20);
+            AddTitle("SEASON COMPLETE", 52f, 28, GetTournamentAwardsAccentColor(tournament.PlayerPlacement));
             CreateTournamentAwardsScene(tournament);
 
             menuButtons.Add(new rimrushMenuButton("BRACKET", 220f, 452f, 180f, 42f, ShowTournamentBracket, runtimeRoot));
@@ -879,16 +1012,19 @@ namespace rimrush
             nativeMenuTextLayer.RefreshLayout(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height));
             rimrushAudio.Create(transform).PlayMusic(rimrushAssets.Sounds.MenuMusic);
 
-            rimrushRender.Sprite(
-                "MenuBackground",
-                rimrushAtlasCache.Instance.Interface,
-                backgroundFrame,
-                rimrushConstants.Width2,
-                240f,
-                0.5f,
-                0.5f,
-                0,
-                runtimeRoot);
+            if (!TryCreateStandaloneMenuBackground(backgroundFrame))
+            {
+                rimrushRender.Sprite(
+                    "MenuBackground",
+                    rimrushAtlasCache.Instance.Interface,
+                    backgroundFrame,
+                    rimrushConstants.Width2,
+                    240f,
+                    0.5f,
+                    0.5f,
+                    0,
+                    runtimeRoot);
+            }
 
             if (showLogo)
             {
@@ -922,7 +1058,7 @@ namespace rimrush
                 MenuTopButtonY,
                 MenuTopButtonSize,
                 MenuTopButtonSize,
-                rimrushHelpPanel.ShowKeyboardPage,
+                ShowMenuControlsPanel,
                 runtimeRoot,
                 32,
                 MenuTopIconPixels,
@@ -1137,10 +1273,73 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            var standalonePanel = TryCreateStandaloneTintPanel(name, x, y, width, height, sortingOrder, tint, parent);
+            if (standalonePanel != null)
+            {
+                return standalonePanel;
+            }
+
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, "bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
             panel.transform.localScale = new Vector3(
-                rimrushConstants.UnitsPerPixel * width / 10f,
-                rimrushConstants.UnitsPerPixel * height / 10f,
+                rimrushConstants.UnitsPerPixel * width / LegacyTintPanelSourcePixels,
+                rimrushConstants.UnitsPerPixel * height / LegacyTintPanelSourcePixels,
+                1f);
+            panel.GetComponent<SpriteRenderer>().color = tint;
+            return panel;
+        }
+
+        private bool TryCreateStandaloneMenuBackground(string backgroundFrame)
+        {
+            var imageKey = ResolveStandaloneMenuBackgroundImage(backgroundFrame);
+            if (string.IsNullOrEmpty(imageKey))
+            {
+                return false;
+            }
+
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(imageKey));
+            if (texture == null)
+            {
+                return false;
+            }
+
+            var background = rimrushRender.Image(
+                "MenuBackground",
+                texture,
+                rimrushConstants.Width2,
+                240f,
+                0.5f,
+                0.5f,
+                0,
+                runtimeRoot);
+            background.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * LegacyMenuBackgroundWidth / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * LegacyMenuBackgroundHeight / Mathf.Max(1f, texture.height),
+                1f);
+            return true;
+        }
+
+        private static string ResolveStandaloneMenuBackgroundImage(string backgroundFrame)
+        {
+            return backgroundFrame switch
+            {
+                "bg10000" => rimrushAssets.Images.MenuBackgroundHalloweenSpotlight,
+                "bg2blue0000" => rimrushAssets.Images.MenuBackgroundMoonlitGym,
+                _ => null
+            };
+        }
+
+        private static GameObject TryCreateStandaloneTintPanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
+        {
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.PanelFillSoft));
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var panel = rimrushRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            panel.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
                 1f);
             panel.GetComponent<SpriteRenderer>().color = tint;
             return panel;
@@ -2090,120 +2289,102 @@ namespace rimrush
             ResetTournamentAwardsState();
 
             var placements = BuildTournamentAwardsPlacements(tournament);
-            var playerPlacement = placements[Mathf.Clamp(tournament.PlayerPlacement - 1, 0, placements.Length - 1)];
+            var accentColor = GetTournamentAwardsAccentColor(tournament.PlayerPlacement);
 
-            CreatePanel(
-                "AwardsTopShade",
+            var showcaseGroup = CreateTournamentAwardsGroup("AwardsShowcase");
+            var showcase = CreateStandaloneImage(
+                "AwardsShowcasePanel",
+                rimrushAssets.Images.Ui.AwardsShowcasePanel,
                 rimrushConstants.Width2,
-                110f,
-                760f,
-                132f,
-                6,
-                new Color(0.01f, 0.04f, 0.05f, 0.48f));
-            CreatePanel(
-                "AwardsCenterShade",
-                rimrushConstants.Width2,
-                258f,
-                610f,
-                248f,
-                6,
-                new Color(0.06f, 0.08f, 0.04f, 0.18f));
-            CreatePanel(
-                "AwardsBottomShade",
-                rimrushConstants.Width2,
-                396f,
-                760f,
-                156f,
-                6,
-                new Color(0.05f, 0.02f, 0.01f, 0.46f));
+                TournamentAwardsShowcaseY,
+                TournamentAwardsShowcaseWidth,
+                TournamentAwardsShowcaseHeight,
+                7,
+                showcaseGroup.transform,
+                new Color(1f, 1f, 1f, 0.9f));
+            if (showcase == null)
+            {
+                CreateFramedPanel(
+                    "AwardsShowcaseFallback",
+                    "0bg100000",
+                    rimrushConstants.Width2,
+                    TournamentAwardsShowcaseY,
+                    TournamentAwardsShowcaseWidth,
+                    TournamentAwardsShowcaseHeight,
+                    7,
+                    new Color(1f, 1f, 1f, 0.74f),
+                    showcaseGroup.transform);
+            }
+
+            RegisterTournamentAwardsAnimation(showcaseGroup.transform, new Vector2(0f, 10f), 0.04f, 0.42f, 0.96f);
 
             var bannerGroup = CreateTournamentAwardsGroup("AwardsResultBanner");
-            var bannerTint = playerPlacement.Placement == 1
-                ? new Color(0.33f, 0.94f, 0.5f, 0.96f)
-                : playerPlacement.Placement == 2
-                    ? new Color(0.22f, 0.82f, 0.96f, 0.96f)
-                    : new Color(0.98f, 0.62f, 0.22f, 0.96f);
-            CreateFramedPanel(
-                "AwardsResultBannerFrame",
-                "btn_bg0000",
+            var plaque = CreateStandaloneImage(
+                "AwardsResultPlaque",
+                rimrushAssets.Images.Ui.AwardsResultPlaque,
                 rimrushConstants.Width2,
-                TournamentAwardsBannerY,
-                248f,
-                52f,
+                TournamentAwardsPlaqueY,
+                312f,
+                66f,
                 12,
-                bannerTint,
                 bannerGroup.transform);
-            rimrushRender.Text(
+            if (plaque == null)
+            {
+                CreateFramedPanel(
+                    "AwardsResultPlaqueFallback",
+                    "btn_bg0000",
+                    rimrushConstants.Width2,
+                    TournamentAwardsPlaqueY,
+                    312f,
+                    66f,
+                    12,
+                    new Color(0.12f, 0.22f, 0.32f, 0.92f),
+                    bannerGroup.transform);
+            }
+
+            CreateMenuText(
                 "AwardsResultBannerLabel",
                 GetTournamentAwardsPlayerMessage(tournament),
                 rimrushConstants.Width2,
-                TournamentAwardsBannerY + 1f,
-                17,
-                Color.white,
+                TournamentAwardsPlaqueY,
+                18,
+                accentColor,
                 TextAnchor.MiddleCenter,
                 13,
-                bannerGroup.transform,
-                rimrushTextStyle.TournamentAccent);
-            RegisterTournamentAwardsAnimation(bannerGroup.transform, new Vector2(0f, 18f), 0.1f, 0.42f, 0.95f);
+                rimrushTextStyle.TournamentAccent,
+                bannerGroup.transform);
+            RegisterTournamentAwardsAnimation(bannerGroup.transform, new Vector2(0f, 14f), 0.1f, 0.42f, 0.95f);
 
             var podiumGroup = CreateTournamentAwardsGroup("AwardsPodium");
-            CreatePanel(
-                "AwardsPodiumGlowCenter",
-                TournamentAwardsChampionX,
-                284f,
-                212f,
-                120f,
-                8,
-                new Color(0.32f, 0.72f, 0.18f, 0.18f),
-                podiumGroup.transform);
-            CreatePanel(
-                "AwardsPodiumGlowLeft",
-                TournamentAwardsLeftX,
-                304f,
-                152f,
-                92f,
-                8,
-                new Color(0.18f, 0.72f, 0.82f, 0.14f),
-                podiumGroup.transform);
-            CreatePanel(
-                "AwardsPodiumGlowRight",
-                TournamentAwardsRightX,
-                312f,
-                152f,
-                92f,
-                8,
-                new Color(0.96f, 0.52f, 0.12f, 0.14f),
-                podiumGroup.transform);
-
-            var tribune = rimrushRender.Sprite(
-                "AwardsTribune",
-                rimrushAtlasCache.Instance.Interface,
-                "TribuneFinal0000",
+            var podiumBase = CreateStandaloneImage(
+                "AwardsPodiumBase",
+                rimrushAssets.Images.Ui.AwardsPodiumBase,
                 rimrushConstants.Width2,
                 TournamentAwardsPodiumY,
-                0.5f,
-                0.5f,
+                TournamentAwardsPodiumWidth,
+                TournamentAwardsPodiumHeight,
                 11,
                 podiumGroup.transform);
-            tribune.transform.localScale *= TournamentAwardsPodiumScale;
-            tribune.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.98f);
+            if (podiumBase == null)
+            {
+                var tribune = rimrushRender.Sprite(
+                    "AwardsTribuneFallback",
+                    rimrushAtlasCache.Instance.Interface,
+                    "TribuneFinal0000",
+                    rimrushConstants.Width2,
+                    TournamentAwardsPodiumY + 4f,
+                    0.5f,
+                    0.5f,
+                    11,
+                    podiumGroup.transform);
+                tribune.transform.localScale *= 0.98f;
+                tribune.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.98f);
+            }
 
-            CreateTournamentAwardsLaneLabel("AwardsLaneSecond", placements[1], TournamentAwardsLeftX, 378f, false, podiumGroup.transform);
-            CreateTournamentAwardsLaneLabel("AwardsLaneChampion", placements[0], TournamentAwardsChampionX, 362f, true, podiumGroup.transform);
-            CreateTournamentAwardsLaneLabel("AwardsLaneThird", placements[2], TournamentAwardsRightX, 388f, false, podiumGroup.transform);
-            RegisterTournamentAwardsAnimation(podiumGroup.transform, new Vector2(0f, 24f), 0.14f, 0.52f, 0.97f);
-
-            var badgeChampionGroup = CreateTournamentAwardsGroup("AwardsBadgeChampion");
-            CreateTournamentAwardsBadge("AwardsBadgeChampion", placements[0], TournamentAwardsChampionX, TournamentAwardsBadgeY, true, badgeChampionGroup.transform);
-            RegisterTournamentAwardsAnimation(badgeChampionGroup.transform, new Vector2(0f, -70f), 0.05f, 0.44f, 0.9f);
-
-            var badgeSecondGroup = CreateTournamentAwardsGroup("AwardsBadgeSecond");
-            CreateTournamentAwardsBadge("AwardsBadgeSecond", placements[1], TournamentAwardsChampionX - TournamentAwardsBadgeSideOffsetX, TournamentAwardsBadgeY, false, badgeSecondGroup.transform);
-            RegisterTournamentAwardsAnimation(badgeSecondGroup.transform, new Vector2(0f, -78f), 0.12f, 0.44f, 0.9f);
-
-            var badgeThirdGroup = CreateTournamentAwardsGroup("AwardsBadgeThird");
-            CreateTournamentAwardsBadge("AwardsBadgeThird", placements[2], TournamentAwardsChampionX + TournamentAwardsBadgeSideOffsetX, TournamentAwardsBadgeY, false, badgeThirdGroup.transform);
-            RegisterTournamentAwardsAnimation(badgeThirdGroup.transform, new Vector2(0f, -62f), 0.19f, 0.44f, 0.9f);
+            CreateTournamentAwardsLaneLabel("AwardsLaneSecond", placements[1], TournamentAwardsLeftX, 384f, false, podiumGroup.transform);
+            CreateTournamentAwardsLaneLabel("AwardsLaneChampion", placements[0], TournamentAwardsChampionX, 368f, true, podiumGroup.transform);
+            CreateTournamentAwardsLaneLabel("AwardsLaneThird", placements[2], TournamentAwardsRightX, 390f, false, podiumGroup.transform);
+            RegisterTournamentAwardsAnimation(podiumGroup.transform, new Vector2(0f, 18f), 0.14f, 0.52f, 0.97f);
 
             CreateTournamentAwardsCharacterGroup(
                 "AwardsSecondPlace",
@@ -2213,7 +2394,7 @@ namespace rimrush
                 TournamentAwardsSideScale,
                 0.12f,
                 0.38f,
-                0.28f,
+                0.24f,
                 0.28f);
             CreateTournamentAwardsCharacterGroup(
                 "AwardsChampionPlace",
@@ -2223,7 +2404,7 @@ namespace rimrush
                 TournamentAwardsChampionScale,
                 0.13f,
                 0.48f,
-                0.26f,
+                0.28f,
                 0.2f);
             CreateTournamentAwardsCharacterGroup(
                 "AwardsThirdPlace",
@@ -2233,7 +2414,7 @@ namespace rimrush
                 TournamentAwardsSideScale,
                 0.11f,
                 0.38f,
-                0.24f,
+                0.22f,
                 0.36f);
         }
 
@@ -2297,35 +2478,20 @@ namespace rimrush
         /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsLaneLabel(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
-            var panelTint = champion
-                ? new Color(0.26f, 0.88f, 0.42f, 0.96f)
-                : placement.Placement == 2
-                    ? new Color(0.2f, 0.72f, 0.88f, 0.94f)
-                    : new Color(0.95f, 0.52f, 0.12f, 0.94f);
-            CreateFramedPanel(
+            var panelTint = GetTournamentAwardsPlateTint(placement, champion);
+            var panel = CreateFramedPanel(
                 $"{key}_Frame",
                 "btn_bg0000",
                 x,
                 y,
-                champion ? 172f : 152f,
-                champion ? 38f : 34f,
+                champion ? 176f : 146f,
+                champion ? 36f : 32f,
                 13,
                 panelTint,
                 parent);
-
-            if (champion)
+            if (panel != null && placement.IsPlayer)
             {
-                rimrushRender.Text(
-                    $"{key}_Champion",
-                    "CHAMPION",
-                    x,
-                    y - 24f,
-                    13,
-                    placement.AccentColor,
-                    TextAnchor.MiddleCenter,
-                    14,
-                    parent,
-                    rimrushTextStyle.TournamentAccent);
+                panel.transform.localScale *= 1.015f;
             }
 
             var name = CharacterNameOrTbd(placement.CharacterId);
@@ -2367,9 +2533,26 @@ namespace rimrush
             float landingDelay)
         {
             var group = CreateTournamentAwardsGroup(key);
-            var glow = rimrushRender.Sprite($"{key}_Aura", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y - 18f, 0.5f, 0.5f, 12, group.transform);
-            glow.transform.localScale *= placement.Placement == 1 ? 0.82f : 0.66f;
-            glow.GetComponent<SpriteRenderer>().color = new Color(placement.GlowColor.r, placement.GlowColor.g, placement.GlowColor.b, glowAlpha);
+            var glow = CreateStandaloneImage(
+                $"{key}_Aura",
+                rimrushAssets.Images.Ui.EmblemOrb,
+                x,
+                y - 18f,
+                placement.Placement == 1 ? 144f : 116f,
+                placement.Placement == 1 ? 144f : 116f,
+                12,
+                group.transform,
+                new Color(
+                    placement.GlowColor.r,
+                    placement.GlowColor.g,
+                    placement.GlowColor.b,
+                    placement.IsPlayer ? glowAlpha + 0.06f : glowAlpha));
+            if (glow == null)
+            {
+                glow = rimrushRender.Sprite($"{key}_Aura", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y - 18f, 0.5f, 0.5f, 12, group.transform);
+                glow.transform.localScale *= placement.Placement == 1 ? 0.82f : 0.66f;
+                glow.GetComponent<SpriteRenderer>().color = new Color(placement.GlowColor.r, placement.GlowColor.g, placement.GlowColor.b, glowAlpha);
+            }
 
             var shadow = rimrushRender.Sprite($"{key}_Shadow", rimrushAtlasCache.Instance.Interface, "loginSelect0000", x, y + 24f, 0.5f, 0.5f, 13, group.transform);
             shadow.transform.localScale *= shadowScale;
@@ -2398,7 +2581,7 @@ namespace rimrush
                 }
             }
 
-            RegisterTournamentAwardsAnimation(group.transform, new Vector2(0f, 16f), landingDelay, 0.44f, 0.96f);
+            RegisterTournamentAwardsAnimation(group.transform, new Vector2(0f, 12f), landingDelay, 0.44f, 0.96f);
         }
 
         /// <summary>
@@ -2639,7 +2822,52 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetTournamentAwardsPlayerMessage(rimrushTournamentData tournament)
         {
-            return $"YOU FINISHED {GetPlacementShortLabel(tournament.PlayerPlacement)} PLACE";
+            switch (tournament.PlayerPlacement)
+            {
+                case 1:
+                    return "CHAMPION";
+                case 2:
+                    return "RUNNER-UP";
+                case 3:
+                    return "THIRD PLACE";
+                case 4:
+                    return "FOURTH PLACE";
+                default:
+                    return $"{Mathf.Max(tournament.PlayerPlacement, 1)}TH PLACE";
+            }
+        }
+
+        private static Color GetTournamentAwardsAccentColor(int placement)
+        {
+            switch (placement)
+            {
+                case 1:
+                    return new Color32(0xD7, 0xF2, 0x4A, 0xFF);
+                case 2:
+                    return new Color32(0x9D, 0xF5, 0xFF, 0xFF);
+                case 3:
+                    return new Color32(0xFF, 0xB1, 0x48, 0xFF);
+                default:
+                    return new Color32(0xD8, 0xE5, 0xF6, 0xFF);
+            }
+        }
+
+        private static Color GetTournamentAwardsPlateTint(TournamentAwardsPlacement placement, bool champion)
+        {
+            if (placement.IsPlayer)
+            {
+                return champion
+                    ? new Color(0.26f, 0.84f, 0.38f, 0.96f)
+                    : placement.Placement == 2
+                        ? new Color(0.2f, 0.72f, 0.88f, 0.94f)
+                        : new Color(0.95f, 0.52f, 0.12f, 0.94f);
+            }
+
+            return champion
+                ? new Color(0.12f, 0.34f, 0.24f, 0.9f)
+                : placement.Placement == 2
+                    ? new Color(0.08f, 0.22f, 0.32f, 0.9f)
+                    : new Color(0.22f, 0.15f, 0.06f, 0.9f);
         }
 
         /// <summary>
@@ -2773,6 +3001,12 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            var standalonePanel = TryCreateStandaloneFrame(name, frame, x, y, width, height, sortingOrder, tint, parent);
+            if (standalonePanel != null)
+            {
+                return standalonePanel;
+            }
+
             var panel = rimrushRender.Sprite(name, rimrushAtlasCache.Instance.Interface, frame, x, y, 0.5f, 0.5f, sortingOrder, parent);
             var atlasFrame = rimrushAtlasCache.Instance.Interface.Frame(frame);
             if (atlasFrame != null)
@@ -2787,6 +3021,73 @@ namespace rimrush
 
             panel.GetComponent<SpriteRenderer>().color = tint;
             return panel;
+        }
+
+        private static GameObject TryCreateStandaloneFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
+        {
+            var imageKey = ResolveStandaloneFrameImage(frame);
+            if (string.IsNullOrEmpty(imageKey))
+            {
+                return null;
+            }
+
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(imageKey));
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var panel = rimrushRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            panel.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
+                1f);
+            panel.GetComponent<SpriteRenderer>().color = tint;
+            return panel;
+        }
+
+        private GameObject CreateStandaloneImage(
+            string name,
+            string imageKey,
+            float x,
+            float y,
+            float width,
+            float height,
+            int sortingOrder,
+            Transform parent = null,
+            Color? tint = null)
+        {
+            if (string.IsNullOrEmpty(imageKey))
+            {
+                return null;
+            }
+
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(imageKey));
+            if (texture == null)
+            {
+                return null;
+            }
+
+            var resolvedParent = parent ?? runtimeRoot;
+            var image = rimrushRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, resolvedParent);
+            image.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
+                rimrushConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
+                1f);
+            image.GetComponent<SpriteRenderer>().color = tint ?? Color.white;
+            return image;
+        }
+
+        private static string ResolveStandaloneFrameImage(string frame)
+        {
+            return frame switch
+            {
+                "0bg100000" => rimrushAssets.Images.Ui.FramePanelLarge,
+                "MatchBack0001" => rimrushAssets.Images.Ui.FrameMatchCardIdle,
+                "MatchBack0002" => rimrushAssets.Images.Ui.FrameMatchCardActive,
+                "btn_bg0000" => rimrushAssets.Images.Ui.MenuButtonPlate,
+                _ => null
+            };
         }
 
         /// <summary>

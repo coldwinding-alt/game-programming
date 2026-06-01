@@ -17,10 +17,51 @@ namespace rimrush
             private const string Root = "rimrush/Images/";
 
             public const string GameLogo = "logo";
+            public const string MenuBackgroundHalloweenSpotlight = "menu_background_halloween_spotlight";
+            public const string MenuBackgroundMoonlitGym = "menu_background_moonlit_gym";
             public const string PauseButton = "pause_button";
             public const string MusicButtonOn = "music_button_on";
             public const string MusicButtonOff = "music_button_off";
             public const string HelpButton = "help_button";
+
+            public static class Ui
+            {
+                public const string FramePanelLarge = "UI/frame_panel_large";
+                public const string FrameMatchCardIdle = "UI/frame_match_card_idle";
+                public const string FrameMatchCardActive = "UI/frame_match_card_active";
+                public const string MenuButtonPlate = "UI/menu_button_plate";
+                public const string EnergyButtonPlate = "UI/energy_button_plate";
+                public const string EmblemOrb = "UI/emblem_orb";
+                public const string PanelFillSoft = "UI/panel_fill_soft";
+                public const string AwardsShowcasePanel = "UI/awards_showcase_panel";
+                public const string AwardsResultPlaque = "UI/awards_result_plaque";
+                public const string AwardsPodiumBase = "UI/awards_podium_base";
+            }
+
+            public static class SkillFxImages
+            {
+                public const string ReaperDashCore = "SkillFx/reaper_dash_core";
+                public const string ReaperDashAccent = "SkillFx/reaper_dash_accent";
+                public const string BadLuckCore = "SkillFx/bad_luck_core";
+                public const string BadLuckAccent = "SkillFx/bad_luck_accent";
+                public const string HarvestTimeCore = "SkillFx/harvest_time_core";
+                public const string HarvestTimeAccent = "SkillFx/harvest_time_accent";
+            }
+
+            public static class TutorialUi
+            {
+                public const string Board = "UI/Tutorial/tutorial_board";
+                public const string Card = "UI/Tutorial/tutorial_card";
+                public const string Tab = "UI/Tutorial/tutorial_tab";
+                public const string ButtonPrimary = "UI/Tutorial/tutorial_button_primary";
+                public const string ButtonSecondary = "UI/Tutorial/tutorial_button_secondary";
+                public const string Chip = "UI/Tutorial/tutorial_chip";
+                public const string FocusFrame = "UI/Tutorial/tutorial_focus_frame";
+                public const string Glow = "UI/Tutorial/tutorial_glow";
+                public const string Orb = "UI/Tutorial/tutorial_orb";
+                public const string Dim = "UI/Tutorial/tutorial_dim";
+                public const string Rule = "UI/Tutorial/tutorial_rule";
+            }
 
             /// <summary>
             /// Executes Resource Path for the Images workflow.
@@ -35,7 +76,13 @@ namespace rimrush
 
             public static class GameplayImages
             {
-                public const string BallClassicOriginal = null;
+                public const string ArenaBackdrop = "Gameplay/arena_halloween_backdrop";
+                public const string BasketGraphic = "Gameplay/basket_halloween_rim";
+                public const string BasketFrontEar = "Gameplay/basket_halloween_front_ear";
+                public const string PlayerShadowPrimary = "Gameplay/player_shadow_primary";
+                public const string PlayerShadowSecondary = "Gameplay/player_shadow_secondary";
+                public const string PlayerShadowBall = "Gameplay/player_shadow_ball";
+                public const string BallClassicOriginal = "Gameplay/ball_classic_original";
                 public const string BallGhoulGreen = "Gameplay/ball_halloween_ghoul_green";
                 public const string BallPumpkinEmber = "Gameplay/ball_halloween_pumpkin_ember";
                 public const string BallMoonlitViolet = "Gameplay/ball_halloween_moonlit_violet";
@@ -43,6 +90,7 @@ namespace rimrush
                 public const string BallEvilEye = "Gameplay/ball_halloween_evil_eye";
                 public const string BallCursed8Ball = "Gameplay/ball_halloween_cursed_8ball";
                 public const string BallCandySwirl = "Gameplay/ball_halloween_candy_swirl";
+                public const string FallbackAvatar = "Gameplay/player_fallback_avatar";
             }
 
             /// <summary>

@@ -1,6 +1,6 @@
 # Project Framing
 
-Updated: `2026-05-08`
+Updated: `2026-05-31`
 
 ## Coursework Positioning
 
@@ -24,5 +24,7 @@ The project is managed as a small agile coursework repository:
 - `TEST_LOG.md` records smoke tests, manual checks, known issues, and documentation audits.
 - `ASSET_CREDITS.md` records active runtime assets and current replacement/provenance status.
 - `DOCS/COURSEWORK_ASSET_REVIEW.md` separates safe submission wording from remaining provenance risks.
+
+The current iteration focus is to move the old hidden `help` flow into a first-screen tutorial level with strong visibility. That tutorial should teach the game's main controls, scoring flow, defensive actions, energy/super usage, and the next step into the main playable modes.
 
 Future work should continue in small commits tied to a clear task, with each change updating the relevant task board, test log, or asset credit note when it affects the submitted project surface.
