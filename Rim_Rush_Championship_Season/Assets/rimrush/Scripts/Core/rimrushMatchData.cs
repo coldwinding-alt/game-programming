@@ -27,6 +27,7 @@ namespace rimrush
     {
         None,
         QuickMatch,
+        Adventure,
         Tournament,
         Training,
         Tutorial
@@ -392,6 +393,26 @@ namespace rimrush
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
 
+        public void StartAdventureMatch(rimrushAdventureData adventure)
+        {
+            ResetAll();
+            if (adventure == null || !adventure.Active || adventure.Completed || !adventure.HasPendingPlayerMatch)
+            {
+                return;
+            }
+
+            var level = adventure.CurrentLevel;
+            MatchMode = 0;
+            ResolveBallSelection(level.BallSelection);
+            CharacterIds = new[]
+            {
+                rimrushPlayersData.SanitizeCharacterId(adventure.PlayerCharacterId),
+                rimrushPlayersData.SanitizeCharacterId(level.WardenCharacterId)
+            };
+            Pb = new[] { new[] { "P0" }, new[] { "B0" } };
+            Skills = new[] { new[] { 0 }, new[] { Mathf.Clamp(level.OpponentSkill, 0, rimrushAISkillsData.MaxSkillIndex) } };
+        }
+
         /// <summary>
         /// Executes Start Selected Two Player Match for the rimrushMatchData workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -531,6 +552,7 @@ namespace rimrush
 
         public int GameMode;
         public rimrushMatchData MatchData;
+        public rimrushAdventureData Adventure;
         public rimrushTournamentData Tournament;
         public bool FirstRun = true;
         public bool FirstRun2 = true;
@@ -557,6 +579,7 @@ namespace rimrush
             ParticipantMode = rimrushParticipantMode.OnePlayer;
             SessionMode = rimrushSessionMode.None;
             MatchData = new rimrushMatchData(true);
+            Adventure = new rimrushAdventureData();
             Tournament = new rimrushTournamentData();
             MatchData.MatchMode = 0;
             Difficulty = rimrushAiDifficulty.Normal;
@@ -579,6 +602,7 @@ namespace rimrush
         };
 
         public bool IsTournamentActive => SessionMode == rimrushSessionMode.Tournament && Tournament.Active;
+        public bool IsAdventureActive => SessionMode == rimrushSessionMode.Adventure && Adventure.Active;
 
         /// <summary>
         /// Executes Toggle Difficulty for the rimrushInventory workflow.
@@ -689,6 +713,7 @@ namespace rimrush
         /// </summary>
         public void StartQuickGame()
         {
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
             MatchPrepared = true;
@@ -706,6 +731,7 @@ namespace rimrush
         public void StartOnePlayer()
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
             GameMode = rimrushGameModeIds.RandomQuick;
@@ -722,6 +748,7 @@ namespace rimrush
         public void StartTwoPlayers()
         {
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
             GameMode = rimrushGameModeIds.TwoPlayers;
@@ -740,6 +767,7 @@ namespace rimrush
         public void StartTwoPlayerVersus(int leftCharacterId, int rightCharacterId)
         {
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.QuickMatch;
             GameMode = rimrushGameModeIds.TwoPlayers;
@@ -755,6 +783,7 @@ namespace rimrush
         public void StartTraining()
         {
             ParticipantMode = rimrushParticipantMode.Training;
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.Training;
             GameMode = rimrushGameModeIds.Training;
@@ -770,6 +799,7 @@ namespace rimrush
         public void StartTutorial()
         {
             ParticipantMode = rimrushParticipantMode.Tutorial;
+            Adventure.Reset();
             Tournament.Reset();
             SessionMode = rimrushSessionMode.Tutorial;
             GameMode = rimrushGameModeIds.Tutorial;
@@ -786,6 +816,7 @@ namespace rimrush
         public bool BeginTournament()
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
+            Adventure.Reset();
             SessionMode = rimrushSessionMode.Tournament;
             GameMode = rimrushGameModeIds.RandomQuick;
             PendingTutorialNextAction = rimrushTutorialNextAction.None;
@@ -858,6 +889,65 @@ namespace rimrush
         public void AbandonTournament()
         {
             Tournament.Reset();
+            SessionMode = rimrushSessionMode.None;
+            MatchPrepared = false;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
+        }
+
+        public void BeginAdventure(int playerCharacterId)
+        {
+            ParticipantMode = rimrushParticipantMode.OnePlayer;
+            Tournament.Reset();
+            SessionMode = rimrushSessionMode.Adventure;
+            GameMode = rimrushGameModeIds.RandomQuick;
+            PendingTutorialNextAction = rimrushTutorialNextAction.None;
+            Adventure.Create(playerCharacterId);
+            MatchPrepared = false;
+        }
+
+        public bool StartAdventureLevel(int levelIndex, int playerCharacterId)
+        {
+            if (!IsAdventureActive || Adventure.Completed)
+            {
+                BeginAdventure(playerCharacterId);
+            }
+
+            if (!Adventure.SelectLevel(levelIndex))
+            {
+                return false;
+            }
+
+            MatchData.StartAdventureMatch(Adventure);
+            MatchPrepared = true;
+            return MatchData.Pb != null && MatchData.Pb.Length >= 2 && MatchData.Pb[1].Length > 0;
+        }
+
+        public bool RestartAdventureLevel()
+        {
+            if (!IsAdventureActive || Adventure.Completed || !Adventure.HasPendingPlayerMatch)
+            {
+                return false;
+            }
+
+            MatchData.StartAdventureMatch(Adventure);
+            MatchPrepared = true;
+            return true;
+        }
+
+        public void AdvanceAdventure(bool playerWon)
+        {
+            if (!IsAdventureActive)
+            {
+                return;
+            }
+
+            Adventure.ApplyCurrentMatchResult(playerWon);
+            MatchPrepared = false;
+        }
+
+        public void AbandonAdventure()
+        {
+            Adventure.Reset();
             SessionMode = rimrushSessionMode.None;
             MatchPrepared = false;
             PendingTutorialNextAction = rimrushTutorialNextAction.None;
