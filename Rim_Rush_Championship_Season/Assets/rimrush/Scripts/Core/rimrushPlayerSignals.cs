@@ -14,6 +14,8 @@ namespace rimrush
         Pump,
         Dash,
         Shoot,
+        Dunk,
+        PutbackDunk,
         Block,
         Score,
         Super,
