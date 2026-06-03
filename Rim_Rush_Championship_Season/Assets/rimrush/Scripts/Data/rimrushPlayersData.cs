@@ -11,6 +11,7 @@ namespace rimrush
         private const int ActiveCharacterSkinCount = 8;
         private const float PortraitAtlasSourceScale = 4f;
         private const int PortraitVariantSampleGrid = 4;
+        private const float GlobalCharacterModelScaleMultiplier = 1.08f;
 
         private sealed class rimrushCharacterDefinition
         {
@@ -23,6 +24,7 @@ namespace rimrush
             public float HeadOffsetX;
             public float HeadOffsetY;
             public float HeadScale = 1f;
+            public float ModelScaleMultiplier = 1f;
             public float PreviewScaleMultiplier = 1f;
             public float PreviewOffsetY;
             public float PortraitScaleMultiplier = 1f;
@@ -36,9 +38,9 @@ namespace rimrush
 
         private static readonly rimrushCharacterDefinition[] CharacterDefinitions =
         {
-            new rimrushCharacterDefinition { DisplayName = "REAPER ACOLYTE", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_pumpkin", HeadOffsetX = 0.75f, HeadOffsetY = -0.5f, HeadScale = 1.02f, PreviewScaleMultiplier = 1f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 8f },
-            new rimrushCharacterDefinition { DisplayName = "GHOST CLOWN", SkinIndex = 1, FormIndex = 1, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_frankenstein", HeadOffsetX = 4.5f, HeadOffsetY = -6f, HeadScale = 1f, PreviewScaleMultiplier = 0.99f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
-            new rimrushCharacterDefinition { DisplayName = "SKULL PIRATE", SkinIndex = 2, FormIndex = 2, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_mummy", HeadOffsetX = 1.5f, HeadOffsetY = -7.5f, HeadScale = 1.02f, PreviewScaleMultiplier = 1f, PreviewOffsetY = -2f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
+            new rimrushCharacterDefinition { DisplayName = "REAPER ACOLYTE", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_pumpkin", HeadOffsetX = 0.75f, HeadOffsetY = 5f, HeadScale = 1.02f, ModelScaleMultiplier = 1.08f, PreviewScaleMultiplier = 1f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 8f },
+            new rimrushCharacterDefinition { DisplayName = "GHOST CLOWN", SkinIndex = 1, FormIndex = 1, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_frankenstein", HeadOffsetX = 4.5f, HeadOffsetY = 1f, HeadScale = 1f, ModelScaleMultiplier = 1.06f, PreviewScaleMultiplier = 0.99f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
+            new rimrushCharacterDefinition { DisplayName = "SKULL PIRATE", SkinIndex = 2, FormIndex = 2, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_mummy", HeadOffsetX = 1.5f, HeadOffsetY = 0f, HeadScale = 1.02f, ModelScaleMultiplier = 1.07f, PreviewScaleMultiplier = 1f, PreviewOffsetY = -2f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
             new rimrushCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 3, FormIndex = 3, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_vampire", HeadOffsetY = -10.5f, HeadScale = 0.95f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 12f },
             new rimrushCharacterDefinition { DisplayName = "CANDLEMAN", SkinIndex = 4, FormIndex = 4, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_candle", HeadOffsetX = 2.75f, HeadOffsetY = 3.5f, HeadScale = 0.96f, PreviewScaleMultiplier = 0.94f, PortraitScaleMultiplier = 0.85f, PortraitOffsetY = -9f },
             new rimrushCharacterDefinition { DisplayName = "SCARECROW", SkinIndex = 5, FormIndex = 5, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_scarecrow", HeadOffsetY = 7f, HeadScale = 1.05f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 2f, PortraitScaleMultiplier = 1.05f, PortraitOffsetY = -10f },
@@ -199,7 +201,20 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static float GetCharacterPreviewScaleMultiplier(int characterId)
         {
-            return GetCharacterDefinition(characterId).PreviewScaleMultiplier;
+            var definition = GetCharacterDefinition(characterId);
+            return definition.PreviewScaleMultiplier * GlobalCharacterModelScaleMultiplier * definition.ModelScaleMultiplier;
+        }
+
+        /// <summary>
+        /// Executes Get Character Gameplay Scale Multiplier for the rimrushCharacterDefinition workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        public static float GetCharacterGameplayScaleMultiplier(int characterId)
+        {
+            var definition = GetCharacterDefinition(characterId);
+            return GlobalCharacterModelScaleMultiplier * definition.ModelScaleMultiplier;
         }
 
         /// <summary>

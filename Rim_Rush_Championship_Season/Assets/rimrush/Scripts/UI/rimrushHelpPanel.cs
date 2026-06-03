@@ -28,6 +28,7 @@ namespace rimrush
         Close,
         KeyboardTab,
         RulesTab,
+        ReplayTutorial,
         DemoMove,
         DemoJump,
         DemoShoot,
@@ -411,6 +412,9 @@ namespace rimrush
                 case rimrushHelpButtonAction.RulesTab:
                     SetPage(rimrushHelpPage.Rules);
                     break;
+                case rimrushHelpButtonAction.ReplayTutorial:
+                    HandleReplayTutorialRequest();
+                    break;
                 case rimrushHelpButtonAction.DemoMove:
                     SelectDemo(rimrushHelpDemo.Move);
                     break;
@@ -433,6 +437,17 @@ namespace rimrush
                     SelectDemo(rimrushHelpDemo.Block);
                     break;
             }
+        }
+
+        private void HandleReplayTutorialRequest()
+        {
+            if (!rimrushGameBootstrap.TryStartTutorialFromHelp())
+            {
+                Debug.LogWarning("Could not find rimrushGameBootstrap to launch the tutorial from the help panel.");
+                return;
+            }
+
+            Hide(playSound: false);
         }
 
         /// <summary>
@@ -735,7 +750,10 @@ namespace rimrush
                 var button = buttons[i];
                 if (button != null)
                 {
-                    button.SetSelected(IsDemoButtonSelected(button.Action));
+                    button.SetSelected(
+                        button.Action == rimrushHelpButtonAction.KeyboardTab && currentPage == rimrushHelpPage.Keyboard ||
+                        button.Action == rimrushHelpButtonAction.RulesTab && currentPage == rimrushHelpPage.Rules ||
+                        IsDemoButtonSelected(button.Action));
                 }
             }
         }

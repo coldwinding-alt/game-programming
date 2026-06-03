@@ -512,7 +512,7 @@ namespace rimrush
         {
             EnsureRuntimeLinks();
             opponent = FindOpponentByPlayerNo(holderPlayerNo) ?? player.GameCore.FindBallHolder(-player.Side) ?? opponent;
-            if (player.UsesCurseSkill && player.ReadyForSuper && opponent != null && Mathf.Abs(player.Position.x - opponent.Position.x) <= 220f)
+            if (player.UsesFreezeSkill && player.ReadyForSuper && opponent != null && Mathf.Abs(player.Position.x - opponent.Position.x) <= 220f)
             {
                 player.SuperShot();
             }
