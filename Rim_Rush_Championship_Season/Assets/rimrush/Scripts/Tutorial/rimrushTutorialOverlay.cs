@@ -9,6 +9,7 @@ namespace rimrush
     public enum rimrushTutorialOverlayCommand
     {
         None,
+        SkipStep,
         ReturnToMenu,
         ReplayTutorial,
         StartTraining,
@@ -19,15 +20,23 @@ namespace rimrush
     {
         private const int WitchCharacterId = 6;
         private const int CanvasSortingOrder = 1400;
-        private const int WitchSortingOrderBase = 1260;
+        private const int WitchSortingOrderBase = 1425;
         private const int ReferenceWidth = 800;
         private const int ReferenceHeight = 480;
+        private const float GuideLeft = 122f;
+        private const float GuideTop = 14f;
+        private const float GuideWidth = 476f;
+        private const float GuideHeight = 100f;
+        private const float KeyChipWidth = 76f;
+        private const float KeyChipHeight = 32f;
+        private const float KeyChipGap = 8f;
+        private const int ProgressDotCount = 10;
 
         private static rimrushTutorialOverlay activeOverlay;
         private static Sprite solidSprite;
         private static Sprite circleSprite;
         private static Sprite ringSprite;
-        private static Sprite witchIconSprite;
+        private static Sprite witchPortraitSprite;
 
         private Canvas canvas;
         private RectTransform overlayRoot;
@@ -67,9 +76,14 @@ namespace rimrush
         private Button replayButton;
         private Button trainingButton;
         private Button quickMatchButton;
+        private Button skipButton;
 
         private DBLiteArmature witchArmature;
         private GameObject witchFallbackRoot;
+        private RectTransform witchFallbackRect;
+        private Vector3 witchBaseLocalPosition;
+        private Vector3 witchBaseLocalScale = Vector3.one;
+        private Vector2 witchFallbackBasePosition;
         private bool initialized;
         private bool visible;
         private float feedbackTimer;
@@ -128,8 +142,9 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(-1, 0);
-            SetCopy("WITCH GUIDE", title, subtitle, narration, keys);
+            SetCopy("TUTORIAL", title, subtitle, narration, keys);
             SetGoal(string.Empty);
+            SetSkipVisible(true);
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
@@ -145,8 +160,9 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(currentIndex, total);
-            SetCopy($"STEP {currentIndex + 1}/{Mathf.Max(1, total)}", title, subtitle, narration, keys);
+            SetCopy($"{currentIndex + 1}/{Mathf.Max(1, total)}", title, subtitle, narration, keys);
             SetGoal(goal);
+            SetSkipVisible(true);
             if (outroRoot != null)
             {
                 outroRoot.SetActive(false);
@@ -257,7 +273,7 @@ namespace rimrush
             }
         }
 
-        public void ShowFeedback(string message, Color color, float duration = 0.9f)
+        public void ShowFeedback(string message, Color color, float duration = 1.35f)
         {
             EnsureInitialized();
             feedbackText.text = message ?? string.Empty;
@@ -268,9 +284,10 @@ namespace rimrush
         public void ShowOutro(string characterName, string skillName)
         {
             ShowInternal();
-            SetProgress(7, 7);
-            SetCopy("TUTORIAL CLEAR", "YOU HAVE THE TOOLKIT", "Pace. Timing. Defense. Super.", "Take that feel into the next mode.", null);
+            SetProgress(9, 10);
+            SetCopy("CLEAR", "READY TO PLAY", "Pick your next run.", "Nice work.", null);
             SetGoal(string.Empty);
+            SetSkipVisible(false);
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
@@ -288,7 +305,7 @@ namespace rimrush
 
             if (outroBodyText != null)
             {
-                outroBodyText.text = $"{characterName}\n{skillName}\nMove, dash, shoot, fake, steal, block, super.";
+                outroBodyText.text = $"{characterName}\n{skillName}\nKeep the rhythm.";
             }
         }
 
@@ -416,45 +433,48 @@ namespace rimrush
                 trajectoryDots.Add(CreateImage($"TrajectoryDot{i}", trajectoryRoot, circleSprite, new Color(0.62f, 1f, 0.9f, 0.85f)));
             }
 
-            headerRoot = CreateCard("HeaderRoot", overlayRoot, 222f, 18f, 356f, 104f, 0.92f);
+            headerRoot = CreateCard("GuideRoot", overlayRoot, GuideLeft, GuideTop, GuideWidth, GuideHeight, 0.92f);
             headerGlow = CreateImage("HeaderGlow", headerRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.12f));
-            SetCenteredRect(headerGlow.rectTransform, 178f, 42f, 280f, 76f);
-            stepText = CreateText("StepText", headerRoot.transform as RectTransform, 24f, 12f, 150f, 22f, 14, new Color32(0x8A, 0xFF, 0xE1, 0xFF), TextAlignmentOptions.Left, LoadBodyFont());
-            titleText = CreateText("TitleText", headerRoot.transform as RectTransform, 24f, 34f, 308f, 26f, 26, Color.white, TextAlignmentOptions.Left, LoadTitleFont());
-            subtitleText = CreateText("SubtitleText", headerRoot.transform as RectTransform, 24f, 62f, 308f, 20f, 13, new Color32(0xD6, 0xE5, 0xF9, 0xFF), TextAlignmentOptions.Left, LoadBodyFont());
-            goalText = CreateText("GoalText", headerRoot.transform as RectTransform, 24f, 82f, 260f, 16f, 12, new Color32(0xFF, 0xD5, 0x7C, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
+            SetCenteredRect(headerGlow.rectTransform, 198f, 48f, 248f, 78f);
+            stepText = CreateText("StepText", headerRoot.transform as RectTransform, 212f, 10f, 76f, 17f, 12, new Color32(0x8A, 0xFF, 0xE1, 0xFF), TextAlignmentOptions.Left, LoadBodyFont());
+            titleText = CreateText("TitleText", headerRoot.transform as RectTransform, 212f, 26f, 204f, 27f, 24, Color.white, TextAlignmentOptions.Left, LoadTitleFont());
+            subtitleText = CreateText("SubtitleText", headerRoot.transform as RectTransform, 212f, 55f, 204f, 17f, 11, new Color32(0xD6, 0xE5, 0xF9, 0xFF), TextAlignmentOptions.Left, LoadBodyFont());
+            goalText = CreateText("GoalText", headerRoot.transform as RectTransform, 212f, 74f, 188f, 15f, 11, new Color32(0xFF, 0xD5, 0x7C, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
 
             var dotsRoot = CreateRootRect("ProgressDots", headerRoot.transform);
-            SetTopLeftRect(dotsRoot, 248f, 80f, 94f, 18f);
-            for (var i = 0; i < 7; i++)
+            SetTopLeftRect(dotsRoot, 362f, 13f, 104f, 14f);
+            for (var i = 0; i < ProgressDotCount; i++)
             {
                 var dot = CreateImage($"ProgressDot{i}", dotsRoot, circleSprite, new Color32(0x35, 0x4C, 0x70, 0xE8));
-                SetCenteredRect(dot.rectTransform, 12f + i * 13f, 9f, 8f, 8f);
+                SetCenteredRect(dot.rectTransform, 7f + i * 10f, 7f, 6f, 6f);
                 progressDots.Add(dot);
             }
 
             var keysRoot = CreateRootRect("KeysRoot", overlayRoot);
-            SetTopLeftRect(keysRoot, 222f, 126f, 356f, 34f);
+            SetTopLeftRect(keysRoot, GuideLeft, GuideTop + GuideHeight + 8f, GuideWidth, KeyChipHeight);
             for (var i = 0; i < 5; i++)
             {
                 var chip = CreateChip(keysRoot, i);
                 keyChipRoots.Add(chip);
-                keyChipLabels.Add(chip.GetComponentInChildren<TextMeshProUGUI>());
+                var keyLabel = chip.transform.Find("KeyLabel") as RectTransform;
+                keyChipLabels.Add(keyLabel != null ? keyLabel.GetComponent<TextMeshProUGUI>() : null);
             }
 
-            feedbackText = CreateText("FeedbackText", overlayRoot, 204f, 170f, 392f, 26f, 18, new Color32(0x9A, 0xFF, 0xDD, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
+            feedbackText = CreateText("FeedbackText", overlayRoot, 154f, 176f, 492f, 26f, 18, new Color32(0x9A, 0xFF, 0xDD, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
+            skipButton = CreateButton("SkipStepButton", overlayRoot, 684f, 426f, 92f, 34f, "SKIP", new Color32(0x13, 0x1E, 0x30, 0xDD), new Color32(0xFF, 0xD5, 0x7C, 0xFF), rimrushTutorialOverlayCommand.SkipStep);
 
-            narratorRoot = CreateCard("NarratorRoot", overlayRoot, 580f, 18f, 198f, 104f, 0.88f);
+            narratorRoot = CreateRootRect("NarratorRoot", headerRoot.transform).gameObject;
             narratorOrb = CreateImage("NarratorOrb", narratorRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.14f));
-            SetCenteredRect(narratorOrb.rectTransform, 48f, 52f, 72f, 72f);
-            var narratorLabel = CreateText("NarratorLabel", narratorRoot.transform as RectTransform, 84f, 16f, 94f, 16f, 12, new Color32(0xFF, 0xD6, 0x80, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
-            narratorLabel.text = "WITCH";
-            narratorText = CreateText("NarratorText", narratorRoot.transform as RectTransform, 84f, 34f, 102f, 48f, 13, Color.white, TextAlignmentOptions.TopLeft, LoadBodyFont());
+            SetTopLeftRect(narratorRoot.transform as RectTransform, 0f, 0f, 196f, GuideHeight);
+            SetCenteredRect(narratorOrb.rectTransform, 43f, 50f, 68f, 68f);
+            var narratorLabel = CreateText("NarratorLabel", narratorRoot.transform as RectTransform, 82f, 14f, 86f, 15f, 11, new Color32(0xFF, 0xD6, 0x80, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
+            narratorLabel.text = "WITCH:";
+            narratorText = CreateText("NarratorText", narratorRoot.transform as RectTransform, 82f, 31f, 104f, 54f, 12, Color.white, TextAlignmentOptions.TopLeft, LoadBodyFont());
             narratorText.enableWordWrapping = true;
             narratorText.fontStyle = FontStyles.Bold;
 
             var witchMount = CreateRootRect("WitchMount", narratorRoot.transform);
-            SetTopLeftRect(witchMount, 10f, 12f, 72f, 76f);
+            SetTopLeftRect(witchMount, 8f, 12f, 70f, 76f);
 
             outroRoot = CreateCard("OutroRoot", overlayRoot, 170f, 84f, 460f, 300f, 0.96f);
             outroRoot.SetActive(false);
@@ -474,6 +494,7 @@ namespace rimrush
             replayButton = CreateButton("ReplayButton", outroRoot.transform as RectTransform, 124f, 250f, 212f, 38f, "REPLAY TUTORIAL", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, rimrushTutorialOverlayCommand.ReplayTutorial);
 
             BuildWitchPreview(witchMount);
+            SetSkipVisible(false);
             HideRuntimeMarkers();
         }
 
@@ -487,7 +508,7 @@ namespace rimrush
             var builtArmature = rimrushPlayersData.BuildGameplayArmature("TutorialNarratorWitch");
             if (builtArmature == null)
             {
-                BuildWitchIconFallback(witchMount);
+                BuildWitchPortraitFallback(witchMount);
                 return;
             }
 
@@ -497,14 +518,16 @@ namespace rimrush
                 witchArmature.transform.SetParent(witchMount, false);
                 witchArmature.transform.localPosition = rimrushConstants.SnapLocalPositionToScreenPixels(
                     witchMount,
-                    new Vector3(0f, -18f, 0f));
+                    new Vector3(0f, -14f, 0f));
                 witchArmature.transform.localScale = new Vector3(
-                    rimrushConstants.PixelPerfectCharacterScale * 0.88f,
-                    rimrushConstants.PixelPerfectCharacterScale * 0.88f,
+                    rimrushConstants.PixelPerfectCharacterScale * 0.74f,
+                    rimrushConstants.PixelPerfectCharacterScale * 0.74f,
                     1f);
                 rimrushPlayersData.ApplyCharacter(witchArmature, WitchCharacterId);
-                witchArmature.StopAtStart("idle");
+                witchArmature.Play("idle");
                 HidePreviewBall(witchArmature);
+                witchBaseLocalPosition = witchArmature.transform.localPosition;
+                witchBaseLocalScale = witchArmature.transform.localScale;
             }
             catch (System.Exception)
             {
@@ -521,31 +544,45 @@ namespace rimrush
                 }
 
                 witchArmature = null;
-                BuildWitchIconFallback(witchMount);
+                BuildWitchPortraitFallback(witchMount);
             }
         }
 
-        private void BuildWitchIconFallback(RectTransform witchMount)
+        private void BuildWitchPortraitFallback(RectTransform witchMount)
         {
-            var sprite = LoadWitchIconSprite();
+            var sprite = LoadWitchPortraitSprite();
             if (sprite == null)
             {
                 return;
             }
 
-            var image = CreateImage("WitchFallbackIcon", witchMount, sprite, Color.white);
+            var image = CreateImage("WitchFallbackPortrait", witchMount, sprite, Color.white);
             image.preserveAspect = true;
             witchFallbackRoot = image.gameObject;
-            SetTopLeftRect(image.rectTransform, 4f, 4f, 62f, 62f);
+            witchFallbackRect = image.rectTransform;
+            SetTopLeftRect(witchFallbackRect, 4f, 0f, 62f, 74f);
+            witchFallbackBasePosition = witchFallbackRect.anchoredPosition;
         }
 
         private void AnimatePulse()
         {
             var wave = 0.5f + 0.5f * Mathf.Sin(effectTime * 4.6f);
+            var floatWave = Mathf.Sin(effectTime * 3.1f);
             if (narratorOrb != null)
             {
                 narratorOrb.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.06f);
                 narratorOrb.color = new Color(0.33f, 1f, 0.88f, 0.1f + wave * 0.06f);
+            }
+
+            if (witchArmature != null)
+            {
+                witchArmature.transform.localPosition = witchBaseLocalPosition + new Vector3(0f, floatWave * 1.3f, 0f);
+                witchArmature.transform.localScale = witchBaseLocalScale * (1f + wave * 0.025f);
+            }
+            else if (witchFallbackRect != null)
+            {
+                witchFallbackRect.anchoredPosition = witchFallbackBasePosition + new Vector2(0f, floatWave * 1.6f);
+                witchFallbackRect.localScale = Vector3.one * (1f + wave * 0.035f);
             }
 
             if (headerGlow != null)
@@ -606,6 +643,7 @@ namespace rimrush
             if (subtitleText != null)
             {
                 subtitleText.text = subtitle ?? string.Empty;
+                subtitleText.gameObject.SetActive(!string.IsNullOrEmpty(subtitle));
             }
 
             if (narratorText != null)
@@ -625,6 +663,14 @@ namespace rimrush
 
             goalText.text = goal ?? string.Empty;
             goalText.gameObject.SetActive(!string.IsNullOrEmpty(goal));
+        }
+
+        private void SetSkipVisible(bool active)
+        {
+            if (skipButton != null)
+            {
+                skipButton.gameObject.SetActive(active);
+            }
         }
 
         private void SetProgress(int currentIndex, int total)
@@ -704,33 +750,15 @@ namespace rimrush
             ringSprite = CreateSprite(CreateRingTexture(160, 0.72f, 0.9f), "TutorialRing");
         }
 
-        private static Sprite LoadWitchIconSprite()
+        private static Sprite LoadWitchPortraitSprite()
         {
-            if (witchIconSprite != null)
+            if (witchPortraitSprite != null)
             {
-                return witchIconSprite;
+                return witchPortraitSprite;
             }
 
-            var resourcePath = rimrushAssets.Images.ResourcePath(rimrushAssets.Images.SkillIcons.Witch);
-            witchIconSprite = Resources.Load<Sprite>(resourcePath);
-            if (witchIconSprite != null)
-            {
-                return witchIconSprite;
-            }
-
-            var texture = Resources.Load<Texture2D>(resourcePath);
-            if (texture == null)
-            {
-                return null;
-            }
-
-            witchIconSprite = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f),
-                100f);
-            witchIconSprite.name = "TutorialWitchFallbackIcon";
-            return witchIconSprite;
+            witchPortraitSprite = rimrushPlayersData.GetCharacterPortraitSprite(WitchCharacterId, 96f);
+            return witchPortraitSprite;
         }
 
         private static Texture2D CreateSolidTexture(int width, int height, Color color)
@@ -883,9 +911,11 @@ namespace rimrush
             var outline = root.AddComponent<Outline>();
             outline.effectColor = new Color(1f, 0.78f, 0.38f, 0.38f);
             outline.effectDistance = new Vector2(1.1f, -1.1f);
-            SetTopLeftRect(root.GetComponent<RectTransform>(), 0f + index * 72f, 0f, 62f, 28f);
+            SetTopLeftRect(root.GetComponent<RectTransform>(), index * (KeyChipWidth + KeyChipGap), 0f, KeyChipWidth, KeyChipHeight);
 
-            var text = CreateText("Label", root.GetComponent<RectTransform>(), 0f, 2f, 62f, 24f, 14, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
+            var press = CreateText("PressLabel", root.GetComponent<RectTransform>(), 0f, 3f, KeyChipWidth, 10f, 8, new Color32(0xFF, 0xD5, 0x7C, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
+            press.text = "PRESS";
+            var text = CreateText("KeyLabel", root.GetComponent<RectTransform>(), 0f, 13f, KeyChipWidth, 18f, 15, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
             text.text = string.Empty;
             return root;
         }
