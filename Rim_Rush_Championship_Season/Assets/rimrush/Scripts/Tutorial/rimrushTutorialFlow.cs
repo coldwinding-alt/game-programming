@@ -47,6 +47,10 @@ namespace rimrush
         private const float RetryIntroDuration = 0.72f;
         private const float SuccessPauseDuration = 0.84f;
         private const float FreePlayDuration = 8.4f;
+        private const float BlockDrillPlayerX = 360f;
+        private const float BlockDrillOpponentX = 452f;
+        private const float BlockDrillJumpDelay = 0.9f;
+        private const float BlockDrillRetryWindow = 4.2f;
 
         private readonly rimrushGameCore core;
         private readonly rimrushTutorialOverlay overlay;
@@ -74,6 +78,7 @@ namespace rimrush
         private bool blockJumpIssued;
         private bool blockShotIssued;
         private bool blockAssistApplied;
+        private bool blockJumpPromptShown;
         private bool freePlayReadyToEnd;
 
         public rimrushTutorialFlow(rimrushGameCore core)
@@ -225,11 +230,11 @@ namespace rimrush
                     var action = false;
                     if (!blockJumpIssued)
                     {
-                        if (Mathf.Abs(opponentPlayer.Position.x - 612f) > 10f)
+                        if (Mathf.Abs(opponentPlayer.Position.x - BlockDrillOpponentX) > 8f)
                         {
-                            move = MoveTo(opponentPlayer.Position.x, 612f);
+                            move = MoveTo(opponentPlayer.Position.x, BlockDrillOpponentX);
                         }
-                        else if (activeTimer >= 0.52f)
+                        else if (activeTimer >= BlockDrillJumpDelay)
                         {
                             jump = true;
                             blockJumpIssued = true;
@@ -254,9 +259,9 @@ namespace rimrush
             phaseTimer = 1.8f;
             activeTimer = 0f;
             overlay.ShowPrelude(
-                "LEARN THE FULL GAME",
-                "Seven safe drills, then a live round.",
-                "Follow the checklist once. Each action shows why the game is fun.",
+                "LEARN THE GAME",
+                "Seven quick drills, then live play.",
+                "One clean run teaches the whole loop.",
                 "A / D",
                 "W",
                 "S",
@@ -281,9 +286,9 @@ namespace rimrush
                 0,
                 TotalSteps,
                 "A / D MOVE",
-                "Hold D to create space.",
+                "Hold D for space.",
                 "MOVE RIGHT",
-                "Footwork sets up every shot, steal, and block.",
+                "Movement starts every play.",
                 "A / D");
             overlay.SetFocusRect(84f, 228f, 256f, 152f);
             overlay.SetTargetRect(222f, 350f, 76f, 22f);
@@ -298,8 +303,8 @@ namespace rimrush
             overlay.UpdateCopy(
                 "D, D DASH",
                 "Burst through the lane.",
-                "CROSS THE LANE FAST",
-                "Dash is the game's pace change. Tap twice quickly.",
+                "CROSS FAST",
+                "Two quick taps change pace.",
                 "D",
                 "D");
             overlay.SetFocusRect(152f, 224f, 332f, 160f);
@@ -328,9 +333,9 @@ namespace rimrush
                 1,
                 TotalSteps,
                 "W THEN B",
-                "Jump, then release in the air.",
+                "Jump, then shoot.",
                 "MAKE ONE JUMP SHOT",
-                "The top is best, but any air release teaches the rhythm.",
+                "Release before landing.",
                 "W",
                 "B");
             overlay.SetFocusRect(486f, 92f, 262f, 282f);
@@ -357,9 +362,9 @@ namespace rimrush
                 2,
                 TotalSteps,
                 "HOLD S FAKE",
-                "Make the defender jump.",
-                "BAIT, THEN SHOOT",
-                "Hold S to sell it. Let go and press B.",
+                "Make the defender bite.",
+                "FAKE, THEN SHOOT",
+                "Hold S. Let go. Press B.",
                 "S",
                 "B");
             overlay.SetFocusRect(216f, 208f, 262f, 170f);
@@ -381,9 +386,9 @@ namespace rimrush
                 3,
                 TotalSteps,
                 "GET CLOSE + B",
-                "Take the ball back.",
+                "Swipe the dribble.",
                 "STEAL ONE DRIBBLE",
-                "Defense starts by closing the space.",
+                "Close space before you press.",
                 "B");
             overlay.SetFocusRect(236f, 216f, 334f, 160f);
         }
@@ -395,10 +400,11 @@ namespace rimrush
             blockJumpIssued = false;
             blockShotIssued = false;
             blockAssistApplied = false;
+            blockJumpPromptShown = false;
             PrepareScriptedStep();
             core.TutorialResetScenario(
-                new Vector2(206f, rimrushObjectsData.PlayerIndentY),
-                new Vector2(612f, rimrushObjectsData.PlayerIndentY),
+                new Vector2(BlockDrillPlayerX, rimrushObjectsData.PlayerIndentY),
+                new Vector2(BlockDrillOpponentX, rimrushObjectsData.PlayerIndentY),
                 false,
                 true,
                 -1f,
@@ -406,12 +412,13 @@ namespace rimrush
             overlay.ShowStep(
                 4,
                 TotalSteps,
-                "W TO CONTEST",
-                "Jump before the shot leaves.",
-                "BLOCK OR ALTER ONE SHOT",
-                "Watch the shooter rise, then meet the release early.",
+                "STAY CLOSE + W",
+                "Jump as they rise.",
+                "CONTEST ONE SHOT",
+                "Stay attached. Press W when they lift.",
+                "A / D",
                 "W");
-            overlay.SetFocusRect(166f, 94f, 300f, 270f);
+            overlay.SetFocusRect(306f, 136f, 224f, 220f);
         }
 
         private void BeginSuper(bool fullIntro)
@@ -431,9 +438,9 @@ namespace rimrush
                 5,
                 TotalSteps,
                 "N SUPER",
-                "Trigger your signature move.",
+                "Use your signature.",
                 "USE THE CHARACTER SKILL",
-                "Supers are the character identity moment.",
+                "Supers flip momentum.",
                 "N");
             overlay.SetFocusRect(10f, 12f, 184f, 88f);
             overlay.SetEnergyPulse(true);
@@ -456,20 +463,16 @@ namespace rimrush
             overlay.ShowStep(
                 6,
                 TotalSteps,
-                "SHORT LIVE ROUND",
-                "Use the whole toolkit.",
+                "LIVE ROUND",
+                "Use any move.",
                 "PLAY ONE POSSESSION",
-                "Move, dash, shoot, fake, steal, block, or super. Make it yours.",
+                "Mix movement, shot, fake, steal, block, or super.",
                 "A / D",
                 "W",
                 "S",
                 "B",
                 "N");
-            overlay.ClearFocus();
-            overlay.SetTargetRect(0f, 0f, 0f, 0f);
-            overlay.SetApexRing(Vector2.zero, 0f, false);
-            overlay.SetEnergyPulse(false);
-            overlay.SetTrajectory(null);
+            ClearOverlayHighlights();
         }
 
         private void ResetStep(bool fullIntro)
@@ -484,6 +487,12 @@ namespace rimrush
         private void PrepareScriptedStep()
         {
             opponentController?.SetMode(rimrushTutorialOpponentMode.Scripted);
+            ClearOverlayHighlights();
+        }
+
+        private void ClearOverlayHighlights()
+        {
+            overlay.ClearFocus();
             overlay.SetApexRing(Vector2.zero, 0f, false);
             overlay.SetEnergyPulse(false);
             overlay.SetTargetRect(0f, 0f, 0f, 0f);
@@ -622,16 +631,28 @@ namespace rimrush
                 return;
             }
 
-            if (activeTimer >= 2.8f && !stepHintShown)
+            if (blockJumpIssued && !blockShotIssued && !blockJumpPromptShown)
             {
-                stepHintShown = true;
-                overlay.ShowFeedback("Jump into the arc.", new Color32(0xFF, 0xD1, 0x76, 0xFF), 0.95f);
+                blockJumpPromptShown = true;
+                overlay.UpdateCopy(
+                    "NOW W",
+                    "Meet the release.",
+                    "GO UP NOW",
+                    "Jump with the shooter.",
+                    "W");
+                overlay.ShowFeedback("Now. Press W.", new Color32(0xFF, 0xD1, 0x76, 0xFF), 0.8f);
             }
 
-            if (blockShotIssued && activeTimer >= 6.4f)
+            if (activeTimer >= 1.8f && !stepHintShown)
+            {
+                stepHintShown = true;
+                overlay.ShowFeedback("Stay close, then jump on the rise.", new Color32(0xFF, 0xD1, 0x76, 0xFF), 0.95f);
+            }
+
+            if (blockShotIssued && activeTimer >= BlockDrillRetryWindow)
             {
                 BeginBlock(false);
-                overlay.ShowFeedback("Jump as the shooter rises, not after the ball is gone.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), 1f);
+                overlay.ShowFeedback("Go earlier. Jump with the body, not after the ball.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), 1f);
             }
         }
 
@@ -676,9 +697,7 @@ namespace rimrush
             phase = TutorialPhase.SuccessPause;
             phaseTimer = SuccessPauseDuration;
             overlay.ShowFeedback(message, new Color32(0x9A, 0xFF, 0xDD, 0xFF), SuccessPauseDuration);
-            overlay.SetApexRing(Vector2.zero, 0f, false);
-            overlay.SetEnergyPulse(false);
-            overlay.SetTrajectory(null);
+            ClearOverlayHighlights();
         }
 
         private void AdvanceAfterSuccess()
@@ -743,7 +762,7 @@ namespace rimrush
                             "B IN THE AIR",
                             "Release before landing.",
                             "FINISH THE JUMP SHOT",
-                            "The highest point is the sweet spot. The tutorial accepts a clean air release.",
+                            "Peak timing is best. Clean air release counts.",
                             "B");
                         overlay.ShowFeedback("Now press B before landing.", new Color32(0xFF, 0xD1, 0x76, 0xFF), 0.85f);
                     }
@@ -830,6 +849,7 @@ namespace rimrush
 
             inventory.PendingTutorialNextAction = command switch
             {
+                rimrushTutorialOverlayCommand.ReturnToMenu => rimrushTutorialNextAction.None,
                 rimrushTutorialOverlayCommand.ReplayTutorial => rimrushTutorialNextAction.ReplayTutorial,
                 rimrushTutorialOverlayCommand.StartTraining => rimrushTutorialNextAction.StartTraining,
                 rimrushTutorialOverlayCommand.StartQuickMatch => rimrushTutorialNextAction.StartQuickMatch,
