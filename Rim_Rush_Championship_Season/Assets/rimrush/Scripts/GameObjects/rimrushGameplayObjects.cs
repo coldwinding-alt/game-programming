@@ -441,6 +441,18 @@ namespace rimrush
             gameCore.NotifyBallOthers();
         }
 
+        public void TutorialLaunchPutbackBounce(int scoringSide, float pickupLock)
+        {
+            var side = scoringSide == 1 ? 1 : -1;
+            var basketX = side == 1 ? rimrushObjectsData.BasketCenter : rimrushObjectsData.BasketCenter2;
+            var nearRimX = basketX + rimrushObjectsData.BasketRadius * side;
+            Side = side;
+            TutorialLaunchRebound(
+                new Vector2(nearRimX, rimrushObjectsData.BasketHeight - rimrushObjectsData.BallRadius - 2f),
+                new Vector2(42f * side, 360f),
+                pickupLock);
+        }
+
         /// <summary>
         /// Executes Take In Hands for the rimrushBallObject workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -2383,6 +2395,10 @@ namespace rimrush
         private const float TeamDepthStep = 0.01f;
         private const float PlayerDepthStep = 0.0025f;
         private const float ShadowDepthBiasScale = 0.25f;
+        private const float TutorialPutbackCatchWindowX = 112f;
+        private const float TutorialPutbackCatchWindowY = 132f;
+        private const float TutorialPutbackDunkYBonus = 48f;
+        private const float TutorialPutbackCompletionChance = 0.94f;
 
         private enum BlockPumpPhase
         {
@@ -2490,6 +2506,7 @@ namespace rimrush
         private bool tutorialPerfectShotPrimed;
         private bool tutorialPerfectDunkPrimed;
         private bool tutorialPutbackDunkPrimed;
+        private float tutorialDunkCompletionChanceOverride = -1f;
         private float tutorialAirMotionTimeScale = 1f;
         private bool tutorialJumpBlockAssist;
         private float flatScoreBonusTimer;
@@ -2535,6 +2552,25 @@ namespace rimrush
         public bool CanThrow => canThrow;
         public IBLPlayerController Controller => controller;
         private bool UsesHighlightedSkillShadow => skillDefinition.SkillType == rimrushCharacterSkillType.CarnivalJackpot && (scoreUpgradeActive || scoreUpgradePendingShot);
+
+        public void ApplyBonusSuperCharge(float amount)
+        {
+            if (amount <= 0f || readyForSuper || isSuperShot || superCoolDown <= 0f)
+            {
+                return;
+            }
+
+            superChargeTime = Mathf.Min(superCoolDown, superChargeTime + amount);
+            energyBar?.SetCharge(superChargeTime / superCoolDown);
+            if (superChargeTime >= superCoolDown)
+            {
+                readyForSuper = true;
+                if (IsHuman)
+                {
+                    rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PEnergy);
+                }
+            }
+        }
 
         /// <summary>
         /// Executes rimrush Player Object for the rimrushPlayerObject workflow.
@@ -2717,6 +2753,7 @@ namespace rimrush
             tutorialPerfectShotPrimed = false;
             tutorialPerfectDunkPrimed = false;
             tutorialPutbackDunkPrimed = false;
+            tutorialDunkCompletionChanceOverride = -1f;
             tutorialAirMotionTimeScale = 1f;
             tutorialJumpBlockAssist = false;
             flatScoreBonusTimer = 0f;
@@ -3119,12 +3156,13 @@ namespace rimrush
         public void TutorialPrimePerfectDunk()
         {
             tutorialPerfectDunkPrimed = true;
+            tutorialDunkCompletionChanceOverride = -1f;
         }
 
         public void TutorialPrimePutbackDunk()
         {
             tutorialPutbackDunkPrimed = true;
-            tutorialPerfectDunkPrimed = true;
+            tutorialDunkCompletionChanceOverride = Mathf.Max(tutorialDunkCompletionChanceOverride, TutorialPutbackCompletionChance);
         }
 
         public void TutorialSetAirMotionTimeScale(float scale)
@@ -4812,13 +4850,16 @@ namespace rimrush
             }
 
             var delta = ball.Position - Position;
-            if (Mathf.Abs(delta.x) > 96f || Mathf.Abs(delta.y) > 120f || Position.y > rimrushObjectsData.DunkZone2Y + 36f)
+            if (Mathf.Abs(delta.x) > TutorialPutbackCatchWindowX ||
+                Mathf.Abs(delta.y) > TutorialPutbackCatchWindowY ||
+                Position.y > rimrushObjectsData.DunkZone2Y + TutorialPutbackDunkYBonus)
             {
                 return false;
             }
 
             tutorialPutbackDunkPrimed = false;
-            tutorialPerfectDunkPrimed = true;
+            tutorialDunkCompletionChanceOverride = Mathf.Max(tutorialDunkCompletionChanceOverride, TutorialPutbackCompletionChance);
+            ball.RemoveFromPhysics();
             isDunking = true;
             canDoAction = false;
             canThrow = false;
@@ -4925,8 +4966,14 @@ namespace rimrush
             }
 
             dunkReleased = true;
-            var completionChance = tutorialPerfectDunkPrimed ? 1f : chanceToCompleteDunk;
+            var completionChance = tutorialPerfectDunkPrimed
+                ? 1f
+                : tutorialDunkCompletionChanceOverride >= 0f
+                    ? Mathf.Max(chanceToCompleteDunk, tutorialDunkCompletionChanceOverride)
+                    : chanceToCompleteDunk;
+            completionChance = Mathf.Clamp01(completionChance);
             tutorialPerfectDunkPrimed = false;
+            tutorialDunkCompletionChanceOverride = -1f;
             var completed = Random.value <= completionChance;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, completed ? 1 : 9, playerNo);
             GameCore.NotifyPlayersBallShot(Side, playerNo);
