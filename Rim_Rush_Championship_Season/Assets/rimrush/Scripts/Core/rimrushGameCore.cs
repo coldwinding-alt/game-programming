@@ -30,6 +30,9 @@ namespace rimrush
         private bool overtimePending;
         private bool runtimeResourcesReleased;
         private rimrushTutorialFlow tutorialFlow;
+        private rimrushAdventureLevelDefinition adventureLevel;
+        private rimrushAdventureMechanic lastAdventureCue = rimrushAdventureMechanic.BasicDuel;
+        private bool adventureCueWasActive;
 
         public rimrushBallObject Ball { get; private set; }
         public rimrushMatchData MatchData => rimrushInventory.Instance.MatchData;
@@ -164,6 +167,8 @@ namespace rimrush
             }
 
             var gameplayDt = tutorialFlow != null ? dt * tutorialFlow.GameplayTimeScale : dt;
+            gameplayDt *= GetAdventureGameplayTimeScale();
+            UpdateAdventureMechanics(gameplayDt);
 
             basketLeft.Update(gameplayDt);
             basketRight.Update(gameplayDt);
@@ -182,7 +187,8 @@ namespace rimrush
             {
                 if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
                 {
-                    if (rimrushInventory.Instance.IsTournamentActive)
+                    var inventory = rimrushInventory.Instance;
+                    if (inventory.IsTournamentActive || inventory.IsAdventureActive)
                     {
                         AdvanceFlowRequested = true;
                     }
@@ -233,6 +239,7 @@ namespace rimrush
 
             if (waitingForBallAfterBuzzer)
             {
+                ApplyAdventureBallWind(gameplayDt);
                 Ball.Update(gameplayDt, basketLeft, basketRight);
                 TryBlockBall();
                 if (HasWaitingBallResolved())
@@ -243,6 +250,7 @@ namespace rimrush
                 return;
             }
 
+            ApplyAdventureBallWind(gameplayDt);
             Ball.Update(gameplayDt, basketLeft, basketRight);
             foreach (var player in playersLeft)
             {
@@ -285,6 +293,7 @@ namespace rimrush
             var teamIndex = scoringSide == -1 ? 0 : 1;
             var fallbackPoints = IsThreePointer(scoringSide) ? 3 : 2;
             var points = MatchProcessor.ResolvePointsForScore(scoringSide, fallbackPoints);
+            var adventureScoreNotice = ResolveAdventureScoreModifier(ref points);
             var scoringPlayer = FindPlayerBySideAndPlayerNo(MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
             string scoreNotice = null;
             if (scoringPlayer != null)
@@ -304,6 +313,10 @@ namespace rimrush
                 if (!string.IsNullOrEmpty(scoreNotice))
                 {
                     hud.ShowMessage($"{scoreNotice} {points}!", 1.28f, false);
+                }
+                else if (!string.IsNullOrEmpty(adventureScoreNotice))
+                {
+                    hud.ShowMessage(adventureScoreNotice, 1.28f, false);
                 }
                 else if (points >= 4)
                 {
@@ -775,7 +788,11 @@ namespace rimrush
         /// <param name="regularTime">Input value used by this step of the workflow.</param>
         private void StartMatch(bool regularTime)
         {
-            var gameMode = rimrushInventory.Instance.GameMode;
+            var inventory = rimrushInventory.Instance;
+            var gameMode = inventory.GameMode;
+            adventureLevel = inventory.IsAdventureActive ? inventory.Adventure.CurrentLevel : null;
+            lastAdventureCue = rimrushAdventureMechanic.BasicDuel;
+            adventureCueWasActive = false;
             isTraining = gameMode == rimrushGameModeIds.Training || gameMode == rimrushGameModeIds.Tutorial;
             isPlaying = isTraining;
             isPaused = false;
@@ -804,6 +821,10 @@ namespace rimrush
             if (preMatchCountdown)
             {
                 hud.StartCountdown(3f, "TIP OFF IN");
+                if (adventureLevel != null)
+                {
+                    hud.ShowMessage(adventureLevel.MechanicTitle, 1.25f, false);
+                }
             }
             else
             {
@@ -1035,6 +1056,179 @@ namespace rimrush
             hud.StartCountdown(3f, "OVERTIME IN");
         }
 
+        private float GetAdventureGameplayTimeScale()
+        {
+            if (adventureLevel == null || !isPlaying)
+            {
+                return 1f;
+            }
+
+            var mechanic = GetActiveAdventureMechanic();
+            return mechanic == rimrushAdventureMechanic.BloodMoon && IsAdventureMechanicCurrentlyActive(mechanic)
+                ? 1.14f
+                : 1f;
+        }
+
+        private void UpdateAdventureMechanics(float dt)
+        {
+            if (adventureLevel == null || isTraining || !isPlaying)
+            {
+                return;
+            }
+
+            var mechanic = GetActiveAdventureMechanic();
+            var active = IsAdventureMechanicCurrentlyActive(mechanic);
+            if (active && (!adventureCueWasActive || mechanic != lastAdventureCue))
+            {
+                hud.ShowMessage(GetAdventureMechanicCue(mechanic), 1.15f, false);
+            }
+
+            lastAdventureCue = mechanic;
+            adventureCueWasActive = active;
+            if (!active)
+            {
+                return;
+            }
+
+            switch (mechanic)
+            {
+                case rimrushAdventureMechanic.CandyCharge:
+                    ApplyAdventureBonusCharge(playersLeft, dt * 0.72f);
+                    break;
+                case rimrushAdventureMechanic.CandleCircle:
+                    ApplyAdventureBonusCharge(playersLeft, dt * 0.34f);
+                    ApplyAdventureBonusCharge(playersRight, dt * 0.26f);
+                    break;
+            }
+        }
+
+        private void ApplyAdventureBallWind(float dt)
+        {
+            if (adventureLevel == null || Ball == null)
+            {
+                return;
+            }
+
+            var mechanic = GetActiveAdventureMechanic();
+            if (mechanic != rimrushAdventureMechanic.FogWind || !IsAdventureMechanicCurrentlyActive(mechanic))
+            {
+                return;
+            }
+
+            if (Ball.State != "shooting" && Ball.State != "basket" && Ball.State != "block" && Ball.State != "alleyOop")
+            {
+                return;
+            }
+
+            var direction = Mathf.Sin((matchTime + 0.7f) * 1.35f) >= 0f ? 1f : -1f;
+            Ball.Velocity.x += direction * 42f * dt;
+        }
+
+        private string ResolveAdventureScoreModifier(ref int points)
+        {
+            if (adventureLevel == null)
+            {
+                return null;
+            }
+
+            var mechanic = GetActiveAdventureMechanic();
+            if (!IsAdventureMechanicCurrentlyActive(mechanic))
+            {
+                return null;
+            }
+
+            if (mechanic == rimrushAdventureMechanic.DoubleHoop)
+            {
+                points *= 2;
+                return $"DOUBLE RIM {points}!";
+            }
+
+            if (mechanic == rimrushAdventureMechanic.HarvestTime)
+            {
+                points += 1;
+                return $"HARVEST +1 {points}!";
+            }
+
+            return null;
+        }
+
+        private rimrushAdventureMechanic GetActiveAdventureMechanic()
+        {
+            if (adventureLevel == null)
+            {
+                return rimrushAdventureMechanic.BasicDuel;
+            }
+
+            if (adventureLevel.Mechanic != rimrushAdventureMechanic.MoonLanternMix)
+            {
+                return adventureLevel.Mechanic;
+            }
+
+            var phase = Mathf.FloorToInt(matchTime / 10f) % 4;
+            switch (phase)
+            {
+                case 0:
+                    return rimrushAdventureMechanic.CandyCharge;
+                case 1:
+                    return rimrushAdventureMechanic.DoubleHoop;
+                case 2:
+                    return rimrushAdventureMechanic.FogWind;
+                default:
+                    return rimrushAdventureMechanic.BloodMoon;
+            }
+        }
+
+        private bool IsAdventureMechanicCurrentlyActive(rimrushAdventureMechanic mechanic)
+        {
+            switch (mechanic)
+            {
+                case rimrushAdventureMechanic.BasicDuel:
+                    return true;
+                case rimrushAdventureMechanic.DoubleHoop:
+                    return Mathf.Repeat(matchTime, 18f) < 7f;
+                case rimrushAdventureMechanic.BloodMoon:
+                    return Mathf.Repeat(matchTime, 20f) < 8f;
+                case rimrushAdventureMechanic.HarvestTime:
+                    return RemainingMatchTime <= 15f;
+                default:
+                    return true;
+            }
+        }
+
+        private static string GetAdventureMechanicCue(rimrushAdventureMechanic mechanic)
+        {
+            switch (mechanic)
+            {
+                case rimrushAdventureMechanic.CandyCharge:
+                    return "CANDY CHARGE";
+                case rimrushAdventureMechanic.DoubleHoop:
+                    return "DOUBLE RIM";
+                case rimrushAdventureMechanic.CandleCircle:
+                    return "CANDLE RING";
+                case rimrushAdventureMechanic.FogWind:
+                    return "FOG WIND";
+                case rimrushAdventureMechanic.BloodMoon:
+                    return "BLOOD MOON";
+                case rimrushAdventureMechanic.HarvestTime:
+                    return "HARVEST TIME";
+                default:
+                    return "WARDEN DUEL";
+            }
+        }
+
+        private static void ApplyAdventureBonusCharge(IReadOnlyList<rimrushPlayerObject> players, float amount)
+        {
+            if (players == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                players[i]?.ApplyBonusSuperCharge(amount);
+            }
+        }
+
         /// <summary>
         /// Executes Is Ball In Game for the rimrushGameCore workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -1195,6 +1389,10 @@ namespace rimrush
             else if (inventory.IsTournamentActive)
             {
                 inventory.MatchData.StartTournamentMatch(inventory.Tournament, inventory.SelectedTournamentBallSelection);
+            }
+            else if (inventory.IsAdventureActive)
+            {
+                inventory.MatchData.StartAdventureMatch(inventory.Adventure);
             }
             else if (inventory.GameMode == rimrushGameModeIds.QuickMatch)
             {

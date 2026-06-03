@@ -38,6 +38,16 @@ namespace rimrush
                 public const string AwardsPodiumBase = "UI/awards_podium_base";
             }
 
+            public static class Story
+            {
+                public const string AdventureComicPage01 = "Story/adventure_comic_page_01";
+                public const string AdventureComicPage02 = "Story/adventure_comic_page_02";
+                public const string AdventureComicPage03 = "Story/adventure_comic_page_03";
+                public const string TournamentComicPage01 = "Story/tournament_comic_page_01";
+                public const string TournamentComicPage02 = "Story/tournament_comic_page_02";
+                public const string TournamentComicPage03 = "Story/tournament_comic_page_03";
+            }
+
             public static class SkillFxImages
             {
                 public const string ReaperDashCore = "SkillFx/reaper_dash_core";

@@ -13,6 +13,10 @@ namespace rimrush
         {
             PlayerCount,
             MatchType,
+            StoryIntro,
+            AdventurePreview,
+            AdventureMap,
+            AdventureResult,
             SinglePlayerSetup,
             TwoPlayerSetup,
             TrainingSetup,
@@ -165,6 +169,21 @@ namespace rimrush
         private const float MenuHelpButtonX = 706f;
         private const float MenuTopButtonSize = 60f;
         private const float MenuTopIconPixels = 58f;
+        private const float SinglePlayerModeCardY = 302f;
+        private const float SinglePlayerModeCardWidth = 306f;
+        private const float SinglePlayerModeCardHeight = 242f;
+        private const float SinglePlayerModeLeftCardX = 238f;
+        private const float SinglePlayerModeRightCardX = 562f;
+        private const float StoryPanelX = rimrushConstants.Width2;
+        private const float StoryPanelY = 260f;
+        private const float StoryPanelWidth = 610f;
+        private const float StoryPanelHeight = 264f;
+        private const float StoryCinematicWidth = rimrushConstants.Width;
+        private const float StoryCinematicHeight = 480f;
+        private const float StoryCinematicPageSeconds = 5.4f;
+        private const float StoryCinematicFadeSeconds = 0.42f;
+        private const float StoryCinematicPanPixels = 14f;
+        private const float StoryCinematicZoomAmount = 0.035f;
         private const float LegacyMenuBackgroundWidth = 1398f;
         private const float LegacyMenuBackgroundHeight = 480f;
         private const float LegacyTintPanelSourcePixels = 10f;
@@ -205,6 +224,15 @@ namespace rimrush
         private bool usingNativeUiPresentation;
         private int viewportScreenWidth = -1;
         private int viewportScreenHeight = -1;
+        private rimrushSinglePlayerNarrativeMode storyIntroMode = rimrushSinglePlayerNarrativeMode.Adventure;
+        private int storyIntroPanelIndex;
+        private System.Action storyIntroContinueAction;
+        private System.Action storyIntroCancelAction;
+        private float storyIntroElapsed;
+        private GameObject storyIntroImageObject;
+        private Vector3 storyIntroImageBaseScale;
+        private SpriteRenderer storyIntroImageRenderer;
+        private int adventureSelectedLevelIndex;
 
         /// <summary>
         /// Executes Awake for the TournamentStandingsRowViewModel workflow.
@@ -280,8 +308,18 @@ namespace rimrush
                 gameCore.Update(Time.deltaTime);
                 if (gameCore.AdvanceFlowRequested)
                 {
+                    var inventory = rimrushInventory.Instance;
+                    if (inventory.IsAdventureActive)
+                    {
+                        var playerWon = inventory.MatchData.WhoWins() < 0;
+                        ClearRuntime();
+                        inventory.AdvanceAdventure(playerWon);
+                        ShowAdventureResult(playerWon);
+                        return;
+                    }
+
                     ClearRuntime();
-                    rimrushInventory.Instance.AdvanceTournament();
+                    inventory.AdvanceTournament();
                     ShowTournamentBracket();
                     return;
                 }
@@ -290,7 +328,14 @@ namespace rimrush
                 {
                     var inventory = rimrushInventory.Instance;
                     var tournamentWasActive = inventory.IsTournamentActive;
+                    var adventureWasActive = inventory.IsAdventureActive;
                     ClearRuntime();
+                    if (adventureWasActive)
+                    {
+                        ShowAdventureMap();
+                        return;
+                    }
+
                     if (tournamentWasActive)
                     {
                         inventory.AbandonTournament();
@@ -319,6 +364,11 @@ namespace rimrush
 
             UpdateTournamentAwardsSequence(Time.deltaTime);
             RefreshNativeMenuViewport();
+
+            if (currentScreen == rimrushBootstrapScreen.StoryIntro && UpdateStoryIntroCinematic(Time.deltaTime))
+            {
+                return;
+            }
 
             for (var i = 0; i < menuButtons.Count; i++)
             {
@@ -364,6 +414,12 @@ namespace rimrush
                 case rimrushBootstrapScreen.MatchType:
                     ShowPlayerCountMenu();
                     break;
+                case rimrushBootstrapScreen.StoryIntro:
+                    CancelSinglePlayerStoryIntro();
+                    break;
+                case rimrushBootstrapScreen.AdventurePreview:
+                case rimrushBootstrapScreen.AdventureMap:
+                case rimrushBootstrapScreen.AdventureResult:
                 case rimrushBootstrapScreen.SinglePlayerSetup:
                 case rimrushBootstrapScreen.TournamentSetup:
                     ShowMatchTypeMenu();
@@ -422,13 +478,814 @@ namespace rimrush
             currentScreen = rimrushBootstrapScreen.MatchType;
             pendingParticipantMode = rimrushParticipantMode.OnePlayer;
             BeginMenuScreen(true, false, "bg10000");
-            AddTitle("MATCH TYPE", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            AddTitle("1 PLAYER", 126f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            AddSubtitle("CHOOSE YOUR SOLO ROUTE", 162f, 15);
 
-            CreatePanel("ModePanel", rimrushConstants.Width2, 326f, 320f, 254f, 8, new Color(0.05f, 0.08f, 0.1f, 0.74f));
+            CreateSinglePlayerModeCard(
+                "Adventure",
+                rimrushSinglePlayerNarrative.Adventure,
+                SinglePlayerModeLeftCardX,
+                new Color(0.08f, 0.13f, 0.16f, 0.86f),
+                new Color32(0xFF, 0x9F, 0x32, 0xFF),
+                "Win duels, reclaim Sigils,",
+                "and reopen the locked park.",
+                "VIEW ROUTE",
+                ShowAdventureStoryIntro);
 
-            menuButtons.Add(new rimrushMenuButton("TOURNAMENT", rimrushConstants.Width2, 312f, 246f, 52f, ShowTournamentSetup, runtimeRoot));
-            menuButtons.Add(new rimrushMenuButton("QUICK MATCH", rimrushConstants.Width2, 372f, 246f, 52f, ShowSinglePlayerSetup, runtimeRoot));
-            menuButtons.Add(new rimrushMenuButton("BACK", rimrushConstants.Width2, 432f, 200f, 46f, ShowPlayerCountMenu, runtimeRoot));
+            CreateSinglePlayerModeCard(
+                "Tournament",
+                rimrushSinglePlayerNarrative.Tournament,
+                SinglePlayerModeRightCardX,
+                new Color(0.07f, 0.09f, 0.2f, 0.86f),
+                new Color32(0x78, 0xE7, 0xFF, 0xFF),
+                "Play divisions, reach finals,",
+                "and claim the Moon Lantern Cup.",
+                "ENTER CUP",
+                ShowTournamentStoryIntro);
+
+            menuButtons.Add(new rimrushMenuButton("BACK", rimrushConstants.Width2, 442f, 180f, 42f, ShowPlayerCountMenu, runtimeRoot));
+        }
+
+        private void ShowAdventureStoryIntro()
+        {
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Adventure, ShowAdventureMap);
+        }
+
+        private void ShowTournamentStoryIntro()
+        {
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Tournament, ShowTournamentSetup);
+        }
+
+        private void ShowSinglePlayerStoryIntro(
+            rimrushSinglePlayerNarrativeMode mode,
+            System.Action continueAction,
+            System.Action cancelAction = null)
+        {
+            storyIntroMode = mode;
+            storyIntroPanelIndex = 0;
+            storyIntroContinueAction = continueAction;
+            storyIntroCancelAction = cancelAction ?? ShowMatchTypeMenu;
+            ShowSinglePlayerStoryIntroPanel();
+        }
+
+        private void ShowSinglePlayerStoryIntroPanel()
+        {
+            var mode = rimrushSinglePlayerNarrative.GetMode(storyIntroMode);
+            var panels = mode.OpeningComic;
+            if (panels == null || panels.Length == 0)
+            {
+                ContinueSinglePlayerStoryIntro();
+                return;
+            }
+
+            storyIntroPanelIndex = Mathf.Clamp(storyIntroPanelIndex, 0, panels.Length - 1);
+            var panel = panels[storyIntroPanelIndex];
+            var isAdventure = storyIntroMode == rimrushSinglePlayerNarrativeMode.Adventure;
+            var accentColor = isAdventure
+                ? new Color32(0xFF, 0xA6, 0x39, 0xFF)
+                : new Color32(0x78, 0xE7, 0xFF, 0xFF);
+            var backgroundFrame = isAdventure ? "bg10000" : "bg2blue0000";
+
+            currentScreen = rimrushBootstrapScreen.StoryIntro;
+            BeginMenuScreen(false, false, backgroundFrame);
+            storyIntroElapsed = 0f;
+            storyIntroImageObject = null;
+            storyIntroImageRenderer = null;
+            storyIntroImageBaseScale = Vector3.one;
+
+            if (!CreateStoryIntroComicImage(panel))
+            {
+                CreateStoryIntroFallbackPanel(panel, accentColor);
+            }
+
+            CreatePanel("StoryIntroTopShade", rimrushConstants.Width2, 45f, rimrushConstants.Width, 90f, 21, new Color(0.01f, 0.02f, 0.04f, 0.62f));
+            CreatePanel("StoryIntroCaptionShade", rimrushConstants.Width2, 401f, rimrushConstants.Width, 88f, 21, new Color(0.01f, 0.02f, 0.04f, 0.74f));
+            AddTitle(mode.MenuTitle, 30f, 24, accentColor);
+            AddSubtitle($"{mode.ModeName} OPENING  {storyIntroPanelIndex + 1}/{panels.Length}", 64f, 11);
+            CreateMenuText(
+                "StoryIntroPanelLabel",
+                $"COMIC PAGE {storyIntroPanelIndex + 1:00}",
+                StoryPanelX,
+                360f,
+                12,
+                accentColor,
+                TextAnchor.MiddleCenter,
+                24,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "StoryIntroCaption",
+                panel.Caption,
+                StoryPanelX,
+                386f,
+                16,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                24,
+                rimrushTextStyle.TournamentBody);
+
+            CreateStoryIntroProgressDots(panels.Length, accentColor);
+
+            menuButtons.Add(new rimrushMenuButton(storyIntroPanelIndex == 0 ? "BACK" : "PREV", 188f, 452f, 150f, 42f, BackSinglePlayerStoryIntro, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("SKIP", rimrushConstants.Width2, 452f, 150f, 42f, ContinueSinglePlayerStoryIntro, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton(storyIntroPanelIndex >= panels.Length - 1 ? "START" : "NEXT", 612f, 452f, 150f, 42f, AdvanceSinglePlayerStoryIntro, runtimeRoot));
+        }
+
+        private bool CreateStoryIntroComicImage(rimrushStoryPanelDefinition panel)
+        {
+            if (panel == null || string.IsNullOrEmpty(panel.ImageKey))
+            {
+                return false;
+            }
+
+            var texture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(panel.ImageKey));
+            if (texture == null)
+            {
+                return false;
+            }
+
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            storyIntroImageObject = rimrushRender.Image(
+                "StoryIntroComicPage",
+                texture,
+                rimrushConstants.Width2,
+                StoryCinematicHeight * 0.5f,
+                0.5f,
+                0.5f,
+                12,
+                runtimeRoot);
+
+            var coverScale = Mathf.Max(
+                StoryCinematicWidth / Mathf.Max(1f, texture.width),
+                StoryCinematicHeight / Mathf.Max(1f, texture.height));
+            storyIntroImageBaseScale = Vector3.one * rimrushConstants.UnitsPerPixel * coverScale;
+            storyIntroImageBaseScale.z = 1f;
+            storyIntroImageRenderer = storyIntroImageObject.GetComponent<SpriteRenderer>();
+            if (storyIntroImageRenderer != null)
+            {
+                storyIntroImageRenderer.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            SetStoryIntroImageTransform(0f, 1f);
+            return true;
+        }
+
+        private void CreateStoryIntroFallbackPanel(rimrushStoryPanelDefinition panel, Color accentColor)
+        {
+            CreatePanel("StoryIntroBackdrop", StoryPanelX, StoryPanelY, StoryPanelWidth, StoryPanelHeight, 8, new Color(0.03f, 0.05f, 0.08f, 0.86f));
+            CreatePanel("StoryIntroImageSlot", StoryPanelX, 214f, StoryPanelWidth - 72f, 150f, 9, new Color(0.08f, 0.12f, 0.16f, 0.94f));
+            CreatePanel("StoryIntroImageAccent", StoryPanelX, 139f, StoryPanelWidth - 92f, 8f, 10, accentColor);
+            CreateMenuText(
+                "StoryIntroArtDirectionFallback",
+                panel != null ? panel.ArtDirection : "Comic page art is loading.",
+                StoryPanelX,
+                244f,
+                12,
+                new Color32(0xC8, 0xDD, 0xE8, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+        }
+
+        private bool UpdateStoryIntroCinematic(float deltaTime)
+        {
+            if (storyIntroImageObject == null)
+            {
+                return false;
+            }
+
+            storyIntroElapsed += Mathf.Max(0f, deltaTime);
+            var normalized = Mathf.Clamp01(storyIntroElapsed / StoryCinematicPageSeconds);
+            var eased = Mathf.SmoothStep(0f, 1f, normalized);
+            var fade = Mathf.Clamp01(storyIntroElapsed / StoryCinematicFadeSeconds);
+            SetStoryIntroImageTransform(eased, 1f + StoryCinematicZoomAmount * eased);
+
+            if (storyIntroImageRenderer != null)
+            {
+                storyIntroImageRenderer.color = new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, fade));
+            }
+
+            return false;
+        }
+
+        private void SetStoryIntroImageTransform(float normalized, float zoom)
+        {
+            if (storyIntroImageObject == null)
+            {
+                return;
+            }
+
+            var direction = storyIntroPanelIndex % 2 == 0 ? 1f : -1f;
+            var panX = Mathf.Lerp(-StoryCinematicPanPixels, StoryCinematicPanPixels, normalized) * direction;
+            var panY = Mathf.Sin(normalized * Mathf.PI) * 4f;
+            storyIntroImageObject.transform.position = rimrushConstants.PixelToWorldSnapped(
+                rimrushConstants.Width2 + panX,
+                StoryCinematicHeight * 0.5f + panY,
+                0f);
+            storyIntroImageObject.transform.localScale = storyIntroImageBaseScale * zoom;
+            storyIntroImageObject.transform.localScale = new Vector3(
+                storyIntroImageObject.transform.localScale.x,
+                storyIntroImageObject.transform.localScale.y,
+                1f);
+        }
+
+        private void CreateStoryIntroProgressDots(int panelCount, Color accentColor)
+        {
+            var totalWidth = Mathf.Max(0f, (panelCount - 1) * 30f);
+            var startX = rimrushConstants.Width2 - totalWidth * 0.5f;
+            for (var i = 0; i < panelCount; i++)
+            {
+                var active = i == storyIntroPanelIndex;
+                CreatePanel(
+                    $"StoryIntroDot_{i}",
+                    startX + i * 30f,
+                    423f,
+                    active ? 22f : 14f,
+                    8f,
+                    24,
+                    active ? accentColor : new Color(0.34f, 0.48f, 0.56f, 0.72f));
+            }
+        }
+
+        private void BackSinglePlayerStoryIntro()
+        {
+            if (storyIntroPanelIndex > 0)
+            {
+                storyIntroPanelIndex--;
+                ShowSinglePlayerStoryIntroPanel();
+                return;
+            }
+
+            CancelSinglePlayerStoryIntro();
+        }
+
+        private void AdvanceSinglePlayerStoryIntro()
+        {
+            var mode = rimrushSinglePlayerNarrative.GetMode(storyIntroMode);
+            var panelCount = mode.OpeningComic != null ? mode.OpeningComic.Length : 0;
+            if (storyIntroPanelIndex < panelCount - 1)
+            {
+                storyIntroPanelIndex++;
+                ShowSinglePlayerStoryIntroPanel();
+                return;
+            }
+
+            ContinueSinglePlayerStoryIntro();
+        }
+
+        private void ContinueSinglePlayerStoryIntro()
+        {
+            var continueAction = storyIntroContinueAction;
+            storyIntroContinueAction = null;
+            storyIntroCancelAction = null;
+            if (continueAction != null)
+            {
+                continueAction();
+                return;
+            }
+
+            ShowMatchTypeMenu();
+        }
+
+        private void CancelSinglePlayerStoryIntro()
+        {
+            var cancelAction = storyIntroCancelAction;
+            storyIntroContinueAction = null;
+            storyIntroCancelAction = null;
+            if (cancelAction != null)
+            {
+                cancelAction();
+                return;
+            }
+
+            ShowMatchTypeMenu();
+        }
+
+        private void ShowAdventureComicReplay()
+        {
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Adventure, ShowAdventureMap, ShowAdventureMap);
+        }
+
+        private void ShowTournamentSetupComicReplay()
+        {
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Tournament, ShowTournamentSetup, ShowTournamentSetup);
+        }
+
+        private void ShowTournamentBracketComicReplay()
+        {
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Tournament, ShowTournamentBracket, ShowTournamentBracket);
+        }
+
+        private void ShowAdventurePreview()
+        {
+            currentScreen = rimrushBootstrapScreen.AdventurePreview;
+            pendingParticipantMode = rimrushParticipantMode.OnePlayer;
+            rimrushInventory.Instance.SetParticipantMode(pendingParticipantMode);
+            BeginMenuScreen(false, false, "bg10000");
+            AddTitle(rimrushSinglePlayerNarrative.Adventure.MenuTitle, 54f, 30, new Color32(0xFF, 0xB6, 0x45, 0xFF));
+            AddSubtitle(rimrushSinglePlayerNarrative.Adventure.Subtitle, 90f, 14);
+
+            CreatePanel("AdventurePreviewPanel", rimrushConstants.Width2, 274f, 590f, 276f, 8, new Color(0.04f, 0.07f, 0.1f, 0.84f));
+            CreatePanel("AdventurePreviewAccent", rimrushConstants.Width2, 149f, 520f, 8f, 9, new Color(1f, 0.55f, 0.18f, 0.92f));
+            CreateMenuText(
+                "AdventurePreviewStatus",
+                rimrushSinglePlayerNarrative.AdventurePreviewStatus,
+                rimrushConstants.Width2,
+                188f,
+                18,
+                new Color32(0xFF, 0xCF, 0x75, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "AdventurePreviewObjective",
+                "Goal: win 1v1 duels, collect Lantern Sigils, and escape before dawn.",
+                rimrushConstants.Width2,
+                236f,
+                13,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventurePreviewLoop",
+                "Next build step: park map, locked routes, and the first Warden gate.",
+                rimrushConstants.Width2,
+                276f,
+                13,
+                new Color32(0xCC, 0xE5, 0xF0, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventurePreviewSafeRoute",
+                "Use Quick Duel only as a temporary 1v1 practice path until Adventure flow lands.",
+                rimrushConstants.Width2,
+                316f,
+                12,
+                new Color32(0xFF, 0xD8, 0x9E, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+
+            menuButtons.Add(new rimrushMenuButton("BACK", 220f, 452f, 180f, 42f, ShowMatchTypeMenu, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("QUICK DUEL", 580f, 452f, 200f, 42f, ShowSinglePlayerSetup, runtimeRoot));
+        }
+
+        private void ShowAdventureMap()
+        {
+            currentScreen = rimrushBootstrapScreen.AdventureMap;
+            pendingParticipantMode = rimrushParticipantMode.OnePlayer;
+            var inventory = rimrushInventory.Instance;
+            inventory.SetParticipantMode(pendingParticipantMode);
+            if (!inventory.IsAdventureActive)
+            {
+                inventory.BeginAdventure(quickCharacterId);
+            }
+
+            var adventure = inventory.Adventure;
+            if (adventure.Completed)
+            {
+                adventureSelectedLevelIndex = Mathf.Max(0, adventure.LastResolvedLevelIndex);
+            }
+            else if (!adventure.IsLevelUnlocked(adventureSelectedLevelIndex))
+            {
+                adventureSelectedLevelIndex = adventure.CurrentLevelIndex;
+            }
+
+            BeginMenuScreen(false, false, "bg10000");
+            AddTitle(rimrushSinglePlayerNarrative.Adventure.MenuTitle, 42f, 29, new Color32(0xFF, 0xB6, 0x45, 0xFF));
+            AddSubtitle(
+                adventure.Completed
+                    ? "PARK GATE OPEN"
+                    : $"SIGILS {adventure.SigilsCollected}/{rimrushAdventureCatalog.LevelCount}",
+                78f,
+                15);
+
+            CreatePanel("AdventureMapBackdrop", 328f, 258f, 622f, 306f, 8, new Color(0.02f, 0.04f, 0.07f, 0.54f));
+            CreatePanel("AdventureMapRoutePanel", 328f, 258f, 580f, 252f, 9, new Color(0.06f, 0.09f, 0.11f, 0.74f));
+            CreateMenuText(
+                "AdventureCupLink",
+                rimrushSinglePlayerNarrative.AdventureLinkToCup,
+                328f,
+                106f,
+                10,
+                new Color32(0xD8, 0xE6, 0xF0, 0xFF),
+                TextAnchor.MiddleCenter,
+                18,
+                rimrushTextStyle.TournamentBody);
+            CreateAdventureRouteMap(adventure);
+            CreateAdventureLevelPoster(adventure, adventureSelectedLevelIndex);
+
+            if (adventure.Completed)
+            {
+                menuButtons.Add(new rimrushMenuButton("MAIN MENU", 156f, 452f, 164f, 42f, ShowPlayerCountMenu, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 400f, 452f, 176f, 42f, ShowAdventureComicReplay, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton("RESET ROUTE", 640f, 452f, 190f, 42f, ResetAdventureRoute, runtimeRoot));
+                return;
+            }
+
+            menuButtons.Add(new rimrushMenuButton("BACK", 124f, 452f, 132f, 42f, ShowMatchTypeMenu, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("RESET", 272f, 452f, 132f, 42f, ResetAdventureRoute, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 444f, 452f, 160f, 42f, ShowAdventureComicReplay, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("PLAY LEVEL", 656f, 452f, 188f, 42f, StartAdventureLevelFlow, runtimeRoot));
+        }
+
+        private void CreateAdventureRouteMap(rimrushAdventureData adventure)
+        {
+            var levels = rimrushAdventureCatalog.AllLevels;
+            for (var i = 1; i < levels.Length; i++)
+            {
+                var previous = levels[i - 1];
+                var current = levels[i];
+                var unlocked = adventure.IsLevelUnlocked(i);
+                CreateAdventureConnector(previous.MapX, previous.MapY, current.MapX, current.MapY, unlocked);
+            }
+
+            for (var i = 0; i < levels.Length; i++)
+            {
+                var level = levels[i];
+                var unlocked = adventure.IsLevelUnlocked(i);
+                var completed = adventure.IsLevelCompleted(i);
+                var selected = i == adventureSelectedLevelIndex;
+                var color = completed
+                    ? new Color(0.18f, 0.78f, 0.46f, 0.92f)
+                    : unlocked
+                        ? new Color(1f, 0.58f, 0.2f, 0.94f)
+                        : new Color(0.22f, 0.27f, 0.34f, 0.86f);
+                if (selected)
+                {
+                    CreatePanel($"AdventureNodeSelect_{i}", level.MapX, level.MapY, 62f, 50f, 13, new Color(1f, 0.92f, 0.52f, 0.44f));
+                }
+
+                if (unlocked && !adventure.Completed)
+                {
+                    var capturedIndex = i;
+                    menuButtons.Add(new rimrushMenuButton(completed ? "OK" : (i + 1).ToString("00"), level.MapX, level.MapY, 46f, 36f, () =>
+                    {
+                        adventureSelectedLevelIndex = capturedIndex;
+                        ShowAdventureMap();
+                    }, runtimeRoot));
+                }
+                else
+                {
+                    CreatePanel($"AdventureNode_{i}", level.MapX, level.MapY, 46f, 36f, 14, color);
+                    CreateMenuText(
+                        $"AdventureNodeText_{i}",
+                        completed ? "OK" : (i + 1).ToString("00"),
+                        level.MapX,
+                        level.MapY + 1f,
+                        13,
+                        Color.white,
+                        TextAnchor.MiddleCenter,
+                        15,
+                        rimrushTextStyle.TournamentAccent);
+                }
+
+                CreateMenuText(
+                    $"AdventureNodeLabel_{i}",
+                    ShortAdventureAreaName(level.AreaName),
+                    level.MapX,
+                    level.MapY + 31f,
+                    9,
+                    unlocked ? Color.white : new Color32(0x9D, 0xAD, 0xB8, 0xFF),
+                    TextAnchor.MiddleCenter,
+                    15,
+                    rimrushTextStyle.TournamentBody);
+            }
+        }
+
+        private void CreateAdventureConnector(float startX, float startY, float endX, float endY, bool unlocked)
+        {
+            var midX = (startX + endX) * 0.5f;
+            var color = unlocked
+                ? new Color(1f, 0.66f, 0.24f, 0.74f)
+                : new Color(0.32f, 0.52f, 0.58f, 0.28f);
+            CreatePanel($"AdventureConnectorA_{startX}_{endX}", midX, startY, Mathf.Abs(endX - startX), 5f, 10, color);
+            CreatePanel($"AdventureConnectorB_{startY}_{endY}", endX, (startY + endY) * 0.5f, 5f, Mathf.Abs(endY - startY), 10, color);
+        }
+
+        private void CreateAdventureLevelPoster(rimrushAdventureData adventure, int selectedLevelIndex)
+        {
+            var level = rimrushAdventureCatalog.GetLevel(selectedLevelIndex);
+            var unlocked = adventure.IsLevelUnlocked(selectedLevelIndex);
+            var completed = adventure.IsLevelCompleted(selectedLevelIndex);
+            const float posterX = 640f;
+            CreateFramedPanel(
+                "AdventurePosterFrame",
+                selectedLevelIndex == adventure.CurrentLevelIndex && !completed ? "MatchBack0002" : "MatchBack0001",
+                posterX,
+                260f,
+                244f,
+                292f,
+                11,
+                unlocked ? new Color(1f, 0.84f, 0.58f, 0.96f) : new Color(0.7f, 0.78f, 0.86f, 0.7f));
+            CreatePanel("AdventurePosterShade", posterX, 260f, 210f, 248f, 12, new Color(0.03f, 0.05f, 0.08f, 0.42f));
+            CreateMenuText(
+                "AdventurePosterIndex",
+                $"LEVEL {selectedLevelIndex + 1:00}",
+                posterX,
+                132f,
+                13,
+                new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "AdventurePosterArea",
+                level.AreaName,
+                posterX,
+                158f,
+                GetCompactFontSize(level.AreaName, 18, 15, 13),
+                Color.white,
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentBody);
+            CreateTournamentBadge(
+                "AdventurePosterWardenBadge",
+                level.WardenCharacterId,
+                posterX - 78f,
+                205f,
+                13,
+                0.38f,
+                0.32f,
+                36f,
+                new Color(1f, 0.65f, 0.24f, 0.34f));
+            CreateMenuText(
+                "AdventurePosterWardenLabel",
+                rimrushSinglePlayerNarrative.Warden,
+                posterX - 42f,
+                192f,
+                10,
+                new Color32(0xFF, 0xD6, 0x6D, 0xFF),
+                TextAnchor.MiddleLeft,
+                13,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "AdventurePosterWarden",
+                rimrushPlayersData.GetCharacterName(level.WardenCharacterId),
+                posterX - 42f,
+                209f,
+                GetCompactFontSize(rimrushPlayersData.GetCharacterName(level.WardenCharacterId), 13, 12, 10),
+                Color.white,
+                TextAnchor.MiddleLeft,
+                13,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventurePosterMechanic",
+                unlocked ? level.MechanicTitle : "LOCKED ROUTE",
+                posterX,
+                252f,
+                17,
+                unlocked ? new Color32(0xFF, 0xB6, 0x45, 0xFF) : new Color32(0xB6, 0xC1, 0xCC, 0xFF),
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "AdventurePosterSummary",
+                unlocked ? level.MechanicSummary : "Claim the previous Lantern Sigil to open this gate.",
+                posterX,
+                290f,
+                11,
+                new Color32(0xD9, 0xE7, 0xF0, 0xFF),
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventurePosterScene",
+                unlocked ? level.SceneDirection : "The route marker is still dark.",
+                posterX,
+                332f,
+                10,
+                new Color32(0xB8, 0xCD, 0xDA, 0xFF),
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentBody);
+
+            for (var i = 0; i < level.RuleIcons.Length; i++)
+            {
+                CreateAdventureRuleIcon(level.RuleIcons[i], posterX - 68f + i * 68f, 382f, unlocked, i);
+            }
+        }
+
+        private void CreateAdventureRuleIcon(string label, float x, float y, bool unlocked, int index)
+        {
+            CreatePanel(
+                $"AdventureRuleIcon_{index}",
+                x,
+                y,
+                58f,
+                28f,
+                13,
+                unlocked ? new Color(0.14f, 0.58f, 0.62f, 0.84f) : new Color(0.22f, 0.26f, 0.32f, 0.7f));
+            CreateMenuText(
+                $"AdventureRuleIconText_{index}",
+                label,
+                x,
+                y + 1f,
+                GetCompactFontSize(label, 11, 10, 9),
+                Color.white,
+                TextAnchor.MiddleCenter,
+                14,
+                rimrushTextStyle.TournamentAccent);
+        }
+
+        private void StartAdventureLevelFlow()
+        {
+            var inventory = rimrushInventory.Instance;
+            inventory.SetQuickSelection(quickCharacterId);
+            if (!inventory.StartAdventureLevel(adventureSelectedLevelIndex, quickCharacterId))
+            {
+                ShowAdventureMap();
+                return;
+            }
+
+            StartGameplay();
+        }
+
+        private void RetryAdventureLevelFlow()
+        {
+            var inventory = rimrushInventory.Instance;
+            if (!inventory.RestartAdventureLevel())
+            {
+                ShowAdventureMap();
+                return;
+            }
+
+            StartGameplay();
+        }
+
+        private void ResetAdventureRoute()
+        {
+            rimrushInventory.Instance.AbandonAdventure();
+            rimrushInventory.Instance.BeginAdventure(quickCharacterId);
+            adventureSelectedLevelIndex = 0;
+            ShowAdventureMap();
+        }
+
+        private void ShowAdventureResult(bool playerWon)
+        {
+            var adventure = rimrushInventory.Instance.Adventure;
+            var resolvedIndex = Mathf.Max(0, adventure.LastResolvedLevelIndex);
+            var level = rimrushAdventureCatalog.GetLevel(resolvedIndex);
+            adventureSelectedLevelIndex = playerWon && !adventure.Completed ? adventure.CurrentLevelIndex : resolvedIndex;
+
+            currentScreen = rimrushBootstrapScreen.AdventureResult;
+            BeginMenuScreen(false, false, playerWon ? "bg10000" : "bg2blue0000");
+            var title = playerWon
+                ? adventure.Completed ? "PARK GATE OPEN" : "SIGIL CLAIMED"
+                : "WARDEN HOLDS";
+            AddTitle(title, 54f, 31, playerWon ? new Color32(0xFF, 0xC7, 0x56, 0xFF) : new Color32(0xDB, 0xE4, 0xF1, 0xFF));
+            AddSubtitle(level.AreaName, 90f, 14);
+
+            CreatePanel("AdventureResultPanel", rimrushConstants.Width2, 266f, 560f, 250f, 8, new Color(0.03f, 0.06f, 0.09f, 0.86f));
+            CreatePanel("AdventureResultAccent", rimrushConstants.Width2, 151f, 504f, 8f, 9, playerWon ? new Color(1f, 0.65f, 0.24f, 0.92f) : new Color(0.54f, 0.72f, 0.82f, 0.72f));
+            CreateTournamentBadge(
+                "AdventureResultWarden",
+                level.WardenCharacterId,
+                246f,
+                238f,
+                10,
+                0.48f,
+                0.39f,
+                44f,
+                playerWon ? new Color(1f, 0.67f, 0.24f, 0.38f) : new Color(0.5f, 0.7f, 0.9f, 0.26f));
+            CreateMenuText(
+                "AdventureResultWardenName",
+                rimrushPlayersData.GetCharacterName(level.WardenCharacterId),
+                292f,
+                238f,
+                GetCompactFontSize(rimrushPlayersData.GetCharacterName(level.WardenCharacterId), 18, 15, 13),
+                Color.white,
+                TextAnchor.MiddleLeft,
+                10,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventureResultMechanic",
+                level.MechanicTitle,
+                rimrushConstants.Width2,
+                286f,
+                18,
+                new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                TextAnchor.MiddleCenter,
+                10,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "AdventureResultStory",
+                playerWon ? level.VictoryBeat : "The Sigil stays locked. Retry the duel when you are ready.",
+                rimrushConstants.Width2,
+                332f,
+                13,
+                new Color32(0xE8, 0xF1, 0xF7, 0xFF),
+                TextAnchor.MiddleCenter,
+                10,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "AdventureResultProgress",
+                $"LANTERN SIGILS {adventure.SigilsCollected}/{rimrushAdventureCatalog.LevelCount}",
+                rimrushConstants.Width2,
+                382f,
+                15,
+                new Color32(0xFF, 0xD6, 0x6D, 0xFF),
+                TextAnchor.MiddleCenter,
+                10,
+                rimrushTextStyle.TournamentAccent);
+
+            if (playerWon)
+            {
+                menuButtons.Add(new rimrushMenuButton("MAP", 220f, 452f, 180f, 42f, ShowAdventureMap, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton(adventure.Completed ? "MAIN MENU" : "CONTINUE", 580f, 452f, 200f, 42f, adventure.Completed ? ShowPlayerCountMenu : ShowAdventureMap, runtimeRoot));
+            }
+            else
+            {
+                menuButtons.Add(new rimrushMenuButton("MAP", 220f, 452f, 180f, 42f, ShowAdventureMap, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton("RETRY", 580f, 452f, 200f, 42f, RetryAdventureLevelFlow, runtimeRoot));
+            }
+        }
+
+        private static string ShortAdventureAreaName(string areaName)
+        {
+            if (string.IsNullOrEmpty(areaName))
+            {
+                return string.Empty;
+            }
+
+            return areaName
+                .Replace("PUMPKIN ", string.Empty)
+                .Replace("LAUGHING ", string.Empty)
+                .Replace("CLOCKTOWER ", string.Empty)
+                .Replace("MOON LANTERN ", "DOME ");
+        }
+
+        private void CreateSinglePlayerModeCard(
+            string key,
+            rimrushSinglePlayerModeDefinition mode,
+            float centerX,
+            Color panelTint,
+            Color accentColor,
+            string objectiveLineOne,
+            string objectiveLineTwo,
+            string buttonText,
+            System.Action action)
+        {
+            CreatePanel(
+                $"{key}_ModeCard",
+                centerX,
+                SinglePlayerModeCardY,
+                SinglePlayerModeCardWidth,
+                SinglePlayerModeCardHeight,
+                8,
+                panelTint);
+            CreatePanel(
+                $"{key}_ModeCardAccent",
+                centerX,
+                SinglePlayerModeCardY - SinglePlayerModeCardHeight * 0.5f + 16f,
+                SinglePlayerModeCardWidth - 42f,
+                8f,
+                9,
+                accentColor);
+            CreateMenuText(
+                $"{key}_ModeTitle",
+                mode.MenuTitle,
+                centerX,
+                238f,
+                GetCompactFontSize(mode.MenuTitle, 20, 18, 16),
+                Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                $"{key}_ModeSubtitle",
+                mode.Subtitle,
+                centerX,
+                273f,
+                11,
+                new Color32(0xD8, 0xE9, 0xF2, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                $"{key}_ModeObjectiveOne",
+                objectiveLineOne,
+                centerX,
+                316f,
+                13,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                $"{key}_ModeObjectiveTwo",
+                objectiveLineTwo,
+                centerX,
+                337f,
+                13,
+                Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+
+            menuButtons.Add(new rimrushMenuButton(buttonText, centerX, 386f, 190f, 44f, action, runtimeRoot));
         }
 
         /// <summary>
@@ -655,7 +1512,8 @@ namespace rimrush
             rimrushInventory.Instance.SetTournamentSelection(tournamentCharacterId);
 
             BeginMenuScreen(false, false, "bg2blue0000");
-            AddTitle("TOURNAMENT", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            AddTitle(rimrushSinglePlayerNarrative.Tournament.MenuTitle, 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+            AddSubtitle(rimrushSinglePlayerNarrative.TournamentSeasonBanner, 88f, 13);
 
             CreatePanel("SelectPanel", 220f, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreatePanel("OptionsPanel", 575f, 278f, 228f, 214f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
@@ -681,11 +1539,31 @@ namespace rimrush
             CreateOptionsPanel("Tournament", 575f);
             CreateMenuText(
                 "ModeFixed",
-                "FORMAT: 8 PLAYER / 2 DIVISIONS",
+                rimrushSinglePlayerNarrative.TournamentFormatLine,
                 575f,
                 186f,
                 12,
                 Color.white,
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "TournamentSeasonHook",
+                rimrushSinglePlayerNarrative.TournamentSeasonHook,
+                575f,
+                366f,
+                10,
+                new Color32(0xCC, 0xE5, 0xF0, 0xFF),
+                TextAnchor.MiddleCenter,
+                20,
+                rimrushTextStyle.TournamentBody);
+            CreateMenuText(
+                "TournamentAdventureLink",
+                rimrushSinglePlayerNarrative.CupLinkToAdventure,
+                575f,
+                389f,
+                9,
+                new Color32(0xD8, 0xE6, 0xF0, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
                 rimrushTextStyle.TournamentBody);
@@ -723,6 +1601,7 @@ namespace rimrush
                 AddSubtitle("NEED 8 ENABLED CHARACTERS", 408f, 18);
             }
 
+            menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 310f, 452f, 170f, 42f, ShowTournamentSetupComicReplay, runtimeRoot));
             menuButtons.Add(new rimrushMenuButton("BACK", 488f, 452f, 150f, 42f, ShowMatchTypeMenu, runtimeRoot));
             if (enoughCharacters)
             {
@@ -777,6 +1656,10 @@ namespace rimrush
             if (rimrushInventory.Instance.IsTournamentActive)
             {
                 rimrushInventory.Instance.AbandonTournament();
+            }
+            else if (rimrushInventory.Instance.IsAdventureActive)
+            {
+                rimrushInventory.Instance.AbandonAdventure();
             }
 
             StartTutorialFlow();
@@ -879,7 +1762,7 @@ namespace rimrush
                 : "bg2blue0000";
             BeginMenuScreen(false, false, backgroundFrame);
             AddTitle(
-                "TOURNAMENT",
+                rimrushSinglePlayerNarrative.Tournament.MenuTitle,
                 titleY,
                 titleFontSize,
                 new Color32(0xD7, 0xF2, 0x4A, 0xFF));
@@ -888,41 +1771,45 @@ namespace rimrush
                 subtitleY,
                 subtitleFontSize);
             CreateTournamentBracketBoard(tournament);
+            CreateTournamentSeasonBanner(tournament);
 
             if (tournament.Completed)
             {
-                menuButtons.Add(new rimrushMenuButton("MAIN MENU", 224f, 452f, 184f, 42f, () =>
+                menuButtons.Add(new rimrushMenuButton("MAIN MENU", 156f, 452f, 164f, 42f, () =>
                 {
                     rimrushInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
-                menuButtons.Add(new rimrushMenuButton("CEREMONY", 576f, 452f, 208f, 42f, ShowTournamentAwards, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 400f, 452f, 176f, 42f, ShowTournamentBracketComicReplay, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton("CEREMONY", 640f, 452f, 190f, 42f, ShowTournamentAwards, runtimeRoot));
             }
             else if (tournament.CurrentStage == rimrushTournamentStage.RegularSeason)
             {
-                menuButtons.Add(new rimrushMenuButton("BACK", 172f, 452f, 150f, 42f, () =>
+                menuButtons.Add(new rimrushMenuButton("BACK", 142f, 452f, 138f, 42f, () =>
                 {
                     rimrushInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 368f, 452f, 168f, 42f, ShowTournamentBracketComicReplay, runtimeRoot));
 
                 if (tournament.RegularSeasonCompleted)
                 {
-                    menuButtons.Add(new rimrushMenuButton("START FINALS", 606f, 452f, 196f, 42f, StartTournamentFinalsFlow, runtimeRoot));
+                    menuButtons.Add(new rimrushMenuButton("START FINALS", 634f, 452f, 190f, 42f, StartTournamentFinalsFlow, runtimeRoot));
                 }
                 else
                 {
-                    menuButtons.Add(new rimrushMenuButton($"PLAY ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}", 608f, 452f, 208f, 42f, StartGameplay, runtimeRoot));
+                    menuButtons.Add(new rimrushMenuButton($"PLAY ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}", 634f, 452f, 190f, 42f, StartGameplay, runtimeRoot));
                 }
             }
             else
             {
-                menuButtons.Add(new rimrushMenuButton("BACK", 172f, 452f, 150f, 42f, () =>
+                menuButtons.Add(new rimrushMenuButton("BACK", 142f, 452f, 138f, 42f, () =>
                 {
                     rimrushInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
-                menuButtons.Add(new rimrushMenuButton("PLAY", 628f, 452f, 150f, 42f, StartGameplay, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 400f, 452f, 176f, 42f, ShowTournamentBracketComicReplay, runtimeRoot));
+                menuButtons.Add(new rimrushMenuButton("PLAY", 640f, 452f, 150f, 42f, StartGameplay, runtimeRoot));
             }
         }
 
@@ -941,7 +1828,7 @@ namespace rimrush
 
             currentScreen = rimrushBootstrapScreen.TournamentAwards;
             BeginMenuScreen(false, false, "bg10000");
-            AddTitle("SEASON COMPLETE", 52f, 28, GetTournamentAwardsAccentColor(tournament.PlayerPlacement));
+            AddTitle(rimrushSinglePlayerNarrative.TournamentSeasonCompleteTitle, 52f, 28, GetTournamentAwardsAccentColor(tournament.PlayerPlacement));
             CreateTournamentAwardsScene(tournament);
 
             menuButtons.Add(new rimrushMenuButton("BRACKET", 220f, 452f, 180f, 42f, ShowTournamentBracket, runtimeRoot));
@@ -1587,6 +2474,40 @@ namespace rimrush
             }
 
             CreateTournamentSummaryPanel(tournament);
+        }
+
+        private void CreateTournamentSeasonBanner(rimrushTournamentData tournament)
+        {
+            var title = rimrushSinglePlayerNarrative.GetTournamentStageTitle(tournament);
+            var description = rimrushSinglePlayerNarrative.GetTournamentStageDescription(tournament);
+            CreatePanel(
+                "TournamentSeasonBannerPanel",
+                rimrushConstants.Width2,
+                104f,
+                424f,
+                44f,
+                18,
+                new Color(0.03f, 0.06f, 0.1f, 0.84f));
+            CreateMenuText(
+                "TournamentSeasonBannerTitle",
+                title,
+                rimrushConstants.Width2,
+                95f,
+                13,
+                new Color32(0xD7, 0xF2, 0x4A, 0xFF),
+                TextAnchor.MiddleCenter,
+                19,
+                rimrushTextStyle.TournamentAccent);
+            CreateMenuText(
+                "TournamentSeasonBannerDescription",
+                description,
+                rimrushConstants.Width2,
+                116f,
+                10,
+                new Color32(0xD8, 0xE6, 0xF0, 0xFF),
+                TextAnchor.MiddleCenter,
+                19,
+                rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>
@@ -2368,6 +3289,17 @@ namespace rimrush
                 13,
                 rimrushTextStyle.TournamentAccent,
                 bannerGroup.transform);
+            CreateMenuText(
+                "AwardsResultEndingLine",
+                rimrushSinglePlayerNarrative.GetTournamentPlacementEnding(tournament.PlayerPlacement),
+                rimrushConstants.Width2,
+                TournamentAwardsPlaqueY + 42f,
+                10,
+                new Color32(0xE0, 0xEC, 0xF4, 0xFF),
+                TextAnchor.MiddleCenter,
+                13,
+                rimrushTextStyle.TournamentBody,
+                bannerGroup.transform);
             RegisterTournamentAwardsAnimation(bannerGroup.transform, new Vector2(0f, 14f), 0.1f, 0.42f, 0.95f);
 
             var podiumGroup = CreateTournamentAwardsGroup("AwardsPodium");
@@ -2840,7 +3772,7 @@ namespace rimrush
             switch (tournament.PlayerPlacement)
             {
                 case 1:
-                    return "CHAMPION";
+                    return rimrushSinglePlayerNarrative.LanternChampion;
                 case 2:
                     return "RUNNER-UP";
                 case 3:
@@ -3290,7 +4222,7 @@ namespace rimrush
             {
                 if (tournament.PlayerPlacement == 1)
                 {
-                    return "CHAMPION";
+                    return rimrushSinglePlayerNarrative.LanternChampion;
                 }
 
                 if (tournament.PlayerPlacement == 2)

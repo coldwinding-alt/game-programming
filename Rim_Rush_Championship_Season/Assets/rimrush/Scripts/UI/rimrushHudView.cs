@@ -1037,6 +1037,7 @@ namespace rimrush
         {
             var inventory = rimrushInventory.Instance;
             var isPlayerFacingMode = inventory.IsTournamentActive ||
+                                     inventory.IsAdventureActive ||
                                      inventory.GameMode == rimrushGameModeIds.RandomQuick ||
                                      inventory.GameMode == rimrushGameModeIds.QuickMatch ||
                                      inventory.GameMode == rimrushGameModeIds.Tutorial;
@@ -1058,7 +1059,7 @@ namespace rimrush
             postMatchSubtitleText.color = new Color32(0xCB, 0xD9, 0xE4, 0xFF);
             postMatchScoreText.color = new Color32(0xFF, 0xF3, 0xD8, 0xFF);
             postMatchWinnerTagText.color = new Color32(0xFF, 0xDE, 0x98, 0xFF);
-            SetText(postMatchSubtitleText, inventory.IsTournamentActive ? "CHAMPIONSHIP RESULT" : "FINAL SCORE");
+            SetText(postMatchSubtitleText, GetPostMatchSubtitle(inventory, postMatchWinnerSide));
             SetText(postMatchWinnerTagText, $"WINNER: {winnerName}");
             postMatchLeftNameText.color = postMatchWinnerSide == -1
                 ? new Color32(0xFF, 0xDE, 0x99, 0xFF)
@@ -1086,7 +1087,7 @@ namespace rimrush
             SetSpriteTint(postMatchLeftPortrait, postMatchWinnerSide == -1 ? Color.white : new Color(0.73f, 0.77f, 0.84f, 0.62f));
             SetSpriteTint(postMatchRightPortrait, postMatchWinnerSide == 1 ? Color.white : new Color(0.73f, 0.77f, 0.84f, 0.62f));
             SetText(postMatchScoreText, $"{leftScoreValue} - {rightScoreValue}");
-            SetText(postMatchPromptText, inventory.IsTournamentActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER");
+            SetText(postMatchPromptText, inventory.IsTournamentActive || inventory.IsAdventureActive ? "CLICK TO CONTINUE" : "CLICK OR PRESS ENTER");
             postMatchAnimTime = 0f;
             if (postMatchCardRoot != null)
             {
@@ -1103,6 +1104,21 @@ namespace rimrush
             HideMessage();
             HideBonusNotice();
             HideCountdown();
+        }
+
+        private static string GetPostMatchSubtitle(rimrushInventory inventory, int winnerSide)
+        {
+            if (inventory.IsTournamentActive)
+            {
+                return rimrushSinglePlayerNarrative.TournamentResultSubtitle;
+            }
+
+            if (inventory.IsAdventureActive)
+            {
+                return winnerSide == -1 ? "LANTERN SIGIL CLAIMED" : "WARDEN GATE HELD";
+            }
+
+            return "FINAL SCORE";
         }
 
         /// <summary>
