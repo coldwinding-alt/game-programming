@@ -2360,6 +2360,11 @@ namespace rimrush
         private const float GroundCollisionMass = 3f;
         private const float GroundBlockCollisionMass = 6f;
         private const float GroundCollisionSpeedEpsilon = 5f;
+        private const float GraphicDepthBase = 0.12f;
+        private const float ShadowDepthBase = 0.02f;
+        private const float TeamDepthStep = 0.01f;
+        private const float PlayerDepthStep = 0.0025f;
+        private const float ShadowDepthBiasScale = 0.25f;
 
         private enum BlockPumpPhase
         {
@@ -2389,6 +2394,7 @@ namespace rimrush
         private readonly int teamIndex;
         private readonly int characterId;
         private readonly int playerNo;
+        private readonly float renderDepthBias;
         private readonly int skillLevel;
         private readonly rimrushCharacterSkillDefinition skillDefinition;
         private readonly int superId;
@@ -2527,6 +2533,7 @@ namespace rimrush
             this.playerNo = playerNo;
             this.skillLevel = skillLevel;
             Side = teamIndex == 0 ? -1 : 1;
+            renderDepthBias = teamIndex * TeamDepthStep + playerNo * PlayerDepthStep;
             IsHuman = !playerBrain.StartsWith("B") && !playerBrain.StartsWith("T");
             brainSlot = rimrushControlsData.ParseControllerSlot(playerBrain);
             skillDefinition = rimrushCharacterSkillsData.Get(characterId);
@@ -4457,7 +4464,7 @@ namespace rimrush
         private void UpdateGraphic()
         {
             var gameplayScale = rimrushPlayersData.GetCharacterGameplayScaleMultiplier(characterId) * graphicScaleMultiplier;
-            graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, 0.12f + playerNo * 0.01f);
+            graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, GraphicDepthBase + renderDepthBias);
             graphic.transform.localScale = new Vector3(
                 rimrushConstants.UnitsPerPixel * facingDirection * gameplayScale,
                 rimrushConstants.UnitsPerPixel * gameplayScale,
@@ -4469,7 +4476,12 @@ namespace rimrush
             if (showShadow)
             {
                 var shadowScale = Mathf.Clamp01(1f - (rimrushObjectsData.PlayerIndentY - Position.y) / 300f);
-                rimrushRender.ApplyPixelTransform(shadow.transform, Position.x, rimrushObjectsData.FloorY + 6f, 0.02f, Mathf.Max(0.2f, shadowScale));
+                rimrushRender.ApplyPixelTransform(
+                    shadow.transform,
+                    Position.x,
+                    rimrushObjectsData.FloorY + 6f,
+                    ShadowDepthBase + renderDepthBias * ShadowDepthBiasScale,
+                    Mathf.Max(0.2f, shadowScale));
             }
         }
 

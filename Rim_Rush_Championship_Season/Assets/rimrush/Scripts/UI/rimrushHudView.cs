@@ -1635,7 +1635,9 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject CreatePopupBackdrop(Transform parent)
         {
-            return CreateHudImage("MessageBackdrop", rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), rimrushConstants.Width2, PopupCenterY + 1f, PopupBackdropWidth, 118, parent);
+            // The popup frame has been retired from the HUD. Message text now
+            // renders on its own so this artwork never appears again.
+            return null;
         }
 
         /// Executes Create Hud Image for the rimrushHudView workflow.

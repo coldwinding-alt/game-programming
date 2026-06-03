@@ -412,6 +412,8 @@ namespace rimrush.EditorTools
                 {
                     errors.Add("Tutorial overlay did not build its runtime UI root.");
                 }
+
+                ValidateTutorialStepCleanup(tutorialCore, tutorialOverlay, errors);
             }
             finally
             {
@@ -421,6 +423,46 @@ namespace rimrush.EditorTools
                 {
                     UnityEngine.Object.DestroyImmediate(tutorialOverlay.gameObject);
                 }
+            }
+        }
+
+        private static void ValidateTutorialStepCleanup(rimrushGameCore tutorialCore, rimrushTutorialOverlay tutorialOverlay, List<string> errors)
+        {
+            if (tutorialCore?.TutorialFlow == null || tutorialOverlay == null)
+            {
+                return;
+            }
+
+            var beginSuperMethod = typeof(rimrushTutorialFlow).GetMethod("BeginSuper", BindingFlags.Instance | BindingFlags.NonPublic);
+            var completeStepMethod = typeof(rimrushTutorialFlow).GetMethod("CompleteStep", BindingFlags.Instance | BindingFlags.NonPublic);
+            var maskTopField = typeof(rimrushTutorialOverlay).GetField("maskTop", BindingFlags.Instance | BindingFlags.NonPublic);
+            var focusFrameField = typeof(rimrushTutorialOverlay).GetField("focusFrame", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (beginSuperMethod == null || completeStepMethod == null || maskTopField == null || focusFrameField == null)
+            {
+                errors.Add("Tutorial cleanup smoke test could not access private tutorial members.");
+                return;
+            }
+
+            beginSuperMethod.Invoke(tutorialCore.TutorialFlow, new object[] { true });
+            var maskTop = maskTopField.GetValue(tutorialOverlay) as RectTransform;
+            var focusFrame = focusFrameField.GetValue(tutorialOverlay) as RectTransform;
+            if (maskTop == null || focusFrame == null)
+            {
+                errors.Add("Tutorial cleanup smoke test could not read tutorial focus markers.");
+                return;
+            }
+
+            if (!maskTop.gameObject.activeSelf || !focusFrame.gameObject.activeSelf)
+            {
+                errors.Add("Tutorial super step no longer enables the expected focus overlay.");
+                return;
+            }
+
+            completeStepMethod.Invoke(tutorialCore.TutorialFlow, new object[] { "cleanup-check" });
+            if (maskTop.gameObject.activeSelf || focusFrame.gameObject.activeSelf)
+            {
+                errors.Add("Tutorial step completion left the focus overlay active after success.");
             }
         }
 
