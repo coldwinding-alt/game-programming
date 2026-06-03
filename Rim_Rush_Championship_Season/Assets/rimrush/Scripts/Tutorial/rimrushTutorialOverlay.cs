@@ -9,6 +9,7 @@ namespace rimrush
     public enum rimrushTutorialOverlayCommand
     {
         None,
+        ReturnToMenu,
         ReplayTutorial,
         StartTraining,
         StartQuickMatch
@@ -162,12 +163,31 @@ namespace rimrush
         public void SetFocusRect(float left, float top, float width, float height)
         {
             EnsureInitialized();
-            SetMarkerActive(maskTop, false);
-            SetMarkerActive(maskBottom, false);
-            SetMarkerActive(maskLeft, false);
-            SetMarkerActive(maskRight, false);
-            SetMarkerActive(focusFrame, false);
-            SetMarkerActive(focusGlow, false);
+            var hasFocus = width > 0f && height > 0f;
+            SetMarkerActive(maskTop, hasFocus);
+            SetMarkerActive(maskBottom, hasFocus);
+            SetMarkerActive(maskLeft, hasFocus);
+            SetMarkerActive(maskRight, hasFocus);
+            SetMarkerActive(focusFrame, hasFocus);
+            SetMarkerActive(focusGlow, hasFocus);
+            if (!hasFocus)
+            {
+                return;
+            }
+
+            var clampedLeft = Mathf.Clamp(left, 0f, ReferenceWidth);
+            var clampedTop = Mathf.Clamp(top, 0f, ReferenceHeight);
+            var clampedWidth = Mathf.Clamp(width, 0f, ReferenceWidth - clampedLeft);
+            var clampedHeight = Mathf.Clamp(height, 0f, ReferenceHeight - clampedTop);
+            var right = clampedLeft + clampedWidth;
+            var bottom = clampedTop + clampedHeight;
+
+            SetTopLeftRect(maskTop, 0f, 0f, ReferenceWidth, clampedTop);
+            SetTopLeftRect(maskBottom, 0f, bottom, ReferenceWidth, Mathf.Max(0f, ReferenceHeight - bottom));
+            SetTopLeftRect(maskLeft, 0f, clampedTop, clampedLeft, clampedHeight);
+            SetTopLeftRect(maskRight, right, clampedTop, Mathf.Max(0f, ReferenceWidth - right), clampedHeight);
+            SetTopLeftRect(focusFrame, clampedLeft, clampedTop, clampedWidth, clampedHeight);
+            SetTopLeftRect(focusGlow, clampedLeft - 16f, clampedTop - 16f, clampedWidth + 32f, clampedHeight + 32f);
         }
 
         public void ClearFocus()
@@ -178,20 +198,45 @@ namespace rimrush
         public void SetTargetRect(float left, float top, float width, float height)
         {
             EnsureInitialized();
-            SetMarkerActive(targetZone, false);
-            SetMarkerActive(targetGlow, false);
+            var hasTarget = width > 0f && height > 0f;
+            SetMarkerActive(targetZone, hasTarget);
+            SetMarkerActive(targetGlow, hasTarget);
+            if (!hasTarget)
+            {
+                return;
+            }
+
+            var clampedLeft = Mathf.Clamp(left, 0f, ReferenceWidth);
+            var clampedTop = Mathf.Clamp(top, 0f, ReferenceHeight);
+            var clampedWidth = Mathf.Clamp(width, 0f, ReferenceWidth - clampedLeft);
+            var clampedHeight = Mathf.Clamp(height, 0f, ReferenceHeight - clampedTop);
+            SetTopLeftRect(targetZone, clampedLeft, clampedTop, clampedWidth, clampedHeight);
+            SetCenteredRect(
+                targetGlow,
+                clampedLeft + clampedWidth * 0.5f,
+                clampedTop + clampedHeight * 0.5f,
+                clampedWidth + 44f,
+                clampedHeight + 44f);
         }
 
         public void SetApexRing(Vector2 center, float size, bool active)
         {
             EnsureInitialized();
-            SetMarkerActive(apexRing, false);
+            SetMarkerActive(apexRing, active && size > 0f);
+            if (active && size > 0f)
+            {
+                SetCenteredRect(apexRing, center.x, center.y, size, size);
+            }
         }
 
         public void SetEnergyPulse(bool active)
         {
             EnsureInitialized();
-            SetMarkerActive(energyPulse, false);
+            SetMarkerActive(energyPulse, active);
+            if (active)
+            {
+                SetCenteredRect(energyPulse, 102f, 56f, 208f, 102f);
+            }
         }
 
         public void SetTrajectory(IReadOnlyList<Vector2> points)
@@ -199,7 +244,16 @@ namespace rimrush
             EnsureInitialized();
             for (var i = 0; i < trajectoryDots.Count; i++)
             {
-                SetMarkerActive(trajectoryDots[i].rectTransform, false);
+                var dot = trajectoryDots[i];
+                var visible = points != null && i < points.Count;
+                SetMarkerActive(dot.rectTransform, visible);
+                if (!visible)
+                {
+                    continue;
+                }
+
+                var size = Mathf.Lerp(12f, 6f, i / Mathf.Max(1f, trajectoryDots.Count - 1f));
+                SetCenteredRect(dot.rectTransform, points[i].x, points[i].y, size, size);
             }
         }
 
@@ -215,7 +269,7 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(7, 7);
-            SetCopy("TUTORIAL CLEAR", "YOU SHOWED THE FULL LOOP", "Pace. Timing. Defense. Super.", "Take that momentum straight into the next mode.", null);
+            SetCopy("TUTORIAL CLEAR", "YOU HAVE THE TOOLKIT", "Pace. Timing. Defense. Super.", "Take that feel into the next mode.", null);
             SetGoal(string.Empty);
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
@@ -234,7 +288,7 @@ namespace rimrush
 
             if (outroBodyText != null)
             {
-                outroBodyText.text = $"{characterName}\n{skillName}\nMove, dash, air shot, fake, steal, block, super.";
+                outroBodyText.text = $"{characterName}\n{skillName}\nMove, dash, shoot, fake, steal, block, super.";
             }
         }
 
@@ -390,17 +444,17 @@ namespace rimrush
 
             feedbackText = CreateText("FeedbackText", overlayRoot, 204f, 170f, 392f, 26f, 18, new Color32(0x9A, 0xFF, 0xDD, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
 
-            narratorRoot = CreateCard("NarratorRoot", overlayRoot, 22f, 332f, 266f, 126f, 0.88f);
+            narratorRoot = CreateCard("NarratorRoot", overlayRoot, 580f, 18f, 198f, 104f, 0.88f);
             narratorOrb = CreateImage("NarratorOrb", narratorRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.14f));
-            SetCenteredRect(narratorOrb.rectTransform, 66f, 62f, 108f, 108f);
-            var narratorLabel = CreateText("NarratorLabel", narratorRoot.transform as RectTransform, 112f, 18f, 128f, 18f, 13, new Color32(0xFF, 0xD6, 0x80, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
+            SetCenteredRect(narratorOrb.rectTransform, 48f, 52f, 72f, 72f);
+            var narratorLabel = CreateText("NarratorLabel", narratorRoot.transform as RectTransform, 84f, 16f, 94f, 16f, 12, new Color32(0xFF, 0xD6, 0x80, 0xFF), TextAlignmentOptions.Left, LoadButtonFont());
             narratorLabel.text = "WITCH";
-            narratorText = CreateText("NarratorText", narratorRoot.transform as RectTransform, 112f, 38f, 128f, 52f, 14, Color.white, TextAlignmentOptions.TopLeft, LoadBodyFont());
+            narratorText = CreateText("NarratorText", narratorRoot.transform as RectTransform, 84f, 34f, 102f, 48f, 13, Color.white, TextAlignmentOptions.TopLeft, LoadBodyFont());
             narratorText.enableWordWrapping = true;
             narratorText.fontStyle = FontStyles.Bold;
 
             var witchMount = CreateRootRect("WitchMount", narratorRoot.transform);
-            SetTopLeftRect(witchMount, 16f, 16f, 94f, 96f);
+            SetTopLeftRect(witchMount, 10f, 12f, 72f, 76f);
 
             outroRoot = CreateCard("OutroRoot", overlayRoot, 170f, 84f, 460f, 300f, 0.96f);
             outroRoot.SetActive(false);
@@ -415,7 +469,7 @@ namespace rimrush
             outroBodyText = CreateText("OutroBody", outroRoot.transform as RectTransform, 42f, 70f, 376f, 72f, 15, new Color32(0xD6, 0xE5, 0xF9, 0xFF), TextAlignmentOptions.Center, LoadBodyFont());
             outroBodyText.enableWordWrapping = true;
 
-            quickMatchButton = CreateButton("QuickMatchButton", outroRoot.transform as RectTransform, 124f, 146f, 212f, 38f, "PLAY MATCH", new Color32(0xE8, 0xA4, 0x36, 0xFF), new Color32(0x19, 0x14, 0x0F, 0xFF), rimrushTutorialOverlayCommand.StartQuickMatch);
+            quickMatchButton = CreateButton("QuickMatchButton", outroRoot.transform as RectTransform, 124f, 146f, 212f, 38f, "MAIN MENU", new Color32(0xE8, 0xA4, 0x36, 0xFF), new Color32(0x19, 0x14, 0x0F, 0xFF), rimrushTutorialOverlayCommand.ReturnToMenu);
             trainingButton = CreateButton("TrainingButton", outroRoot.transform as RectTransform, 124f, 198f, 212f, 38f, "FREE TRAINING", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, rimrushTutorialOverlayCommand.StartTraining);
             replayButton = CreateButton("ReplayButton", outroRoot.transform as RectTransform, 124f, 250f, 212f, 38f, "REPLAY TUTORIAL", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, rimrushTutorialOverlayCommand.ReplayTutorial);
 
@@ -443,10 +497,10 @@ namespace rimrush
                 witchArmature.transform.SetParent(witchMount, false);
                 witchArmature.transform.localPosition = rimrushConstants.SnapLocalPositionToScreenPixels(
                     witchMount,
-                    new Vector3(0f, -28f, 0f));
+                    new Vector3(0f, -18f, 0f));
                 witchArmature.transform.localScale = new Vector3(
-                    rimrushConstants.PixelPerfectCharacterScale * 1.08f,
-                    rimrushConstants.PixelPerfectCharacterScale * 1.08f,
+                    rimrushConstants.PixelPerfectCharacterScale * 0.88f,
+                    rimrushConstants.PixelPerfectCharacterScale * 0.88f,
                     1f);
                 rimrushPlayersData.ApplyCharacter(witchArmature, WitchCharacterId);
                 witchArmature.StopAtStart("idle");
@@ -482,20 +536,44 @@ namespace rimrush
             var image = CreateImage("WitchFallbackIcon", witchMount, sprite, Color.white);
             image.preserveAspect = true;
             witchFallbackRoot = image.gameObject;
-            SetTopLeftRect(image.rectTransform, 8f, 4f, 78f, 78f);
+            SetTopLeftRect(image.rectTransform, 4f, 4f, 62f, 62f);
         }
 
         private void AnimatePulse()
         {
+            var wave = 0.5f + 0.5f * Mathf.Sin(effectTime * 4.6f);
             if (narratorOrb != null)
             {
-                narratorOrb.rectTransform.localScale = Vector3.one;
-                narratorOrb.color = new Color(0.33f, 1f, 0.88f, 0.13f);
+                narratorOrb.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.06f);
+                narratorOrb.color = new Color(0.33f, 1f, 0.88f, 0.1f + wave * 0.06f);
             }
 
             if (headerGlow != null)
             {
-                headerGlow.color = new Color(0.33f, 1f, 0.88f, 0.1f);
+                headerGlow.color = new Color(0.33f, 1f, 0.88f, 0.08f + wave * 0.05f);
+            }
+
+            if (focusGlow != null && focusGlow.gameObject.activeSelf)
+            {
+                focusGlow.localScale = Vector3.one * (1f + wave * 0.03f);
+            }
+
+            if (targetGlowImage != null && targetGlowImage.gameObject.activeSelf)
+            {
+                targetGlowImage.rectTransform.localScale = Vector3.one * (1f + wave * 0.05f);
+                targetGlowImage.color = new Color(1f, 0.8f, 0.4f, 0.12f + wave * 0.08f);
+            }
+
+            if (apexRingImage != null && apexRingImage.gameObject.activeSelf)
+            {
+                apexRingImage.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.08f);
+                apexRingImage.color = new Color(1f, 0.84f, 0.46f, 0.72f + wave * 0.18f);
+            }
+
+            if (energyPulseImage != null && energyPulseImage.gameObject.activeSelf)
+            {
+                energyPulseImage.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.08f);
+                energyPulseImage.color = new Color(0.53f, 1f, 0.86f, 0.34f + wave * 0.18f);
             }
 
             if (overlayRoot != null)
@@ -744,7 +822,7 @@ namespace rimrush
 
         private RectTransform CreateMask(string name)
         {
-            var image = CreateImage(name, overlayRoot, solidSprite, new Color(0.02f, 0.04f, 0.08f, 0.76f));
+            var image = CreateImage(name, overlayRoot, solidSprite, new Color(0.02f, 0.04f, 0.08f, 0.52f));
             return image.rectTransform;
         }
 

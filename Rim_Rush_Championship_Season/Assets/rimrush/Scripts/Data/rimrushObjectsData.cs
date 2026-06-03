@@ -89,7 +89,7 @@ namespace rimrush
         public const float ThreePointsDistance = rimrushConstants.Width2;
         public const float DashDelay = 1f;
         public const float DashDoubleTapWindow = 0.46f;
-        public const float DashInputBuffer = 0.12f;
+        public const float DashInputBuffer = 0.22f;
         public const float DigTime = 3f;
         public const float EnergyTime = 3f;
         public const float DunkPickupLock = 0.22f;
