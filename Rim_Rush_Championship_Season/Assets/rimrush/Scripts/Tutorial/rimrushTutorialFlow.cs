@@ -754,14 +754,13 @@ namespace rimrush
                     if (currentStep == TutorialStep.Shot)
                     {
                         shotStage = ShotStage.PeakShot;
-                        slowMotionTimer = 0.66f;
-                        slowMotionScale = 0.62f;
                         overlay.UpdateCopy(
-                            "PEAK + B",
-                            "Release inside the ring.",
-                            "MAKE THE SHOT",
-                            "Top of the jump. Then B.",
+                            "B IN THE AIR",
+                            "Release before landing.",
+                            "FINISH THE JUMP SHOT",
+                            "The highest point is the sweet spot. The tutorial accepts a clean air release.",
                             "B");
+                        overlay.ShowFeedback("Now press B before landing.", new Color32(0xFF, 0xD1, 0x76, 0xFF), 0.85f);
                     }
                     break;
 
@@ -769,13 +768,16 @@ namespace rimrush
                     if (currentStep == TutorialStep.Shot)
                     {
                         shotAttempted = true;
-                        shotPeakValid = !player.IsGrounded && Mathf.Abs(player.Velocity.y) <= 62f;
+                        shotAttemptStartedAt = activeTimer;
+                        shotPeakValid = shotStage == ShotStage.PeakShot && !player.IsGrounded;
                         overlay.ShowFeedback(
-                            shotPeakValid ? "That release looked clean." : "A little higher.",
+                            shotPeakValid
+                                ? Mathf.Abs(player.Velocity.y) <= 140f ? "Clean air release. Watch it fly." : "Good air release. Higher timing is stronger."
+                                : "Jump first, then press B in the air.",
                             shotPeakValid ? new Color32(0x9A, 0xFF, 0xDD, 0xFF) : new Color32(0xFF, 0xD1, 0x76, 0xFF),
                             0.9f);
                     }
-                    else if (currentStep == TutorialStep.Pump && pumpTriggered && opponent != null && !opponent.IsGrounded)
+                    else if (currentStep == TutorialStep.Pump && pumpTriggered)
                     {
                         CompleteStep("Perfect. The fake created the window.");
                     }
@@ -787,8 +789,6 @@ namespace rimrush
                         pumpTriggered = true;
                         pumpStage = PumpStage.Finish;
                         pumpBitePending = true;
-                        slowMotionTimer = 0.5f;
-                        slowMotionScale = 0.58f;
                         overlay.UpdateCopy(
                             "LET GO + B",
                             "Punish the jump.",
@@ -822,10 +822,10 @@ namespace rimrush
                     break;
 
                 case rimrushPlayerSignalType.Score:
-                    if (currentStep == TutorialStep.Shot && shotPeakValid)
+                    if (currentStep == TutorialStep.Shot && shotAttempted)
                     {
                         shotScored = true;
-                        CompleteStep("Beautiful. That is the rhythm to remember.");
+                        CompleteStep(shotPeakValid ? "Beautiful. That is the rhythm to remember." : "Good. Now you know how a shot becomes points.");
                     }
                     else if (currentStep == TutorialStep.FreePlay && activeTimer >= 2f)
                     {
@@ -956,9 +956,9 @@ namespace rimrush
                 return false;
             }
 
-            var nearPath = Mathf.Abs(ball.Position.x - player.Position.x) <= 74f;
-            var inVerticalLane = ball.Position.y >= player.Position.y - 180f &&
-                                 ball.Position.y <= player.Position.y + 42f;
+            var nearPath = Mathf.Abs(ball.Position.x - player.Position.x) <= 110f;
+            var inVerticalLane = ball.Position.y >= player.Position.y - 220f &&
+                                 ball.Position.y <= player.Position.y + 70f;
             if (!nearPath || !inVerticalLane)
             {
                 return false;
