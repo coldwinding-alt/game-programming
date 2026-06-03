@@ -47,7 +47,10 @@ namespace rimrush
         private const float HintFeedbackDuration = 1.28f;
         private const float RetryFeedbackDuration = 1.25f;
         private const float ActionFeedbackDuration = 1.08f;
-        private const float FreePlayDuration = 6.8f;
+        private const float FreePlayReminderDelay = 6.8f;
+        private const float FreePlayScoreOutroDelay = 1.25f;
+        private const float SuperCompletionDelay = 0.32f;
+        private const float SuperFallbackCompletionDelay = 1.1f;
         private const float ShotRetryWindow = 4.4f;
         private const float ShotIdleRetryWindow = 6.8f;
         private const float PumpFinishWindow = 4.8f;
@@ -118,7 +121,10 @@ namespace rimrush
         private bool putbackAttempted;
         private float putbackAttemptStartedAt;
         private bool putbackScored;
+        private bool superTriggered;
+        private float superTriggeredAt;
         private bool freePlayReadyToEnd;
+        private float freePlayScoredAt;
 
         public rimrushTutorialFlow(rimrushGameCore core)
         {
@@ -320,8 +326,8 @@ namespace rimrush
             activeTimer = 0f;
             overlay.ShowPrelude(
                 "START HERE",
-                "Follow the keys.",
-                "Press the shown buttons.",
+                string.Empty,
+                "One drill at a time. Press the shown keys.",
                 "A / D",
                 "W",
                 "S",
@@ -350,9 +356,9 @@ namespace rimrush
                 0,
                 TotalSteps,
                 "MOVE",
-                "Use A and D.",
-                "MOVE BOTH WAYS",
-                "Feel left and right first.",
+                string.Empty,
+                string.Empty,
+                "Move left, then right.",
                 "A",
                 "D");
         }
@@ -375,9 +381,9 @@ namespace rimrush
                 1,
                 TotalSteps,
                 "DASH",
-                "Double-tap a side.",
-                "BURST ONCE",
-                "Tap the same direction twice.",
+                string.Empty,
+                string.Empty,
+                "Double-tap one side to dash.",
                 "A",
                 "A",
                 "D",
@@ -406,9 +412,9 @@ namespace rimrush
                 2,
                 TotalSteps,
                 "JUMP SHOT",
-                "W, then B.",
-                "SCORE ONCE",
-                "Shoot in the air.",
+                string.Empty,
+                string.Empty,
+                "Jump first. Press B at the top.",
                 "W",
                 "B");
         }
@@ -436,9 +442,9 @@ namespace rimrush
                 3,
                 TotalSteps,
                 "PUMP FAKE",
-                "Hold S.",
-                "FAKE + SHOOT",
-                "Release, then B.",
+                string.Empty,
+                string.Empty,
+                "Hold S to fake. Release, then shoot.",
                 "S",
                 "B");
         }
@@ -464,9 +470,9 @@ namespace rimrush
                 4,
                 TotalSteps,
                 "DUNK",
-                "W, then B.",
-                "FINISH AT RIM",
-                "Press B near the top.",
+                string.Empty,
+                string.Empty,
+                "Jump near the rim. Press B.",
                 "W",
                 "B");
         }
@@ -489,9 +495,9 @@ namespace rimrush
                 5,
                 TotalSteps,
                 "STEAL",
-                "Get close.",
-                "TAKE THE BALL",
-                "Close in, press B.",
+                string.Empty,
+                string.Empty,
+                "Get close, then press B.",
                 "B");
         }
 
@@ -522,9 +528,9 @@ namespace rimrush
                 6,
                 TotalSteps,
                 "BLOCK",
-                "Read the slow shot.",
-                "BLOCK THE SHOT",
-                "When he rises, press W.",
+                string.Empty,
+                string.Empty,
+                "Read the slow shot. Press W late.",
                 "W");
         }
 
@@ -550,9 +556,9 @@ namespace rimrush
                 7,
                 TotalSteps,
                 "PUTBACK",
-                "Follow the miss.",
-                "FINISH REBOUND",
-                "Jump, then B near ball.",
+                string.Empty,
+                string.Empty,
+                "Chase the rebound. Press B near it.",
                 "W",
                 "B");
         }
@@ -561,6 +567,8 @@ namespace rimrush
         {
             ResetStep(fullIntro);
             currentStep = TutorialStep.Super;
+            superTriggered = false;
+            superTriggeredAt = 0f;
             PrepareScriptedStep();
             core.TutorialResetScenario(
                 new Vector2(242f, rimrushObjectsData.PlayerIndentY),
@@ -574,9 +582,9 @@ namespace rimrush
                 8,
                 TotalSteps,
                 "SUPER",
-                "Energy is full.",
-                "USE SKILL",
-                "Press N.",
+                string.Empty,
+                string.Empty,
+                "Energy is full. Press N.",
                 "N");
         }
 
@@ -585,6 +593,7 @@ namespace rimrush
             ResetStep(fullIntro);
             currentStep = TutorialStep.FreePlay;
             freePlayReadyToEnd = false;
+            freePlayScoredAt = 0f;
             PrepareScriptedStep();
             core.TutorialResetScenario(
                 new Vector2(238f, rimrushObjectsData.PlayerIndentY),
@@ -598,9 +607,9 @@ namespace rimrush
                 9,
                 TotalSteps,
                 "LIVE PLAY",
-                "Use any move.",
-                "PLAY ONE POSSESSION",
-                "Trust the buttons.",
+                string.Empty,
+                string.Empty,
+                "Score one basket to finish.",
                 "A / D",
                 "W",
                 "S",
@@ -616,6 +625,8 @@ namespace rimrush
             activeTimer = 0f;
             stepHintShown = false;
             stepRetryHintShown = false;
+            superTriggered = false;
+            superTriggeredAt = 0f;
             player?.TutorialSetJumpBlockAssist(false);
         }
 
@@ -712,7 +723,7 @@ namespace rimrush
             if (activeTimer >= 2.6f && !stepHintShown)
             {
                 stepHintShown = true;
-                overlay.ShowFeedback(shotStage == ShotStage.Jump ? "W first. B in air." : "Press B before landing.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                overlay.ShowFeedback(shotStage == ShotStage.Jump ? "W first. B at the top." : "Highest point has best accuracy.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
             }
 
             if (shotAttempted && activeTimer - shotAttemptStartedAt >= ShotRetryWindow)
@@ -960,6 +971,18 @@ namespace rimrush
 
         private void UpdateSuperStep()
         {
+            if (superTriggered)
+            {
+                var elapsed = activeTimer - superTriggeredAt;
+                if ((!player.IsSuperShot && elapsed >= SuperCompletionDelay) ||
+                    elapsed >= SuperFallbackCompletionDelay)
+                {
+                    CompleteStep("Super landed.");
+                }
+
+                return;
+            }
+
             if (activeTimer >= 2.5f && !stepHintShown)
             {
                 stepHintShown = true;
@@ -975,17 +998,18 @@ namespace rimrush
 
         private void UpdateFreePlayStep()
         {
-            if (!freePlayReadyToEnd && activeTimer >= 2.6f)
+            if (!freePlayReadyToEnd)
             {
-                freePlayReadyToEnd = true;
-            }
+                if (activeTimer >= FreePlayReminderDelay && !stepHintShown)
+                {
+                    stepHintShown = true;
+                    overlay.ShowFeedback("Score one basket to finish.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                }
 
-            if (activeTimer < FreePlayDuration)
-            {
                 return;
             }
 
-            if (core.Ball != null && !freePlayReadyToEnd && IsBallStillLive())
+            if (activeTimer - freePlayScoredAt < FreePlayScoreOutroDelay)
             {
                 return;
             }
@@ -1139,12 +1163,12 @@ namespace rimrush
                     {
                         shotStage = ShotStage.PeakShot;
                         overlay.UpdateCopy(
-                            "PRESS B",
-                            "Before landing.",
-                            "SHOOT NOW",
-                            "Press B in the air.",
+                            "TOP RELEASE",
+                            "Best accuracy.",
+                            "SHOOT AT PEAK",
+                            "Press B near highest point.",
                             "B");
-                        overlay.ShowFeedback("Press B now.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
+                        overlay.ShowFeedback("Highest point has best accuracy.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
                     }
                     break;
 
@@ -1156,7 +1180,7 @@ namespace rimrush
                         shotAttempted = shotPeakValid;
                         overlay.ShowFeedback(
                             shotPeakValid
-                                ? Mathf.Abs(player.Velocity.y) <= 140f ? "Clean release." : "Good release."
+                                ? Mathf.Abs(player.Velocity.y) <= 140f ? "Peak release. Best accuracy." : "Good release. Top is best."
                                 : "Jump first, then B.",
                             shotPeakValid ? new Color32(0x9A, 0xFF, 0xDD, 0xFF) : new Color32(0xFF, 0xD1, 0x76, 0xFF),
                             ActionFeedbackDuration);
@@ -1235,9 +1259,11 @@ namespace rimrush
                     break;
 
                 case rimrushPlayerSignalType.Super:
-                    if (currentStep == TutorialStep.Super)
+                    if (currentStep == TutorialStep.Super && !superTriggered)
                     {
-                        CompleteStep("Super landed.");
+                        superTriggered = true;
+                        superTriggeredAt = activeTimer;
+                        overlay.ShowFeedback("Skill live. Watch the burst.", new Color32(0x9A, 0xFF, 0xDD, 0xFF), ActionFeedbackDuration);
                     }
                     break;
 
@@ -1261,9 +1287,11 @@ namespace rimrush
                         putbackScored = true;
                         CompleteStep("Putback made.");
                     }
-                    else if (currentStep == TutorialStep.FreePlay && activeTimer >= 2f)
+                    else if (currentStep == TutorialStep.FreePlay)
                     {
                         freePlayReadyToEnd = true;
+                        freePlayScoredAt = activeTimer;
+                        overlay.ShowFeedback("Basket. Nice finish.", new Color32(0x9A, 0xFF, 0xDD, 0xFF), FreePlayScoreOutroDelay);
                     }
                     break;
             }

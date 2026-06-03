@@ -142,7 +142,7 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(-1, 0);
-            SetCopy("TUTORIAL", title, subtitle, narration, keys);
+            SetCopy("TUTORIAL", title, string.Empty, narration, keys);
             SetGoal(string.Empty);
             SetSkipVisible(true);
             ClearFocus();
@@ -160,8 +160,8 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(currentIndex, total);
-            SetCopy($"{currentIndex + 1}/{Mathf.Max(1, total)}", title, subtitle, narration, keys);
-            SetGoal(goal);
+            SetCopy($"{currentIndex + 1}/{Mathf.Max(1, total)}", title, string.Empty, narration, keys);
+            SetGoal(string.Empty);
             SetSkipVisible(true);
             if (outroRoot != null)
             {
@@ -172,8 +172,9 @@ namespace rimrush
         public void UpdateCopy(string title, string subtitle, string goal, string narration, params string[] keys)
         {
             ShowInternal();
-            SetCopy(stepText != null ? stepText.text : string.Empty, title, subtitle, narration, keys);
-            SetGoal(goal);
+            var currentNarration = narratorText != null ? narratorText.text : string.Empty;
+            SetCopy(stepText != null ? stepText.text : string.Empty, title, string.Empty, currentNarration, keys);
+            SetGoal(string.Empty);
         }
 
         public void SetFocusRect(float left, float top, float width, float height)
@@ -285,7 +286,7 @@ namespace rimrush
         {
             ShowInternal();
             SetProgress(9, 10);
-            SetCopy("CLEAR", "READY TO PLAY", "Pick your next run.", "Nice work.", null);
+            SetCopy("CLEAR", "READY TO PLAY", string.Empty, "Nice work. Choose your next run.", null);
             SetGoal(string.Empty);
             SetSkipVisible(false);
             ClearFocus();

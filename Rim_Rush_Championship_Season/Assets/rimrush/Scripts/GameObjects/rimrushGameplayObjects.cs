@@ -2043,18 +2043,12 @@ namespace rimrush
 
         public void PlayBuff(float effectDuration)
         {
-            mode = FxMode.Buff;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Buff, effectDuration);
         }
 
         public void PlayBurst(float effectDuration = 0.42f)
         {
-            mode = FxMode.Burst;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Burst, effectDuration);
         }
 
         public void PlayBurst(float effectDuration, rimrushCharacterSkillDefinition definition)
@@ -2065,10 +2059,7 @@ namespace rimrush
 
         public void PlayDash(float effectDuration)
         {
-            mode = FxMode.Dash;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Dash, effectDuration);
         }
 
         public void Stop()
@@ -2099,13 +2090,13 @@ namespace rimrush
                 return;
             }
 
-            if (!visible)
+            var shouldRender = visible || mode == FxMode.Dash;
+            if (!shouldRender)
             {
                 root.SetActive(false);
                 return;
             }
 
-            root.SetActive(true);
             rimrushRender.ApplyPixelTransform(root.transform, position.x, position.y + 30f, 0.08f, 1f);
             var rootScale = root.transform.localScale;
             rootScale.x = Mathf.Abs(rootScale.x) * Mathf.Sign(facingDirection);
@@ -2117,6 +2108,7 @@ namespace rimrush
             if (UsesCustomFxArt(skillDefinition.SkillType))
             {
                 UpdateCustomFx(t);
+                root.SetActive(true);
                 return;
             }
 
@@ -2158,6 +2150,8 @@ namespace rimrush
                     break;
                 }
             }
+
+            root.SetActive(true);
         }
 
         private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
@@ -2178,6 +2172,14 @@ namespace rimrush
             coreRenderer.transform.localRotation = Quaternion.identity;
             accentRenderer.transform.localPosition = Vector3.zero;
             accentRenderer.transform.localRotation = Quaternion.identity;
+        }
+
+        private void BeginMode(FxMode fxMode, float effectDuration)
+        {
+            mode = fxMode;
+            timer = 0f;
+            duration = Mathf.Max(0.01f, effectDuration);
+            root.SetActive(false);
         }
 
         private void UpdateCustomFx(float t)
