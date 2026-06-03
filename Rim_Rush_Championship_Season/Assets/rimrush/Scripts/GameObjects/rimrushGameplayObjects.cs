@@ -425,6 +425,22 @@ namespace rimrush
             UpdateGraphic();
         }
 
+        public void TutorialLaunchRebound(Vector2 position, Vector2 velocity, float pickupLock)
+        {
+            Position = position;
+            previousPosition = position;
+            Velocity = velocity;
+            State = "basket";
+            physicsRemoved = false;
+            alleyOopPlayer = null;
+            gameCore.IsAlleyOop = false;
+            ResetScoring(false);
+            pickupLockTimer = Mathf.Max(0f, pickupLock);
+            Show();
+            UpdateGraphic();
+            gameCore.NotifyBallOthers();
+        }
+
         /// <summary>
         /// Executes Take In Hands for the rimrushBallObject workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -2027,18 +2043,12 @@ namespace rimrush
 
         public void PlayBuff(float effectDuration)
         {
-            mode = FxMode.Buff;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Buff, effectDuration);
         }
 
         public void PlayBurst(float effectDuration = 0.42f)
         {
-            mode = FxMode.Burst;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Burst, effectDuration);
         }
 
         public void PlayBurst(float effectDuration, rimrushCharacterSkillDefinition definition)
@@ -2049,10 +2059,7 @@ namespace rimrush
 
         public void PlayDash(float effectDuration)
         {
-            mode = FxMode.Dash;
-            timer = 0f;
-            duration = Mathf.Max(0.01f, effectDuration);
-            root.SetActive(true);
+            BeginMode(FxMode.Dash, effectDuration);
         }
 
         public void Stop()
@@ -2083,13 +2090,13 @@ namespace rimrush
                 return;
             }
 
-            if (!visible)
+            var shouldRender = visible || mode == FxMode.Dash;
+            if (!shouldRender)
             {
                 root.SetActive(false);
                 return;
             }
 
-            root.SetActive(true);
             rimrushRender.ApplyPixelTransform(root.transform, position.x, position.y + 30f, 0.08f, 1f);
             var rootScale = root.transform.localScale;
             rootScale.x = Mathf.Abs(rootScale.x) * Mathf.Sign(facingDirection);
@@ -2101,6 +2108,7 @@ namespace rimrush
             if (UsesCustomFxArt(skillDefinition.SkillType))
             {
                 UpdateCustomFx(t);
+                root.SetActive(true);
                 return;
             }
 
@@ -2142,6 +2150,8 @@ namespace rimrush
                     break;
                 }
             }
+
+            root.SetActive(true);
         }
 
         private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
@@ -2162,6 +2172,14 @@ namespace rimrush
             coreRenderer.transform.localRotation = Quaternion.identity;
             accentRenderer.transform.localPosition = Vector3.zero;
             accentRenderer.transform.localRotation = Quaternion.identity;
+        }
+
+        private void BeginMode(FxMode fxMode, float effectDuration)
+        {
+            mode = fxMode;
+            timer = 0f;
+            duration = Mathf.Max(0.01f, effectDuration);
+            root.SetActive(false);
         }
 
         private void UpdateCustomFx(float t)
@@ -2360,6 +2378,11 @@ namespace rimrush
         private const float GroundCollisionMass = 3f;
         private const float GroundBlockCollisionMass = 6f;
         private const float GroundCollisionSpeedEpsilon = 5f;
+        private const float GraphicDepthBase = 0.12f;
+        private const float ShadowDepthBase = 0.02f;
+        private const float TeamDepthStep = 0.01f;
+        private const float PlayerDepthStep = 0.0025f;
+        private const float ShadowDepthBiasScale = 0.25f;
 
         private enum BlockPumpPhase
         {
@@ -2389,6 +2412,7 @@ namespace rimrush
         private readonly int teamIndex;
         private readonly int characterId;
         private readonly int playerNo;
+        private readonly float renderDepthBias;
         private readonly int skillLevel;
         private readonly rimrushCharacterSkillDefinition skillDefinition;
         private readonly int superId;
@@ -2464,6 +2488,10 @@ namespace rimrush
         private bool scoreUpgradeActive;
         private bool scoreUpgradePendingShot;
         private bool tutorialPerfectShotPrimed;
+        private bool tutorialPerfectDunkPrimed;
+        private bool tutorialPutbackDunkPrimed;
+        private float tutorialAirMotionTimeScale = 1f;
+        private bool tutorialJumpBlockAssist;
         private float flatScoreBonusTimer;
         private int flatScoreBonusPoints;
         private float moveBuffTimer;
@@ -2527,6 +2555,7 @@ namespace rimrush
             this.playerNo = playerNo;
             this.skillLevel = skillLevel;
             Side = teamIndex == 0 ? -1 : 1;
+            renderDepthBias = teamIndex * TeamDepthStep + playerNo * PlayerDepthStep;
             IsHuman = !playerBrain.StartsWith("B") && !playerBrain.StartsWith("T");
             brainSlot = rimrushControlsData.ParseControllerSlot(playerBrain);
             skillDefinition = rimrushCharacterSkillsData.Get(characterId);
@@ -2685,6 +2714,11 @@ namespace rimrush
             hellNativeSuperRefundPending = false;
             scoreUpgradeActive = false;
             scoreUpgradePendingShot = false;
+            tutorialPerfectShotPrimed = false;
+            tutorialPerfectDunkPrimed = false;
+            tutorialPutbackDunkPrimed = false;
+            tutorialAirMotionTimeScale = 1f;
+            tutorialJumpBlockAssist = false;
             flatScoreBonusTimer = 0f;
             flatScoreBonusPoints = 0;
             moveBuffTimer = 0f;
@@ -2899,6 +2933,12 @@ namespace rimrush
                 }
                 else
                 {
+                    if (TryTutorialPutbackDunk())
+                    {
+                        UpdateGraphic();
+                        return;
+                    }
+
                     if (IsGrounded)
                     {
                         BeginSteal();
@@ -2919,10 +2959,11 @@ namespace rimrush
 
             if (!IsGrounded)
             {
-                Velocity.y += rimrushObjectsData.Gravity.y * 3f * dt;
+                Velocity.y += rimrushObjectsData.Gravity.y * 3f * dt * tutorialAirMotionTimeScale;
             }
 
-            Position += Velocity * dt;
+            var verticalDt = IsGrounded ? dt : dt * tutorialAirMotionTimeScale;
+            Position += new Vector2(Velocity.x * dt, Velocity.y * verticalDt);
             Position.x = Mathf.Clamp(Position.x, 20f, rimrushConstants.Width - 20f);
             if (Position.y >= rimrushObjectsData.PlayerIndentY)
             {
@@ -3073,6 +3114,27 @@ namespace rimrush
         public void TutorialPrimePerfectShot()
         {
             tutorialPerfectShotPrimed = true;
+        }
+
+        public void TutorialPrimePerfectDunk()
+        {
+            tutorialPerfectDunkPrimed = true;
+        }
+
+        public void TutorialPrimePutbackDunk()
+        {
+            tutorialPutbackDunkPrimed = true;
+            tutorialPerfectDunkPrimed = true;
+        }
+
+        public void TutorialSetAirMotionTimeScale(float scale)
+        {
+            tutorialAirMotionTimeScale = Mathf.Clamp(scale, 0.35f, 1f);
+        }
+
+        public void TutorialSetJumpBlockAssist(bool active)
+        {
+            tutorialJumpBlockAssist = active;
         }
 
         /// <summary>
@@ -3540,10 +3602,14 @@ namespace rimrush
                 return false;
             }
 
-            var minX = Position.x - rimrushObjectsData.JumpBlockWidth * 0.5f - rimrushObjectsData.BallRadius;
-            var maxX = Position.x + rimrushObjectsData.JumpBlockWidth * 0.5f + rimrushObjectsData.BallRadius;
-            var minY = Position.y - rimrushObjectsData.JumpBlockHeight - rimrushObjectsData.BallRadius;
-            var maxY = Position.y + rimrushObjectsData.BallRadius;
+            var blockWidth = rimrushObjectsData.JumpBlockWidth + (tutorialJumpBlockAssist ? 58f : 0f);
+            var blockHeight = rimrushObjectsData.JumpBlockHeight + (tutorialJumpBlockAssist ? 42f : 0f);
+            var topBonus = tutorialJumpBlockAssist ? 18f : 0f;
+            var bottomBonus = tutorialJumpBlockAssist ? 16f : 0f;
+            var minX = Position.x - blockWidth * 0.5f - rimrushObjectsData.BallRadius;
+            var maxX = Position.x + blockWidth * 0.5f + rimrushObjectsData.BallRadius;
+            var minY = Position.y - blockHeight - rimrushObjectsData.BallRadius - topBonus;
+            var maxY = Position.y + rimrushObjectsData.BallRadius + bottomBonus;
             if (!SweptPointIntersectsRect(start, end, minX, maxX, minY, maxY))
             {
                 return false;
@@ -4457,7 +4523,7 @@ namespace rimrush
         private void UpdateGraphic()
         {
             var gameplayScale = rimrushPlayersData.GetCharacterGameplayScaleMultiplier(characterId) * graphicScaleMultiplier;
-            graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, 0.12f + playerNo * 0.01f);
+            graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, GraphicDepthBase + renderDepthBias);
             graphic.transform.localScale = new Vector3(
                 rimrushConstants.UnitsPerPixel * facingDirection * gameplayScale,
                 rimrushConstants.UnitsPerPixel * gameplayScale,
@@ -4469,7 +4535,12 @@ namespace rimrush
             if (showShadow)
             {
                 var shadowScale = Mathf.Clamp01(1f - (rimrushObjectsData.PlayerIndentY - Position.y) / 300f);
-                rimrushRender.ApplyPixelTransform(shadow.transform, Position.x, rimrushObjectsData.FloorY + 6f, 0.02f, Mathf.Max(0.2f, shadowScale));
+                rimrushRender.ApplyPixelTransform(
+                    shadow.transform,
+                    Position.x,
+                    rimrushObjectsData.FloorY + 6f,
+                    ShadowDepthBase + renderDepthBias * ShadowDepthBiasScale,
+                    Mathf.Max(0.2f, shadowScale));
             }
         }
 
@@ -4722,6 +4793,47 @@ namespace rimrush
             actionLatch = Mathf.Max(actionLatch, dunkDuration + 0.15f);
             canTakeInHands = false;
             PlayState("dunk" + dunkType);
+            GameCore.PlayerSignals.Dispatch(rimrushPlayerSignalType.Dunk, Side, playerNo);
+            rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PSwoosh, 0.8f);
+            return true;
+        }
+
+        private bool TryTutorialPutbackDunk()
+        {
+            var ball = GameCore.Ball;
+            if (!tutorialPutbackDunkPrimed || WithBall || IsGrounded || ball == null || !ball.IsInGame || removedFromPlay || isSuperShot || isDunking)
+            {
+                return false;
+            }
+
+            if (ball.State == "inHands" || ball.State == "score" || ball.State == "alleyOop")
+            {
+                return false;
+            }
+
+            var delta = ball.Position - Position;
+            if (Mathf.Abs(delta.x) > 96f || Mathf.Abs(delta.y) > 120f || Position.y > rimrushObjectsData.DunkZone2Y + 36f)
+            {
+                return false;
+            }
+
+            tutorialPutbackDunkPrimed = false;
+            tutorialPerfectDunkPrimed = true;
+            isDunking = true;
+            canDoAction = false;
+            canThrow = false;
+            dunkReleased = false;
+            dunkTimer = 0f;
+            dunkDuration = rimrushObjectsData.Dunk1Duration;
+            dunkStartPosition = Position;
+            dunkTargetPosition = new Vector2(DunkTargetX(), rimrushObjectsData.DunkY);
+            Velocity = Vector2.zero;
+            dashTimer = 0f;
+            dashDirection = 0;
+            actionLatch = Mathf.Max(actionLatch, dunkDuration + 0.15f);
+            canTakeInHands = false;
+            PlayState("dunk1");
+            GameCore.PlayerSignals.Dispatch(rimrushPlayerSignalType.PutbackDunk, Side, playerNo);
             rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PSwoosh, 0.8f);
             return true;
         }
@@ -4735,12 +4847,13 @@ namespace rimrush
         {
             var paintStart = Side == 1 ? rimrushObjectsData.PaintStartX : rimrushConstants.Width - rimrushObjectsData.PaintMiddleX;
             var paintMiddle = Side == 1 ? rimrushObjectsData.PaintMiddleX : rimrushConstants.Width - rimrushObjectsData.PaintStartX;
-            if (Position.x >= paintStart && Position.x <= paintMiddle && Position.y <= rimrushObjectsData.DunkZone1Y)
+            var tutorialDunkYBonus = tutorialPerfectDunkPrimed ? 36f : 0f;
+            if (Position.x >= paintStart && Position.x <= paintMiddle && Position.y <= rimrushObjectsData.DunkZone1Y + tutorialDunkYBonus)
             {
                 return 1 + Mathf.RoundToInt(2f * Random.value);
             }
 
-            if ((Position.x - paintStart) * Side < 0f && Position.y <= rimrushObjectsData.DunkZone2Y)
+            if ((Position.x - paintStart) * Side < 0f && Position.y <= rimrushObjectsData.DunkZone2Y + tutorialDunkYBonus)
             {
                 return 1;
             }
@@ -4812,7 +4925,8 @@ namespace rimrush
             }
 
             dunkReleased = true;
-            var completionChance = chanceToCompleteDunk;
+            var completionChance = tutorialPerfectDunkPrimed ? 1f : chanceToCompleteDunk;
+            tutorialPerfectDunkPrimed = false;
             var completed = Random.value <= completionChance;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, completed ? 1 : 9, playerNo);
             GameCore.NotifyPlayersBallShot(Side, playerNo);

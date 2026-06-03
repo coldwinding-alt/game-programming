@@ -32,6 +32,8 @@ namespace rimrush
     public sealed class rimrushKeyboardController : IBLPlayerController
     {
         private readonly rimrushControlProfile controls;
+        private float lastLeftDown = -10f;
+        private float lastRightDown = -10f;
         private float lastLeftUp = -10f;
         private float lastRightUp = -10f;
 
@@ -63,25 +65,39 @@ namespace rimrush
             CurrentDash = 0;
             var leftDown = controls.MoveLeftKey;
             var rightDown = controls.MoveRightKey;
+            var currentTime = Time.time;
 
             if (Input.GetKeyUp(leftDown))
             {
-                lastLeftUp = Time.time;
+                lastLeftUp = currentTime;
             }
 
             if (Input.GetKeyUp(rightDown))
             {
-                lastRightUp = Time.time;
+                lastRightUp = currentTime;
             }
 
-            if (Input.GetKeyDown(leftDown) && Time.time - lastLeftUp <= rimrushObjectsData.DashDoubleTapWindow)
+            if (Input.GetKeyDown(leftDown))
             {
-                CurrentDash = -1;
+                // Accept both quick re-presses and classic double taps so dash is less frame-perfect.
+                if (currentTime - lastLeftDown <= rimrushObjectsData.DashDoubleTapWindow
+                    || currentTime - lastLeftUp <= rimrushObjectsData.DashDoubleTapWindow)
+                {
+                    CurrentDash = -1;
+                }
+
+                lastLeftDown = currentTime;
             }
 
-            if (Input.GetKeyDown(rightDown) && Time.time - lastRightUp <= rimrushObjectsData.DashDoubleTapWindow)
+            if (Input.GetKeyDown(rightDown))
             {
-                CurrentDash = 1;
+                if (currentTime - lastRightDown <= rimrushObjectsData.DashDoubleTapWindow
+                    || currentTime - lastRightUp <= rimrushObjectsData.DashDoubleTapWindow)
+                {
+                    CurrentDash = 1;
+                }
+
+                lastRightDown = currentTime;
             }
 
             if (Input.GetKey(leftDown))
@@ -172,6 +188,16 @@ namespace rimrush
         /// <param name="startSide">Input value used by this step of the workflow.</param>
         public void Restart(int startSide)
         {
+            lastLeftDown = -10f;
+            lastRightDown = -10f;
+            lastLeftUp = -10f;
+            lastRightUp = -10f;
+            CurrentMove = 0;
+            CurrentDash = 0;
+            CurrentJump = false;
+            CurrentAction = false;
+            CurrentBlockOrPump = false;
+            CurrentSuper = false;
         }
 
         /// <summary>
