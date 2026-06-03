@@ -234,7 +234,7 @@ namespace rimrush
 
             if (outroBodyText != null)
             {
-                outroBodyText.text = $"{characterName}\n{skillName}";
+                outroBodyText.text = $"{characterName}\n{skillName}\nMove, dash, air shot, fake, steal, block, super.";
             }
         }
 
