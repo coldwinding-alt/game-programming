@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace rimrush
@@ -63,8 +62,6 @@ namespace rimrush
         private PumpStage pumpStage;
         private float phaseTimer;
         private float activeTimer;
-        private float slowMotionTimer;
-        private float slowMotionScale = 1f;
         private bool stepHintShown;
         private bool stepRetryHintShown;
         private bool shotAttempted;
@@ -77,7 +74,6 @@ namespace rimrush
         private bool blockJumpIssued;
         private bool blockShotIssued;
         private bool blockAssistApplied;
-        private bool blockSlowMotionConsumed;
         private bool freePlayReadyToEnd;
 
         public rimrushTutorialFlow(rimrushGameCore core)
@@ -117,11 +113,6 @@ namespace rimrush
             if (overlay == null || player == null)
             {
                 return;
-            }
-
-            if (slowMotionTimer > 0f)
-            {
-                slowMotionTimer = Mathf.Max(0f, slowMotionTimer - dt);
             }
 
             if (phase == TutorialPhase.Outro)
@@ -248,7 +239,6 @@ namespace rimrush
                     {
                         action = true;
                         blockShotIssued = true;
-                        blockSlowMotionConsumed = true;
                     }
 
                     controller.SetFrameInputs(move, jump, action, false, false, 0);
@@ -263,7 +253,6 @@ namespace rimrush
             phase = TutorialPhase.IntroFreeze;
             phaseTimer = 1.8f;
             activeTimer = 0f;
-            slowMotionTimer = 0f;
             overlay.ShowPrelude(
                 "LEARN THE FULL GAME",
                 "Seven safe drills, then a live round.",
@@ -423,7 +412,6 @@ namespace rimrush
                 "Watch the shooter rise, then meet the release early.",
                 "W");
             overlay.SetFocusRect(166f, 94f, 300f, 270f);
-            UpdateBlockTrajectory();
         }
 
         private void BeginSuper(bool fullIntro)
@@ -489,8 +477,6 @@ namespace rimrush
             phase = TutorialPhase.IntroFreeze;
             phaseTimer = fullIntro ? FullIntroDuration : RetryIntroDuration;
             activeTimer = 0f;
-            slowMotionTimer = 0f;
-            slowMotionScale = 1f;
             stepHintShown = false;
             stepRetryHintShown = false;
         }
@@ -631,7 +617,6 @@ namespace rimrush
 
         private void UpdateBlockStep()
         {
-            UpdateBlockTrajectory();
             if (TryResolveTutorialBlockAssist())
             {
                 return;
@@ -767,9 +752,9 @@ namespace rimrush
                 case rimrushPlayerSignalType.Shoot:
                     if (currentStep == TutorialStep.Shot)
                     {
-                        shotAttempted = true;
                         shotAttemptStartedAt = activeTimer;
                         shotPeakValid = shotStage == ShotStage.PeakShot && !player.IsGrounded;
+                        shotAttempted = shotPeakValid;
                         overlay.ShowFeedback(
                             shotPeakValid
                                 ? Mathf.Abs(player.Velocity.y) <= 140f ? "Clean air release. Watch it fly." : "Good air release. Higher timing is stronger."
@@ -920,27 +905,6 @@ namespace rimrush
                     overlay.SetTrajectory(null);
                     break;
             }
-        }
-
-        private void UpdateBlockTrajectory()
-        {
-            if (overlay == null || player == null || opponent == null || currentStep != TutorialStep.Block)
-            {
-                return;
-            }
-
-            var start = new Vector2(opponent.Position.x - 12f, opponent.Position.y - 120f);
-            var end = new Vector2(player.Position.x + 4f, 138f);
-            var points = new List<Vector2>(7);
-            for (var i = 0; i < 7; i++)
-            {
-                var t = i / 6f;
-                var x = Mathf.Lerp(start.x, end.x, t);
-                var y = Mathf.Lerp(start.y, end.y, t) - Mathf.Sin(t * Mathf.PI) * 58f;
-                points.Add(new Vector2(x, y));
-            }
-
-            overlay.SetTrajectory(points);
         }
 
         private bool TryResolveTutorialBlockAssist()
