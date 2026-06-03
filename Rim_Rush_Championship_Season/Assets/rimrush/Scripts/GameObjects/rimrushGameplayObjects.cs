@@ -470,7 +470,7 @@ namespace rimrush
             State = "down";
             physicsRemoved = false;
             alleyOopPlayer = null;
-            pickupLockTimer = 0f;
+            pickupLockTimer = CalcPickupLockUntilFloor(playerPosition.y);
             ResetScoring(false);
             Show();
             UpdateGraphic();
@@ -610,6 +610,18 @@ namespace rimrush
             }
 
             return Mathf.Clamp(Position.x + Velocity.x * timeToFloor, 20f, rimrushConstants.Width - 20f);
+        }
+
+        private static float CalcPickupLockUntilFloor(float startY)
+        {
+            var floorDelta = Mathf.Max(0f, rimrushObjectsData.BallFloorY - startY);
+            var gravity = rimrushObjectsData.Gravity.y * rimrushObjectsData.BallGravMass;
+            if (floorDelta <= 0.01f || gravity <= 0.0001f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Sqrt(2f * floorDelta / gravity);
         }
 
         /// <summary>
