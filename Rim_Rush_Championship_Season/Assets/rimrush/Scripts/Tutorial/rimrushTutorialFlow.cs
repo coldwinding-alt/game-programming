@@ -550,7 +550,7 @@ namespace rimrush
                 false,
                 1f,
                 -1f);
-            core.Ball.TutorialLaunchRebound(new Vector2(720f, 238f), new Vector2(-28f, -64f), 7.5f);
+            core.Ball.TutorialLaunchPutbackBounce(player.Side, 7.5f);
             player.TutorialPrimePutbackDunk();
             overlay.ShowStep(
                 7,
@@ -558,7 +558,7 @@ namespace rimrush
                 "PUTBACK",
                 string.Empty,
                 string.Empty,
-                "Chase the rebound. Press B near it.",
+                "Read the rim bounce. Press B near it.",
                 "W",
                 "B");
         }
