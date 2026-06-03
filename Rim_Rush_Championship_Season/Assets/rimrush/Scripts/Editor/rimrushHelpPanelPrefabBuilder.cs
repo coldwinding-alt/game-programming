@@ -110,8 +110,8 @@ namespace rimrush.EditorTools
             var rulesPage = new GameObject("RulesPage");
             rulesPage.transform.SetParent(panelRoot.transform, false);
 
-            BuildKeyboardPage(keyboardPage.transform, card, stage, chip, keycap, spotlight, buttons, out var demoRows, out var demoTitle, out var demoDescription, out var demoCoach, out var witchMount, out var witchSpotlight);
-            BuildRulesPage(rulesPage.transform, card, stage);
+            BuildKeyboardPage(keyboardPage.transform, card, stage, tab, chip, keycap, spotlight, buttons, out var demoRows, out var demoTitle, out var demoDescription, out var demoCoach, out var witchMount, out var witchSpotlight);
+            BuildRulesPage(rulesPage.transform, stage, tab, buttons);
 
             panel.EditorConfigure(
                 panelRoot,
@@ -159,6 +159,7 @@ namespace rimrush.EditorTools
             Transform parent,
             Sprite card,
             Sprite stage,
+            Sprite tab,
             Sprite chip,
             Sprite keycap,
             Sprite spotlight,
@@ -171,7 +172,7 @@ namespace rimrush.EditorTools
             out SpriteRenderer witchSpotlight)
         {
             AddText("KeyboardHeader", "KEYBOARD MAP", 64f, 119f, 17, new Color32(0xF2, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentAccent);
-            AddText("KeyboardSub", "Same controls in every mode.", 64f, 140f, 11, new Color32(0xC7, 0xD7, 0xE8, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentBody);
+            AddText("KeyboardSub", "Quick keys. Full tutorial in one click.", 64f, 140f, 11, new Color32(0xC7, 0xD7, 0xE8, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentBody);
 
             AddControlRow(parent, card, keycap, 65f, 166f, "MOVE", "A / D", "LEFT / RIGHT", "Hold to run.\nDouble-tap: Dash.");
             AddControlRow(parent, card, keycap, 65f, 202f, "JUMP", "W", "UP", "Shoot in air.\nContest shots.");
@@ -185,7 +186,20 @@ namespace rimrush.EditorTools
             AddSprite("PreviewStage", stage, 574f, 206f, 0.86f, 326f, 178f, 895, parent);
             witchSpotlight = AddSprite("WitchSpotlight", spotlight, 552f, 248f, 0.855f, 190f, 62f, 899, parent);
             AddText("PreviewHeader", "DRILL PREVIEW", 430f, 121f, 16, new Color32(0xFF, 0xD2, 0x75, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentAccent);
-            AddText("PreviewHint", "Click a chip to replay.", 430f, 140f, 11, new Color32(0xBE, 0xCF, 0xE2, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentBody);
+            AddText("PreviewHint", "Quick drills here. Full tour above.", 430f, 140f, 11, new Color32(0xBE, 0xCF, 0xE2, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentBody);
+            CreateTextButton(
+                "KeyboardReplayTutorialButton",
+                "REPLAY TUTORIAL",
+                rimrushHelpButtonAction.ReplayTutorial,
+                tab,
+                658f,
+                121f,
+                144f,
+                30f,
+                parent,
+                915,
+                buttons,
+                9);
 
             witchMount = new GameObject("WitchMount").transform;
             witchMount.SetParent(parent, false);
@@ -291,15 +305,27 @@ namespace rimrush.EditorTools
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
         /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="card">Input value used by this step of the workflow.</param>
         /// <param name="stage">Input value used by this step of the workflow.</param>
-        private static void BuildRulesPage(Transform parent, Sprite card, Sprite stage)
+        private static void BuildRulesPage(Transform parent, Sprite stage, Sprite tab, List<rimrushHelpButton> buttons)
         {
             AddSprite("RulesEmptyStage", stage, 400f, 254f, 0.86f, 560f, 242f, 895, parent);
-            AddText("RulesTitle", "RULES", 400f, 190f, 28, new Color32(0xFF, 0xB9, 0x48, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.DisplayTitle);
-            AddText("RulesEmpty", "COMING SOON", 400f, 245f, 18, new Color32(0xB8, 0xFF, 0xE2, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentAccent);
-            AddText("RulesNote", "Rules text will go here.", 400f, 278f, 10, new Color32(0xC9, 0xD6, 0xE6, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentBody);
-            AddSprite("RulesSmallCard", card, 400f, 347f, 0.855f, 320f, 54f, 898, parent);
+            AddText("RulesTitle", "QUICK START", 400f, 182f, 26, new Color32(0xFF, 0xB9, 0x48, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.DisplayTitle);
+            AddText("RulesEmpty", "Need the full guided run?", 400f, 228f, 15, new Color32(0xB8, 0xFF, 0xE2, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentAccent);
+            AddText("RulesNote", "Replay Tutorial shows the whole loop fast:\nDash, apex shot, pump fake, steal, block, Super.", 400f, 276f, 10, new Color32(0xC9, 0xD6, 0xE6, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentBody);
+            CreateTextButton(
+                "RulesReplayTutorialButton",
+                "REPLAY TUTORIAL",
+                rimrushHelpButtonAction.ReplayTutorial,
+                tab,
+                400f,
+                346f,
+                220f,
+                38f,
+                parent,
+                910,
+                buttons,
+                12);
+            AddText("RulesReplayNote", "One guided possession. Ready for grading.", 400f, 382f, 9, new Color32(0xD8, 0xE6, 0xF6, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>

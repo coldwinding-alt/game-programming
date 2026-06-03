@@ -20,12 +20,10 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Sprite LoadBallThemeSprite(rimrushBallTheme theme, float anchorX, float anchorY)
         {
-            return LoadGameplaySprite(
-                rimrushAssets.Images.BallTheme(theme),
-                anchorX,
-                anchorY,
-                rimrushAtlasCache.Instance.Gameplay,
-                "BallMC0000");
+            var resourcePath = rimrushAssets.Images.BallTheme(theme);
+            return string.IsNullOrEmpty(resourcePath)
+                ? null
+                : LoadGameplaySprite(resourcePath, anchorX, anchorY);
         }
 
         /// <summary>
@@ -94,6 +92,9 @@ namespace rimrush
 
     public sealed class rimrushArenaObject
     {
+        private const float ArenaLogicalWidth = 1398f;
+        private const float ArenaLogicalHeight = 480f;
+
         public GameObject Graphic { get; }
 
         /// <summary>
@@ -114,6 +115,26 @@ namespace rimrush
                 "0bg_gameplay0000");
             renderer.sortingOrder = 0;
             rimrushRender.ApplyPixelTransform(Graphic.transform, -299f, 0f);
+            ApplyArenaLogicalScale(Graphic.transform, renderer.sprite);
+        }
+
+        /// <summary>
+        /// Keeps high-resolution standalone arena art at the same logical gameplay size as the legacy atlas frame.
+        /// </summary>
+        /// <param name="transform">Input value used by this step of the workflow.</param>
+        /// <param name="sprite">Input value used by this step of the workflow.</param>
+        private static void ApplyArenaLogicalScale(Transform transform, Sprite sprite)
+        {
+            if (sprite == null || sprite.rect.width <= 0f || sprite.rect.height <= 0f)
+            {
+                return;
+            }
+
+            var baseScale = rimrushConstants.UnitsPerPixel;
+            transform.localScale = new Vector3(
+                baseScale * ArenaLogicalWidth / sprite.rect.width,
+                baseScale * ArenaLogicalHeight / sprite.rect.height,
+                1f);
         }
     }
 
@@ -1201,6 +1222,11 @@ namespace rimrush
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private float CalcDispersion(float distance, float y, float running, float accuracy)
         {
+            if (accuracy <= -0.5f)
+            {
+                return 1f;
+            }
+
             float vertical;
             if (y < 235f)
             {
@@ -1374,9 +1400,9 @@ namespace rimrush
             whiteRenderer.enabled = false;
             animRenderer.enabled = false;
             animRenderer.sprite = null;
-            blackNode.localScale = new Vector3(0.12f, 0.12f, 1f);
+            blackNode.localScale = new Vector3(0.1f, 0.1f, 1f);
             blackNode.localRotation = Quaternion.identity;
-            whiteRenderer.transform.localScale = new Vector3(0.086f, 0.027f, 1f);
+            whiteRenderer.transform.localScale = new Vector3(0.06f, 0.02f, 1f);
             whiteRenderer.transform.localRotation = Quaternion.identity;
         }
 
@@ -1449,7 +1475,7 @@ namespace rimrush
         private void UpdateBlackExpand()
         {
             var t = Mathf.Clamp01(phaseTime / BlackExpandDuration);
-            var scale = Mathf.Lerp(0.12f, 1f, t);
+            var scale = Mathf.Lerp(0.1f, 0.78f, t);
             blackNode.localScale = new Vector3(scale, scale, 1f);
             blackNode.localRotation = Quaternion.Euler(0f, 0f, -180f * t);
         }
@@ -1483,15 +1509,15 @@ namespace rimrush
             Vector2 scale;
             if (phaseTime <= time1)
             {
-                scale = Vector2.Lerp(new Vector2(0.086f, 0.027f), new Vector2(0.658f, 0.596f), phaseTime / time1);
+                scale = Vector2.Lerp(new Vector2(0.06f, 0.02f), new Vector2(0.46f, 0.42f), phaseTime / time1);
             }
             else if (phaseTime <= total12)
             {
-                scale = Vector2.Lerp(new Vector2(0.658f, 0.596f), new Vector2(0.084f, 1.258f), (phaseTime - time1) / time2);
+                scale = Vector2.Lerp(new Vector2(0.46f, 0.42f), new Vector2(0.06f, 0.82f), (phaseTime - time1) / time2);
             }
             else
             {
-                scale = Vector2.Lerp(new Vector2(0.084f, 1.258f), new Vector2(0.028f, 0.072f), (phaseTime - total12) / WhiteFlashDuration3);
+                scale = Vector2.Lerp(new Vector2(0.06f, 0.82f), new Vector2(0.02f, 0.05f), (phaseTime - total12) / WhiteFlashDuration3);
             }
 
             whiteRenderer.transform.localScale = new Vector3(scale.x, scale.y, 1f);
@@ -1934,6 +1960,7 @@ namespace rimrush
         private readonly SpriteRenderer glowRenderer;
         private readonly SpriteRenderer coreRenderer;
         private readonly SpriteRenderer accentRenderer;
+        private readonly rimrushCharacterSkillDefinition baseSkillDefinition;
         private rimrushCharacterSkillDefinition skillDefinition;
         private FxMode mode = FxMode.Hidden;
         private float timer;
@@ -1941,15 +1968,16 @@ namespace rimrush
 
         public rimrushPlayerSkillFx(Transform parent, rimrushCharacterSkillDefinition skillDefinition)
         {
+            baseSkillDefinition = skillDefinition;
             this.skillDefinition = skillDefinition;
             DBLiteFactory.Instance.EnsureLoaded();
 
             root = new GameObject("PlayerSkillFx");
             root.transform.SetParent(parent, false);
 
-            glowRenderer = CreateRenderer("Glow", 68, rimrushAtlasCache.Instance.Interface.Sprite("EmblemsBg0000"));
-            coreRenderer = CreateRenderer("Core", 69, null);
-            accentRenderer = CreateRenderer("Accent", 70, null);
+            glowRenderer = CreateRenderer("Glow", 17, rimrushAtlasCache.Instance.Interface.Sprite("EmblemsBg0000"));
+            coreRenderer = CreateRenderer("Core", 18, null);
+            accentRenderer = CreateRenderer("Accent", 19, null);
 
             ApplyTheme(skillDefinition);
             Stop();
@@ -1961,13 +1989,13 @@ namespace rimrush
             var useCustomArt = UsesCustomFxArt(definition.SkillType);
             coreRenderer.sprite = LoadSkillSprite(definition.SkillType, false);
             accentRenderer.sprite = LoadSkillSprite(definition.SkillType, true);
-            glowRenderer.color = WithAlpha(definition.PrimaryColor, useCustomArt ? 0.24f : 0.3f);
+            glowRenderer.color = WithAlpha(definition.PrimaryColor, useCustomArt ? 0.14f : 0.18f);
             coreRenderer.color = useCustomArt
-                ? WithAlpha(Color.white, 0.94f)
-                : WithAlpha(definition.PrimaryColor, 0.72f);
+                ? WithAlpha(Color.white, 0.72f)
+                : WithAlpha(definition.PrimaryColor, 0.5f);
             accentRenderer.color = useCustomArt
-                ? WithAlpha(Color.white, 0.86f)
-                : WithAlpha(definition.AccentColor, 0.82f);
+                ? WithAlpha(Color.white, 0.62f)
+                : WithAlpha(definition.AccentColor, 0.58f);
         }
 
         public void PlayBuff(float effectDuration)
@@ -1986,6 +2014,12 @@ namespace rimrush
             root.SetActive(true);
         }
 
+        public void PlayBurst(float effectDuration, rimrushCharacterSkillDefinition definition)
+        {
+            ApplyTheme(definition);
+            PlayBurst(effectDuration);
+        }
+
         public void PlayDash(float effectDuration)
         {
             mode = FxMode.Dash;
@@ -2000,6 +2034,11 @@ namespace rimrush
             timer = 0f;
             duration = 0f;
             root.SetActive(false);
+            if (skillDefinition.SkillType != baseSkillDefinition.SkillType ||
+                skillDefinition.SkillName != baseSkillDefinition.SkillName)
+            {
+                ApplyTheme(baseSkillDefinition);
+            }
         }
 
         public void Update(float dt, Vector2 position, float facingDirection, bool visible)
@@ -2024,7 +2063,7 @@ namespace rimrush
             }
 
             root.SetActive(true);
-            rimrushRender.ApplyPixelTransform(root.transform, position.x, position.y - 44f, 0.17f, 1f);
+            rimrushRender.ApplyPixelTransform(root.transform, position.x, position.y + 30f, 0.08f, 1f);
             var rootScale = root.transform.localScale;
             rootScale.x = Mathf.Abs(rootScale.x) * Mathf.Sign(facingDirection);
             root.transform.localScale = rootScale;
@@ -2042,36 +2081,36 @@ namespace rimrush
             {
                 case FxMode.Buff:
                 {
-                    var pulse = 0.88f + Mathf.Sin(Time.time * 11f) * 0.12f;
-                    glowRenderer.transform.localScale = Vector3.one * pulse * 0.36f;
-                    coreRenderer.transform.localScale = new Vector3(0.28f, 0.22f, 1f) * (0.96f + Mathf.Sin(Time.time * 13f) * 0.08f);
-                    accentRenderer.transform.localScale = new Vector3(0.42f, 0.14f, 1f) * (0.98f + Mathf.Sin(Time.time * 15f) * 0.08f);
-                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.22f + Mathf.Sin(Time.time * 8f) * 0.03f + 0.06f);
-                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.48f);
-                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.58f);
-                    accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 85f);
+                    var pulse = 0.92f + Mathf.Sin(Time.time * 10f) * 0.06f;
+                    glowRenderer.transform.localScale = Vector3.one * pulse * 0.24f;
+                    coreRenderer.transform.localScale = new Vector3(0.18f, 0.12f, 1f) * (0.98f + Mathf.Sin(Time.time * 11f) * 0.04f);
+                    accentRenderer.transform.localScale = new Vector3(0.3f, 0.08f, 1f) * (0.98f + Mathf.Sin(Time.time * 12f) * 0.04f);
+                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.13f + Mathf.Sin(Time.time * 7f) * 0.015f);
+                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.34f);
+                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.42f);
+                    accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 48f);
                     break;
                 }
                 case FxMode.Burst:
                 {
-                    glowRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.18f, 0.52f, t);
-                    coreRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.12f, 0.38f, t);
-                    accentRenderer.transform.localScale = new Vector3(Mathf.Lerp(0.18f, 0.56f, t), Mathf.Lerp(0.06f, 0.22f, t), 1f);
-                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.38f * (1f - t));
-                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.66f * (1f - t));
-                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.8f * (1f - t));
-                    accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -180f * t);
+                    glowRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.1f, 0.32f, t);
+                    coreRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.08f, 0.22f, t);
+                    accentRenderer.transform.localScale = new Vector3(Mathf.Lerp(0.12f, 0.36f, t), Mathf.Lerp(0.04f, 0.12f, t), 1f);
+                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.26f * (1f - t));
+                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.46f * (1f - t));
+                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.58f * (1f - t));
+                    accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -120f * t);
                     break;
                 }
                 case FxMode.Dash:
                 {
-                    var stretch = Mathf.Lerp(0.82f, 1.34f, Mathf.Sin(t * Mathf.PI));
-                    glowRenderer.transform.localScale = new Vector3(0.5f * stretch, 0.22f, 1f);
-                    coreRenderer.transform.localScale = new Vector3(0.7f * stretch, 0.2f, 1f);
-                    accentRenderer.transform.localScale = new Vector3(1.2f * stretch, 0.12f, 1f);
-                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.16f);
-                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.48f);
-                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.7f * (1f - t * 0.5f));
+                    var stretch = Mathf.Lerp(0.88f, 1.18f, Mathf.Sin(t * Mathf.PI));
+                    glowRenderer.transform.localScale = new Vector3(0.34f * stretch, 0.12f, 1f);
+                    coreRenderer.transform.localScale = new Vector3(0.46f * stretch, 0.1f, 1f);
+                    accentRenderer.transform.localScale = new Vector3(0.72f * stretch, 0.06f, 1f);
+                    glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.1f);
+                    coreRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.34f);
+                    accentRenderer.color = WithAlpha(skillDefinition.AccentColor, 0.48f * (1f - t * 0.5f));
                     accentRenderer.transform.localRotation = Quaternion.identity;
                     break;
                 }
@@ -2106,7 +2145,7 @@ namespace rimrush
                     UpdateSoulReapFx(t);
                     break;
                 case rimrushCharacterSkillType.BadLuck:
-                    UpdateBadLuckFx(t);
+                    UpdateFreezeFx(t);
                     break;
                 case rimrushCharacterSkillType.HarvestTime:
                     UpdateHarvestTimeFx(t);
@@ -2118,66 +2157,66 @@ namespace rimrush
         {
             var fade = mode == FxMode.Burst ? 1f - t : 1f - t * 0.18f;
             var stretch = mode == FxMode.Burst
-                ? Mathf.Lerp(0.66f, 1.02f, t)
-                : Mathf.Lerp(0.94f, 1.16f, Mathf.Sin(t * Mathf.PI));
+                ? Mathf.Lerp(0.72f, 1f, t)
+                : Mathf.Lerp(0.92f, 1.08f, Mathf.Sin(t * Mathf.PI));
 
-            SetRendererPixelSize(glowRenderer, 190f * stretch, 84f);
-            SetRendererPixelSize(coreRenderer, 252f * stretch, 148f);
-            SetRendererPixelSize(accentRenderer, 258f * stretch, 168f);
+            SetRendererPixelSize(glowRenderer, 118f * stretch, 34f);
+            SetRendererPixelSize(coreRenderer, 150f * stretch, 44f);
+            SetRendererPixelSize(accentRenderer, 162f * stretch, 50f);
 
-            glowRenderer.transform.localPosition = new Vector3(24f, -4f, 0f);
-            coreRenderer.transform.localPosition = new Vector3(38f, -3f, 0f);
-            accentRenderer.transform.localPosition = new Vector3(42f, -2f, 0f);
+            glowRenderer.transform.localPosition = new Vector3(8f, -3f, 0f);
+            coreRenderer.transform.localPosition = new Vector3(18f, -4f, 0f);
+            accentRenderer.transform.localPosition = new Vector3(24f, -5f, 0f);
 
-            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.15f + Mathf.Sin(Time.time * 14f) * 0.03f + 0.05f);
-            coreRenderer.color = WithAlpha(Color.white, 0.95f * fade);
-            accentRenderer.color = WithAlpha(Color.white, 0.78f * fade);
+            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.1f + Mathf.Sin(Time.time * 12f) * 0.015f);
+            coreRenderer.color = WithAlpha(Color.white, 0.68f * fade);
+            accentRenderer.color = WithAlpha(Color.white, 0.5f * fade);
         }
 
-        private void UpdateBadLuckFx(float t)
+        private void UpdateFreezeFx(float t)
         {
             var fade = mode == FxMode.Burst ? 1f - t : 0.92f;
             var pulse = mode == FxMode.Burst
-                ? Mathf.Lerp(0.76f, 1.12f, t)
-                : 0.98f + Mathf.Sin(Time.time * 9f) * 0.05f;
+                ? Mathf.Lerp(0.78f, 1.02f, t)
+                : 0.98f + Mathf.Sin(Time.time * 8f) * 0.04f;
 
-            SetRendererPixelSize(glowRenderer, 152f * pulse, 152f * pulse);
-            SetRendererPixelSize(coreRenderer, 188f * pulse, 188f * pulse);
-            SetRendererPixelSize(accentRenderer, 222f * pulse, 222f * pulse);
+            SetRendererPixelSize(glowRenderer, 72f * pulse, 72f * pulse);
+            SetRendererPixelSize(coreRenderer, 82f * pulse, 82f * pulse);
+            SetRendererPixelSize(accentRenderer, 96f * pulse, 96f * pulse);
 
-            glowRenderer.transform.localPosition = new Vector3(0f, 8f, 0f);
-            coreRenderer.transform.localPosition = new Vector3(0f, 7f, 0f);
-            accentRenderer.transform.localPosition = new Vector3(0f, 7f, 0f);
+            glowRenderer.transform.localPosition = new Vector3(0f, -14f, 0f);
+            coreRenderer.transform.localPosition = new Vector3(0f, -15f, 0f);
+            accentRenderer.transform.localPosition = new Vector3(0f, -15f, 0f);
 
-            coreRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -Time.time * 7f);
-            accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 16f);
+            coreRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -Time.time * 5f);
+            accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Time.time * 10f);
 
-            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.18f + Mathf.Sin(Time.time * 7f) * 0.02f + 0.04f);
-            coreRenderer.color = WithAlpha(Color.white, 0.86f * fade);
-            accentRenderer.color = WithAlpha(Color.white, 0.9f * fade);
+            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.1f + Mathf.Sin(Time.time * 6f) * 0.012f);
+            coreRenderer.color = WithAlpha(Color.white, 0.6f * fade);
+            accentRenderer.color = WithAlpha(Color.white, 0.66f * fade);
         }
 
         private void UpdateHarvestTimeFx(float t)
         {
             var fade = mode == FxMode.Burst ? 1f - t : 0.96f;
             var pulse = mode == FxMode.Burst
-                ? Mathf.Lerp(0.72f, 1.04f, t)
-                : 0.97f + Mathf.Sin(Time.time * 7f) * 0.04f;
+                ? Mathf.Lerp(0.76f, 1f, t)
+                : 0.97f + Mathf.Sin(Time.time * 6f) * 0.035f;
 
-            SetRendererPixelSize(glowRenderer, 162f * pulse, 162f * pulse);
-            SetRendererPixelSize(coreRenderer, 168f * pulse, 236f * pulse);
-            SetRendererPixelSize(accentRenderer, 228f * pulse, 228f * pulse);
+            SetRendererPixelSize(glowRenderer, 96f * pulse, 34f * pulse);
+            SetRendererPixelSize(coreRenderer, 62f * pulse, 78f * pulse);
+            SetRendererPixelSize(accentRenderer, 110f * pulse, 46f * pulse);
 
-            glowRenderer.transform.localPosition = new Vector3(0f, 10f, 0f);
-            coreRenderer.transform.localPosition = new Vector3(0f, 18f, 0f);
-            accentRenderer.transform.localPosition = new Vector3(0f, 10f, 0f);
+            glowRenderer.transform.localPosition = new Vector3(0f, -1f, 0f);
+            coreRenderer.transform.localPosition = new Vector3(28f, -26f, 0f);
+            accentRenderer.transform.localPosition = new Vector3(0f, -4f, 0f);
 
-            coreRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2.1f) * 2.8f);
-            accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -Time.time * 12f);
+            coreRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2.1f) * 2f);
+            accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -Time.time * 7f);
 
-            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.16f + Mathf.Sin(Time.time * 6f) * 0.02f + 0.05f);
-            coreRenderer.color = WithAlpha(Color.white, 0.94f * fade);
-            accentRenderer.color = WithAlpha(Color.white, 0.88f * fade);
+            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.09f + Mathf.Sin(Time.time * 5f) * 0.012f);
+            coreRenderer.color = WithAlpha(Color.white, 0.62f * fade);
+            accentRenderer.color = WithAlpha(Color.white, 0.52f * fade);
         }
 
         private static void SetRendererPixelSize(SpriteRenderer renderer, float widthPixels, float heightPixels)
@@ -2315,6 +2354,9 @@ namespace rimrush
 
         private readonly GameObject graphic;
         private readonly GameObject shadow;
+        private readonly SpriteRenderer shadowRenderer;
+        private readonly Sprite defaultShadowSprite;
+        private readonly Sprite activeSkillShadowSprite;
         private readonly DBLiteArmature armature;
         private readonly IBLPlayerController controller;
         private readonly int teamIndex;
@@ -2392,12 +2434,13 @@ namespace rimrush
         private rimrushPlayerObject teamMate;
         private bool hellOpeningChargeApplied;
         private bool hellNativeSuperRefundPending;
-        private float scoreUpgradeTimer;
+        private bool scoreUpgradeActive;
+        private bool scoreUpgradePendingShot;
+        private bool tutorialPerfectShotPrimed;
         private float flatScoreBonusTimer;
         private int flatScoreBonusPoints;
         private float moveBuffTimer;
         private bool moveBuffScoreBonusAvailable;
-        private float badLuckTimer;
         private float pendingScoreRefundFraction;
         private float pendingScoreRefundTimer;
 
@@ -2428,13 +2471,15 @@ namespace rimrush
         public bool UsesPossessionSkill => skillDefinition.UsesPossessionSkill;
         public bool UsesDashSkill => skillDefinition.UsesDashSkill;
         public bool UsesShieldSkill => skillDefinition.UsesBasketShield;
-        public bool UsesCurseSkill => skillDefinition.UsesCurseSkill;
+        public bool UsesFreezeSkill => skillDefinition.UsesFreezeSkill;
         public bool ReadyForSuper => readyForSuper;
         public bool CanUseHellBonusSuperDash => hellEnhanced && hellBonusSuperDashCooldownTimer <= 0f;
         public bool CanUseHellBonusShield => hellEnhanced && shield != null && hellBonusShieldCooldownTimer <= 0f && shield.CanActivate;
         public bool IsSuperShot => isSuperShot;
         public bool NeedBlock => needBlock;
         public bool CanThrow => canThrow;
+        public IBLPlayerController Controller => controller;
+        private bool UsesHighlightedSkillShadow => skillDefinition.SkillType == rimrushCharacterSkillType.CarnivalJackpot && (scoreUpgradeActive || scoreUpgradePendingShot);
 
         /// <summary>
         /// Executes rimrush Player Object for the rimrushPlayerObject workflow.
@@ -2455,7 +2500,7 @@ namespace rimrush
             this.playerNo = playerNo;
             this.skillLevel = skillLevel;
             Side = teamIndex == 0 ? -1 : 1;
-            IsHuman = !playerBrain.StartsWith("B");
+            IsHuman = !playerBrain.StartsWith("B") && !playerBrain.StartsWith("T");
             brainSlot = rimrushControlsData.ParseControllerSlot(playerBrain);
             skillDefinition = rimrushCharacterSkillsData.Get(characterId);
             superId = skillDefinition.IconSuperId;
@@ -2495,8 +2540,8 @@ namespace rimrush
 
             shadow = new GameObject($"PlayerShadow_{teamIndex}_{playerNo}");
             shadow.transform.SetParent(parent, false);
-            var shadowRenderer = shadow.AddComponent<SpriteRenderer>();
-            shadowRenderer.sprite = rimrushGameplaySpriteLoader.LoadGameplaySprite(
+            shadowRenderer = shadow.AddComponent<SpriteRenderer>();
+            defaultShadowSprite = rimrushGameplaySpriteLoader.LoadGameplaySprite(
                 playerNo == 0
                     ? rimrushAssets.Images.GameplayImages.PlayerShadowPrimary
                     : rimrushAssets.Images.GameplayImages.PlayerShadowSecondary,
@@ -2504,6 +2549,15 @@ namespace rimrush
                 0.5f,
                 rimrushAtlasCache.Instance.Gameplay,
                 playerNo == 0 ? "ShadowMC0000" : "ShadowMC0001");
+            shadowRenderer.sprite = defaultShadowSprite;
+            activeSkillShadowSprite = skillDefinition.SkillType == rimrushCharacterSkillType.CarnivalJackpot
+                ? rimrushGameplaySpriteLoader.LoadGameplaySprite(
+                    rimrushAssets.Images.GameplayImages.PlayerShadowPrimaryRed,
+                    0.5f,
+                    0.5f,
+                    rimrushAtlasCache.Instance.Gameplay,
+                    "ShadowMC0000") ?? defaultShadowSprite
+                : defaultShadowSprite;
             shadowRenderer.sortingOrder = 2;
 
             armature = rimrushPlayersData.BuildGameplayArmature($"playerSmall_{teamIndex}_{playerNo}");
@@ -2529,10 +2583,10 @@ namespace rimrush
             controller = IsHuman
                 ? new rimrushKeyboardController(playerBrain)
                 : playerBrain.Length > 0 && (playerBrain[0] == 'T' || playerBrain[0] == 't')
-                    ? new rimrushTutorialOpponentController(this)
+                    ? new rimrushTutorialOpponentController(this, skillLevel)
                     : rimrushAIController.CreateForBrain(this, playerBrain, skillLevel);
 
-            energyBar = IsHuman ? new rimrushEnergyBarView(parent, brainSlot, superId, superCoolDown) : null;
+            energyBar = IsHuman ? new rimrushEnergyBarView(parent, brainSlot, skillDefinition, superCoolDown) : null;
             teleportFx = skillDefinition.UsesTeleportDunk ? new rimrushTeleportFx(parent, skillDefinition) : null;
             shield = skillDefinition.UsesBasketShield || hellEnhanced
                 ? new rimrushShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent, skillDefinition)
@@ -2602,12 +2656,12 @@ namespace rimrush
             superDashHits.Clear();
             isSuperShot = false;
             hellNativeSuperRefundPending = false;
-            scoreUpgradeTimer = 0f;
+            scoreUpgradeActive = false;
+            scoreUpgradePendingShot = false;
             flatScoreBonusTimer = 0f;
             flatScoreBonusPoints = 0;
             moveBuffTimer = 0f;
             moveBuffScoreBonusAvailable = false;
-            badLuckTimer = 0f;
             pendingScoreRefundFraction = 0f;
             pendingScoreRefundTimer = 0f;
             GameCore.IsSuperShot = false;
@@ -2957,6 +3011,7 @@ namespace rimrush
         {
             Position = position;
             Velocity = Vector2.zero;
+            pointOfThrow = Position.x;
             if (!Mathf.Approximately(facing, 0f))
             {
                 facingDirection = Mathf.Sign(facing);
@@ -2982,6 +3037,15 @@ namespace rimrush
             readyForSuper = true;
             superChargeTime = superCoolDown;
             energyBar?.SetCharge(1f);
+        }
+
+        /// <summary>
+        /// Executes Tutorial Prime Perfect Shot for the rimrushPlayerObject workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        public void TutorialPrimePerfectShot()
+        {
+            tutorialPerfectShotPrimed = true;
         }
 
         /// <summary>
@@ -3036,6 +3100,11 @@ namespace rimrush
         /// <param name="holderPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
+            if (scoreUpgradePendingShot)
+            {
+                ClearScoreUpgrade();
+            }
+
             if (holderSide == Side)
             {
                 controller.BallInOwnHands(holderPlayerNo);
@@ -3056,6 +3125,12 @@ namespace rimrush
         /// <param name="shooterPlayerNo">Input value used by this step of the workflow.</param>
         public void NotifyBallShot(int shotSide, int shooterPlayerNo)
         {
+            if (scoreUpgradeActive && shotSide == Side && shooterPlayerNo == playerNo)
+            {
+                scoreUpgradeActive = false;
+                scoreUpgradePendingShot = true;
+            }
+
             if (shotSide == Side)
             {
                 controller.BallOwnShoot(shooterPlayerNo);
@@ -3119,10 +3194,33 @@ namespace rimrush
             return shield != null && shield.TryBlockBall(ball);
         }
 
-        public void ApplyBadLuck(float duration)
+        public void ApplyFreeze(float duration, rimrushCharacterSkillDefinition freezeDefinition)
         {
-            badLuckTimer = Mathf.Max(badLuckTimer, duration);
-            GameCore.ShowHudBonusNotice("BAD LUCK MARK!", 0.95f);
+            if (duration <= 0f || removedFromPlay || isSuperShot || isDunking)
+            {
+                return;
+            }
+
+            stunTimer = Mathf.Max(stunTimer, duration);
+            dashTimer = 0f;
+            dashDirection = 0;
+            bufferedDashDirection = 0;
+            dashBufferTimer = 0f;
+            pendingGroundThrow = false;
+            pendingStealAction = false;
+            CancelStealAnimation(false);
+            blockPumpPhase = BlockPumpPhase.None;
+            blockPumpTimer = 0f;
+            jumpBlockActive = false;
+            canDoAction = false;
+            canTakeInHands = false;
+            Velocity = Vector2.zero;
+            actionLatch = Mathf.Max(actionLatch, stunTimer);
+            PlayState("stun");
+            skillFx?.PlayBurst(Mathf.Min(duration, 0.8f), freezeDefinition);
+            GameCore.PlayerSignals.Dispatch(rimrushPlayerSignalType.Stun, Side, playerNo);
+            rimrushAudio.Instance?.Play(rimrushAssets.Sounds.PStunned, 0.9f);
+            GameCore.ShowHudBonusNotice("FROZEN 2 SEC!", 0.95f);
         }
 
         public int ResolveScorePoints(int basePoints, out string scoreNotice)
@@ -3130,10 +3228,10 @@ namespace rimrush
             scoreNotice = null;
             var resolvedPoints = basePoints;
 
-            if (scoreUpgradeTimer > 0f && resolvedPoints >= 2)
+            if (scoreUpgradePendingShot && resolvedPoints >= 2)
             {
                 resolvedPoints = Mathf.Min(5, resolvedPoints + 2);
-                scoreUpgradeTimer = 0f;
+                scoreUpgradePendingShot = false;
                 scoreNotice = skillDefinition.ScoreNotice;
                 skillFx?.PlayBurst(0.5f);
             }
@@ -3166,7 +3264,7 @@ namespace rimrush
                 GrantSuperChargeFraction(pendingScoreRefundFraction);
                 pendingScoreRefundFraction = 0f;
                 pendingScoreRefundTimer = 0f;
-                GameCore.ShowHudBonusNotice("MOON REFUND!", 0.95f);
+                GameCore.ShowHudBonusNotice("SUPER REFUND!", 0.95f);
             }
         }
 
@@ -3468,7 +3566,7 @@ namespace rimrush
                     MakeAlleyOop();
                     return true;
                 case rimrushCharacterSkillType.BadLuck:
-                    MakeBadLuck();
+                    MakeFreeze();
                     return true;
             }
 
@@ -3634,8 +3732,9 @@ namespace rimrush
 
         private void MakeScoreUpgradeBuff()
         {
-            scoreUpgradeTimer = skillDefinition.EffectDuration;
-            skillFx?.PlayBuff(skillDefinition.EffectDuration);
+            scoreUpgradeActive = true;
+            scoreUpgradePendingShot = false;
+            skillFx?.PlayBuff(float.PositiveInfinity);
             EndSuper();
         }
 
@@ -3647,15 +3746,15 @@ namespace rimrush
             EndSuper();
         }
 
-        private void MakeBadLuck()
+        private void MakeFreeze()
         {
             var opponent = GameCore.FindClosestOpponent(this);
             if (opponent != null)
             {
-                opponent.ApplyBadLuck(skillDefinition.EffectDuration);
+                opponent.ApplyFreeze(skillDefinition.EffectDuration, skillDefinition);
             }
 
-            skillFx?.PlayBuff(0.55f);
+            skillFx?.PlayBurst(0.45f);
             EndSuper();
         }
 
@@ -3924,7 +4023,11 @@ namespace rimrush
                 flatScoreBonusPoints = Mathf.Max(flatScoreBonusPoints, skillDefinition.FlatScoreBonus);
                 flatScoreBonusTimer = Mathf.Max(flatScoreBonusTimer, skillDefinition.BonusDuration);
                 skillFx?.PlayBuff(Mathf.Min(skillDefinition.BonusDuration, 1.1f));
-                GameCore.ShowHudBonusNotice("REAPED BALL!", 0.95f);
+            }
+
+            if (skillDefinition.SkillType == rimrushCharacterSkillType.SoulReap)
+            {
+                GameCore.ShowHudBonusNotice(skillDefinition.ScoreNotice, 0.95f);
             }
         }
 
@@ -4239,11 +4342,6 @@ namespace rimrush
 
         private void UpdateSkillTimers(float dt)
         {
-            if (scoreUpgradeTimer > 0f)
-            {
-                scoreUpgradeTimer = Mathf.Max(0f, scoreUpgradeTimer - dt);
-            }
-
             if (flatScoreBonusTimer > 0f)
             {
                 flatScoreBonusTimer = Mathf.Max(0f, flatScoreBonusTimer - dt);
@@ -4260,11 +4358,6 @@ namespace rimrush
                 {
                     moveBuffScoreBonusAvailable = false;
                 }
-            }
-
-            if (badLuckTimer > 0f)
-            {
-                badLuckTimer = Mathf.Max(0f, badLuckTimer - dt);
             }
 
             if (pendingScoreRefundTimer > 0f)
@@ -4291,17 +4384,16 @@ namespace rimrush
 
         private float GetShotAccuracy()
         {
+            if (tutorialPerfectShotPrimed)
+            {
+                tutorialPerfectShotPrimed = false;
+                return -0.5f;
+            }
+
             var resolvedAccuracy = accuracy;
             if (moveBuffTimer > 0f)
             {
                 resolvedAccuracy += skillDefinition.AccuracyModifier;
-            }
-
-            if (badLuckTimer > 0f)
-            {
-                resolvedAccuracy += rimrushCharacterSkillsData.Get(7).AccuracyPenalty;
-                badLuckTimer = 0f;
-                GameCore.ShowHudBonusNotice("BAD LUCK!", 0.9f);
             }
 
             return Mathf.Max(-0.05f, resolvedAccuracy);
@@ -4325,12 +4417,14 @@ namespace rimrush
         /// </summary>
         private void UpdateGraphic()
         {
+            var gameplayScale = rimrushPlayersData.GetCharacterGameplayScaleMultiplier(characterId) * graphicScaleMultiplier;
             graphic.transform.position = rimrushConstants.PixelToWorldSnapped(Position.x, Position.y, 0.12f + playerNo * 0.01f);
             graphic.transform.localScale = new Vector3(
-                rimrushConstants.UnitsPerPixel * facingDirection * graphicScaleMultiplier,
-                rimrushConstants.UnitsPerPixel * graphicScaleMultiplier,
+                rimrushConstants.UnitsPerPixel * facingDirection * gameplayScale,
+                rimrushConstants.UnitsPerPixel * gameplayScale,
                 1f);
 
+            UpdateShadowAppearance();
             var showShadow = !removedFromPlay && graphicScaleMultiplier > 0.05f;
             shadow.SetActive(showShadow);
             if (showShadow)
@@ -4338,6 +4432,27 @@ namespace rimrush
                 var shadowScale = Mathf.Clamp01(1f - (rimrushObjectsData.PlayerIndentY - Position.y) / 300f);
                 rimrushRender.ApplyPixelTransform(shadow.transform, Position.x, rimrushObjectsData.FloorY + 6f, 0.02f, Mathf.Max(0.2f, shadowScale));
             }
+        }
+
+        private void UpdateShadowAppearance()
+        {
+            if (shadowRenderer == null)
+            {
+                return;
+            }
+
+            var targetSprite = UsesHighlightedSkillShadow ? activeSkillShadowSprite : defaultShadowSprite;
+            if (targetSprite != null && shadowRenderer.sprite != targetSprite)
+            {
+                shadowRenderer.sprite = targetSprite;
+            }
+        }
+
+        private void ClearScoreUpgrade()
+        {
+            scoreUpgradeActive = false;
+            scoreUpgradePendingShot = false;
+            skillFx?.Stop();
         }
 
         /// <summary>
@@ -4659,13 +4774,6 @@ namespace rimrush
 
             dunkReleased = true;
             var completionChance = chanceToCompleteDunk;
-            if (badLuckTimer > 0f)
-            {
-                completionChance = Mathf.Max(0.05f, completionChance - 0.35f);
-                badLuckTimer = 0f;
-                GameCore.ShowHudBonusNotice("BAD LUCK!", 0.9f);
-            }
-
             var completed = Random.value <= completionChance;
             GameCore.MatchProcessor.Shoot(Side, IsHuman, completed ? 1 : 9, playerNo);
             GameCore.NotifyPlayersBallShot(Side, playerNo);

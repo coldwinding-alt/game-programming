@@ -48,19 +48,24 @@ namespace rimrush
                 public const string HarvestTimeAccent = "SkillFx/harvest_time_accent";
             }
 
-            public static class TutorialUi
+            public static class SkillIcons
             {
-                public const string Board = "UI/Tutorial/tutorial_board";
-                public const string Card = "UI/Tutorial/tutorial_card";
-                public const string Tab = "UI/Tutorial/tutorial_tab";
-                public const string ButtonPrimary = "UI/Tutorial/tutorial_button_primary";
-                public const string ButtonSecondary = "UI/Tutorial/tutorial_button_secondary";
-                public const string Chip = "UI/Tutorial/tutorial_chip";
-                public const string FocusFrame = "UI/Tutorial/tutorial_focus_frame";
-                public const string Glow = "UI/Tutorial/tutorial_glow";
-                public const string Orb = "UI/Tutorial/tutorial_orb";
-                public const string Dim = "UI/Tutorial/tutorial_dim";
-                public const string Rule = "UI/Tutorial/tutorial_rule";
+                public const string ReaperAcolyte = "SkillIcons/reaper_acolyte_skill_icon";
+                public const string ReaperAcolyteMask = "SkillIcons/reaper_acolyte_skill_charge_mask";
+                public const string GhostClown = "SkillIcons/ghost_clown_skill_icon";
+                public const string GhostClownMask = "SkillIcons/ghost_clown_skill_charge_mask";
+                public const string SkullPirate = "SkillIcons/skull_pirate_skill_icon";
+                public const string SkullPirateMask = "SkillIcons/skull_pirate_skill_charge_mask";
+                public const string Vampire = "SkillIcons/vampire_skill_icon";
+                public const string VampireMask = "SkillIcons/vampire_skill_charge_mask";
+                public const string Candleman = "SkillIcons/candleman_skill_icon";
+                public const string CandlemanMask = "SkillIcons/candleman_skill_charge_mask";
+                public const string Scarecrow = "SkillIcons/scarecrow_skill_icon";
+                public const string ScarecrowMask = "SkillIcons/scarecrow_skill_charge_mask";
+                public const string Witch = "SkillIcons/witch_skill_icon";
+                public const string WitchMask = "SkillIcons/witch_skill_charge_mask";
+                public const string BlackCat = "SkillIcons/black_cat_skill_icon";
+                public const string BlackCatMask = "SkillIcons/black_cat_skill_charge_mask";
             }
 
             /// <summary>
@@ -80,6 +85,7 @@ namespace rimrush
                 public const string BasketGraphic = "Gameplay/basket_halloween_rim";
                 public const string BasketFrontEar = "Gameplay/basket_halloween_front_ear";
                 public const string PlayerShadowPrimary = "Gameplay/player_shadow_primary";
+                public const string PlayerShadowPrimaryRed = "Gameplay/player_shadow_primary_red";
                 public const string PlayerShadowSecondary = "Gameplay/player_shadow_secondary";
                 public const string PlayerShadowBall = "Gameplay/player_shadow_ball";
                 public const string BallClassicOriginal = "Gameplay/ball_classic_original";
@@ -103,6 +109,7 @@ namespace rimrush
             {
                 return theme switch
                 {
+                    rimrushBallTheme.ClassicOriginal => null,
                     rimrushBallTheme.GhoulGreen => GameplayImages.BallGhoulGreen,
                     rimrushBallTheme.PumpkinEmber => GameplayImages.BallPumpkinEmber,
                     rimrushBallTheme.MoonlitViolet => GameplayImages.BallMoonlitViolet,
@@ -110,7 +117,7 @@ namespace rimrush
                     rimrushBallTheme.EvilEye => GameplayImages.BallEvilEye,
                     rimrushBallTheme.Cursed8Ball => GameplayImages.BallCursed8Ball,
                     rimrushBallTheme.CandySwirl => GameplayImages.BallCandySwirl,
-                    _ => GameplayImages.BallClassicOriginal
+                    _ => null
                 };
             }
         }

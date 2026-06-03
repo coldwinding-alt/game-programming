@@ -332,7 +332,7 @@ namespace rimrush
 
             CharacterIds = new[] { resolvedCharacterId, opponentCharacterId };
             Pb = new[] { new[] { "P0" }, new[] { "T0" } };
-            Skills = new[] { new[] { 0 }, new[] { 0 } };
+            Skills = new[] { new[] { 0 }, new[] { 2 } };
         }
 
         /// <summary>

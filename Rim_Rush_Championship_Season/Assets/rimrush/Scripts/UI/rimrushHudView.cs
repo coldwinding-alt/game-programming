@@ -2173,9 +2173,9 @@ namespace rimrush
         /// </summary>
         /// <param name="parent">Input value used by this step of the workflow.</param>
         /// <param name="controllerSlot">Input value used by this step of the workflow.</param>
-        /// <param name="superId">Input value used by this step of the workflow.</param>
+        /// <param name="skillDefinition">Input value used by this step of the workflow.</param>
         /// <param name="fullTime">Input value used by this step of the workflow.</param>
-        public rimrushEnergyBarView(Transform parent, int controllerSlot, int superId, float fullTime)
+        public rimrushEnergyBarView(Transform parent, int controllerSlot, rimrushCharacterSkillDefinition skillDefinition, float fullTime)
         {
             var profile = rimrushControlsData.ProfileForSlot(controllerSlot);
             var x = 45f;
@@ -2191,6 +2191,7 @@ namespace rimrush
             var y = 45f;
             const float legacyEnergyBgWidth = 95f;
             const float legacyEnergyBgHeight = 89f;
+            const float standaloneEnergyIconPixels = 76f;
             var energyTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EnergyButtonPlate));
             GameObject bg;
             if (energyTexture != null)
@@ -2207,8 +2208,26 @@ namespace rimrush
                 bg.transform.localScale *= 1.1f;
             }
 
-            rimrushRender.Sprite($"EnergyBase_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball000{superId}", x, y, 0.5f, 0.5f, 84, parent);
-            overlay = new rimrushRadialIconMesh($"EnergyFill_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball2000{superId}", x, y, 85, parent);
+            var baseResourcePath = skillDefinition.HasStandaloneIconArt
+                ? rimrushAssets.Images.ResourcePath(skillDefinition.IconImageKey)
+                : null;
+            var maskResourcePath = skillDefinition.HasStandaloneIconArt
+                ? rimrushAssets.Images.ResourcePath(skillDefinition.ChargeMaskImageKey)
+                : null;
+            var baseTexture = !string.IsNullOrEmpty(baseResourcePath) ? Resources.Load<Texture2D>(baseResourcePath) : null;
+            var maskTexture = !string.IsNullOrEmpty(maskResourcePath) ? Resources.Load<Texture2D>(maskResourcePath) : null;
+
+            if (baseTexture != null && maskTexture != null)
+            {
+                rimrushIconButton.CreateImageIcon($"EnergyBase_{controllerSlot}", baseResourcePath, x, y, 84, standaloneEnergyIconPixels, parent);
+                overlay = new rimrushRadialIconMesh($"EnergyFill_{controllerSlot}", maskTexture, x, y, 85, parent, standaloneEnergyIconPixels);
+            }
+            else
+            {
+                var superId = skillDefinition.IconSuperId;
+                rimrushRender.Sprite($"EnergyBase_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball000{superId}", x, y, 0.5f, 0.5f, 84, parent);
+                overlay = new rimrushRadialIconMesh($"EnergyFill_{controllerSlot}", rimrushAtlasCache.Instance.Interface, $"icon_ball2000{superId}", x, y, 85, parent);
+            }
 
             rimrushRender.Sprite($"EnergyHintBg_{controllerSlot}", rimrushAtlasCache.Instance.Gameplay, "key_hint0000", x - 30f, y + 30f, 0.5f, 0.5f, 86, parent);
             rimrushRender.Text(
@@ -2289,6 +2308,41 @@ namespace rimrush
             var rect = sprite.rect;
             uvMin = new Vector2(rect.xMin / sprite.texture.width, rect.yMin / sprite.texture.height);
             uvMax = new Vector2(rect.xMax / sprite.texture.width, rect.yMax / sprite.texture.height);
+
+            rimrushRender.ApplyPixelTransform(graphic.transform, x, y, 0.13f, 1f);
+            SetProgress(0f);
+        }
+
+        /// <summary>
+        /// Executes rimrush Radial Icon Mesh for the standalone texture workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="name">Input value used by this step of the workflow.</param>
+        /// <param name="texture">Input value used by this step of the workflow.</param>
+        /// <param name="x">Input value used by this step of the workflow.</param>
+        /// <param name="y">Input value used by this step of the workflow.</param>
+        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
+        /// <param name="parent">Input value used by this step of the workflow.</param>
+        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
+        public rimrushRadialIconMesh(string name, Texture2D texture, float x, float y, int sortingOrder, Transform parent, float targetPixels)
+        {
+            graphic = new GameObject(name);
+            graphic.transform.SetParent(parent, false);
+
+            var filter = graphic.AddComponent<MeshFilter>();
+            var renderer = graphic.AddComponent<MeshRenderer>();
+            mesh = new Mesh { name = $"{name}_Mesh" };
+            mesh.MarkDynamic();
+            filter.sharedMesh = mesh;
+
+            renderer.sharedMaterial = rimrushSharedMaterialCache.GetSpritesDefault(texture);
+            renderer.sortingOrder = sortingOrder;
+
+            var sourcePixels = Mathf.Max(1f, Mathf.Max(texture.width, texture.height));
+            width = targetPixels * texture.width / sourcePixels;
+            height = targetPixels * texture.height / sourcePixels;
+            uvMin = Vector2.zero;
+            uvMax = Vector2.one;
 
             rimrushRender.ApplyPixelTransform(graphic.transform, x, y, 0.13f, 1f);
             SetProgress(0f);
