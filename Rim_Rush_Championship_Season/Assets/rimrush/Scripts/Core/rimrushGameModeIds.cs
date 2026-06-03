@@ -9,11 +9,4 @@ namespace rimrush
         public const int Tutorial = 5;
     }
 
-    public enum rimrushTutorialNextAction
-    {
-        None,
-        ReplayTutorial,
-        StartTraining,
-        StartQuickMatch
-    }
 }

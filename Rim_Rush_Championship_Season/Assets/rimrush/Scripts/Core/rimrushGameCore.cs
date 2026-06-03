@@ -257,7 +257,6 @@ namespace rimrush
             ResolvePlayerBlocking();
             TryBlockBall();
             TryPickupLooseBall();
-
             tutorialFlow?.UpdateAfterGameplay(dt);
 
             if (!isTraining && !IsSuperShot)

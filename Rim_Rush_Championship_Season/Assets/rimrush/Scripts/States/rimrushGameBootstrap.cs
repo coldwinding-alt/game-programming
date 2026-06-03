@@ -7,6 +7,8 @@ namespace rimrush
 {
     public sealed class rimrushGameBootstrap : MonoBehaviour
     {
+        private static rimrushGameBootstrap activeInstance;
+
         private enum rimrushBootstrapScreen
         {
             PlayerCount,
@@ -210,6 +212,7 @@ namespace rimrush
         /// </summary>
         private void Awake()
         {
+            activeInstance = this;
             mainCamera = Camera.main;
             if (mainCamera == null)
             {
@@ -244,6 +247,26 @@ namespace rimrush
             versusBallSelection = inventory.SelectedVersusBallSelection;
             SeedTwoPlayerSelection();
             ShowPlayerCountMenu();
+        }
+
+        private void OnDestroy()
+        {
+            if (activeInstance == this)
+            {
+                activeInstance = null;
+            }
+        }
+
+        public static bool TryStartTutorialFromHelp()
+        {
+            var bootstrap = activeInstance != null ? activeInstance : FindObjectOfType<rimrushGameBootstrap>();
+            if (bootstrap == null)
+            {
+                return false;
+            }
+
+            bootstrap.StartTutorialFromHelpPanel();
+            return true;
         }
 
         /// <summary>
@@ -287,13 +310,7 @@ namespace rimrush
             }
 
             var helpVisible = rimrushHelpPanel.IsAnyOpen;
-            var tutorialVisible = rimrushTutorialMenuPanel.IsAnyOpen;
-            nativeMenuTextLayer?.SetVisible(!helpVisible && !tutorialVisible);
-            if (tutorialVisible)
-            {
-                HandleTutorialMenuCommand();
-                return;
-            }
+            nativeMenuTextLayer?.SetVisible(!helpVisible);
 
             if (helpVisible)
             {
@@ -392,7 +409,7 @@ namespace rimrush
                 ShowTwoPlayerSetup();
             }, runtimeRoot));
 
-            menuButtons.Add(new rimrushMenuButton("TUTORIAL", rimrushConstants.Width2, 366f, 228f, 52f, ShowTutorialPanel, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("TUTORIAL", rimrushConstants.Width2, 366f, 228f, 52f, StartTutorialFlow, runtimeRoot));
             menuButtons.Add(new rimrushMenuButton("TRAINING", rimrushConstants.Width2, 426f, 228f, 52f, ShowTrainingSetup, runtimeRoot));
         }
 
@@ -738,8 +755,6 @@ namespace rimrush
             inventory.SetTrainingSelection(trainingCharacterId);
             inventory.SetTrainingBallSelection(trainingBallSelection);
             inventory.StartTraining();
-            rimrushTutorialMenuPanel.HideActive();
-            inventory.PendingTutorialNextAction = rimrushTutorialNextAction.None;
             StartGameplay();
         }
 
@@ -754,9 +769,17 @@ namespace rimrush
             inventory.SetTrainingSelection(trainingCharacterId);
             inventory.SetTrainingBallSelection(trainingBallSelection);
             inventory.StartTutorial();
-            rimrushTutorialMenuPanel.HideActive();
-            inventory.PendingTutorialNextAction = rimrushTutorialNextAction.None;
             StartGameplay();
+        }
+
+        private void StartTutorialFromHelpPanel()
+        {
+            if (rimrushInventory.Instance.IsTournamentActive)
+            {
+                rimrushInventory.Instance.AbandonTournament();
+            }
+
+            StartTutorialFlow();
         }
 
         /// <summary>
@@ -779,65 +802,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Tutorial Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
-        /// </summary>
-        private void ShowTutorialPanel()
-        {
-            rimrushHelpPanel.HideActive();
-            rimrushTutorialMenuPanel.ShowOverview(trainingCharacterId, trainingBallSelection);
-        }
-
-        /// <summary>
         /// Executes Show Menu Controls Panel for the TournamentStandingsRowViewModel workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
         private void ShowMenuControlsPanel()
         {
-            rimrushHelpPanel.HideActive();
-            rimrushTutorialMenuPanel.ShowControls(trainingCharacterId, trainingBallSelection);
-        }
-
-        /// <summary>
-        /// Executes Handle Tutorial Menu Command for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
-        /// </summary>
-        private void HandleTutorialMenuCommand()
-        {
-            switch (rimrushTutorialMenuPanel.ConsumeActiveCommand())
-            {
-                case rimrushTutorialMenuCommand.Close:
-                    rimrushTutorialMenuPanel.HideActive();
-                    break;
-                case rimrushTutorialMenuCommand.StartTutorial:
-                    StartTutorialFlow();
-                    break;
-                case rimrushTutorialMenuCommand.StartTraining:
-                    StartTrainingFlow();
-                    break;
-                case rimrushTutorialMenuCommand.PreviousCharacter:
-                    trainingCharacterId = WrapCharacter(trainingCharacterId, -1);
-                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
-                    break;
-                case rimrushTutorialMenuCommand.NextCharacter:
-                    trainingCharacterId = WrapCharacter(trainingCharacterId, 1);
-                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
-                    break;
-                case rimrushTutorialMenuCommand.PreviousBall:
-                    trainingBallSelection = rimrushBallCatalog.StepSelection(trainingBallSelection, -1);
-                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
-                    break;
-                case rimrushTutorialMenuCommand.NextBall:
-                    trainingBallSelection = rimrushBallCatalog.StepSelection(trainingBallSelection, 1);
-                    rimrushTutorialMenuPanel.RefreshActiveSelection(trainingCharacterId, trainingBallSelection);
-                    break;
-                case rimrushTutorialMenuCommand.OverviewTab:
-                    rimrushTutorialMenuPanel.ShowOverview(trainingCharacterId, trainingBallSelection);
-                    break;
-                case rimrushTutorialMenuCommand.ControlsTab:
-                    rimrushTutorialMenuPanel.ShowControls(trainingCharacterId, trainingBallSelection);
-                    break;
-            }
+            rimrushHelpPanel.ShowKeyboardPage();
         }
 
         /// <summary>
@@ -1480,6 +1450,18 @@ namespace rimrush
             menuButtons.Add(new rimrushMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
 
             CreatePreviewPlayer(key, characterId, centerX, previewY, previewScale);
+            var skillDefinition = rimrushCharacterSkillsData.Get(characterId);
+            CreateCharacterSkillIcon($"{key}_SkillIcon", skillDefinition, centerX - 82f, nameY - 18f, 21);
+            CreateMenuText(
+                $"{key}_SkillName",
+                skillDefinition.SkillName,
+                centerX - 48f,
+                nameY - 20f,
+                GetCompactFontSize(skillDefinition.SkillName, 12, 11, 10),
+                new Color32(0xCD, 0xF0, 0x0F, 0xFF),
+                TextAnchor.MiddleLeft,
+                21,
+                rimrushTextStyle.TournamentAccent);
             CreateMenuText(
                 $"{key}_CharacterName",
                 rimrushPlayersData.GetCharacterName(characterId),
@@ -1490,6 +1472,39 @@ namespace rimrush
                 TextAnchor.MiddleCenter,
                 21,
                 rimrushTextStyle.TournamentBody);
+        }
+
+        private void CreateCharacterSkillIcon(string name, rimrushCharacterSkillDefinition skillDefinition, float x, float y, int sortingOrder)
+        {
+            const float orbPixels = 52f;
+            const float iconPixels = 42f;
+            var orbTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EmblemOrb));
+            if (orbTexture != null)
+            {
+                var orb = rimrushRender.Image($"{name}_Orb", orbTexture, x, y, 0.5f, 0.5f, sortingOrder, runtimeRoot);
+                orb.transform.localScale = new Vector3(
+                    rimrushConstants.UnitsPerPixel * orbPixels / Mathf.Max(1f, orbTexture.width),
+                    rimrushConstants.UnitsPerPixel * orbPixels / Mathf.Max(1f, orbTexture.height),
+                    1f);
+                var orbRenderer = orb.GetComponent<SpriteRenderer>();
+                if (orbRenderer != null)
+                {
+                    orbRenderer.color = new Color(1f, 1f, 1f, 0.92f);
+                }
+            }
+            else
+            {
+                var fallbackOrb = rimrushRender.Sprite($"{name}_OrbFallback", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, runtimeRoot);
+                fallbackOrb.transform.localScale *= orbPixels / 150f;
+            }
+
+            if (!skillDefinition.HasStandaloneIconArt)
+            {
+                return;
+            }
+
+            var iconPath = rimrushAssets.Images.ResourcePath(skillDefinition.IconImageKey);
+            rimrushIconButton.CreateImageIcon(name, iconPath, x, y, sortingOrder + 1, iconPixels, runtimeRoot);
         }
 
         /// <summary>

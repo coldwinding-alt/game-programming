@@ -52,6 +52,7 @@ namespace rimrush.EditorTools
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsShowcasePanel), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsResultPlaque), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsPodiumBase), errors);
+                ValidateSkillIconAssets(errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Scoreboard), errors);
                 CheckResource<Texture2D>(rimrushAssets.Hud.ResourcePath(rimrushAssets.Hud.Popup), errors);
                 CheckResource<TextAsset>(rimrushAssets.Portraits.ResourcePath(rimrushAssets.Portraits.UiAtlas), errors);
@@ -146,6 +147,8 @@ namespace rimrush.EditorTools
                 core = new rimrushGameBuilder().Build(root.transform);
                 core.Update(0.016f);
                 ValidateBlockedShotScorePersistence(core, errors);
+                ValidateHelpPanelTutorialEntry(errors);
+                ValidateTutorialModeBoot(errors);
             }
             catch (Exception ex)
             {
@@ -322,6 +325,103 @@ namespace rimrush.EditorTools
         {
             ValidateSharedRuntimeMaterials(errors);
             ValidateGameRuntimeMeshRelease(errors);
+        }
+
+        /// <summary>
+        /// Executes Validate Help Panel Tutorial Entry for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateHelpPanelTutorialEntry(List<string> errors)
+        {
+            var prefab = Resources.Load<rimrushHelpPanel>("rimrush/Prefabs/UI/RimrushHelpPanel");
+            if (prefab == null)
+            {
+                errors.Add("Missing help panel prefab at Resources/rimrush/Prefabs/UI/RimrushHelpPanel.");
+                return;
+            }
+
+            rimrushHelpPanel instance = null;
+            try
+            {
+                instance = UnityEngine.Object.Instantiate(prefab);
+                var buttons = instance.GetComponentsInChildren<rimrushHelpButton>(true);
+                var replayButtons = 0;
+                for (var i = 0; i < buttons.Length; i++)
+                {
+                    if (buttons[i] != null && buttons[i].Action == rimrushHelpButtonAction.ReplayTutorial)
+                    {
+                        replayButtons++;
+                    }
+                }
+
+                if (replayButtons <= 0)
+                {
+                    errors.Add("Help panel no longer exposes a Replay Tutorial button.");
+                }
+            }
+            finally
+            {
+                if (instance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(instance.gameObject);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes Validate Tutorial Mode Boot for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateTutorialModeBoot(List<string> errors)
+        {
+            var existingOverlay = UnityEngine.Object.FindObjectOfType<rimrushTutorialOverlay>();
+            if (existingOverlay != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existingOverlay.gameObject);
+            }
+
+            var runtimeRoot = new GameObject("TutorialSmokeRoot");
+            rimrushGameCore tutorialCore = null;
+            rimrushTutorialOverlay tutorialOverlay = null;
+
+            try
+            {
+                rimrushAudio.Create(runtimeRoot.transform);
+                rimrushInventory.Instance.SetTrainingSelection(0);
+                rimrushInventory.Instance.SetTrainingBallSelection(rimrushBallSelection.ClassicOriginal);
+                rimrushInventory.Instance.StartTutorial();
+                tutorialCore = new rimrushGameBuilder().Build(runtimeRoot.transform);
+                tutorialCore.Update(0.016f);
+
+                if (tutorialCore.TutorialFlow == null)
+                {
+                    errors.Add("Tutorial mode did not create a tutorial flow.");
+                }
+
+                tutorialOverlay = UnityEngine.Object.FindObjectOfType<rimrushTutorialOverlay>();
+                if (tutorialOverlay == null)
+                {
+                    errors.Add("Tutorial mode did not create the tutorial overlay.");
+                    return;
+                }
+
+                var overlayRootField = typeof(rimrushTutorialOverlay).GetField("overlayRoot", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (overlayRootField == null || overlayRootField.GetValue(tutorialOverlay) == null)
+                {
+                    errors.Add("Tutorial overlay did not build its runtime UI root.");
+                }
+            }
+            finally
+            {
+                tutorialCore?.Shutdown();
+                UnityEngine.Object.DestroyImmediate(runtimeRoot);
+                if (tutorialOverlay != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(tutorialOverlay.gameObject);
+                }
+            }
         }
 
         /// <summary>
@@ -531,6 +631,126 @@ namespace rimrush.EditorTools
             finally
             {
                 UnityEngine.Object.DestroyImmediate(inspector);
+            }
+        }
+
+        /// <summary>
+        /// Executes Validate Skill Icon Assets for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateSkillIconAssets(List<string> errors)
+        {
+            var validatedImageKeys = new HashSet<string>();
+            for (var characterId = 0; characterId < rimrushPlayersData.CharacterCount; characterId++)
+            {
+                var skillDefinition = rimrushCharacterSkillsData.Get(characterId);
+                ValidateSkillIconTexture(skillDefinition.IconImageKey, validatedImageKeys, errors);
+                ValidateSkillIconTexture(skillDefinition.ChargeMaskImageKey, validatedImageKeys, errors);
+            }
+        }
+
+        /// <summary>
+        /// Executes Validate Skill Icon Texture for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="imageKey">Input value used by this step of the workflow.</param>
+        /// <param name="validatedImageKeys">Input value used by this step of the workflow.</param>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateSkillIconTexture(string imageKey, HashSet<string> validatedImageKeys, List<string> errors)
+        {
+            if (string.IsNullOrEmpty(imageKey) || !validatedImageKeys.Add(imageKey))
+            {
+                return;
+            }
+
+            var resourcePath = rimrushAssets.Images.ResourcePath(imageKey);
+            var texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                errors.Add($"Missing skill icon texture: {resourcePath}");
+                return;
+            }
+
+            if (texture.width < 512 || texture.height < 512)
+            {
+                errors.Add($"{resourcePath} should stay at least 512x512 for crisp HUD rendering, got {texture.width}x{texture.height}.");
+            }
+
+            ValidateStandaloneUiTextureImport(
+                resourcePath,
+                $"Assets/rimrush/Resources/{resourcePath}.png",
+                errors);
+        }
+
+        /// <summary>
+        /// Executes Validate Standalone Ui Texture Import for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
+        /// <param name="assetPath">Input value used by this step of the workflow.</param>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateStandaloneUiTextureImport(string resourcePath, string assetPath, List<string> errors)
+        {
+            if (!File.Exists(assetPath))
+            {
+                errors.Add($"Missing standalone UI asset file: {assetPath}");
+                return;
+            }
+
+            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null)
+            {
+                errors.Add($"Could not inspect texture importer for {assetPath}.");
+                return;
+            }
+
+            if (importer.mipmapEnabled)
+            {
+                errors.Add($"{resourcePath} should disable mipmaps for sharp UI rendering.");
+            }
+
+            if (!importer.alphaIsTransparency)
+            {
+                errors.Add($"{resourcePath} should enable alpha transparency handling.");
+            }
+
+            if (importer.filterMode != FilterMode.Bilinear)
+            {
+                errors.Add($"{resourcePath} should use bilinear filtering, got {importer.filterMode}.");
+            }
+
+            if (importer.maxTextureSize < 4096)
+            {
+                errors.Add($"{resourcePath} should keep max texture size at 4096, got {importer.maxTextureSize}.");
+            }
+
+            ValidatePlatformTextureSettings(resourcePath, importer.GetPlatformTextureSettings("DefaultTexturePlatform"), errors);
+            ValidatePlatformTextureSettings(resourcePath, importer.GetPlatformTextureSettings("Standalone"), errors);
+        }
+
+        /// <summary>
+        /// Executes Validate Platform Texture Settings for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
+        /// <param name="settings">Input value used by this step of the workflow.</param>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidatePlatformTextureSettings(string resourcePath, TextureImporterPlatformSettings settings, List<string> errors)
+        {
+            if (!settings.overridden)
+            {
+                errors.Add($"{resourcePath} should override {settings.name} import settings to avoid low-quality UI compression.");
+            }
+
+            if (settings.maxTextureSize < 4096)
+            {
+                errors.Add($"{resourcePath} should keep {settings.name} max texture size at 4096, got {settings.maxTextureSize}.");
+            }
+
+            if (settings.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                errors.Add($"{resourcePath} should keep {settings.name} uncompressed for clean UI edges.");
             }
         }
 
