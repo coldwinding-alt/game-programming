@@ -674,19 +674,19 @@ namespace rimrush
             switch (demo)
             {
                 case rimrushHelpDemo.Move:
-                    return "Hold A/D or LEFT/RIGHT.\nRelease to stop.";
+                    return "Hold A / D.\nRelease to stop.";
                 case rimrushHelpDemo.Jump:
-                    return "Press W or UP.\nJump for air shots.";
+                    return "Press W.\nJump for air shots.";
                 case rimrushHelpDemo.Shoot:
-                    return "Press ACTION with the ball.\nAir shots release before landing.";
+                    return "Press B with the ball.\nRelease before landing.";
                 case rimrushHelpDemo.Pump:
-                    return "Hold S or DOWN with the ball.\nUse it to fake the shot.";
+                    return "Hold S with the ball.\nUse it to fake the shot.";
                 case rimrushHelpDemo.Dash:
-                    return "Double-tap left or right.\nDash has a short cooldown.";
+                    return "Double-tap A or D.\nDash has a short cooldown.";
                 case rimrushHelpDemo.Steal:
-                    return "Press ACTION near the dribbler.\nSteal from close range.";
+                    return "Press B near the dribbler.\nSteal from close range.";
                 default:
-                    return "Hold S or DOWN to block.\nJump into the shot path.";
+                    return "Hold S to block.\nJump into the shot path.";
             }
         }
 
@@ -703,17 +703,17 @@ namespace rimrush
                 case rimrushHelpDemo.Move:
                     return "Tip: stop before shooting.";
                 case rimrushHelpDemo.Jump:
-                    return "Tip: time your jump.";
+                    return "Tip: jump late.";
                 case rimrushHelpDemo.Shoot:
                     return "Tip: release at the top.";
                 case rimrushHelpDemo.Pump:
-                    return "Tip: pump only works with the ball.";
+                    return "Tip: ball only.";
                 case rimrushHelpDemo.Dash:
                     return "Tip: dash beats steals.";
                 case rimrushHelpDemo.Steal:
-                    return "Tip: steal from the front.";
+                    return "Tip: stay in front.";
                 default:
-                    return "Tip: use DOWN to block.";
+                    return "Tip: time the jump.";
             }
         }
 

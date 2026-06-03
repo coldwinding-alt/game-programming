@@ -1,7 +1,6 @@
 // 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
 // 概括：rimrushHelpPanelPrefabBuilder 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
@@ -19,27 +18,6 @@ namespace rimrush.EditorTools
         private const string PrefabRoot = "Assets/rimrush/Resources/rimrush/Prefabs/UI";
         private const string PrefabPath = PrefabRoot + "/RimrushHelpPanel.prefab";
         private const string MainScenePath = "Assets/Scenes/Main.unity";
-
-        [InitializeOnLoadMethod]
-        private static void RunBatchBuildFromEnvironment()
-        {
-            if (Environment.GetEnvironmentVariable("RIMRUSH_HELP_PANEL_BATCH_BUILD") != "1")
-            {
-                return;
-            }
-
-            EditorApplication.delayCall += () =>
-            {
-                try
-                {
-                    Build();
-                }
-                finally
-                {
-                    EditorApplication.Exit(0);
-                }
-            };
-        }
 
         [MenuItem("rimrush/Build Help Panel Prefab")]
         /// <summary>
@@ -60,6 +38,20 @@ namespace rimrush.EditorTools
             Debug.Log("Rimrush help panel prefab and scene instance built.");
         }
 
+        [MenuItem("rimrush/Build Help Panel Prefab Only")]
+        public static void BuildPrefabAssetOnly()
+        {
+            Directory.CreateDirectory(HelpAssetRoot);
+            Directory.CreateDirectory(HelpTmpFontRoot);
+            Directory.CreateDirectory(PrefabRoot);
+            CreateTextureAssets();
+            CreateTmpFontAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            BuildPrefab();
+            AssetDatabase.SaveAssets();
+            Debug.Log("Rimrush help panel prefab rebuilt.");
+        }
+
         /// <summary>
         /// Executes Build Prefab for the rimrushHelpPanelPrefabBuilder workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -67,6 +59,12 @@ namespace rimrush.EditorTools
         /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject BuildPrefab()
         {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                AssetDatabase.DeleteAsset(PrefabPath);
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            }
+
             var root = new GameObject("RimrushHelpPanel");
             var panel = root.AddComponent<rimrushHelpPanel>();
             var panelRoot = new GameObject("PanelRoot");
@@ -194,11 +192,11 @@ namespace rimrush.EditorTools
         {
             AddText("KeyboardHeader", "KEYBOARD MAP", 64f, 119f, 17, new Color32(0xF2, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 930, parent, rimrushTextStyle.TournamentAccent);
 
-            AddControlRow(parent, card, keycap, 65f, 166f, "MOVE", "A / D", "LEFT / RIGHT", "Hold to run.\nDouble-tap: Dash.", secondaryUsesKeycap: false);
-            AddControlRow(parent, card, keycap, 65f, 202f, "JUMP", "W", "UP", "Shoot in air.\nContest shots.", secondaryUsesKeycap: false);
-            AddControlRow(parent, card, keycap, 65f, 238f, "ACTION", "B", "L", "Ball: Shoot.\nNo ball: Steal.");
-            AddControlRow(parent, card, keycap, 65f, 274f, "DOWN", "S", "DOWN", "Defense: Block.\nWith ball: Pump.", secondaryUsesKeycap: false);
-            AddControlRow(parent, card, keycap, 65f, 310f, "SUPER", "N / V", "K", "Use when\nenergy is full.");
+            AddControlRow(parent, card, keycap, 65f, 166f, "MOVE", "A / D", "Move left / right.\nDouble-tap to dash.");
+            AddControlRow(parent, card, keycap, 65f, 202f, "JUMP", "W", "Jump.\nAir shots and contests.");
+            AddControlRow(parent, card, keycap, 65f, 238f, "ACTION", "B", "With ball: Shoot.\nNo ball: Steal.");
+            AddControlRow(parent, card, keycap, 65f, 274f, "DOWN", "S", "With ball: Pump fake.\nDefense: Block.");
+            AddControlRow(parent, card, keycap, 65f, 310f, "SUPER", "N / V", "Use at full energy.");
 
             AddProfileStrip(parent, card, keycap);
 
@@ -232,9 +230,9 @@ namespace rimrush.EditorTools
             CreateDemoButton(parent, chip, buttons, demoRows, rimrushHelpDemo.Steal, rimrushHelpButtonAction.DemoSteal, "STEAL", 702f, 289f);
             CreateDemoButton(parent, chip, buttons, demoRows, rimrushHelpDemo.Block, rimrushHelpButtonAction.DemoBlock, "BLOCK", 702f, 316f);
 
-            demoTitle = AddText("DemoTitle", "DOWN: BLOCK", 430f, 326f, 14, new Color32(0xD8, 0xFF, 0x89, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentAccent);
-            demoDescription = AddText("DemoDescription", "Hold S or DOWN to block.\nJump into the shot path.", 430f, 350f, 10, new Color32(0xF4, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentBody);
-            demoCoach = AddText("DemoCoach", "Tip: use DOWN to block.", 430f, 377f, 9, new Color32(0x9F, 0xFF, 0xD3, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentBody);
+            demoTitle = AddText("DemoTitle", "DOWN: BLOCK", 430f, 314f, 14, new Color32(0xD8, 0xFF, 0x89, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentAccent);
+            demoDescription = AddText("DemoDescription", "Hold S to block.\nJump into the shot path.", 430f, 338f, 10, new Color32(0xF4, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentBody);
+            demoCoach = AddText("DemoCoach", "Tip: time the jump.", 590f, 328f, 9, new Color32(0x9F, 0xFF, 0xD3, 0xFF), TextAnchor.MiddleLeft, 933, parent, rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>
@@ -248,7 +246,6 @@ namespace rimrush.EditorTools
         /// <param name="y">Input value used by this step of the workflow.</param>
         /// <param name="label">Input value used by this step of the workflow.</param>
         /// <param name="p1Key">Input value used by this step of the workflow.</param>
-        /// <param name="p2Key">Input value used by this step of the workflow.</param>
         /// <param name="description">Input value used by this step of the workflow.</param>
         private static void AddControlRow(
             Transform parent,
@@ -257,24 +254,13 @@ namespace rimrush.EditorTools
             float x,
             float y,
             string label,
-            string p1Key,
-            string p2Key,
-            string description,
-            bool secondaryUsesKeycap = true)
+            string keyText,
+            string description)
         {
             AddSprite(label + "Card", card, x + 165f, y, 0.858f, 330f, 33f, 892, parent);
             AddText(label + "Label", label, x + 12f, y + 1f, 12, new Color32(0xFF, 0xCF, 0x76, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
-            AddKey(parent, keycap, p1Key, x + 92f, y, p1Key.Length > 5 ? 76f : 52f);
-            if (secondaryUsesKeycap)
-            {
-                AddKey(parent, keycap, p2Key, x + 171f, y, p2Key.Length > 5 ? 92f : 52f);
-            }
-            else
-            {
-                AddDirectionLabel(parent, p2Key, x + 171f, y, p2Key.Length > 5 ? 96f : 60f);
-            }
-
-            AddText(label + "Desc", description, x + 222f, y + 1f, 10, new Color32(0xE5, 0xEE, 0xFA, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentBody);
+            AddKey(parent, keycap, keyText, x + 108f, y, keyText.Length > 5 ? 76f : 52f);
+            AddText(label + "Desc", description, x + 168f, y + 1f, 10, new Color32(0xE5, 0xEE, 0xFA, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>
@@ -330,18 +316,18 @@ namespace rimrush.EditorTools
         /// <param name="keycap">Input value used by this step of the workflow.</param>
         private static void AddProfileStrip(Transform parent, Sprite card, Sprite keycap)
         {
-            AddSprite("ProfileStrip", card, 400f, 401f, 0.858f, 676f, 86f, 892, parent);
-            AddText("ProfileStripTitle", "QUICK PROFILE", 76f, 358f, 13, new Color32(0xFF, 0xCF, 0x76, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
-            AddText("ProfileStripLeftLabel", "1P", 78f, 381f, 11, new Color32(0xB6, 0xFF, 0xDC, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
-            AddText("ProfileStripRightLabel", "2P", 416f, 381f, 11, new Color32(0xB6, 0xFF, 0xDC, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
+            AddSprite("ProfileStrip", card, 400f, 400f, 0.858f, 676f, 108f, 892, parent);
+            AddText("ProfileStripTitle", "QUICK PROFILE", 76f, 351f, 15, new Color32(0xFF, 0xCF, 0x76, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
+            AddText("ProfileStripLeftLabel", "1P", 78f, 376f, 12, new Color32(0xB6, 0xFF, 0xDC, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
+            AddText("ProfileStripRightLabel", "2P", 416f, 376f, 12, new Color32(0xB6, 0xFF, 0xDC, 0xFF), TextAnchor.MiddleLeft, 926, parent, rimrushTextStyle.TournamentAccent);
 
-            AddProfileMoveCluster(parent, keycap, 172f, 401f, "W", "A", "S", "D");
-            AddProfileActionRow(parent, keycap, 260f, 388f, "N", "SUPER");
-            AddProfileActionRow(parent, keycap, 260f, 417f, "B", "ACTION");
+            AddProfileMoveCluster(parent, keycap, 172f, 405f, "W", "A", "S", "D");
+            AddProfileActionRow(parent, keycap, 266f, 390f, "N / V", "SUPER");
+            AddProfileActionRow(parent, keycap, 266f, 420f, "B", "ACTION");
 
-            AddProfileMoveCluster(parent, keycap, 510f, 401f, "^", "<", "v", ">");
-            AddProfileActionRow(parent, keycap, 598f, 388f, "K", "SUPER");
-            AddProfileActionRow(parent, keycap, 598f, 417f, "L", "ACTION");
+            AddProfileMoveCluster(parent, keycap, 510f, 405f, "^", "<", "v", ">");
+            AddProfileActionRow(parent, keycap, 604f, 390f, "K", "SUPER");
+            AddProfileActionRow(parent, keycap, 604f, 420f, "L", "ACTION");
         }
 
         /// <summary>
@@ -358,10 +344,10 @@ namespace rimrush.EditorTools
         /// <param name="rightKey">Input value used by this step of the workflow.</param>
         private static void AddProfileMoveCluster(Transform parent, Sprite keycap, float centerX, float centerY, string topKey, string leftKey, string bottomKey, string rightKey)
         {
-            AddProfileKey(parent, keycap, topKey, centerX, centerY - 15f, 28f, 28f);
-            AddProfileKey(parent, keycap, leftKey, centerX - 30f, centerY + 14f, 28f, 28f);
-            AddProfileKey(parent, keycap, bottomKey, centerX, centerY + 14f, 28f, 28f);
-            AddProfileKey(parent, keycap, rightKey, centerX + 30f, centerY + 14f, 28f, 28f);
+            AddProfileKey(parent, keycap, topKey, centerX, centerY - 17f, 32f, 32f);
+            AddProfileKey(parent, keycap, leftKey, centerX - 34f, centerY + 17f, 32f, 32f);
+            AddProfileKey(parent, keycap, bottomKey, centerX, centerY + 17f, 32f, 32f);
+            AddProfileKey(parent, keycap, rightKey, centerX + 34f, centerY + 17f, 32f, 32f);
         }
 
         /// <summary>
@@ -376,13 +362,14 @@ namespace rimrush.EditorTools
         /// <param name="label">Input value used by this step of the workflow.</param>
         private static void AddProfileActionRow(Transform parent, Sprite keycap, float x, float y, string keyText, string label)
         {
-            AddProfileKey(parent, keycap, keyText, x, y, 28f, 28f);
+            var keyWidth = keyText.Length > 1 ? 52f : 32f;
+            AddProfileKey(parent, keycap, keyText, x, y, keyWidth, 32f);
             AddText(
                 "ProfileAction_" + keyText,
                 label,
-                x + 30f,
+                x + (keyWidth * 0.5f) + 18f,
                 y + 1f,
-                11,
+                12,
                 new Color32(0xF4, 0xF7, 0xFF, 0xFF),
                 TextAnchor.MiddleLeft,
                 928,
@@ -435,7 +422,6 @@ namespace rimrush.EditorTools
         {
             AddSprite("RulesEmptyStage", stage, 400f, 254f, 0.86f, 560f, 242f, 895, parent);
             AddText("RulesTitle", "QUICK START", 400f, 182f, 26, new Color32(0xFF, 0xB9, 0x48, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.DisplayTitle);
-            AddText("RulesNote", "Replay Tutorial shows the whole loop fast:\nDash, apex shot, pump fake, steal, block, Super.", 400f, 276f, 10, new Color32(0xC9, 0xD6, 0xE6, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentBody);
             CreateTextButton(
                 "RulesReplayTutorialButton",
                 "REPLAY TUTORIAL",
@@ -449,7 +435,6 @@ namespace rimrush.EditorTools
                 910,
                 buttons,
                 12);
-            AddText("RulesReplayNote", "One guided possession. Ready for grading.", 400f, 382f, 9, new Color32(0xD8, 0xE6, 0xF6, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>
