@@ -39,6 +39,8 @@ namespace rimrush.EditorTools
                 CheckResource<Font>("rimrush/Fonts/Griffy-Regular", errors);
                 EnsureTextMeshProEssentialResources(errors);
                 ValidateNativeMenuTextLayer(errors);
+                ValidateSinglePlayerNarrativeDefinitions(errors);
+                ValidateAdventureModeDefinitionsAndFlow(errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.PauseButton), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOn), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.MusicButtonOff), errors);
@@ -241,6 +243,232 @@ namespace rimrush.EditorTools
                 layer?.Dispose();
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        /// <summary>
+        /// Executes Validate Single Player Narrative Definitions for the rimrushSmokeTest workflow.
+        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// </summary>
+        /// <param name="errors">Input value used by this step of the workflow.</param>
+        private static void ValidateSinglePlayerNarrativeDefinitions(List<string> errors)
+        {
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.ParkName, "park name", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.PumpkinHeartLantern, "core lantern", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.LanternSigil, "sigil", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.Warden, "warden", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.MidnightLockdownProtocol, "lockdown protocol", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.LanternChampion, "champion title", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.AdventurePreviewStatus, "adventure entry status", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.TournamentPreviewStatus, "tournament entry status", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.ComicReplayButton, "comic replay button", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.AdventureLinkToCup, "adventure to cup link", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.CupLinkToAdventure, "cup to adventure link", errors);
+
+            ValidateNarrativeMode(rimrushSinglePlayerNarrative.Adventure, rimrushSinglePlayerNarrativeMode.Adventure, 3, errors);
+            ValidateNarrativeMode(rimrushSinglePlayerNarrative.Tournament, rimrushSinglePlayerNarrativeMode.Tournament, 3, errors);
+
+            if (!ReferenceEquals(
+                    rimrushSinglePlayerNarrative.GetMode(rimrushSinglePlayerNarrativeMode.Adventure),
+                    rimrushSinglePlayerNarrative.Adventure))
+            {
+                errors.Add("Single-player narrative lookup did not resolve Adventure mode.");
+            }
+
+            if (!ReferenceEquals(
+                    rimrushSinglePlayerNarrative.GetMode(rimrushSinglePlayerNarrativeMode.Tournament),
+                    rimrushSinglePlayerNarrative.Tournament))
+            {
+                errors.Add("Single-player narrative lookup did not resolve Tournament mode.");
+            }
+        }
+
+        private static void ValidateNarrativeMode(
+            rimrushSinglePlayerModeDefinition mode,
+            rimrushSinglePlayerNarrativeMode expectedMode,
+            int expectedComicPanels,
+            List<string> errors)
+        {
+            if (mode == null)
+            {
+                errors.Add($"Single-player narrative mode {expectedMode} is missing.");
+                return;
+            }
+
+            if (mode.Mode != expectedMode)
+            {
+                errors.Add($"Single-player narrative mode {expectedMode} has mismatched mode id {mode.Mode}.");
+            }
+
+            ValidateNarrativeTerm(mode.ModeName, $"{expectedMode} mode name", errors);
+            ValidateNarrativeTerm(mode.MenuTitle, $"{expectedMode} menu title", errors);
+            ValidateNarrativeTerm(mode.Subtitle, $"{expectedMode} subtitle", errors);
+            ValidateNarrativeTerm(mode.Objective, $"{expectedMode} objective", errors);
+            ValidateNarrativeTerm(mode.Tone, $"{expectedMode} tone", errors);
+            ValidateNarrativeTerm(mode.GameplayWrapper, $"{expectedMode} gameplay wrapper", errors);
+            ValidateNarrativeTerm(mode.WorldRole, $"{expectedMode} world role", errors);
+
+            if (mode.OpeningComic == null || mode.OpeningComic.Length != expectedComicPanels)
+            {
+                errors.Add($"{expectedMode} opening comic should have {expectedComicPanels} panels.");
+                return;
+            }
+
+            for (var i = 0; i < mode.OpeningComic.Length; i++)
+            {
+                var panel = mode.OpeningComic[i];
+                if (panel == null)
+                {
+                    errors.Add($"{expectedMode} opening comic panel {i + 1} is missing.");
+                    continue;
+                }
+
+                ValidateNarrativeTerm(panel.Caption, $"{expectedMode} panel {i + 1} caption", errors);
+                ValidateNarrativeTerm(panel.ArtDirection, $"{expectedMode} panel {i + 1} art direction", errors);
+                ValidateNarrativeTerm(panel.ImageKey, $"{expectedMode} panel {i + 1} image key", errors);
+                if (!string.IsNullOrWhiteSpace(panel.ImageKey))
+                {
+                    var resourcePath = rimrushAssets.Images.ResourcePath(panel.ImageKey);
+                    var texture = Resources.Load<Texture2D>(resourcePath);
+                    if (texture == null)
+                    {
+                        errors.Add($"Missing opening comic image resource: {resourcePath}");
+                    }
+                    else if (texture.width < 1280 || texture.height < 720)
+                    {
+                        errors.Add($"{expectedMode} opening comic panel {i + 1} should be high-resolution, got {texture.width}x{texture.height}.");
+                    }
+
+                    var assetPath = $"Assets/rimrush/Resources/rimrush/Images/{panel.ImageKey}.png";
+                    var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                    if (importer == null)
+                    {
+                        errors.Add($"Opening comic image importer is missing: {assetPath}");
+                    }
+                    else
+                    {
+                        if (importer.mipmapEnabled)
+                        {
+                            errors.Add($"{expectedMode} opening comic panel {i + 1} should have mipmaps disabled for crisp fullscreen UI.");
+                        }
+
+                        if (importer.npotScale != TextureImporterNPOTScale.None)
+                        {
+                            errors.Add($"{expectedMode} opening comic panel {i + 1} should preserve non-power-of-two dimensions.");
+                        }
+
+                        if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+                        {
+                            errors.Add($"{expectedMode} opening comic panel {i + 1} should use uncompressed import quality.");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void ValidateNarrativeTerm(string text, string label, List<string> errors)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                errors.Add($"Single-player narrative {label} is empty.");
+            }
+        }
+
+        private static void ValidateAdventureModeDefinitionsAndFlow(List<string> errors)
+        {
+            var levels = rimrushAdventureCatalog.AllLevels;
+            if (levels == null || levels.Length != 8)
+            {
+                errors.Add("Adventure mode should define exactly 8 levels.");
+                return;
+            }
+
+            var seenWardens = new HashSet<int>();
+            for (var i = 0; i < levels.Length; i++)
+            {
+                var level = levels[i];
+                if (level == null)
+                {
+                    errors.Add($"Adventure level {i + 1} is missing.");
+                    continue;
+                }
+
+                if (level.Index != i)
+                {
+                    errors.Add($"Adventure level {i + 1} has mismatched index {level.Index}.");
+                }
+
+                ValidateNarrativeTerm(level.AreaName, $"adventure level {i + 1} area", errors);
+                ValidateNarrativeTerm(level.Mood, $"adventure level {i + 1} mood", errors);
+                ValidateNarrativeTerm(level.MechanicTitle, $"adventure level {i + 1} mechanic title", errors);
+                ValidateNarrativeTerm(level.MechanicSummary, $"adventure level {i + 1} mechanic summary", errors);
+                ValidateNarrativeTerm(level.SceneDirection, $"adventure level {i + 1} scene direction", errors);
+                ValidateNarrativeTerm(level.VictoryBeat, $"adventure level {i + 1} victory beat", errors);
+                if (!seenWardens.Add(level.WardenCharacterId))
+                {
+                    errors.Add($"Adventure level {i + 1} repeats Warden character {level.WardenCharacterId}.");
+                }
+
+                if (level.RuleIcons == null || level.RuleIcons.Length < 2)
+                {
+                    errors.Add($"Adventure level {i + 1} needs at least two rule icons.");
+                }
+
+                if (level.OpponentSkill < 0 || level.OpponentSkill > rimrushAISkillsData.MaxSkillIndex)
+                {
+                    errors.Add($"Adventure level {i + 1} has out-of-range opponent skill {level.OpponentSkill}.");
+                }
+            }
+
+            var adventure = new rimrushAdventureData();
+            adventure.Create(0);
+            if (!adventure.Active || adventure.Completed || !adventure.IsLevelUnlocked(0) || adventure.IsLevelUnlocked(1))
+            {
+                errors.Add("Adventure flow did not start with only the first level unlocked.");
+            }
+
+            if (!adventure.SelectLevel(0))
+            {
+                errors.Add("Adventure flow could not select the first unlocked level.");
+            }
+
+            var matchData = new rimrushMatchData(true);
+            matchData.StartAdventureMatch(adventure);
+            if (matchData.CharacterIds[1] != rimrushAdventureCatalog.GetLevel(0).WardenCharacterId)
+            {
+                errors.Add("Adventure match did not use the first level Warden as opponent.");
+            }
+
+            adventure.ApplyCurrentMatchResult(true);
+            if (!adventure.IsLevelCompleted(0) || !adventure.IsLevelUnlocked(1) || adventure.SigilsCollected != 1)
+            {
+                errors.Add("Adventure victory did not claim a Sigil and unlock the second level.");
+            }
+
+            if (!adventure.SelectLevel(1))
+            {
+                errors.Add("Adventure flow could not select the newly unlocked second level.");
+            }
+
+            adventure.ApplyCurrentMatchResult(false);
+            if (adventure.IsLevelCompleted(1) || adventure.IsLevelUnlocked(2))
+            {
+                errors.Add("Adventure defeat should not complete a level or unlock the next route.");
+            }
+
+            for (var i = 1; i < rimrushAdventureCatalog.LevelCount; i++)
+            {
+                adventure.SelectLevel(i);
+                adventure.ApplyCurrentMatchResult(true);
+            }
+
+            if (!adventure.Completed || adventure.SigilsCollected != rimrushAdventureCatalog.LevelCount)
+            {
+                errors.Add("Adventure flow did not complete after all levels were won.");
+            }
+
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.GetTournamentStageTitle(new rimrushTournamentData()), "tournament stage title", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.GetTournamentStageDescription(new rimrushTournamentData()), "tournament stage description", errors);
+            ValidateNarrativeTerm(rimrushSinglePlayerNarrative.GetTournamentPlacementEnding(1), "tournament champion ending", errors);
         }
 
         /// <summary>
