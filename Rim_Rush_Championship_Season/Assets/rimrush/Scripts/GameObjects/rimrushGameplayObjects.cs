@@ -462,6 +462,21 @@ namespace rimrush
             gameCore.NotifyBallOthers();
         }
 
+        public void DropFromFreeze(Vector2 playerPosition)
+        {
+            Position = playerPosition;
+            previousPosition = Position;
+            Velocity = Vector2.zero;
+            State = "down";
+            physicsRemoved = false;
+            alleyOopPlayer = null;
+            pickupLockTimer = 0f;
+            ResetScoring(false);
+            Show();
+            UpdateGraphic();
+            gameCore.NotifyBallOthers();
+        }
+
         /// <summary>
         /// Executes Shoot for the rimrushBallObject workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -3075,6 +3090,17 @@ namespace rimrush
             }
         }
 
+        private void DropHeldBallForFreeze()
+        {
+            if (!WithBall || GameCore.Ball == null)
+            {
+                return;
+            }
+
+            FreeBall();
+            GameCore.Ball.DropFromFreeze(Position + new Vector2(0f, -45f));
+        }
+
         /// <summary>
         /// Executes Notify Ball Loose for the rimrushPlayerObject workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -3201,6 +3227,7 @@ namespace rimrush
                 return;
             }
 
+            DropHeldBallForFreeze();
             stunTimer = Mathf.Max(stunTimer, duration);
             dashTimer = 0f;
             dashDirection = 0;
