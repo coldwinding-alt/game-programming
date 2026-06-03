@@ -108,6 +108,7 @@ namespace rimrush
         private readonly Vector3 countdownBaseScale;
         private readonly string leftCharacterLabel;
         private readonly string rightCharacterLabel;
+        private readonly bool isTutorial;
         private readonly GameObject postMatchOverlayRoot;
         private readonly GameObject postMatchTopGlow;
         private readonly GameObject postMatchBottomGlow;
@@ -154,6 +155,7 @@ namespace rimrush
         public rimrushHudView(Transform parent, rimrushMatchData matchData)
         {
             var gameMode = rimrushInventory.Instance.GameMode;
+            isTutorial = gameMode == rimrushGameModeIds.Tutorial;
             isTraining = gameMode == rimrushGameModeIds.Training || gameMode == rimrushGameModeIds.Tutorial;
             leftCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[0]);
             rightCharacterLabel = rimrushPlayersData.GetCharacterName(matchData.CharacterIds[1]);
@@ -222,6 +224,7 @@ namespace rimrush
                 87,
                 scoreboardRoot.transform,
                 rimrushTextStyle.HudTimer);
+            SetScoreboardVisible(true);
 
             pauseButton = new rimrushMenuButton(string.Empty, PauseButtonX, TopRightButtonY, TopRightButtonSize, TopRightButtonSize, () => pendingPauseCommand = rimrushPauseCommand.Toggle, parent);
             pauseButton.SetBackgroundVisible(false);
@@ -1561,7 +1564,7 @@ namespace rimrush
         /// <param name="visible">Input value used by this step of the workflow.</param>
         private void SetScoreboardVisible(bool visible)
         {
-            SetGameObjectVisible(scoreboardRoot, visible);
+            SetGameObjectVisible(scoreboardRoot, visible && !isTutorial);
         }
 
         /// <summary>
@@ -2167,6 +2170,11 @@ namespace rimrush
 
     public sealed class rimrushEnergyBarView
     {
+        private const float SoloEnergyX = 45f;
+        private const float PlayerOneEnergyX = 45f;
+        private const float PlayerTwoEnergyX = 706f;
+        private const float EnergyY = 45f;
+        private const float PlayerTwoEnergyY = 126f;
         private readonly rimrushRadialIconMesh overlay;
 
         /// <summary>
@@ -2180,17 +2188,18 @@ namespace rimrush
         public rimrushEnergyBarView(Transform parent, int controllerSlot, rimrushCharacterSkillDefinition skillDefinition, float fullTime)
         {
             var profile = rimrushControlsData.ProfileForSlot(controllerSlot);
-            var x = 45f;
+            var x = SoloEnergyX;
+            var y = EnergyY;
             if (controllerSlot == 1)
             {
-                x = 185f;
+                x = PlayerOneEnergyX;
             }
             else if (controllerSlot == 2)
             {
-                x = 614f;
+                x = PlayerTwoEnergyX;
+                y = PlayerTwoEnergyY;
             }
 
-            var y = 45f;
             const float legacyEnergyBgWidth = 95f;
             const float legacyEnergyBgHeight = 89f;
             const float standaloneEnergyIconPixels = 76f;

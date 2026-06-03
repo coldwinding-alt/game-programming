@@ -453,9 +453,9 @@ namespace rimrush.EditorTools
                 return;
             }
 
-            if (!maskTop.gameObject.activeSelf || !focusFrame.gameObject.activeSelf)
+            if (maskTop.gameObject.activeSelf || focusFrame.gameObject.activeSelf)
             {
-                errors.Add("Tutorial super step no longer enables the expected focus overlay.");
+                errors.Add("Tutorial super step unexpectedly enabled the removed focus overlay.");
                 return;
             }
 
