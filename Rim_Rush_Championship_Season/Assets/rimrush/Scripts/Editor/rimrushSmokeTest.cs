@@ -51,6 +51,7 @@ namespace rimrush.EditorTools
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.MenuButtonPlate), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EnergyButtonPlate), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EmblemOrb), errors);
+                CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AdventureTreasureMapBg), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsShowcasePanel), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsResultPlaque), errors);
                 CheckResource<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.AwardsPodiumBase), errors);
@@ -403,6 +404,36 @@ namespace rimrush.EditorTools
                 ValidateNarrativeTerm(level.MechanicSummary, $"adventure level {i + 1} mechanic summary", errors);
                 ValidateNarrativeTerm(level.SceneDirection, $"adventure level {i + 1} scene direction", errors);
                 ValidateNarrativeTerm(level.VictoryBeat, $"adventure level {i + 1} victory beat", errors);
+                if (level.VictoryLines == null || level.VictoryLines.Length < 3)
+                {
+                    errors.Add($"Adventure level {i + 1} needs at least three victory result lines.");
+                }
+                else
+                {
+                    for (var lineIndex = 0; lineIndex < level.VictoryLines.Length; lineIndex++)
+                    {
+                        ValidateNarrativeTerm(
+                            level.VictoryLines[lineIndex],
+                            $"adventure level {i + 1} victory line {lineIndex + 1}",
+                            errors);
+                    }
+                }
+
+                if (level.DefeatLines == null || level.DefeatLines.Length < 3)
+                {
+                    errors.Add($"Adventure level {i + 1} needs at least three defeat result lines.");
+                }
+                else
+                {
+                    for (var lineIndex = 0; lineIndex < level.DefeatLines.Length; lineIndex++)
+                    {
+                        ValidateNarrativeTerm(
+                            level.DefeatLines[lineIndex],
+                            $"adventure level {i + 1} defeat line {lineIndex + 1}",
+                            errors);
+                    }
+                }
+
                 if (!seenWardens.Add(level.WardenCharacterId))
                 {
                     errors.Add($"Adventure level {i + 1} repeats Warden character {level.WardenCharacterId}.");
@@ -431,12 +462,21 @@ namespace rimrush.EditorTools
                 errors.Add("Adventure flow could not select the first unlocked level.");
             }
 
+            var firstLevel = rimrushAdventureCatalog.GetLevel(0);
             var matchData = new rimrushMatchData(true);
             matchData.StartAdventureMatch(adventure);
-            if (matchData.CharacterIds[1] != rimrushAdventureCatalog.GetLevel(0).WardenCharacterId)
+            if (matchData.CharacterIds[1] != firstLevel.WardenCharacterId)
             {
                 errors.Add("Adventure match did not use the first level Warden as opponent.");
             }
+
+            AssertOpponentSkill(matchData, firstLevel.OpponentSkill, errors, "Adventure normal mapping");
+            matchData.StartAdventureMatch(adventure, rimrushAiDifficulty.Easy);
+            AssertOpponentSkill(matchData, Mathf.Max(0, firstLevel.OpponentSkill - 1), errors, "Adventure easy mapping");
+            matchData.StartAdventureMatch(adventure, rimrushAiDifficulty.Hard);
+            AssertOpponentSkill(matchData, Mathf.Min(rimrushAISkillsData.MaxSkillIndex, firstLevel.OpponentSkill + 2), errors, "Adventure hard mapping");
+            matchData.StartAdventureMatch(adventure, rimrushAiDifficulty.Hell);
+            AssertOpponentSkill(matchData, Mathf.Min(rimrushAISkillsData.MaxSkillIndex, firstLevel.OpponentSkill + 4), errors, "Adventure hell mapping");
 
             adventure.ApplyCurrentMatchResult(true);
             if (!adventure.IsLevelCompleted(0) || !adventure.IsLevelUnlocked(1) || adventure.SigilsCollected != 1)
@@ -517,25 +557,25 @@ namespace rimrush.EditorTools
         {
             var audioPaths = new[]
             {
-                "rimrush/Sound/2_M_Whistle",
-                "rimrush/Sound/4_P_Teleport",
-                "rimrush/Sound/5_P_Swoosh",
-                "rimrush/Sound/6_P_Energy",
-                "rimrush/Sound/7_P_Stunned",
-                "rimrush/Sound/8_B_Steel",
-                "rimrush/Sound/9_M_Buzzer",
-                "rimrush/Sound/10_B_Ring",
-                "rimrush/Sound/11_P_MegaStart",
-                "rimrush/Sound/13_P_Shield",
-                "rimrush/Sound/16_B_Bounce",
-                "rimrush/Sound/17_P_Dash",
-                "rimrush/Sound/18_P_SuperDash",
-                "rimrush/Sound/19_M_Countdown",
-                "rimrush/Sound/20_ButtonSnd",
-                "rimrush/Sound/21_B_NET",
-                "rimrush/Sound/22_B_Brick",
-                "rimrush/Sound/23_B_Basket",
-                "rimrush/Sound/24_TrackSnd",
+                "rimrush/Sound/whistle",
+                "rimrush/Sound/teleport",
+                "rimrush/Sound/swoosh",
+                "rimrush/Sound/energy",
+                "rimrush/Sound/stunned",
+                "rimrush/Sound/clash",
+                "rimrush/Sound/buzzer",
+                "rimrush/Sound/rim_hit",
+                "rimrush/Sound/mega_dunk",
+                "rimrush/Sound/shield",
+                "rimrush/Sound/ball_bounce",
+                "rimrush/Sound/dash",
+                "rimrush/Sound/super_dash",
+                "rimrush/Sound/countdown",
+                "rimrush/Sound/button",
+                "rimrush/Sound/net",
+                "rimrush/Sound/brick",
+                "rimrush/Sound/basket",
+                "rimrush/Sound/bgm",
             };
 
             for (var i = 0; i < audioPaths.Length; i++)

@@ -1392,7 +1392,7 @@ namespace rimrush
             }
             else if (inventory.IsAdventureActive)
             {
-                inventory.MatchData.StartAdventureMatch(inventory.Adventure);
+                inventory.MatchData.StartAdventureMatch(inventory.Adventure, inventory.Difficulty);
             }
             else if (inventory.GameMode == rimrushGameModeIds.QuickMatch)
             {

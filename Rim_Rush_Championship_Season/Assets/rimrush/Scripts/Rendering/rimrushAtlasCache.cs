@@ -215,8 +215,11 @@ public enum rimrushTextStyle
     TournamentBody,
     TournamentAccent,
     ButtonLabel,
+    LinkLabel,
     DisplayTitle,
-    Subtitle
+    Subtitle,
+    StoryScrollTitle,
+    StoryScrollBody
 }
 
     public static class rimrushFontCache
@@ -614,6 +617,8 @@ internal static class rimrushTextStyles
                     rimrushTextRasterProfile.UiMedium,
                     new Color(0f, 0f, 0f, 0.35f),
                     fontSize >= 28 ? 0.75f : 0.55f);
+            case rimrushTextStyle.LinkLabel:
+                return Create(rimrushFontKind.Impact2, rimrushTextRasterProfile.UiMedium);
             case rimrushTextStyle.DisplayTitle:
                 return Create(
                     rimrushFontKind.AgencyBold,
@@ -622,6 +627,18 @@ internal static class rimrushTextStyles
                     fontSize >= 42 ? 0.95f : 0.8f);
             case rimrushTextStyle.Subtitle:
                 return Create(rimrushFontKind.Impact2, rimrushTextRasterProfile.UiMedium);
+            case rimrushTextStyle.StoryScrollTitle:
+                return Create(
+                    rimrushFontKind.Griffy,
+                    rimrushTextRasterProfile.Display,
+                    new Color32(0x54, 0x2C, 0x12, 0x38),
+                    fontSize >= 26 ? 0.42f : 0.3f);
+            case rimrushTextStyle.StoryScrollBody:
+                return Create(
+                    rimrushFontKind.RajdhaniSemiBold,
+                    rimrushTextRasterProfile.UiMedium,
+                    new Color32(0x43, 0x26, 0x10, 0x18),
+                    0.16f);
             default:
                 return Create(rimrushFontKind.Impact2, rimrushTextRasterProfile.UiSmall);
         }

@@ -336,6 +336,7 @@ namespace rimrush
         private bool canScore;
         private bool upperSensorPassed;
         private bool guaranteedDunkScore;
+        private bool tutorialGuaranteedScore;
         private int scoreArmedSide;
         private float pickupLockTimer;
         private float collisionSoundCooldown;
@@ -968,7 +969,8 @@ namespace rimrush
             }
 
             var matchProcessorReady = gameCore.MatchProcessor.ProcessSensor(1);
-            if (matchProcessorReady || (guaranteedDunkScore && scoringSide == scoreArmedSide))
+            if (matchProcessorReady || (guaranteedDunkScore && scoringSide == scoreArmedSide)
+                || (tutorialGuaranteedScore && scoringSide == scoreArmedSide))
             {
                 CommitScore(scoringSide);
             }
@@ -1031,7 +1033,18 @@ namespace rimrush
             canScore = false;
             upperSensorPassed = false;
             guaranteedDunkScore = false;
+            tutorialGuaranteedScore = false;
             scoreArmedSide = 0;
+        }
+
+        public void TutorialSetGuaranteedScore()
+        {
+            tutorialGuaranteedScore = true;
+        }
+
+        public void TutorialClearGuaranteedScore()
+        {
+            tutorialGuaranteedScore = false;
         }
 
         /// <summary>
@@ -1241,7 +1254,10 @@ namespace rimrush
                 arc = 130f;
             }
 
-            arc *= 1f + 0.1f * (Random.value <= 0.5f ? -1f : 1f) * Random.value;
+            if (!tutorialGuaranteedScore)
+            {
+                arc *= 1f + 0.1f * (Random.value <= 0.5f ? -1f : 1f) * Random.value;
+            }
             arc = Mathf.Min(arc, 185f);
             return CalcVel(x, y, targetX, rimrushObjectsData.BasketHeight, arc);
         }
