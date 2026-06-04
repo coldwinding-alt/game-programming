@@ -206,7 +206,7 @@ namespace rimrush
         private const float StoryIntroLoreButtonHitWidth = 112f;
         private const float StoryIntroLoreButtonHitHeight = 40f;
         private const float StoryIntroLoreIconOffsetX = -32f;
-        private const float StoryIntroLoreLabelOffsetX = -8f;
+        private const float StoryIntroLoreLabelOffsetX = -4f;
         private const float StoryIntroLoreIconSize = 42f;
         private const float StoryIntroLorePanelX = 638f;
         private const float StoryIntroLorePanelY = 236f;
@@ -1188,18 +1188,13 @@ namespace rimrush
 
         private static Vector2 GetAdventureNodePosition(int index)
         {
-            return index switch
+            if (index < 0 || index >= rimrushAdventureCatalog.LevelCount)
             {
-                0 => new Vector2(96f, 358f),
-                1 => new Vector2(168f, 312f),
-                2 => new Vector2(240f, 360f),
-                3 => new Vector2(312f, 278f),
-                4 => new Vector2(382f, 326f),
-                5 => new Vector2(450f, 250f),
-                6 => new Vector2(514f, 338f),
-                7 => new Vector2(554f, 204f),
-                _ => new Vector2(AdventureMapPanelX, AdventureMapPanelY)
-            };
+                return new Vector2(AdventureMapPanelX, AdventureMapPanelY);
+            }
+
+            var level = rimrushAdventureCatalog.GetLevel(index);
+            return new Vector2(level.MapX, level.MapY);
         }
 
         private static Vector2 GetAdventureNodeRouteAnchor(int index)
