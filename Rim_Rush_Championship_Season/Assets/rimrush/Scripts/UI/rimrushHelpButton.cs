@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushHelpButton 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 帮助面板里的可点击按钮
+// 支持鼠标悬停变色和缩放效果，用于帮助面板的标签页切换和动作演示选择。
 
 using TMPro;
 using UnityEngine;
@@ -31,9 +31,41 @@ namespace rimrush
 
         public rimrushHelpButtonAction Action => action;
 
+        public void Configure(
+            rimrushHelpButtonAction configuredAction,
+            Vector2 center,
+            Vector2 size,
+            Transform configuredVisualRoot,
+            SpriteRenderer[] configuredTintTargets,
+            TMP_Text[] configuredLabelTargets,
+            Color configuredNormalTint,
+            Color configuredHoverTint,
+            Color configuredSelectedTint,
+            Color configuredNormalLabelTint,
+            Color configuredHoverLabelTint,
+            Color configuredSelectedLabelTint,
+            float configuredHoverScale)
+        {
+            action = configuredAction;
+            pixelCenter = center;
+            pixelSize = size;
+            visualRoot = configuredVisualRoot;
+            tintTargets = configuredTintTargets;
+            labelTargets = configuredLabelTargets;
+            normalTint = configuredNormalTint;
+            hoverTint = configuredHoverTint;
+            selectedTint = configuredSelectedTint;
+            normalLabelTint = configuredNormalLabelTint;
+            hoverLabelTint = configuredHoverLabelTint;
+            selectedLabelTint = configuredSelectedLabelTint;
+            hoverScale = configuredHoverScale;
+            initialized = false;
+            EnsureInitialized();
+            RefreshVisuals();
+        }
+
         /// <summary>
-        /// Executes Awake for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up the button hitbox and show the default visual state when the game starts.
         /// </summary>
         private void Awake()
         {
@@ -42,8 +74,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes On Disable for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Reset hover and press state when the button is turned off, so it doesn't stay highlighted.
         /// </summary>
         private void OnDisable()
         {
@@ -53,11 +84,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Tick for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check if the mouse is hovering over this button. Returns true if the player
+        /// clicked and released on it (a full press). Call this every frame from the panel.
         /// </summary>
-        /// <param name="camera">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool Tick(Camera camera)
         {
             if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
@@ -85,10 +114,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Selected for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Mark this button as selected (highlighted) or not. Used for tabs and demo buttons
+        /// so the player can see which one is currently active.
         /// </summary>
-        /// <param name="isSelected">Input value used by this step of the workflow.</param>
         public void SetSelected(bool isSelected)
         {
             EnsureInitialized();
@@ -97,8 +125,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Ensure Initialized for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the pixel hitbox from the center and size values set in the inspector.
+        /// Only runs once, the first time the button is used.
         /// </summary>
         private void EnsureInitialized()
         {
@@ -118,8 +146,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Refresh Visuals for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Update the button's color and scale based on whether it's hovered, selected, or normal.
+        /// Hover makes it slightly bigger, selected uses a different tint color.
         /// </summary>
         private void RefreshVisuals()
         {
@@ -160,12 +188,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Try Get Mouse Pixel for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert the mouse screen position to game pixel coordinates.
+        /// Returns false if the mouse is outside the game window or camera view.
         /// </summary>
-        /// <param name="camera">Input value used by this step of the workflow.</param>
-        /// <param name="pixel">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool TryGetMousePixel(Camera camera, out Vector2 pixel)
         {
             var mouse = Input.mousePosition;
@@ -194,22 +219,9 @@ namespace rimrush
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Executes Editor Configure for the rimrushHelpButton workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up the button from the prefab builder. Only used in the Unity Editor
+        /// when creating or updating the help panel prefab.
         /// </summary>
-        /// <param name="configuredAction">Input value used by this step of the workflow.</param>
-        /// <param name="center">Input value used by this step of the workflow.</param>
-        /// <param name="size">Input value used by this step of the workflow.</param>
-        /// <param name="configuredVisualRoot">Input value used by this step of the workflow.</param>
-        /// <param name="configuredTintTargets">Input value used by this step of the workflow.</param>
-        /// <param name="configuredLabelTargets">Input value used by this step of the workflow.</param>
-        /// <param name="configuredNormalTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredHoverTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredSelectedTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredNormalLabelTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredHoverLabelTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredSelectedLabelTint">Input value used by this step of the workflow.</param>
-        /// <param name="configuredHoverScale">Input value used by this step of the workflow.</param>
         public void EditorConfigure(
             rimrushHelpButtonAction configuredAction,
             Vector2 center,
@@ -225,19 +237,20 @@ namespace rimrush
             Color configuredSelectedLabelTint,
             float configuredHoverScale)
         {
-            action = configuredAction;
-            pixelCenter = center;
-            pixelSize = size;
-            visualRoot = configuredVisualRoot;
-            tintTargets = configuredTintTargets;
-            labelTargets = configuredLabelTargets;
-            normalTint = configuredNormalTint;
-            hoverTint = configuredHoverTint;
-            selectedTint = configuredSelectedTint;
-            normalLabelTint = configuredNormalLabelTint;
-            hoverLabelTint = configuredHoverLabelTint;
-            selectedLabelTint = configuredSelectedLabelTint;
-            hoverScale = configuredHoverScale;
+            Configure(
+                configuredAction,
+                center,
+                size,
+                configuredVisualRoot,
+                configuredTintTargets,
+                configuredLabelTargets,
+                configuredNormalTint,
+                configuredHoverTint,
+                configuredSelectedTint,
+                configuredNormalLabelTint,
+                configuredHoverLabelTint,
+                configuredSelectedLabelTint,
+                configuredHoverScale);
         }
 #endif
     }

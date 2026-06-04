@@ -1,5 +1,4 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushHelpPanelPrefabBuilder 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 帮助面板预制体生成器 / 在编辑器中自动创建帮助面板的预制体，包括按键说明页面、规则页面、女巫角色演示区域和所有按钮。不需要手动拖拽搭建 UI，运行一次就能生成完整面板。
 
 using System.Collections.Generic;
 using System.IO;
@@ -21,8 +20,7 @@ namespace rimrush.EditorTools
 
         [MenuItem("rimrush/Build Help Panel Prefab")]
         /// <summary>
-        /// Executes Build for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the help panel prefab and place an instance in the main scene.
         /// </summary>
         public static void Build()
         {
@@ -53,10 +51,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Build Prefab for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create the full help panel prefab hierarchy with all sprites, text, and buttons.
         /// </summary>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static GameObject BuildPrefab()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
@@ -86,30 +82,32 @@ namespace rimrush.EditorTools
 
             AddText("Title", "HOW TO PLAY", 65f, 56f, 34, new Color32(0xFF, 0xB7, 0x3C, 0xFF), TextAnchor.MiddleLeft, 930, panelRoot.transform, rimrushTextStyle.DisplayTitle);
 
-            var keyboardTab = CreateTextButton(
-                "KeyboardTab",
-                "KEYBOARD",
-                rimrushHelpButtonAction.KeyboardTab,
+            var quickTestToggle = CreateTextButton(
+                "QuickTestToggle",
+                "FAST TEST: OFF",
+                rimrushHelpButtonAction.QuickTestToggle,
                 tab,
-                544f,
+                604f,
                 58f,
-                116f,
+                160f,
                 34f,
                 panelRoot.transform,
                 915,
-                buttons);
-            var rulesTab = CreateTextButton(
-                "RulesTab",
-                "RULES",
-                rimrushHelpButtonAction.RulesTab,
+                buttons,
+                10);
+            var quickTestInfoButton = CreateTextButton(
+                "QuickTestInfoButton",
+                "?",
+                rimrushHelpButtonAction.QuickTestInfoToggle,
                 tab,
-                662f,
+                704f,
                 58f,
-                96f,
-                34f,
+                26f,
+                26f,
                 panelRoot.transform,
-                915,
-                buttons);
+                916,
+                buttons,
+                13);
             CreateTextButton(
                 "CloseButton",
                 "X",
@@ -126,30 +124,47 @@ namespace rimrush.EditorTools
 
             var keyboardPage = new GameObject("KeyboardPage");
             keyboardPage.transform.SetParent(panelRoot.transform, false);
-            var rulesPage = new GameObject("RulesPage");
-            rulesPage.transform.SetParent(panelRoot.transform, false);
 
             BuildKeyboardPage(keyboardPage.transform, card, stage, tab, chip, keycap, spotlight, buttons, out var demoRows, out var demoTitle, out var demoDescription, out var demoCoach, out var witchMount, out var witchSpotlight);
-            BuildRulesPage(rulesPage.transform, stage, tab, buttons);
+            var quickTestInfoRoot = new GameObject("QuickTestInfoPanel");
+            quickTestInfoRoot.transform.SetParent(panelRoot.transform, false);
+            AddSprite("QuickTestInfoPanelPlate", card, 596f, 113f, 0.842f, 292f, 72f, 912, quickTestInfoRoot.transform);
+            var quickTestInfoText = AddText(
+                "QuickTestInfoText",
+                "DEV / REVIEW TEST\n15s matches + no skill cooldowns.\nQuickly try the full game flow.",
+                466f,
+                113f,
+                9,
+                new Color32(0xF4, 0xF7, 0xFF, 0xFF),
+                TextAnchor.MiddleLeft,
+                936,
+                quickTestInfoRoot.transform,
+                rimrushTextStyle.TournamentBody);
+            quickTestInfoRoot.SetActive(false);
 
             panel.EditorConfigure(
                 panelRoot,
                 keyboardPage,
-                rulesPage,
+                null,
                 buttons.ToArray(),
-                keyboardTab.Plate,
-                rulesTab.Plate,
-                keyboardTab.Label,
-                rulesTab.Label,
+                null,
+                null,
+                null,
+                null,
                 demoRows,
                 demoTitle,
                 demoDescription,
                 demoCoach,
                 witchMount,
-                witchSpotlight);
+                witchSpotlight,
+                quickTestToggle.Button,
+                quickTestToggle.Plate,
+                quickTestToggle.Label,
+                quickTestInfoButton.Button,
+                quickTestInfoRoot,
+                quickTestInfoText);
 
             keyboardPage.SetActive(true);
-            rulesPage.SetActive(false);
             panelRoot.SetActive(true);
 
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
@@ -158,22 +173,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Build Keyboard Page for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the keyboard controls page with key mappings, profile strip, and witch demo area.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="card">Input value used by this step of the workflow.</param>
-        /// <param name="stage">Input value used by this step of the workflow.</param>
-        /// <param name="chip">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="spotlight">Input value used by this step of the workflow.</param>
-        /// <param name="buttons">Input value used by this step of the workflow.</param>
-        /// <param name="demoRows">Input value used by this step of the workflow.</param>
-        /// <param name="demoTitle">Input value used by this step of the workflow.</param>
-        /// <param name="demoDescription">Input value used by this step of the workflow.</param>
-        /// <param name="demoCoach">Input value used by this step of the workflow.</param>
-        /// <param name="witchMount">Input value used by this step of the workflow.</param>
-        /// <param name="witchSpotlight">Input value used by this step of the workflow.</param>
         private static void BuildKeyboardPage(
             Transform parent,
             Sprite card,
@@ -236,17 +237,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Control Row for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a single row showing an action label, its keycap, and a description.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="card">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="label">Input value used by this step of the workflow.</param>
-        /// <param name="p1Key">Input value used by this step of the workflow.</param>
-        /// <param name="description">Input value used by this step of the workflow.</param>
         private static void AddControlRow(
             Transform parent,
             Sprite card,
@@ -264,15 +256,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Key for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a visual keycap sprite with centered key label text.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="keyText">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
         private static void AddKey(Transform parent, Sprite keycap, string keyText, float x, float y, float width)
         {
             AddSprite("Key_" + keyText.Replace(" ", string.Empty).Replace("/", string.Empty), keycap, x, y, 0.852f, width, 24f, 906, parent);
@@ -280,14 +265,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Direction Label for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This keeps arrow-key words readable without making them look like physical keycaps.
+        /// Add a plain text label for arrow-key names without a keycap background.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="keyText">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
         private static void AddDirectionLabel(Transform parent, string keyText, float x, float y, float width)
         {
             var sanitized = keyText.Replace(" ", string.Empty).Replace("/", string.Empty);
@@ -308,12 +287,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Profile Strip for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add the two-player quick profile strip showing 1P and 2P key layouts.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="card">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
         private static void AddProfileStrip(Transform parent, Sprite card, Sprite keycap)
         {
             AddSprite("ProfileStrip", card, 400f, 400f, 0.858f, 676f, 108f, 892, parent);
@@ -331,17 +306,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Profile Move Cluster for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This lays out the movement keys in a familiar directional shape for quick scanning.
+        /// Lay out four movement keycaps in a cross pattern for the quick profile display.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="centerX">Input value used by this step of the workflow.</param>
-        /// <param name="centerY">Input value used by this step of the workflow.</param>
-        /// <param name="topKey">Input value used by this step of the workflow.</param>
-        /// <param name="leftKey">Input value used by this step of the workflow.</param>
-        /// <param name="bottomKey">Input value used by this step of the workflow.</param>
-        /// <param name="rightKey">Input value used by this step of the workflow.</param>
         private static void AddProfileMoveCluster(Transform parent, Sprite keycap, float centerX, float centerY, string topKey, string leftKey, string bottomKey, string rightKey)
         {
             AddProfileKey(parent, keycap, topKey, centerX, centerY - 17f, 32f, 32f);
@@ -351,15 +317,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Profile Action Row for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This pairs a tactile keycap with its action label.
+        /// Add a keycap and its action label side by side in the profile strip.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="keyText">Input value used by this step of the workflow.</param>
-        /// <param name="label">Input value used by this step of the workflow.</param>
         private static void AddProfileActionRow(Transform parent, Sprite keycap, float x, float y, string keyText, string label)
         {
             var keyWidth = keyText.Length > 1 ? 52f : 32f;
@@ -378,16 +337,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Profile Key for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This builds the larger bottom-panel keycaps used by the two-player quick profile.
+        /// Add a larger profile-style keycap with a centered key label.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="keycap">Input value used by this step of the workflow.</param>
-        /// <param name="keyText">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
         private static void AddProfileKey(Transform parent, Sprite keycap, string keyText, float x, float y, float width, float height)
         {
             var sanitized = keyText
@@ -413,43 +364,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Build Rules Page for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a small chip button that triggers a witch drill demo animation.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="stage">Input value used by this step of the workflow.</param>
-        private static void BuildRulesPage(Transform parent, Sprite stage, Sprite tab, List<rimrushHelpButton> buttons)
-        {
-            AddSprite("RulesEmptyStage", stage, 400f, 254f, 0.86f, 560f, 242f, 895, parent);
-            AddText("RulesTitle", "QUICK START", 400f, 182f, 26, new Color32(0xFF, 0xB9, 0x48, 0xFF), TextAnchor.MiddleCenter, 930, parent, rimrushTextStyle.DisplayTitle);
-            CreateTextButton(
-                "RulesReplayTutorialButton",
-                "REPLAY TUTORIAL",
-                rimrushHelpButtonAction.ReplayTutorial,
-                tab,
-                400f,
-                346f,
-                220f,
-                38f,
-                parent,
-                910,
-                buttons,
-                12);
-        }
-
-        /// <summary>
-        /// Executes Create Demo Button for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
-        /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="chip">Input value used by this step of the workflow.</param>
-        /// <param name="buttons">Input value used by this step of the workflow.</param>
-        /// <param name="demoRows">Input value used by this step of the workflow.</param>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <param name="action">Input value used by this step of the workflow.</param>
-        /// <param name="label">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
         private static void CreateDemoButton(
             Transform parent,
             Sprite chip,
@@ -480,38 +396,23 @@ namespace rimrush.EditorTools
         private readonly struct TextButtonParts
         {
             /// <summary>
-            /// Executes Text Button Parts for the rimrushHelpPanelPrefabBuilder workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Hold the plate renderer, label text, and button component for a created text button.
             /// </summary>
-            /// <param name="plate">Input value used by this step of the workflow.</param>
-            /// <param name="label">Input value used by this step of the workflow.</param>
-            public TextButtonParts(SpriteRenderer plate, TMP_Text label)
+            public TextButtonParts(SpriteRenderer plate, TMP_Text label, rimrushHelpButton button)
             {
                 Plate = plate;
                 Label = label;
+                Button = button;
             }
 
             public readonly SpriteRenderer Plate;
             public readonly TMP_Text Label;
+            public readonly rimrushHelpButton Button;
         }
 
         /// <summary>
-        /// Executes Create Text Button for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a clickable button with a plate sprite, text label, and hover color config.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="label">Input value used by this step of the workflow.</param>
-        /// <param name="action">Input value used by this step of the workflow.</param>
-        /// <param name="sprite">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="buttons">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TextButtonParts CreateTextButton(
             string name,
             string label,
@@ -546,23 +447,12 @@ namespace rimrush.EditorTools
                 new Color32(0x14, 0x1B, 0x25, 0xFF),
                 1.035f);
             buttons.Add(button);
-            return new TextButtonParts(plate, text);
+            return new TextButtonParts(plate, text, button);
         }
 
         /// <summary>
-        /// Executes Add Sprite for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a SpriteRenderer GameObject at the given pixel position and size.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="sprite">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static SpriteRenderer AddSprite(string name, Sprite sprite, float x, float y, float z, float width, float height, int sortingOrder, Transform parent)
         {
             var go = new GameObject(name);
@@ -577,35 +467,16 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Text for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a TextMeshPro text element at the given pixel position.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="text">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="style">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TMP_Text AddText(string name, string text, float x, float y, int fontSize, Color color, TextAnchor anchor, int sortingOrder, Transform parent, rimrushTextStyle style)
         {
             return rimrushRender.TmpText(name, text, x, y, fontSize, color, anchor, sortingOrder, parent, style);
         }
 
         /// <summary>
-        /// Executes Apply Pixel Transform for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Position and scale a transform using the game's pixel-to-world conversion.
         /// </summary>
-        /// <param name="transform">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <param name="scaleX">Input value used by this step of the workflow.</param>
-        /// <param name="scaleY">Input value used by this step of the workflow.</param>
         private static void ApplyPixelTransform(Transform transform, float x, float y, float z, float scaleX, float scaleY)
         {
             transform.position = rimrushConstants.PixelToWorldSnapped(x, y, z);
@@ -616,19 +487,15 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Load Sprite for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Load a sprite from the help asset folder by name.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Sprite LoadSprite(string name)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>($"{HelpAssetRoot}/{name}.png");
         }
 
         /// <summary>
-        /// Executes Create Texture Assets for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Generate and save all the UI texture assets (boards, cards, keycaps, etc.).
         /// </summary>
         private static void CreateTextureAssets()
         {
@@ -644,30 +511,26 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Create Tmp Font Assets for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Generate TextMeshPro SDF font assets for all bundled fonts.
         /// </summary>
         private static void CreateTmpFontAssets()
         {
+            CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/Impact.ttf", "Impact SDF");
+            CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/CfCrackBold.ttf", "CfCrackBold SDF");
             CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/AgencyBold.ttf", "AgencyBold SDF");
             CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/Impact2.ttf", "Impact2 SDF");
+            CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/Rajdhani-Bold.ttf", "Rajdhani-Bold SDF");
+            CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/Rajdhani-SemiBold.ttf", "Rajdhani-SemiBold SDF");
+            CreateTmpFontAsset("Assets/rimrush/Resources/rimrush/Fonts/Griffy-Regular.ttf", "Griffy-Regular SDF");
         }
 
         /// <summary>
-        /// Executes Create Tmp Font Asset for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a single TMP SDF font asset from a source TTF file.
         /// </summary>
-        /// <param name="sourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="assetName">Input value used by this step of the workflow.</param>
         private static void CreateTmpFontAsset(string sourcePath, string assetName)
         {
             var assetPath = $"{HelpTmpFontRoot}/{assetName}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
-            if (existing != null && existing.atlasTexture != null && existing.material != null)
-            {
-                return;
-            }
-
             if (existing != null)
             {
                 AssetDatabase.DeleteAsset(assetPath);
@@ -726,13 +589,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Create Solid Texture for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a solid-color texture of the given size.
         /// </summary>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Texture2D CreateSolidTexture(int width, int height, Color color)
         {
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -748,19 +606,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Create Rounded Texture for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a rounded-corner texture with gradient fill, border, and optional glint pattern.
         /// </summary>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="radius">Input value used by this step of the workflow.</param>
-        /// <param name="borderWidth">Input value used by this step of the workflow.</param>
-        /// <param name="top">Input value used by this step of the workflow.</param>
-        /// <param name="bottom">Input value used by this step of the workflow.</param>
-        /// <param name="border">Input value used by this step of the workflow.</param>
-        /// <param name="glint">Input value used by this step of the workflow.</param>
-        /// <param name="pattern">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Texture2D CreateRoundedTexture(int width, int height, int radius, int borderWidth, Color top, Color bottom, Color border, Color glint, bool pattern)
         {
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -803,12 +650,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Create Spotlight Texture for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a radial spotlight texture with a soft green glow.
         /// </summary>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Texture2D CreateSpotlightTexture(int width, int height)
         {
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -832,15 +675,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Inside Rounded Rect for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check whether a pixel coordinate falls inside a rounded rectangle.
         /// </summary>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="radius">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool InsideRoundedRect(int x, int y, int width, int height, int radius)
         {
             radius = Mathf.Max(0, radius);
@@ -857,11 +693,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Write Texture for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save a generated texture as a PNG and configure its sprite import settings.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="texture">Input value used by this step of the workflow.</param>
         private static void WriteTexture(string name, Texture2D texture)
         {
             var path = $"{HelpAssetRoot}/{name}.png";
@@ -884,10 +717,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Add Prefab Instance To Main Scene for the rimrushHelpPanelPrefabBuilder workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Place the help panel prefab instance into the main scene, replacing any existing one.
         /// </summary>
-        /// <param name="prefab">Input value used by this step of the workflow.</param>
         private static void AddPrefabInstanceToMainScene(GameObject prefab)
         {
             if (prefab == null)

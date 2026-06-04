@@ -1,5 +1,9 @@
 using UnityEngine;
 
+// 教程流程控制器
+// 管理整个新手教程的 10 个练习步骤：移动、冲刺、投篮、假动作、扣篮、抢断、盖帽、补扣、大招、自由对战。
+// 每一步都会显示操作提示，等玩家完成后自动进入下一步。
+
 namespace rimrush
 {
     public sealed class rimrushTutorialFlow
@@ -69,6 +73,7 @@ namespace rimrush
         private const float BlockRetryDelay = 0.52f;
         private const float PutbackRetryWindow = 3.7f;
         private const float PutbackIdleRetryWindow = 6.2f;
+        private const float PutbackLooseBallPickupLock = 0.92f;
 
         private readonly rimrushGameCore core;
         private readonly rimrushTutorialOverlay overlay;
@@ -127,6 +132,9 @@ namespace rimrush
         private bool freePlayReadyToEnd;
         private float freePlayScoredAt;
 
+        /// <summary>
+        /// Set up the tutorial with a reference to the game core.
+        /// </summary>
         public rimrushTutorialFlow(rimrushGameCore core)
         {
             this.core = core;
@@ -134,10 +142,19 @@ namespace rimrush
             inventory = rimrushInventory.Instance;
         }
 
+        /// <summary>
+        /// True when the game should pause so the player can read the instructions.
+        /// </summary>
         public bool FreezeGameplay => phase == TutorialPhase.IntroFreeze || phase == TutorialPhase.SuccessPause;
 
+        /// <summary>
+        /// Always normal speed during tutorial.
+        /// </summary>
         public float GameplayTimeScale => 1f;
 
+        /// <summary>
+        /// Begin the tutorial: find the player and opponent, then show the opening screen.
+        /// </summary>
         public void Start()
         {
             player = core.PlayersLeft.Count > 0 ? core.PlayersLeft[0] : null;
@@ -153,12 +170,18 @@ namespace rimrush
             BeginOpening();
         }
 
+        /// <summary>
+        /// Clean up when leaving the tutorial.
+        /// </summary>
         public void Shutdown()
         {
             core.PlayerSignals.OnSignal -= OnPlayerSignal;
             overlay?.Hide();
         }
 
+        /// <summary>
+        /// Main update: advance timers, check for drill completion, handle skip commands.
+        /// </summary>
         public void UpdateFrame(float dt)
         {
             if (overlay == null || player == null)
@@ -245,6 +268,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Refresh overlay visuals after gameplay resolves each frame.
+        /// </summary>
         public void UpdateAfterGameplay(float dt)
         {
             if (player == null || overlay == null || phase == TutorialPhase.Outro)
@@ -255,6 +281,9 @@ namespace rimrush
             UpdatePresentation();
         }
 
+        /// <summary>
+        /// Script the opponent's actions during drills (pump fake, steal, block).
+        /// </summary>
         public void PopulateOpponentInputs(rimrushPlayerObject opponentPlayer, rimrushTutorialOpponentController controller, float dt)
         {
             if (controller == null || opponentPlayer == null || phase != TutorialPhase.Active)
@@ -319,6 +348,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Show the "START HERE" prelude before the first drill.
+        /// </summary>
         private void BeginOpening()
         {
             currentStep = TutorialStep.Opening;
@@ -336,6 +368,10 @@ namespace rimrush
                 "N");
         }
 
+        /// <summary>
+        /// Drill 1: teach the player to move. The player must walk left past a marker,
+        /// then walk right past another marker. Shows "A" and "D" key prompts.
+        /// </summary>
         private void BeginMove(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -364,6 +400,10 @@ namespace rimrush
                 "D");
         }
 
+        /// <summary>
+        /// Drill 2: teach the player to dash. The player must double-tap A or D quickly
+        /// to perform a burst of speed. Shows the double-tap key pattern.
+        /// </summary>
         private void BeginDash(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -391,6 +431,10 @@ namespace rimrush
                 "D");
         }
 
+        /// <summary>
+        /// Drill 3: teach the player to shoot. The player must jump (W) and then press B
+        /// at the peak of the jump for best accuracy. Also shows the 2PT/3PT scoring line.
+        /// </summary>
         private void BeginShot(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -415,11 +459,15 @@ namespace rimrush
                 "JUMP SHOT",
                 string.Empty,
                 string.Empty,
-                "Jump first. Press B at the top.",
+                "Jump spot decides points.\nNear rim=2PT. Behind line=3PT.",
                 "W",
                 "B");
+            overlay.SetScoringGuide(player.Side, true);
         }
 
+        /// <summary>
+        /// Drill 4: pump fake then shoot.
+        /// </summary>
         private void BeginPump(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -434,7 +482,7 @@ namespace rimrush
             PrepareScriptedStep();
             core.Ball.TutorialClearGuaranteedScore();
             core.TutorialResetScenario(
-                new Vector2(276f, rimrushObjectsData.PlayerIndentY),
+                new Vector2(344f, rimrushObjectsData.PlayerIndentY),
                 new Vector2(426f, rimrushObjectsData.PlayerIndentY),
                 true,
                 false,
@@ -451,6 +499,9 @@ namespace rimrush
                 "B");
         }
 
+        /// <summary>
+        /// Drill 5: jump near the rim and dunk.
+        /// </summary>
         private void BeginDunk(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -479,6 +530,9 @@ namespace rimrush
                 "B");
         }
 
+        /// <summary>
+        /// Drill 6: get close and steal the ball.
+        /// </summary>
         private void BeginSteal(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -503,6 +557,9 @@ namespace rimrush
                 "B");
         }
 
+        /// <summary>
+        /// Drill 7: time the jump to block a shot.
+        /// </summary>
         private void BeginBlock(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -536,6 +593,9 @@ namespace rimrush
                 "W");
         }
 
+        /// <summary>
+        /// Drill 8: grab the rebound and put it back in.
+        /// </summary>
         private void BeginPutback(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -553,18 +613,22 @@ namespace rimrush
                 false,
                 1f,
                 -1f);
-            core.Ball.TutorialLaunchPutbackBounce(player.Side, 7.5f);
+            core.Ball.TutorialLaunchPutbackBounce(player.Side, PutbackLooseBallPickupLock);
+            player.TutorialPrimePutbackDunk();
             overlay.ShowStep(
                 7,
                 TotalSteps,
                 "PUTBACK",
                 string.Empty,
                 string.Empty,
-                "Wait for the bounce. Then W + B.",
+                "Crash the rebound. Jump, then B.",
                 "W",
                 "B");
         }
 
+        /// <summary>
+        /// Drill 9: use the super skill shot.
+        /// </summary>
         private void BeginSuper(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -590,6 +654,9 @@ namespace rimrush
                 "N");
         }
 
+        /// <summary>
+        /// Final step: free play — score one basket to finish the tutorial.
+        /// </summary>
         private void BeginFreePlay(bool fullIntro)
         {
             ResetStep(fullIntro);
@@ -620,6 +687,9 @@ namespace rimrush
             ClearOverlayHighlights();
         }
 
+        /// <summary>
+        /// Reset all step state and start the intro freeze timer.
+        /// </summary>
         private void ResetStep(bool fullIntro)
         {
             phase = TutorialPhase.IntroFreeze;
@@ -632,21 +702,31 @@ namespace rimrush
             player?.TutorialSetJumpBlockAssist(false);
         }
 
+        /// <summary>
+        /// Put the opponent in scripted mode and clear old overlay visuals.
+        /// </summary>
         private void PrepareScriptedStep()
         {
             opponentController?.SetMode(rimrushTutorialOpponentMode.Scripted);
             ClearOverlayHighlights();
         }
 
+        /// <summary>
+        /// Remove all focus boxes, rings, guides, and trajectory dots from the overlay.
+        /// </summary>
         private void ClearOverlayHighlights()
         {
             overlay.ClearFocus();
             overlay.SetApexRing(Vector2.zero, 0f, false);
             overlay.SetEnergyPulse(false);
             overlay.SetTargetRect(0f, 0f, 0f, 0f);
+            overlay.SetScoringGuide(0, false);
             overlay.SetTrajectory(null);
         }
 
+        /// <summary>
+        /// Check if the player moved left and right. Show hints if stuck.
+        /// </summary>
         private void UpdateMoveStep()
         {
             if (player.Position.x <= moveStartX - 42f)
@@ -690,6 +770,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player dashed. Auto-retry if stuck too long.
+        /// </summary>
         private void UpdateDashStep()
         {
             if (dashCompletionPending)
@@ -715,6 +798,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player scored a shot. Reset if the attempt fails.
+        /// </summary>
         private void UpdateShotStep()
         {
             if (shotScored)
@@ -725,7 +811,7 @@ namespace rimrush
             if (activeTimer >= 2.6f && !stepHintShown)
             {
                 stepHintShown = true;
-                overlay.ShowFeedback(shotStage == ShotStage.Jump ? "W first. B at the top." : "Highest point has best accuracy.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                overlay.ShowFeedback(shotStage == ShotStage.Jump ? "W, then B. Watch the 2PT/3PT line." : "Highest point has best accuracy.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
             }
 
             if (shotAttempted && activeTimer - shotAttemptStartedAt >= ShotRetryWindow)
@@ -742,6 +828,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player did a pump fake and then scored. Reset if stuck.
+        /// </summary>
         private void UpdatePumpStep()
         {
             if (!pumpTriggered)
@@ -763,6 +852,12 @@ namespace rimrush
 
             if (pumpShotAttempted)
             {
+                if (pumpJumpIssued && !IsBallStillLive())
+                {
+                    CompleteStep("Fake worked.");
+                    return;
+                }
+
                 if (activeTimer - pumpShotStartedAt >= ShotRetryWindow)
                 {
                     BeginPump(false);
@@ -785,6 +880,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player dunked. Show the "press B" prompt when airborne.
+        /// </summary>
         private void UpdateDunkStep()
         {
             if (dunkScored)
@@ -824,6 +922,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player stole the ball. Restart if the opponent drifts too far.
+        /// </summary>
         private void UpdateStealStep()
         {
             if (stealSuccessPending)
@@ -857,6 +958,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the player blocked the shot. Show timing cues during the drill.
+        /// </summary>
         private void UpdateBlockStep()
         {
             if (blockSuccessPending)
@@ -920,6 +1024,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Queue up a block drill retry after a short delay.
+        /// </summary>
         private void ScheduleBlockRetry(string message)
         {
             if (blockRetryPending || blockSuccessPending)
@@ -932,6 +1039,9 @@ namespace rimrush
             overlay.ShowFeedback(message, new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
         }
 
+        /// <summary>
+        /// Check if the player grabbed the rebound and put it back in.
+        /// </summary>
         private void UpdatePutbackStep()
         {
             if (putbackScored)
@@ -946,13 +1056,13 @@ namespace rimrush
                 putbackWindowOpened = true;
                 player.TutorialPrimePutbackDunk();
                 overlay.UpdateCopy(
-                    "ATTACK THE BOUNCE",
-                    "Ball is coming back up.",
+                    "ATTACK THE REBOUND",
+                    "Loose ball near the rim.",
                     "W + B NOW",
-                    "Jump right into the rebound window.",
+                    "Catch it high and dunk.",
                     "W",
                     "B");
-                overlay.ShowFeedback("Now. Go off the bounce.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
+                overlay.ShowFeedback("Now. Meet it above the rim.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
             }
 
             if (player != null && !player.IsGrounded && !putbackJumped)
@@ -960,7 +1070,7 @@ namespace rimrush
                 putbackJumped = true;
                 if (!putbackWindowOpened)
                 {
-                    overlay.ShowFeedback("Wait for the bounce first.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                    overlay.ShowFeedback("Track the rebound, then B.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
                 }
             }
 
@@ -968,7 +1078,7 @@ namespace rimrush
             {
                 stepHintShown = true;
                 overlay.ShowFeedback(
-                    putbackWindowOpened ? "Ball is up. W + B." : "Let it bounce, then W + B.",
+                    putbackWindowOpened ? "Ball is live. W + B." : "Jump into the rebound, then B.",
                     new Color32(0xFF, 0xD1, 0x76, 0xFF),
                     HintFeedbackDuration);
             }
@@ -976,24 +1086,27 @@ namespace rimrush
             if (putbackWindowOpened && !putbackAttempted && !putbackWindowLive)
             {
                 BeginPutback(false);
-                overlay.ShowFeedback("Missed the bounce. Attack the pop-up.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                overlay.ShowFeedback("Missed the rebound. Attack it earlier.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
                 return;
             }
 
             if (putbackAttempted && activeTimer - putbackAttemptStartedAt >= PutbackRetryWindow)
             {
                 BeginPutback(false);
-                overlay.ShowFeedback("Good read. Finish it right off the bounce.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                overlay.ShowFeedback("Good read. Try the putback again.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
                 return;
             }
 
-            if (!putbackWindowOpened && !putbackAttempted && activeTimer >= PutbackIdleRetryWindow)
+            if (!putbackAttempted && activeTimer >= PutbackIdleRetryWindow)
             {
                 BeginPutback(false);
-                overlay.ShowFeedback("Let it bounce, then attack.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                overlay.ShowFeedback("Jump into the rebound, then press B.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
             }
         }
 
+        /// <summary>
+        /// Check if the player used the super skill shot.
+        /// </summary>
         private void UpdateSuperStep()
         {
             if (superTriggered)
@@ -1021,6 +1134,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Free play: wait for the player to score one basket.
+        /// </summary>
         private void UpdateFreePlayStep()
         {
             if (!freePlayReadyToEnd)
@@ -1042,6 +1158,9 @@ namespace rimrush
             BeginOutro();
         }
 
+        /// <summary>
+        /// Mark the current step as done and show a success message.
+        /// </summary>
         private void CompleteStep(string message)
         {
             phase = TutorialPhase.SuccessPause;
@@ -1050,12 +1169,18 @@ namespace rimrush
             ClearOverlayHighlights();
         }
 
+        /// <summary>
+        /// Show the outro screen with "where next?" options.
+        /// </summary>
         private void BeginOutro()
         {
             phase = TutorialPhase.Outro;
             overlay.ShowOutro(rimrushPlayersData.GetCharacterName(player.CharacterId), rimrushCharacterSkillsData.Get(player.CharacterId).SkillName);
         }
 
+        /// <summary>
+        /// Move to the next drill after the success pause ends.
+        /// </summary>
         private void AdvanceAfterSuccess()
         {
             switch (currentStep)
@@ -1093,6 +1218,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Check if the overlay sent a command (like skip).
+        /// </summary>
         private bool HandleStepCommand()
         {
             var command = overlay.ConsumeCommand();
@@ -1110,6 +1238,9 @@ namespace rimrush
             return false;
         }
 
+        /// <summary>
+        /// Jump to the next step when the player presses skip.
+        /// </summary>
         private void SkipCurrentStep()
         {
             switch (currentStep)
@@ -1150,6 +1281,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Listen for player actions (dash, shoot, dunk, steal, block, score, etc).
+        /// </summary>
         private void OnPlayerSignal(rimrushPlayerSignalType signal, int side, int playerNo)
         {
             if (player == null || phase != TutorialPhase.Active)
@@ -1191,7 +1325,7 @@ namespace rimrush
                             "TOP RELEASE",
                             "Best accuracy.",
                             "SHOOT AT PEAK",
-                            "Press B near highest point.",
+                            "B at the top.\nJump spot decides 2PT or 3PT.",
                             "B");
                         overlay.ShowFeedback("Highest point has best accuracy.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
                     }
@@ -1203,10 +1337,12 @@ namespace rimrush
                         shotAttemptStartedAt = activeTimer;
                         shotPeakValid = shotStage == ShotStage.PeakShot && !player.IsGrounded;
                         shotAttempted = shotPeakValid;
+                        var shotValueText = core.MatchProcessor.ThrowType == 0 ? "3PT range." : "2PT range.";
+                        var shotFeedback = Mathf.Abs(player.Velocity.y) <= 140f
+                            ? $"{shotValueText} Peak release."
+                            : $"{shotValueText} Top is best.";
                         overlay.ShowFeedback(
-                            shotPeakValid
-                                ? Mathf.Abs(player.Velocity.y) <= 140f ? "Peak release. Best accuracy." : "Good release. Top is best."
-                                : "Jump first, then B.",
+                            shotPeakValid ? shotFeedback : "Jump first, then B.",
                             shotPeakValid ? new Color32(0x9A, 0xFF, 0xDD, 0xFF) : new Color32(0xFF, 0xD1, 0x76, 0xFF),
                             ActionFeedbackDuration);
                     }
@@ -1214,10 +1350,17 @@ namespace rimrush
                     {
                         pumpShotAttempted = true;
                         pumpShotStartedAt = activeTimer;
-                        overlay.ShowFeedback(
-                            player.IsGrounded ? "Good release." : "That counts.",
-                            new Color32(0x9A, 0xFF, 0xDD, 0xFF),
-                            ActionFeedbackDuration);
+                        if (pumpJumpIssued)
+                        {
+                            overlay.ShowFeedback(
+                                player.IsGrounded ? "Good release. Watch it finish." : "That counts. Watch it finish.",
+                                new Color32(0x9A, 0xFF, 0xDD, 0xFF),
+                                ActionFeedbackDuration);
+                        }
+                        else
+                        {
+                            overlay.ShowFeedback("Make him leave his feet first.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
+                        }
                     }
                     break;
 
@@ -1247,6 +1390,12 @@ namespace rimrush
                         dunkAttempted = true;
                         dunkAttemptStartedAt = activeTimer;
                         overlay.ShowFeedback("Strong take. Watch it finish.", new Color32(0x9A, 0xFF, 0xDD, 0xFF), ActionFeedbackDuration);
+                    }
+                    else if (currentStep == TutorialStep.Putback)
+                    {
+                        putbackAttempted = true;
+                        putbackAttemptStartedAt = activeTimer;
+                        overlay.ShowFeedback("Putback take. Watch it finish.", new Color32(0x9A, 0xFF, 0xDD, 0xFF), ActionFeedbackDuration);
                     }
                     break;
 
@@ -1297,11 +1446,7 @@ namespace rimrush
                     if (currentStep == TutorialStep.Shot && shotAttempted)
                     {
                         shotScored = true;
-                        CompleteStep(shotPeakValid ? "Good rhythm." : "Shot made.");
-                    }
-                    else if (currentStep == TutorialStep.Pump && pumpShotAttempted)
-                    {
-                        CompleteStep("Fake worked.");
+                        CompleteStep(core.MatchProcessor.ThrowType == 0 ? "Good rhythm. 3PT." : "Good rhythm. 2PT.");
                     }
                     else if (currentStep == TutorialStep.Dunk && dunkAttempted)
                     {
@@ -1323,6 +1468,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Handle button presses on the outro screen (replay, training, menu).
+        /// </summary>
         private void HandleOutroCommand()
         {
             var command = overlay.ConsumeCommand();
@@ -1343,6 +1491,9 @@ namespace rimrush
             core.RequestReturnToMenu();
         }
 
+        /// <summary>
+        /// Refresh overlay visuals (scoring guide, etc).
+        /// </summary>
         private void UpdatePresentation()
         {
             if (overlay == null || player == null)
@@ -1351,8 +1502,15 @@ namespace rimrush
             }
 
             ClearOverlayHighlights();
+            if (currentStep == TutorialStep.Shot && phase != TutorialPhase.SuccessPause && phase != TutorialPhase.Outro)
+            {
+                overlay.SetScoringGuide(player.Side, true);
+            }
         }
 
+        /// <summary>
+        /// True if the ball is in the air (shooting, dunking, blocking, etc).
+        /// </summary>
         private bool IsBallStillLive()
         {
             return core.Ball != null &&
@@ -1363,6 +1521,9 @@ namespace rimrush
                     core.Ball.State == "alleyOop");
         }
 
+        /// <summary>
+        /// Return -1 (left), 1 (right), or 0 (close enough) to move toward a target X position.
+        /// </summary>
         private static int MoveTo(float currentX, float targetX)
         {
             var delta = targetX - currentX;

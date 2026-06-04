@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAutoBoot 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 游戏自动启动入口
+// 游戏开始时自动运行，检查是否已经有启动器存在。如果没有就创建一个 rimrushGameBootstrap 对象来初始化游戏。这个文件是游戏的启动起点。
 
 using UnityEngine;
 
@@ -7,11 +7,10 @@ namespace rimrush
 {
     public static class rimrushAutoBoot
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         /// <summary>
-        /// Executes Boot for the rimrushAutoBoot workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Run automatically when the game starts. Creates a bootstrap object if one does not already exist in the scene.
         /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
             if (Object.FindObjectOfType<rimrushGameBootstrap>() != null)

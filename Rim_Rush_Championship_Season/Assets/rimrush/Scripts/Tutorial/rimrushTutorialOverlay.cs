@@ -1,3 +1,6 @@
+// 教程界面覆盖层
+// 在教程模式下覆盖在游戏画面上方，显示操作提示、进度点、女巫角色讲解、技能演示动画和按键提示。教程完成后的结算界面也在这里管理。
+
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -51,6 +54,12 @@ namespace rimrush
         private RectTransform apexRing;
         private RectTransform energyPulse;
         private RectTransform trajectoryRoot;
+        private GameObject scoringGuideRoot;
+        private Image scoringLeftFill;
+        private Image scoringRightFill;
+        private TextMeshProUGUI scoringLeftLabel;
+        private TextMeshProUGUI scoringRightLabel;
+        private TextMeshProUGUI scoringLineLabel;
         private readonly List<Image> trajectoryDots = new List<Image>();
         private readonly List<Image> progressDots = new List<Image>();
         private readonly List<GameObject> keyChipRoots = new List<GameObject>();
@@ -93,6 +102,9 @@ namespace rimrush
 
         public static rimrushTutorialOverlay Active => FindOrCreate();
 
+        /// <summary>
+        /// Register as the active overlay and build UI on first use.
+        /// </summary>
         private void Awake()
         {
             if (activeOverlay == null || activeOverlay == this)
@@ -104,6 +116,9 @@ namespace rimrush
             Hide();
         }
 
+        /// <summary>
+        /// Clear the singleton reference when this overlay is destroyed.
+        /// </summary>
         private void OnDestroy()
         {
             if (activeOverlay == this)
@@ -112,6 +127,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Tick pulse animations and fade out timed feedback messages.
+        /// </summary>
         private void Update()
         {
             if (!visible)
@@ -133,11 +151,17 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Keep the witch sprite drawn above the overlay each frame.
+        /// </summary>
         private void LateUpdate()
         {
             ApplyWitchSortingOrder();
         }
 
+        /// <summary>
+        /// Show the opening screen before the first drill starts.
+        /// </summary>
         public void ShowPrelude(string title, string subtitle, string narration, params string[] keys)
         {
             ShowInternal();
@@ -149,6 +173,7 @@ namespace rimrush
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
+            SetScoringGuide(0, false);
             SetTrajectory(null);
             if (outroRoot != null)
             {
@@ -156,6 +181,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Show a numbered drill step with progress dots and key prompts.
+        /// </summary>
         public void ShowStep(int currentIndex, int total, string title, string subtitle, string goal, string narration, params string[] keys)
         {
             ShowInternal();
@@ -169,6 +197,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Refresh the header text and key chips without changing the layout.
+        /// </summary>
         public void UpdateCopy(string title, string subtitle, string goal, string narration, params string[] keys)
         {
             ShowInternal();
@@ -177,6 +208,9 @@ namespace rimrush
             SetGoal(string.Empty);
         }
 
+        /// <summary>
+        /// Dim everything outside the given rectangle to spotlight a UI area.
+        /// </summary>
         public void SetFocusRect(float left, float top, float width, float height)
         {
             EnsureInitialized();
@@ -207,11 +241,17 @@ namespace rimrush
             SetTopLeftRect(focusGlow, clampedLeft - 16f, clampedTop - 16f, clampedWidth + 32f, clampedHeight + 32f);
         }
 
+        /// <summary>
+        /// Remove the focus spotlight so the full screen is visible again.
+        /// </summary>
         public void ClearFocus()
         {
             SetFocusRect(0f, 0f, 0f, 0f);
         }
 
+        /// <summary>
+        /// Highlight a target zone the player should aim at.
+        /// </summary>
         public void SetTargetRect(float left, float top, float width, float height)
         {
             EnsureInitialized();
@@ -236,6 +276,9 @@ namespace rimrush
                 clampedHeight + 44f);
         }
 
+        /// <summary>
+        /// Show or hide the pulsing ring that marks the apex of a shot arc.
+        /// </summary>
         public void SetApexRing(Vector2 center, float size, bool active)
         {
             EnsureInitialized();
@@ -246,6 +289,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Show or hide the energy pulse glow near the shooting lane.
+        /// </summary>
         public void SetEnergyPulse(bool active)
         {
             EnsureInitialized();
@@ -256,6 +302,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Draw a trail of dots showing the ball's predicted path.
+        /// </summary>
         public void SetTrajectory(IReadOnlyList<Vector2> points)
         {
             EnsureInitialized();
@@ -274,6 +323,35 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Show or hide the 2-point / 3-point scoring zone overlay.
+        /// </summary>
+        public void SetScoringGuide(int scoringSide, bool active)
+        {
+            EnsureInitialized();
+            if (scoringGuideRoot == null)
+            {
+                return;
+            }
+
+            scoringGuideRoot.SetActive(active);
+            if (!active)
+            {
+                return;
+            }
+
+            var leftIsThree = scoringSide == -1;
+            SetScoringZone(scoringLeftFill, scoringLeftLabel, leftIsThree);
+            SetScoringZone(scoringRightFill, scoringRightLabel, !leftIsThree);
+            if (scoringLineLabel != null)
+            {
+                scoringLineLabel.text = "2PT / 3PT LINE";
+            }
+        }
+
+        /// <summary>
+        /// Flash a colored feedback message that fades after a short delay.
+        /// </summary>
         public void ShowFeedback(string message, Color color, float duration = 1.35f)
         {
             EnsureInitialized();
@@ -282,6 +360,9 @@ namespace rimrush
             feedbackTimer = duration;
         }
 
+        /// <summary>
+        /// Show the outro screen with replay, training, and menu choices.
+        /// </summary>
         public void ShowOutro(string characterName, string skillName)
         {
             ShowInternal();
@@ -293,6 +374,7 @@ namespace rimrush
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
+            SetScoringGuide(0, false);
             SetTrajectory(null);
             if (outroRoot != null)
             {
@@ -310,6 +392,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Return the pending button command and reset it to None.
+        /// </summary>
         public rimrushTutorialOverlayCommand ConsumeCommand()
         {
             var command = pendingCommand;
@@ -317,6 +402,9 @@ namespace rimrush
             return command;
         }
 
+        /// <summary>
+        /// Hide the entire tutorial overlay.
+        /// </summary>
         public void Hide()
         {
             visible = false;
@@ -326,6 +414,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Find the existing overlay in the scene or create a new runtime instance.
+        /// </summary>
         private static rimrushTutorialOverlay FindOrCreate()
         {
             if (activeOverlay != null)
@@ -350,6 +441,9 @@ namespace rimrush
             return activeOverlay;
         }
 
+        /// <summary>
+        /// Build the UI once, then just fix up the camera on later calls.
+        /// </summary>
         private void EnsureInitialized()
         {
             if (initialized)
@@ -365,6 +459,9 @@ namespace rimrush
             EnsureCanvasCamera();
         }
 
+        /// <summary>
+        /// Activate the overlay root and reset timers and feedback text.
+        /// </summary>
         private void ShowInternal()
         {
             EnsureInitialized();
@@ -383,6 +480,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Construct the entire tutorial overlay from code (no prefab).
+        /// </summary>
         private void BuildUi()
         {
             canvas = gameObject.GetComponent<Canvas>();
@@ -427,6 +527,8 @@ namespace rimrush
             targetGlow = targetGlowImage.rectTransform;
             targetFill = CreateImage("TargetZone", overlayRoot, solidSprite, new Color(1f, 0.82f, 0.44f, 0.16f));
             targetZone = targetFill.rectTransform;
+
+            BuildScoringGuide();
 
             trajectoryRoot = CreateRootRect("TrajectoryRoot", overlayRoot);
             for (var i = 0; i < 7; i++)
@@ -499,6 +601,9 @@ namespace rimrush
             HideRuntimeMarkers();
         }
 
+        /// <summary>
+        /// Spawn a live witch character model inside the narrator panel.
+        /// </summary>
         private void BuildWitchPreview(RectTransform witchMount)
         {
             if (witchMount == null || witchArmature != null || witchFallbackRoot != null)
@@ -549,6 +654,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Use a static portrait sprite when the live model is unavailable.
+        /// </summary>
         private void BuildWitchPortraitFallback(RectTransform witchMount)
         {
             var sprite = LoadWitchPortraitSprite();
@@ -565,6 +673,9 @@ namespace rimrush
             witchFallbackBasePosition = witchFallbackRect.anchoredPosition;
         }
 
+        /// <summary>
+        /// Update pulsing glow effects on the witch orb, header, and focus areas.
+        /// </summary>
         private void AnimatePulse()
         {
             var wave = 0.5f + 0.5f * Mathf.Sin(effectTime * 4.6f);
@@ -620,15 +731,22 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Hide all focus, target, apex, energy, scoring, and trajectory markers.
+        /// </summary>
         private void HideRuntimeMarkers()
         {
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
+            SetScoringGuide(0, false);
             SetTrajectory(null);
         }
 
+        /// <summary>
+        /// Update all header and narrator text labels, plus key chip display.
+        /// </summary>
         private void SetCopy(string stepLabel, string title, string subtitle, string narration, IReadOnlyList<string> keys)
         {
             if (stepText != null)
@@ -655,6 +773,9 @@ namespace rimrush
             SetKeys(keys);
         }
 
+        /// <summary>
+        /// Show or hide the goal line below the title.
+        /// </summary>
         private void SetGoal(string goal)
         {
             if (goalText == null)
@@ -666,6 +787,9 @@ namespace rimrush
             goalText.gameObject.SetActive(!string.IsNullOrEmpty(goal));
         }
 
+        /// <summary>
+        /// Show or hide the skip button.
+        /// </summary>
         private void SetSkipVisible(bool active)
         {
             if (skipButton != null)
@@ -674,6 +798,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Light up progress dots to show which step the player is on.
+        /// </summary>
         private void SetProgress(int currentIndex, int total)
         {
             for (var i = 0; i < progressDots.Count; i++)
@@ -699,6 +826,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Show or hide each key prompt chip and set its label text.
+        /// </summary>
         private void SetKeys(IReadOnlyList<string> keys)
         {
             for (var i = 0; i < keyChipRoots.Count; i++)
@@ -712,6 +842,54 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Build the 2-point / 3-point scoring zone labels and line marker.
+        /// </summary>
+        private void BuildScoringGuide()
+        {
+            scoringGuideRoot = CreateRootRect("ScoringGuideRoot", overlayRoot).gameObject;
+
+            scoringLeftFill = CreateImage("ScoringLeftFill", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0x35, 0xD8, 0xB8, 0x24));
+            SetTopLeftRect(scoringLeftFill.rectTransform, 44f, 336f, 346f, 58f);
+            scoringRightFill = CreateImage("ScoringRightFill", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xB9, 0x4D, 0x24));
+            SetTopLeftRect(scoringRightFill.rectTransform, 410f, 336f, 346f, 58f);
+
+            var lineGlow = CreateImage("ScoringLineGlow", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xD5, 0x7C, 0x66));
+            SetTopLeftRect(lineGlow.rectTransform, rimrushConstants.Width2 - 2f, 148f, 4f, 268f);
+            var lineCore = CreateImage("ScoringLineCore", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xF4, 0xB2, 0xEE));
+            SetTopLeftRect(lineCore.rectTransform, rimrushConstants.Width2 - 0.5f, 148f, 1f, 268f);
+
+            scoringLineLabel = CreateText("ScoringLineLabel", scoringGuideRoot.transform as RectTransform, 330f, 314f, 140f, 18f, 13, new Color32(0xFF, 0xF4, 0xB2, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
+            scoringLeftLabel = CreateText("ScoringLeftLabel", scoringGuideRoot.transform as RectTransform, 108f, 354f, 170f, 24f, 20, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
+            scoringRightLabel = CreateText("ScoringRightLabel", scoringGuideRoot.transform as RectTransform, 522f, 354f, 170f, 24f, 20, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
+
+            scoringGuideRoot.SetActive(false);
+        }
+
+        /// <summary>
+        /// Color and label a single scoring zone as 2-point or 3-point.
+        /// </summary>
+        private static void SetScoringZone(Image fill, TextMeshProUGUI label, bool isThreePoint)
+        {
+            if (fill != null)
+            {
+                fill.color = isThreePoint
+                    ? new Color32(0x35, 0xD8, 0xB8, 0x28)
+                    : new Color32(0xFF, 0xB9, 0x4D, 0x28);
+            }
+
+            if (label != null)
+            {
+                label.text = isThreePoint ? "3PT RANGE" : "2PT RANGE";
+                label.color = isThreePoint
+                    ? new Color32(0x8A, 0xFF, 0xE1, 0xFF)
+                    : new Color32(0xFF, 0xD5, 0x7C, 0xFF);
+            }
+        }
+
+        /// <summary>
+        /// Assign the main camera to the canvas if one is not already set.
+        /// </summary>
         private void EnsureCanvasCamera()
         {
             if (canvas == null)
@@ -725,6 +903,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Create an EventSystem if none exists in the scene.
+        /// </summary>
         private static void EnsureEventSystem()
         {
             if (FindObjectOfType<EventSystem>() != null)
@@ -739,6 +920,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Generate the solid, circle, and ring sprites used by the overlay.
+        /// </summary>
         private static void EnsureSprites()
         {
             if (solidSprite != null && circleSprite != null && ringSprite != null)
@@ -751,6 +935,9 @@ namespace rimrush
             ringSprite = CreateSprite(CreateRingTexture(160, 0.72f, 0.9f), "TutorialRing");
         }
 
+        /// <summary>
+        /// Load and cache the witch character portrait sprite.
+        /// </summary>
         private static Sprite LoadWitchPortraitSprite()
         {
             if (witchPortraitSprite != null)
@@ -762,6 +949,9 @@ namespace rimrush
             return witchPortraitSprite;
         }
 
+        /// <summary>
+        /// Generate a small flat-color texture.
+        /// </summary>
         private static Texture2D CreateSolidTexture(int width, int height, Color color)
         {
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
@@ -776,6 +966,9 @@ namespace rimrush
             return texture;
         }
 
+        /// <summary>
+        /// Generate a soft-edged circle texture for glows and dots.
+        /// </summary>
         private static Texture2D CreateCircleTexture(int size, float softness)
         {
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -802,6 +995,9 @@ namespace rimrush
             return texture;
         }
 
+        /// <summary>
+        /// Generate a ring texture with a hollow center for frame outlines.
+        /// </summary>
         private static Texture2D CreateRingTexture(int size, float innerRadius, float outerSoftness)
         {
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -829,6 +1025,9 @@ namespace rimrush
             return texture;
         }
 
+        /// <summary>
+        /// Wrap a texture into a named Sprite with center pivot.
+        /// </summary>
         private static Sprite CreateSprite(Texture2D texture, string name)
         {
             texture.name = name;
@@ -837,6 +1036,9 @@ namespace rimrush
             return sprite;
         }
 
+        /// <summary>
+        /// Create a RectTransform that stretches to fill its parent.
+        /// </summary>
         private static RectTransform CreateRootRect(string name, Transform parent)
         {
             var root = new GameObject(name, typeof(RectTransform));
@@ -849,12 +1051,18 @@ namespace rimrush
             return rect;
         }
 
+        /// <summary>
+        /// Create a semi-transparent dark panel used to dim areas outside the focus rect.
+        /// </summary>
         private RectTransform CreateMask(string name)
         {
             var image = CreateImage(name, overlayRoot, solidSprite, new Color(0.02f, 0.04f, 0.08f, 0.52f));
             return image.rectTransform;
         }
 
+        /// <summary>
+        /// Create a dark card panel with a gold outline and drop shadow.
+        /// </summary>
         private static GameObject CreateCard(string name, RectTransform parent, float left, float top, float width, float height, float alpha)
         {
             var root = new GameObject(name, typeof(RectTransform));
@@ -874,6 +1082,9 @@ namespace rimrush
             return root;
         }
 
+        /// <summary>
+        /// Create a non-interactive Image element with the given sprite and color.
+        /// </summary>
         private static Image CreateImage(string name, RectTransform parent, Sprite sprite, Color color)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(Image));
@@ -885,6 +1096,9 @@ namespace rimrush
             return image;
         }
 
+        /// <summary>
+        /// Create a TextMeshPro label with outline at a fixed screen position.
+        /// </summary>
         private TextMeshProUGUI CreateText(string name, RectTransform parent, float left, float top, float width, float height, int fontSize, Color color, TextAlignmentOptions alignment, TMP_FontAsset font)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -902,6 +1116,9 @@ namespace rimrush
             return text;
         }
 
+        /// <summary>
+        /// Create a "PRESS [key]" chip with a gold border for key prompts.
+        /// </summary>
         private GameObject CreateChip(RectTransform parent, int index)
         {
             var root = new GameObject($"KeyChip{index}", typeof(RectTransform), typeof(Image));
@@ -921,6 +1138,9 @@ namespace rimrush
             return root;
         }
 
+        /// <summary>
+        /// Create a styled button that fires a tutorial command when clicked.
+        /// </summary>
         private Button CreateButton(string name, RectTransform parent, float left, float top, float width, float height, string label, Color background, Color textColor, rimrushTutorialOverlayCommand command)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -951,6 +1171,9 @@ namespace rimrush
             return button;
         }
 
+        /// <summary>
+        /// Anchor a RectTransform so it stretches to fill its entire parent.
+        /// </summary>
         private static void StretchToParent(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
@@ -959,6 +1182,9 @@ namespace rimrush
             rect.offsetMax = Vector2.zero;
         }
 
+        /// <summary>
+        /// Position and size a RectTransform anchored to the top-left corner.
+        /// </summary>
         private static void SetTopLeftRect(RectTransform rect, float left, float top, float width, float height)
         {
             if (rect == null)
@@ -973,11 +1199,17 @@ namespace rimrush
             rect.sizeDelta = new Vector2(width, height);
         }
 
+        /// <summary>
+        /// Position and size a RectTransform by its center point.
+        /// </summary>
         private static void SetCenteredRect(RectTransform rect, float centerX, float centerY, float width, float height)
         {
             SetTopLeftRect(rect, centerX - width * 0.5f, centerY - height * 0.5f, width, height);
         }
 
+        /// <summary>
+        /// Show or hide a marker's GameObject.
+        /// </summary>
         private static void SetMarkerActive(RectTransform rect, bool active)
         {
             if (rect != null)
@@ -986,6 +1218,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Bump the witch sprite renderers above the overlay canvas.
+        /// </summary>
         private void ApplyWitchSortingOrder()
         {
             if (witchArmature == null)
@@ -1004,6 +1239,9 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Hide the ball slots on the witch model so only the character shows.
+        /// </summary>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
             if (armature == null)
@@ -1015,16 +1253,25 @@ namespace rimrush
             armature.SetSlotHidden("ball_front", true);
         }
 
+        /// <summary>
+        /// Load the Impact font used for large headings.
+        /// </summary>
         private static TMP_FontAsset LoadTitleFont()
         {
             return Resources.Load<TMP_FontAsset>("rimrush/Fonts/TMP/Impact2 SDF") ?? TMP_Settings.defaultFontAsset;
         }
 
+        /// <summary>
+        /// Load the Agency Bold font used for buttons and key labels.
+        /// </summary>
         private static TMP_FontAsset LoadButtonFont()
         {
             return Resources.Load<TMP_FontAsset>("rimrush/Fonts/TMP/AgencyBold SDF") ?? LoadTitleFont();
         }
 
+        /// <summary>
+        /// Load the Rajdhani Bold font used for body and narration text.
+        /// </summary>
         private static TMP_FontAsset LoadBodyFont()
         {
             return Resources.Load<TMP_FontAsset>("rimrush/Fonts/TMP/RajdhaniBold SDF") ?? LoadTitleFont();

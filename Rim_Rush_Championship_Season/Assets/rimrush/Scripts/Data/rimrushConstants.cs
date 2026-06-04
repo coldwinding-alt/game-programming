@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushConstants 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 游戏常量和坐标转换工具
+// 定义球场尺寸、像素比例、物理参数等基础数值。还提供像素坐标和世界坐标之间的转换函数，让画面在不同分辨率下都保持像素完美。
 
 using UnityEngine;
 
@@ -34,13 +34,12 @@ namespace rimrush
         };
 
         /// <summary>
-        /// Executes Pixel To World for the rimrushConstants workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a position from pixel coordinates to Unity world coordinates. Used to place game objects at exact pixel positions on screen.
         /// </summary>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="x">Horizontal pixel position.</param>
+        /// <param name="y">Vertical pixel position (0 = top of the screen).</param>
+        /// <param name="z">Z depth for sorting order.</param>
+        /// <returns>The equivalent position in Unity world space.</returns>
         public static Vector3 PixelToWorld(float x, float y, float z = 0f)
         {
             return new Vector3(
@@ -50,13 +49,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Pixel To World Snapped for the rimrushConstants workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert pixel coordinates to world coordinates, snapping to the nearest pixel. This prevents blurry sprites by keeping everything aligned to the pixel grid.
         /// </summary>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="x">Horizontal pixel position.</param>
+        /// <param name="y">Vertical pixel position (0 = top of the screen).</param>
+        /// <param name="z">Z depth for sorting order.</param>
+        /// <returns>The snapped position in Unity world space.</returns>
         public static Vector3 PixelToWorldSnapped(float x, float y, float z = 0f)
         {
             return new Vector3(
@@ -66,12 +64,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Snap Local Position To Screen Pixels for the rimrushConstants workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Snap a local position to the nearest screen pixel so child objects stay sharp.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <param name="localPosition">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="parent">The parent transform whose world scale is used to calculate pixel boundaries.</param>
+        /// <param name="localPosition">The local position to snap.</param>
+        /// <returns>The local position with X and Y snapped to the nearest pixel.</returns>
         public static Vector3 SnapLocalPositionToScreenPixels(Transform parent, Vector3 localPosition)
         {
             var parentScale = parent != null ? parent.lossyScale : Vector3.one;
@@ -82,11 +79,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes World To Pixel for the rimrushConstants workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a Unity world position back to pixel coordinates. The reverse of PixelToWorld.
         /// </summary>
-        /// <param name="world">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="world">A position in Unity world space.</param>
+        /// <returns>The equivalent pixel coordinates.</returns>
         public static Vector2 WorldToPixel(Vector3 world)
         {
             return new Vector2(
@@ -95,12 +91,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Snap Local Axis To Screen Pixels for the rimrushConstants workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Snap a single axis value to the nearest pixel boundary based on the parent's world scale.
         /// </summary>
-        /// <param name="localValue">Input value used by this step of the workflow.</param>
-        /// <param name="parentWorldScale">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="localValue">The local-space position value on one axis.</param>
+        /// <param name="parentWorldScale">The parent's world scale on that same axis.</param>
+        /// <returns>The value snapped to the nearest pixel.</returns>
         private static float SnapLocalAxisToScreenPixels(float localValue, float parentWorldScale)
         {
             var pixelsPerLocalUnit = Mathf.Abs(parentWorldScale) * PixelsPerUnit;

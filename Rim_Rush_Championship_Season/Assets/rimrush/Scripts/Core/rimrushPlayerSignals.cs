@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushPlayerSignals 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 玩家动作信号系统
+// 当玩家做出特定动作（投篮、扣篮、抢断、盖帽、得分等）时发出通知。教程系统和其他模块监听这些信号来做出反应，比如教程检测玩家是否完成了指定操作。
 
 using System;
 
@@ -27,12 +27,11 @@ namespace rimrush
         public event Action<rimrushPlayerSignalType, int, int> OnSignal;
 
         /// <summary>
-        /// Executes Dispatch for the rimrushPlayerSignalBus workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Broadcasts a player action event to all registered listeners (such as the tutorial system).
         /// </summary>
-        /// <param name="signal">Input value used by this step of the workflow.</param>
-        /// <param name="side">Input value used by this step of the workflow.</param>
-        /// <param name="playerNo">Input value used by this step of the workflow.</param>
+        /// <param name="signal">The type of action that occurred (e.g. Shoot, Dunk, Steal).</param>
+        /// <param name="side">Which team the player belongs to (-1 = left, 1 = right).</param>
+        /// <param name="playerNo">Index of the player within their team.</param>
         public void Dispatch(rimrushPlayerSignalType signal, int side, int playerNo)
         {
             OnSignal?.Invoke(signal, side, playerNo);

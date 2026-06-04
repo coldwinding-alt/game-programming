@@ -1,0 +1,211 @@
+第二部分 提交指导
+
+请上传以下内容：
+
+最终提交表格：StudentID_CW2_FinalSubmissionForm.pdf
+最终报告：StudentID_CW2_FinalReport.pdf
+最终游戏构建包：StudentID_CW2_FinalGameBuild.zip [仅在构建包过大时提供链接]
+演示视频链接：StudentID_CW2_DemoVideo.txt [仅在视频过大时提供链接]
+
+
+课程作业 2 最终提交表格
+
+学生姓名：
+学生 ID：
+游戏标题：
+Unity 版本：
+构建平台：
+GitHub 仓库链接：
+最终 commit 哈希值：
+可玩构建包链接（如未直接上传）：
+如何运行游戏：
+操作方式：
+主要游戏目标：
+胜利/失败/通关条件：
+我创建的主要系统/脚本：
+使用的外部素材/模板/教程/AI：
+已知问题：
+
+
+你的报告应说明：
+
+1. 设计选择
+2. 技术决策
+3. 问题与局限性
+4. 测试以及因测试所做的改动
+5. 对游戏从概念到最终版本发展过程的反思
+6. 个人贡献
+7. 模板、素材、教程或 AI 辅助的使用情况
+
+
+游戏 + 报告部分，你的提交应展示：
+
+1. 一个可玩且稳定的垂直切片
+2. 清晰的玩家体验
+3. 对游戏系统的恰当使用，如输入、游戏逻辑、交互、音频、动画、物理、碰撞、UI 和 AI（如适用）
+4. 合理的编程决策
+5. 测试、调试和改进的证据
+6. 法律、伦理、社会、无障碍及安全方面的考量（如适用）
+7. 设计方案与最终成果之间的清晰关联
+
+
+游戏演示/展示部分，你应准备：
+
+1. 解释游戏及其目标
+2. 自信地演示主要功能
+3. 解释重要的设计决策
+4. 解释重要的编程/技术决策
+5. 诚实且深思熟虑地回答问题
+6. 专业地进行展示
+
+
+游戏演示/展示将以现场形式评估。你仍需在此上传演示幻灯片、演示计划或录制链接作为支持材料。
+
+
+不要只提交一个 Unity 项目文件夹就认为它是可玩的。
+你必须提交以下之一：
+1. 一个可玩的构建包，或
+2. 一个指向可玩构建包的清晰下载链接。
+
+如果你同时提供了 Unity 项目或 GitHub 链接，请确保 README 说明了如何打开和运行项目。
+
+不要上传不必要的 Unity 文件夹，如 Library、Temp、Obj、Logs 或过大的构建缓存文件夹，除非有特别要求。
+
+
+==================================================
+
+英文原文 / English Original
+
+==================================================
+
+Upload the following:
+
+Final Submission Form: StudentID_CW2_FinalSubmissionForm.pdf
+Final Report: StudentID_CW2_FinalReport.pdf
+Final Game Build: StudentID_CW2_FinalGameBuild.zip [Link only if the build is too large]
+Demo Video Link: StudentID_CW2_DemoVideo.txt [Link only if the build is too Video]
+
+
+
+
+Coursework 2 Final Submission Form
+
+
+
+Student name:
+
+Student ID:
+
+Game title:
+
+Unity version:
+
+Build platform:
+
+GitHub repository link:
+
+Final commit hash:
+
+Playable build link, if not uploaded directly:
+
+How to run the game:
+
+Controls:
+
+Main game objective:
+
+Win / lose / completion condition:
+
+Main systems/scripts I created:
+
+External assets/templates/tutorials/AI used:
+
+Known issues:
+
+
+
+
+
+Your Report should explain:
+
+
+
+1. Design choices
+
+2. Technical decisions
+
+3. Problems and limitations
+
+4. Testing and what changed because of testing
+
+5. Reflection on how the game developed from concept to final version
+
+6. Personal contribution
+
+7. Use of templates, assets, tutorials, or AI support
+
+
+
+
+
+For the Game + Report part, your submission should show:
+
+
+
+1. A playable and stable vertical slice
+
+2. Clear player experience
+
+3. Appropriate use of game systems such as input, game logic, interaction, audio, animation, physics, collision, UI, and AI where relevant
+
+4. Sound programming decisions
+
+5. Evidence of testing, debugging, and improvement
+
+6. Legal, ethical, social, accessibility, and security considerations where relevant
+
+7. Clear connection between your design plan and final result
+
+
+
+
+
+For the Game Demo / Presentation part, you should prepare to:
+
+
+
+1. Explain the game and its goals
+
+2. Demonstrate the main features confidently
+
+3. Explain important design decisions
+
+4. Explain important programming/technical decisions
+
+5. Answer questions honestly and thoughtfully
+
+6. Present professionally
+
+
+
+The Game Demo / Presentation will be assessed live. You must still upload your presentation slides, demo plan, or recording link here as supporting evidence.
+
+
+
+
+
+Do not submit only a Unity project folder and assume it is playable.
+
+You must submit either:
+
+1. A playable build, or
+
+2. A clear download link to a playable build.
+
+
+
+If you also provide the Unity project or GitHub link, make sure the README explains how to open and run the project.
+
+
+
+Do not upload unnecessary Unity folders such as Library, Temp, Obj, Logs, or very large build-cache folders unless specifically required.

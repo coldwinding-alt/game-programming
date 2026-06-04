@@ -1,3 +1,7 @@
+// 教程模式的对手控制器
+// 训练关卡里，对手会按照脚本移动到指定位置、跳跃、投篮，配合玩家完成练习。
+// 自由对战时，切换成普通 AI 控制。
+
 namespace rimrush
 {
     public enum rimrushTutorialOpponentMode
@@ -19,12 +23,18 @@ namespace rimrush
         public bool CurrentSuper { get; private set; }
         public int CurrentDash { get; private set; }
 
+        /// <summary>
+        /// Create the controller. skillLevel sets how smart the AI is during free play.
+        /// </summary>
         public rimrushTutorialOpponentController(rimrushPlayerObject player, int skillLevel)
         {
             this.player = player;
             fallbackController = rimrushAIController.CreateForBrain(player, "B0", skillLevel <= 0 ? 2 : skillLevel);
         }
 
+        /// <summary>
+        /// Switch between scripted (follow tutorial instructions) and free play (normal AI).
+        /// </summary>
         public void SetMode(rimrushTutorialOpponentMode nextMode)
         {
             mode = nextMode;
@@ -34,6 +44,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Called each frame. In scripted mode the tutorial tells the opponent what to do.
+        /// In free play the AI decides on its own.
+        /// </summary>
         public void UpdateController(float dt)
         {
             if (mode == rimrushTutorialOpponentMode.FreePlay)
@@ -47,31 +61,49 @@ namespace rimrush
             player.GameCore.TutorialFlow?.PopulateOpponentInputs(player, this, dt);
         }
 
+        /// <summary>
+        /// Tell the AI that this player is now holding the ball.
+        /// </summary>
         public void BallInOwnHands(int holderPlayerNo)
         {
             fallbackController.BallInOwnHands(holderPlayerNo);
         }
 
+        /// <summary>
+        /// Tell the AI that the opponent has the ball.
+        /// </summary>
         public void BallInOpponentsHands(int holderPlayerNo)
         {
             fallbackController.BallInOpponentsHands(holderPlayerNo);
         }
 
+        /// <summary>
+        /// Tell the AI that this player just took a shot.
+        /// </summary>
         public void BallOwnShoot(int shooterPlayerNo)
         {
             fallbackController.BallOwnShoot(shooterPlayerNo);
         }
 
+        /// <summary>
+        /// Tell the AI that the opponent just took a shot.
+        /// </summary>
         public void BallOpponentShoot(int shooterPlayerNo)
         {
             fallbackController.BallOpponentShoot(shooterPlayerNo);
         }
 
+        /// <summary>
+        /// Tell the AI that nobody is holding or shooting the ball right now.
+        /// </summary>
         public void BallOthers()
         {
             fallbackController.BallOthers();
         }
 
+        /// <summary>
+        /// Can the player press the action button right now?
+        /// </summary>
         public bool ReadyForAction()
         {
             return mode == rimrushTutorialOpponentMode.FreePlay
@@ -79,6 +111,9 @@ namespace rimrush
                 : !CurrentAction;
         }
 
+        /// <summary>
+        /// Should the player let go of the block/pump button?
+        /// </summary>
         public bool ReleaseBlockOrPump(float dt)
         {
             return mode == rimrushTutorialOpponentMode.FreePlay
@@ -86,28 +121,43 @@ namespace rimrush
                 : !CurrentBlockOrPump;
         }
 
+        /// <summary>
+        /// Reset the controller when a new round starts.
+        /// </summary>
         public void Restart(int startSide)
         {
             fallbackController.Restart(startSide);
             SetFrameInputs(0, false, false, false, false, 0);
         }
 
+        /// <summary>
+        /// Called when the player lands on the ground.
+        /// </summary>
         public void PlayerOnGround()
         {
             fallbackController.PlayerOnGround();
         }
 
+        /// <summary>
+        /// Called when the player finishes a dash.
+        /// </summary>
         public void PlayerOnDashEnd()
         {
             fallbackController.PlayerOnDashEnd();
         }
 
+        /// <summary>
+        /// Called when the player blocks a shot.
+        /// </summary>
         public void PlayerOnBlock()
         {
             fallbackController.PlayerOnBlock();
             CurrentBlockOrPump = false;
         }
 
+        /// <summary>
+        /// Set all button inputs for this frame (used by the tutorial to script the opponent).
+        /// </summary>
         public void SetFrameInputs(int move, bool jump, bool action, bool blockOrPump, bool super, int dash)
         {
             CurrentMove = move;
@@ -118,6 +168,9 @@ namespace rimrush
             CurrentDash = dash;
         }
 
+        /// <summary>
+        /// Copy button states from another controller (used to mirror AI decisions).
+        /// </summary>
         private void CopyInputsFrom(IBLPlayerController controller)
         {
             CurrentMove = controller.CurrentMove;

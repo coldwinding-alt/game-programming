@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAssets 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 游戏资源路径管理
+// 集中管理所有图片、音效、字体等资源的路径名。其他代码需要加载资源时，都来这里查找正确的路径，避免写错文件名。
 
 namespace rimrush
 {
@@ -80,11 +80,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Resource Path for the Images workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Build the full resource loading path for an image key. Returns null if the key is empty.
             /// </summary>
-            /// <param name="imageKey">Input value used by this step of the workflow.</param>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <param name="imageKey">The short image key (e.g. "logo" or "UI/panel_fill_soft").</param>
+            /// <returns>The full Resources path, or null if the key is empty.</returns>
             public static string ResourcePath(string imageKey)
             {
                 return string.IsNullOrEmpty(imageKey) ? null : $"{Root}{imageKey}";
@@ -99,7 +98,6 @@ namespace rimrush
                 public const string PlayerShadowPrimaryRed = "Gameplay/player_shadow_primary_red";
                 public const string PlayerShadowSecondary = "Gameplay/player_shadow_secondary";
                 public const string PlayerShadowBall = "Gameplay/player_shadow_ball";
-                public const string BallClassicOriginal = "Gameplay/ball_classic_original";
                 public const string BallGhoulGreen = "Gameplay/ball_halloween_ghoul_green";
                 public const string BallPumpkinEmber = "Gameplay/ball_halloween_pumpkin_ember";
                 public const string BallMoonlitViolet = "Gameplay/ball_halloween_moonlit_violet";
@@ -111,11 +109,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Ball Theme for the GameplayImages workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Return the image path for a ball skin theme. Returns null for the default classic ball.
             /// </summary>
-            /// <param name="theme">Input value used by this step of the workflow.</param>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <param name="theme">The ball skin theme to look up.</param>
+            /// <returns>The GameplayImages key for that ball, or null for ClassicOriginal.</returns>
             public static string BallTheme(rimrushBallTheme theme)
             {
                 return theme switch
@@ -141,11 +138,10 @@ namespace rimrush
             public const string Popup = "popup_halloween";
 
             /// <summary>
-            /// Executes Resource Path for the Hud workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Build the full resource loading path for a HUD element key. Returns null if the key is empty.
             /// </summary>
-            /// <param name="hudKey">Input value used by this step of the workflow.</param>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <param name="hudKey">The short HUD key (e.g. "scoreboard_halloween").</param>
+            /// <returns>The full Resources path, or null if the key is empty.</returns>
             public static string ResourcePath(string hudKey)
             {
                 return string.IsNullOrEmpty(hudKey) ? null : $"{Root}{hudKey}";
@@ -159,11 +155,10 @@ namespace rimrush
             public const string UiAtlas = "portraits_ui";
 
             /// <summary>
-            /// Executes Resource Path for the Portraits workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Build the full resource loading path for a portrait key. Returns null if the key is empty.
             /// </summary>
-            /// <param name="portraitKey">Input value used by this step of the workflow.</param>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <param name="portraitKey">The short portrait key (e.g. "portraits_ui").</param>
+            /// <returns>The full Resources path, or null if the key is empty.</returns>
             public static string ResourcePath(string portraitKey)
             {
                 return string.IsNullOrEmpty(portraitKey) ? null : $"{Root}{portraitKey}";

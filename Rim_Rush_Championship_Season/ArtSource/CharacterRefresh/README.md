@@ -18,11 +18,7 @@ The runtime still keeps the original DragonBones slot keys so the existing `sk2.
 
 These are the current right-facing portrait/gameplay source images on chroma-key backgrounds. The rebuild script removes the chroma key automatically, so committed cutout intermediates are no longer required for the live pipeline.
 
-- `reaper_source.png`
-- `ghost_clown_source.png`
-- `skull_pirate_source.png`
-
-These older first-pass sources are kept only for reference.
+Older first-pass sources and cutout intermediates were removed after the pipeline switched to chroma-key cleanup directly inside `rebuild_character_refresh_assets.py`, so the folder now keeps only the active rebuild inputs.
 
 ## Rebuild Workflow
 

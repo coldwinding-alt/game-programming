@@ -1,375 +1,55 @@
-﻿{
-	"frames": {
-		"0bg100000": {
-			"frame": {
-				"x": 1402,
-				"y": 2,
-				"w": 391,
-				"h": 399
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 391,
-				"h": 399
-			},
-			"sourceSize": {
-				"w": 391,
-				"h": 399
-			}
-		},
-		"EmblemsBg0000": {
-			"frame": {
-				"x": 1402,
-				"y": 484,
-				"w": 150,
-				"h": 150
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 150,
-				"h": 150
-			},
-			"sourceSize": {
-				"w": 150,
-				"h": 150
-			}
-		},
-		"MatchBack0001": {
-			"frame": {
-				"x": 1642,
-				"y": 484,
-				"w": 132,
-				"h": 102
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 132,
-				"h": 102
-			},
-			"sourceSize": {
-				"w": 132,
-				"h": 102
-			}
-		},
-		"MatchBack0002": {
-			"frame": {
-				"x": 413,
-				"y": 966,
-				"w": 132,
-				"h": 102
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 132,
-				"h": 102
-			},
-			"sourceSize": {
-				"w": 132,
-				"h": 102
-			}
-		},
-		"TribuneFinal0000": {
-			"frame": {
-				"x": 2,
-				"y": 966,
-				"w": 409,
-				"h": 113
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 409,
-				"h": 113
-			},
-			"sourceSize": {
-				"w": 409,
-				"h": 113
-			}
-		},
-		"bg0000": {
-			"frame": {
-				"x": 1776,
-				"y": 484,
-				"w": 10,
-				"h": 10
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 10,
-				"h": 10
-			},
-			"sourceSize": {
-				"w": 10,
-				"h": 10
-			}
-		},
-		"bg10000": {
-			"frame": {
-				"x": 2,
-				"y": 2,
-				"w": 1398,
-				"h": 480
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 1398,
-				"h": 480
-			},
-			"sourceSize": {
-				"w": 1398,
-				"h": 480
-			}
-		},
-		"bg2blue0000": {
-			"frame": {
-				"x": 2,
-				"y": 484,
-				"w": 1398,
-				"h": 480
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 1398,
-				"h": 480
-			},
-			"sourceSize": {
-				"w": 1398,
-				"h": 480
-			}
-		},
-		"btn_bg0000": {
-			"frame": {
-				"x": 547,
-				"y": 966,
-				"w": 104,
-				"h": 83
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 104,
-				"h": 83
-			},
-			"sourceSize": {
-				"w": 104,
-				"h": 83
-			}
-		},
-		"icon_ball0000": {
-			"frame": {
-				"x": 653,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball0001": {
-			"frame": {
-				"x": 722,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball0002": {
-			"frame": {
-				"x": 791,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball0003": {
-			"frame": {
-				"x": 860,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball20000": {
-			"frame": {
-				"x": 929,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball20001": {
-			"frame": {
-				"x": 998,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball20002": {
-			"frame": {
-				"x": 1067,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"icon_ball20003": {
-			"frame": {
-				"x": 1136,
-				"y": 966,
-				"w": 67,
-				"h": 67
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 67,
-				"h": 67
-			},
-			"sourceSize": {
-				"w": 67,
-				"h": 67
-			}
-		},
-		"loginSelect0000": {
-			"frame": {
-				"x": 1554,
-				"y": 484,
-				"w": 86,
-				"h": 140
-			},
-			"rotated": false,
-			"trimmed": false,
-			"spriteSourceSize": {
-				"x": 0,
-				"y": 0,
-				"w": 86,
-				"h": 140
-			},
-			"sourceSize": {
-				"w": 86,
-				"h": 140
-			}
-		}
-	},
-	"meta": {
-		"app": "Adobe Animate",
-		"version": "19.2.1.408",
-		"image": "interface.png",
-		"format": "RGBA8888",
-		"size": {
-			"w": 1795,
-			"h": 1081
-		},
-		"scale": "1"
-	}
+{
+    "frames": {
+        "EmblemsBg0000": {
+            "frame": {
+                "x": 2,
+                "y": 2,
+                "w": 150,
+                "h": 150
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 150,
+                "h": 150
+            },
+            "sourceSize": {
+                "w": 150,
+                "h": 150
+            }
+        },
+        "loginSelect0000": {
+            "frame": {
+                "x": 154,
+                "y": 2,
+                "w": 86,
+                "h": 140
+            },
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {
+                "x": 0,
+                "y": 0,
+                "w": 86,
+                "h": 140
+            },
+            "sourceSize": {
+                "w": 86,
+                "h": 140
+            }
+        }
+    },
+    "meta": {
+        "app": "Adobe Animate",
+        "version": "19.2.1.408",
+        "image": "interface.png",
+        "format": "RGBA8888",
+        "size": {
+            "w": 256,
+            "h": 256
+        },
+        "scale": "1"
+    }
 }

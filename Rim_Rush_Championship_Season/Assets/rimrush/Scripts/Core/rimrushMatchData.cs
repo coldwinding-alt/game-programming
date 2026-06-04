@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushMatchData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 比赛配置数据和物品清单
+// 定义一场比赛需要的配置信息：双方角色、难度、游戏模式。还包含 rimrushInventory 类，用来保存玩家的进度、选择和解锁状态。
 
 using System;
 using System.Collections.Generic;
@@ -86,12 +86,11 @@ namespace rimrush
         };
 
         /// <summary>
-        /// Executes Step Selection for the rimrushBallCatalog workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Moves to the next or previous ball selection in the ordered list, wrapping around at the ends.
         /// </summary>
-        /// <param name="current">Input value used by this step of the workflow.</param>
-        /// <param name="direction">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="current">The currently selected ball skin.</param>
+        /// <param name="direction">Positive to step forward, negative to step backward.</param>
+        /// <returns>The next ball selection in the given direction.</returns>
         public static rimrushBallSelection StepSelection(rimrushBallSelection current, int direction)
         {
             var index = Array.IndexOf(OrderedSelections, current);
@@ -114,11 +113,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Resolve Theme for the rimrushBallCatalog workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Converts a ball selection to a concrete theme. If "Random" is selected, picks a random non-random theme.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="selection">The ball selection to resolve.</param>
+        /// <returns>The concrete ball theme to use for rendering.</returns>
         public static rimrushBallTheme ResolveTheme(rimrushBallSelection selection)
         {
             return selection == rimrushBallSelection.Random
@@ -127,11 +125,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Preview Theme for the rimrushBallCatalog workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Returns the theme to show in the UI preview. For "Random", always shows the classic theme as a placeholder.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="selection">The ball selection to preview.</param>
+        /// <returns>The theme to display in the selection UI.</returns>
         public static rimrushBallTheme PreviewTheme(rimrushBallSelection selection)
         {
             return selection == rimrushBallSelection.Random
@@ -140,11 +137,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes To Theme for the rimrushBallCatalog workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Directly maps a non-random ball selection to its corresponding ball theme.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="selection">The ball selection (must not be Random).</param>
+        /// <returns>The matching ball theme.</returns>
         public static rimrushBallTheme ToTheme(rimrushBallSelection selection)
         {
             return selection switch
@@ -161,11 +157,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Label for the rimrushBallCatalog workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Returns the short display label for a ball selection (e.g. "GHOUL", "EMBER", "RANDOM").
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="selection">The ball selection to get a label for.</param>
+        /// <returns>A short uppercase string shown in the UI.</returns>
         public static string Label(rimrushBallSelection selection)
         {
             return selection switch
@@ -195,10 +190,9 @@ namespace rimrush
         public int[] MatchScore = { 0, 0 };
 
         /// <summary>
-        /// Executes rimrush Match Data for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Creates match data with default character IDs and a random ball theme.
         /// </summary>
-        /// <param name="local">Input value used by this step of the workflow.</param>
+        /// <param name="local">True for local play (uses character index 0 as default), false for networked.</param>
         public rimrushMatchData(bool local)
         {
             FirstCharacterId = rimrushPlayersData.SanitizeCharacterId(local ? 0 : 1);
@@ -208,8 +202,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Reset Data for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Resets both team character IDs back to their default values.
         /// </summary>
         public void ResetData()
         {
@@ -217,8 +210,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Reset Partly for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Resets match mode, player brains, skills, and scores. Does not change character IDs or ball theme.
         /// </summary>
         public void ResetPartly()
         {
@@ -229,8 +221,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Reset All for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Resets everything back to defaults: character IDs, brains, skills, scores, and match mode.
         /// </summary>
         public void ResetAll()
         {
@@ -239,8 +230,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Base Init for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Sets up default match configuration: both team characters, default brain strings, and default skill levels.
         /// </summary>
         public void BaseInit()
         {
@@ -255,8 +245,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Reset Score for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Sets both team scores back to zero.
         /// </summary>
         public void ResetScore()
         {
@@ -264,12 +253,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Quick Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a quick match: picks a random opponent, sets brain strings for human vs AI, and resolves the ball theme.
         /// </summary>
-        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="difficulty">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="playerCharacterId">The player's chosen character ID.</param>
+        /// <param name="difficulty">AI difficulty level.</param>
+        /// <param name="ballSelection">Which ball skin to use (Random picks one at random).</param>
         public void StartQuickMatch(int playerCharacterId, rimrushAiDifficulty difficulty, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -285,10 +273,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Quick Local Versus Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a local 2-player versus match with two distinct characters and player-brain strings.
         /// </summary>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartQuickLocalVersusMatch(rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -302,11 +289,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Training for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a training session with one player character and no opponent.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">The player's chosen character ID.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartTraining(int characterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -319,11 +305,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tutorial for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a tutorial match with a specific opponent character and tutorial brain string.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">The player's chosen character ID.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartTutorial(int characterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -337,22 +322,20 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Random Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a random match. Currently just delegates to StartQuickMatch.
         /// </summary>
-        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="difficulty">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="playerCharacterId">The player's chosen character ID.</param>
+        /// <param name="difficulty">AI difficulty level.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartRandomMatch(int playerCharacterId, rimrushAiDifficulty difficulty, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             StartQuickMatch(playerCharacterId, difficulty, ballSelection);
         }
 
         /// <summary>
-        /// Executes Start Players2 Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a 2-player local match using the currently stored character IDs.
         /// </summary>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartPlayers2Match(rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             MatchMode = 0;
@@ -366,11 +349,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tournament Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures the next match in a tournament, using the tournament's current opponent and stage-based skill level.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="tournament">The active tournament data.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartTournamentMatch(rimrushTournamentData tournament, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -419,12 +401,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Selected Two Player Match for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Configures a 2-player match with specific character choices for each player.
         /// </summary>
-        /// <param name="leftCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="rightCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="leftCharacterId">Character ID for the left-side player.</param>
+        /// <param name="rightCharacterId">Character ID for the right-side player.</param>
+        /// <param name="ballSelection">Which ball skin to use.</param>
         public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId, rimrushBallSelection ballSelection = rimrushBallSelection.Random)
         {
             ResetAll();
@@ -440,21 +421,19 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Who Wins for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Compares both team scores to determine the winner.
         /// </summary>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <returns>-1 if left team wins, 1 if right team wins, 0 if tied.</returns>
         public int WhoWins()
         {
             return MatchScore[0] > MatchScore[1] ? -1 : MatchScore[0] < MatchScore[1] ? 1 : 0;
         }
 
         /// <summary>
-        /// Executes Get Quick Match Opponent Skill for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Maps a difficulty level to a numeric AI skill index for quick matches.
         /// </summary>
-        /// <param name="difficulty">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="difficulty">The chosen AI difficulty.</param>
+        /// <returns>A skill index (1 = easy, 2 = normal, 5 = hard, 10 = hell).</returns>
         private static int GetQuickMatchOpponentSkill(rimrushAiDifficulty difficulty)
         {
             switch (difficulty)
@@ -494,11 +473,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Tournament Opponent Skill for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Calculates the AI skill level for a tournament match based on the tournament's difficulty and current stage.
+        /// Later rounds and higher difficulties give opponents higher skill levels.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="tournament">The active tournament data.</param>
+        /// <returns>A clamped skill index appropriate for the current tournament stage.</returns>
         private static int GetTournamentOpponentSkill(rimrushTournamentData tournament)
         {
             if (tournament == null)
@@ -553,8 +532,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Roll Ball Theme for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Randomly picks a new ball theme for the current match.
         /// </summary>
         public void RollBallTheme()
         {
@@ -562,10 +540,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Resolve Ball Selection for the rimrushMatchData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Converts a ball selection choice into a concrete ball theme and stores it.
         /// </summary>
-        /// <param name="ballSelection">Input value used by this step of the workflow.</param>
+        /// <param name="ballSelection">The chosen ball selection (may be Random).</param>
         private void ResolveBallSelection(rimrushBallSelection ballSelection)
         {
             BallTheme = rimrushBallCatalog.ResolveTheme(ballSelection);
@@ -598,8 +575,7 @@ namespace rimrush
         public rimrushBallSelection SelectedVersusBallSelection;
 
         /// <summary>
-        /// Executes rimrush Inventory for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Initializes the global inventory with default game mode, difficulty, character selections, and ball selections.
         /// </summary>
         private rimrushInventory()
         {
@@ -633,8 +609,7 @@ namespace rimrush
         public bool IsAdventureActive => SessionMode == rimrushSessionMode.Adventure && Adventure.Active;
 
         /// <summary>
-        /// Executes Toggle Difficulty for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Cycles through difficulty levels in order: Easy -> Normal -> Hard -> Hell -> Easy.
         /// </summary>
         public void ToggleDifficulty()
         {
@@ -648,10 +623,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Participant Mode for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Sets whether this is a 1-player, 2-player, training, or tutorial session. Also updates the session mode accordingly.
         /// </summary>
-        /// <param name="participantMode">Input value used by this step of the workflow.</param>
+        /// <param name="participantMode">The participant mode to set.</param>
         public void SetParticipantMode(rimrushParticipantMode participantMode)
         {
             ParticipantMode = participantMode;
@@ -666,78 +640,70 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Quick Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the player's chosen character for quick match mode.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">The character ID to use for quick matches.</param>
         public void SetQuickSelection(int characterId)
         {
             SelectedQuickCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Executes Set Tournament Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the player's chosen character for tournament mode.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">The character ID to use for tournaments.</param>
         public void SetTournamentSelection(int characterId)
         {
             SelectedTournamentCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Executes Set Training Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the player's chosen character for training mode.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
+        /// <param name="characterId">The character ID to use for training.</param>
         public void SetTrainingSelection(int characterId)
         {
             SelectedTrainingCharacterId = rimrushPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Executes Set Quick Ball Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the chosen ball skin for quick match mode.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <param name="selection">The ball skin selection.</param>
         public void SetQuickBallSelection(rimrushBallSelection selection)
         {
             SelectedQuickBallSelection = selection;
         }
 
         /// <summary>
-        /// Executes Set Tournament Ball Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the chosen ball skin for tournament mode.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <param name="selection">The ball skin selection.</param>
         public void SetTournamentBallSelection(rimrushBallSelection selection)
         {
             SelectedTournamentBallSelection = selection;
         }
 
         /// <summary>
-        /// Executes Set Training Ball Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the chosen ball skin for training mode.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <param name="selection">The ball skin selection.</param>
         public void SetTrainingBallSelection(rimrushBallSelection selection)
         {
             SelectedTrainingBallSelection = selection;
         }
 
         /// <summary>
-        /// Executes Set Versus Ball Selection for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stores the chosen ball skin for 2-player versus mode.
         /// </summary>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
+        /// <param name="selection">The ball skin selection.</param>
         public void SetVersusBallSelection(rimrushBallSelection selection)
         {
             SelectedVersusBallSelection = selection;
         }
 
         /// <summary>
-        /// Executes Start Quick Game for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Resets any active adventure/tournament, then prepares a quick match with the current settings.
         /// </summary>
         public void StartQuickGame()
         {
@@ -753,8 +719,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start One Player for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a single-player match from the main menu. Resets adventure/tournament and uses random opponent.
         /// </summary>
         public void StartOnePlayer()
         {
@@ -770,8 +735,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Two Players for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a 2-player local versus match from the main menu.
         /// </summary>
         public void StartTwoPlayers()
         {
@@ -787,11 +751,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Two Player Versus for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a 2-player match with each player's character explicitly chosen.
         /// </summary>
-        /// <param name="leftCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="rightCharacterId">Input value used by this step of the workflow.</param>
+        /// <param name="leftCharacterId">Character ID for the left-side player.</param>
+        /// <param name="rightCharacterId">Character ID for the right-side player.</param>
         public void StartTwoPlayerVersus(int leftCharacterId, int rightCharacterId)
         {
             ParticipantMode = rimrushParticipantMode.TwoPlayers;
@@ -805,8 +768,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Training for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a training session with the currently selected training character and ball skin.
         /// </summary>
         public void StartTraining()
         {
@@ -821,8 +783,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tutorial for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Starts a tutorial session with the currently selected training character and ball skin.
         /// </summary>
         public void StartTutorial()
         {
@@ -837,10 +798,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Begin Tournament for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Creates a new tournament with the selected character and difficulty, then prepares the first match.
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>True if the tournament was created successfully.</returns>
         public bool BeginTournament()
         {
             ParticipantMode = rimrushParticipantMode.OnePlayer;
@@ -865,10 +825,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Begin Tournament Finals for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Advances an active tournament to its finals stage and prepares the next match if one is pending.
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>True if there is a pending finals match to play.</returns>
         public bool BeginTournamentFinals()
         {
             if (!IsTournamentActive)
@@ -888,10 +847,9 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Advance Tournament for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Records the current match result and advances the tournament bracket. Prepares the next match if available.
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>True if the tournament is now complete.</returns>
         public bool AdvanceTournament()
         {
             if (!IsTournamentActive)
@@ -911,8 +869,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Abandon Tournament for the rimrushInventory workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Cancels the current tournament and clears all tournament state.
         /// </summary>
         public void AbandonTournament()
         {

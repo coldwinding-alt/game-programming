@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAIDifficultyTuning 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// AI 难度调节参数
+// 根据难度等级（简单、普通、困难、地狱）调整电脑对手的表现：反应速度、投篮准确度、防守积极性等。难度越高，电脑越厉害。
 
 namespace rimrush
 {
@@ -26,28 +26,27 @@ namespace rimrush
         public readonly bool HasBonusSupers;
 
         /// <summary>
-        /// Executes rimrush AIDifficulty Tuning Profile for the rimrushAIDifficultyTuning workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a new AI difficulty profile with all tuning values for one difficulty level.
         /// </summary>
-        /// <param name="defenceContestDistance">Input value used by this step of the workflow.</param>
-        /// <param name="stealBehindDistance">Input value used by this step of the workflow.</param>
-        /// <param name="stealBasketDistance">Input value used by this step of the workflow.</param>
-        /// <param name="holderSuperDashMinDistance">Input value used by this step of the workflow.</param>
-        /// <param name="holderSuperDashMaxDistance">Input value used by this step of the workflow.</param>
-        /// <param name="looseBallSuperDashDistance">Input value used by this step of the workflow.</param>
-        /// <param name="attackPressureDistance">Input value used by this step of the workflow.</param>
-        /// <param name="attackSuperDashDistance">Input value used by this step of the workflow.</param>
-        /// <param name="dashBlockRangeMaxDistance">Input value used by this step of the workflow.</param>
-        /// <param name="dashCooldownMultiplier">Input value used by this step of the workflow.</param>
-        /// <param name="stealRangeBonus">Input value used by this step of the workflow.</param>
-        /// <param name="stunDurationMultiplier">Input value used by this step of the workflow.</param>
-        /// <param name="openingSuperChargeFraction">Input value used by this step of the workflow.</param>
-        /// <param name="nativeSuperRefundFraction">Input value used by this step of the workflow.</param>
-        /// <param name="bonusSuperDashCooldown">Input value used by this step of the workflow.</param>
-        /// <param name="bonusSuperDashBossCooldown">Input value used by this step of the workflow.</param>
-        /// <param name="bonusShieldCooldown">Input value used by this step of the workflow.</param>
-        /// <param name="bonusShieldBossCooldown">Input value used by this step of the workflow.</param>
-        /// <param name="hasBonusSupers">Input value used by this step of the workflow.</param>
+        /// <param name="defenceContestDistance">How close the AI needs to be to contest a shot on defence.</param>
+        /// <param name="stealBehindDistance">Max distance for a steal attempt when behind the ball carrier.</param>
+        /// <param name="stealBasketDistance">Max distance for a steal attempt near the basket.</param>
+        /// <param name="holderSuperDashMinDistance">Minimum distance the ball carrier must travel before a super dash is allowed.</param>
+        /// <param name="holderSuperDashMaxDistance">Maximum range the AI will use a super dash while holding the ball.</param>
+        /// <param name="looseBallSuperDashDistance">How far the AI will super dash to grab a loose ball.</param>
+        /// <param name="attackPressureDistance">How close the AI gets before it starts pressuring on offence.</param>
+        /// <param name="attackSuperDashDistance">Max distance for an offensive super dash toward the basket.</param>
+        /// <param name="dashBlockRangeMaxDistance">How close the AI must be to attempt a dash block.</param>
+        /// <param name="dashCooldownMultiplier">Multiplier on dash cooldown time (lower = faster dashes).</param>
+        /// <param name="stealRangeBonus">Extra range added to the AI's steal attempts.</param>
+        /// <param name="stunDurationMultiplier">Multiplier on how long the AI stays stunned (lower = recovers faster).</param>
+        /// <param name="openingSuperChargeFraction">How much super meter the AI starts with at the beginning of a match.</param>
+        /// <param name="nativeSuperRefundFraction">Fraction of super meter refunded after the AI uses a skill.</param>
+        /// <param name="bonusSuperDashCooldown">Extra cooldown (in seconds) added to the AI's super dash.</param>
+        /// <param name="bonusSuperDashBossCooldown">Extra super dash cooldown used in boss-level encounters.</param>
+        /// <param name="bonusShieldCooldown">Extra cooldown (in seconds) added to the AI's shield skill.</param>
+        /// <param name="bonusShieldBossCooldown">Extra shield cooldown used in boss-level encounters.</param>
+        /// <param name="hasBonusSupers">Whether this difficulty level grants the AI bonus super abilities.</param>
         public rimrushAIDifficultyTuningProfile(
             float defenceContestDistance,
             float stealBehindDistance,
@@ -148,11 +147,10 @@ namespace rimrush
             hasBonusSupers: true);
 
         /// <summary>
-        /// Executes Get for the rimrushAIDifficultyTuning workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the tuning profile for the given difficulty level. Falls back to Normal if unknown.
         /// </summary>
-        /// <param name="difficulty">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="difficulty">The difficulty level to look up (Easy, Normal, Hard, or Hell).</param>
+        /// <returns>The matching AI difficulty tuning profile.</returns>
         public static rimrushAIDifficultyTuningProfile Get(rimrushAiDifficulty difficulty)
         {
             switch (difficulty)

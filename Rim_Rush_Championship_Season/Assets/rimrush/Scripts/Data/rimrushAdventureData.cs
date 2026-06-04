@@ -1,3 +1,6 @@
+// 冒险模式关卡数据
+// 定义冒险模式的 8 个关卡，每关有不同的对手、场景和特殊规则。玩家需要一关一关打通，收集灯笼印记来解锁最终逃脱路线。
+
 using UnityEngine;
 
 namespace rimrush
@@ -33,6 +36,24 @@ namespace rimrush
         public readonly string[] VictoryLines;
         public readonly string[] DefeatLines;
 
+        /// <summary>
+        /// Creates a new adventure level definition with all gameplay, narrative, and map data.
+        /// </summary>
+        /// <param name="index">Zero-based level index.</param>
+        /// <param name="areaName">Display name of the level area.</param>
+        /// <param name="wardenCharacterId">Character ID of the Warden guarding this level.</param>
+        /// <param name="mood">Short mood description for the level.</param>
+        /// <param name="mechanic">The unique gameplay mechanic used in this level.</param>
+        /// <param name="mechanicTitle">Display title for the mechanic.</param>
+        /// <param name="mechanicSummary">Short summary of how the mechanic works.</param>
+        /// <param name="sceneDirection">Art direction notes for the scene.</param>
+        /// <param name="ruleIcons">Icon keys shown on the rule overlay.</param>
+        /// <param name="mapX">X position on the adventure map.</param>
+        /// <param name="mapY">Y position on the adventure map.</param>
+        /// <param name="ballSelection">Ball skin used for this level.</param>
+        /// <param name="opponentSkill">AI difficulty tier of the opponent.</param>
+        /// <param name="victoryLines">Dialogue lines shown when the player wins.</param>
+        /// <param name="defeatLines">Dialogue lines shown when the player loses.</param>
         public rimrushAdventureLevelDefinition(
             int index,
             string areaName,
@@ -68,6 +89,11 @@ namespace rimrush
             VictoryBeat = VictoryLines.Length > 0 ? VictoryLines[0] : string.Empty;
         }
 
+        /// <summary>
+        /// Returns a random dialogue line from the victory or defeat pool.
+        /// </summary>
+        /// <param name="playerWon">True to pick from victory lines, false for defeat lines.</param>
+        /// <returns>A random result line, or a default fallback if the pool is empty.</returns>
         public string GetRandomResultLine(bool playerWon)
         {
             var pool = playerWon ? VictoryLines : DefeatLines;
@@ -296,10 +322,21 @@ namespace rimrush
                 })
         };
 
+        /// <summary>
+        /// Returns the total number of adventure levels defined in the catalog.
+        /// </summary>
         public static int LevelCount => Levels.Length;
 
+        /// <summary>
+        /// Returns all adventure level definitions as an array.
+        /// </summary>
         public static rimrushAdventureLevelDefinition[] AllLevels => Levels;
 
+        /// <summary>
+        /// Returns the adventure level definition at the given index, clamped to valid bounds.
+        /// </summary>
+        /// <param name="index">The level index to look up.</param>
+        /// <returns>The level definition for the requested index.</returns>
         public static rimrushAdventureLevelDefinition GetLevel(int index)
         {
             return Levels[Mathf.Clamp(index, 0, Levels.Length - 1)];
@@ -310,13 +347,23 @@ namespace rimrush
     {
         private readonly bool[] levelCompleted = new bool[rimrushAdventureCatalog.LevelCount];
 
+        /// <summary>Whether an adventure run is currently in progress.</summary>
         public bool Active { get; private set; }
+        /// <summary>Whether the player has completed all adventure levels.</summary>
         public bool Completed { get; private set; }
+        /// <summary>The character ID chosen by the player for this adventure run.</summary>
         public int PlayerCharacterId { get; private set; }
+        /// <summary>The index of the level the player is currently on or selecting.</summary>
         public int CurrentLevelIndex { get; private set; }
+        /// <summary>The highest level index the player has unlocked so far.</summary>
         public int HighestUnlockedLevelIndex { get; private set; }
+        /// <summary>The index of the last level whose match result was resolved, or -1 if none.</summary>
         public int LastResolvedLevelIndex { get; private set; } = -1;
+        /// <summary>Whether the player won the most recently resolved match.</summary>
         public bool LastPlayerWon { get; private set; }
+        /// <summary>
+        /// Returns the number of Lantern Sigils the player has collected.
+        /// </summary>
         public int SigilsCollected
         {
             get
@@ -334,9 +381,18 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Returns true if there is an active, incomplete adventure with a valid current level ready for a match.
+        /// </summary>
         public bool HasPendingPlayerMatch => Active && !Completed && CurrentLevelIndex >= 0 && CurrentLevelIndex < rimrushAdventureCatalog.LevelCount;
+        /// <summary>
+        /// Returns the level definition for the current level index.
+        /// </summary>
         public rimrushAdventureLevelDefinition CurrentLevel => rimrushAdventureCatalog.GetLevel(CurrentLevelIndex);
 
+        /// <summary>
+        /// Resets all adventure progress, returning the run to an inactive state.
+        /// </summary>
         public void Reset()
         {
             Active = false;
@@ -352,6 +408,10 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Starts a new adventure run with the given player character.
+        /// </summary>
+        /// <param name="playerCharacterId">The character ID to use for this run.</param>
         public void Create(int playerCharacterId)
         {
             Reset();
@@ -359,6 +419,12 @@ namespace rimrush
             PlayerCharacterId = rimrushPlayersData.SanitizeCharacterId(playerCharacterId);
         }
 
+        /// <summary>
+        /// Attempts to select the given level index as the current level.
+        /// Fails if the adventure is not active, is completed, or the level is not unlocked.
+        /// </summary>
+        /// <param name="levelIndex">The level index to select.</param>
+        /// <returns>True if the level was selected successfully, false otherwise.</returns>
         public bool SelectLevel(int levelIndex)
         {
             if (!Active || Completed || !IsLevelUnlocked(levelIndex))
@@ -370,16 +436,32 @@ namespace rimrush
             return true;
         }
 
+        /// <summary>
+        /// Returns whether the given level index has been unlocked by the player.
+        /// </summary>
+        /// <param name="levelIndex">The level index to check.</param>
+        /// <returns>True if the level is within the unlocked range, false otherwise.</returns>
         public bool IsLevelUnlocked(int levelIndex)
         {
             return levelIndex >= 0 && levelIndex <= HighestUnlockedLevelIndex && levelIndex < rimrushAdventureCatalog.LevelCount;
         }
 
+        /// <summary>
+        /// Returns whether the given level index has been completed by the player.
+        /// </summary>
+        /// <param name="levelIndex">The level index to check.</param>
+        /// <returns>True if the level has been completed, false otherwise.</returns>
         public bool IsLevelCompleted(int levelIndex)
         {
             return levelIndex >= 0 && levelIndex < levelCompleted.Length && levelCompleted[levelIndex];
         }
 
+        /// <summary>
+        /// Applies the result of the current level match. If the player won, marks the level
+        /// as completed and unlocks the next level. If the player lost, records the result
+        /// but does not advance progress.
+        /// </summary>
+        /// <param name="playerWon">True if the player won the match.</param>
         public void ApplyCurrentMatchResult(bool playerWon)
         {
             if (!Active || Completed || CurrentLevelIndex < 0 || CurrentLevelIndex >= levelCompleted.Length)

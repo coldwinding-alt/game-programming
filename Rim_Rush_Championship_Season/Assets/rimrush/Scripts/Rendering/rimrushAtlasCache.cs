@@ -1,5 +1,4 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAtlasCache 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 图集、字体和材质缓存 / 加载并缓存游戏用到的纹理图集（把很多小图合成一张大图来提高性能）、字体和材质球。还提供渲染辅助工具，比如创建精灵、绘制文字、应用像素坐标变换。是整个游戏渲染系统的基础。
 
 using System.Collections.Generic;
 using TMPro;
@@ -22,11 +21,8 @@ namespace rimrush
         public rimrushAtlas SkillFx => Get(rimrushAssets.Atlases.SkillFx);
 
         /// <summary>
-        /// Executes Get for the rimrushAtlasCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Get or create a cached atlas by its resource key.
         /// </summary>
-        /// <param name="atlasKey">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushAtlas Get(string atlasKey)
         {
             if (!atlases.TryGetValue(atlasKey, out var atlas))
@@ -46,10 +42,8 @@ namespace rimrush
         private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
 
         /// <summary>
-        /// Executes rimrush Atlas for the rimrushAtlas workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Load a texture atlas and parse its sprite frame metadata from JSON.
         /// </summary>
-        /// <param name="atlasKey">Input value used by this step of the workflow.</param>
         public rimrushAtlas(string atlasKey)
         {
             texture = Resources.Load<Texture2D>($"rimrush/Atlases/{atlasKey}");
@@ -85,24 +79,16 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Has Frame for the rimrushAtlas workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check whether the atlas contains a sprite frame with the given name.
         /// </summary>
-        /// <param name="frameName">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         public bool HasFrame(string frameName)
         {
             return frames.ContainsKey(frameName);
         }
 
         /// <summary>
-        /// Executes Sprite for the rimrushAtlas workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create or return a cached Sprite for the named atlas frame, using the given anchor point.
         /// </summary>
-        /// <param name="frameName">Input value used by this step of the workflow.</param>
-        /// <param name="anchorX">Input value used by this step of the workflow.</param>
-        /// <param name="anchorY">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public Sprite Sprite(string frameName, float anchorX = 0.5f, float anchorY = 0.5f)
         {
             if (texture == null || !frames.TryGetValue(frameName, out var frame))
@@ -126,11 +112,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Frame for the rimrushAtlas workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the raw atlas frame metadata for the given frame name.
         /// </summary>
-        /// <param name="frameName">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public rimrushAtlasFrame Frame(string frameName)
         {
             frames.TryGetValue(frameName, out var frame);
@@ -152,12 +135,8 @@ namespace rimrush
         public float SourceH;
 
         /// <summary>
-        /// Executes From Json for the rimrushAtlasFrame workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Parse atlas frame metadata from a JSON dictionary.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="data">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static rimrushAtlasFrame FromJson(string name, Dictionary<string, object> data)
         {
             var frame = rimrushJson.Dict(data, "frame");
@@ -179,12 +158,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Pivot for the rimrushAtlasFrame workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Calculate the sprite pivot point from the anchor values and source frame dimensions.
         /// </summary>
-        /// <param name="anchorX">Input value used by this step of the workflow.</param>
-        /// <param name="anchorY">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public Vector2 Pivot(float anchorX, float anchorY)
         {
             var pivotX = anchorX * SourceW - SourceX;
@@ -229,12 +204,8 @@ public enum rimrushTextStyle
         private static readonly HashSet<rimrushFontKind> MissingResourceWarnings = new HashSet<rimrushFontKind>();
 
         /// <summary>
-        /// Executes Get for the rimrushFontCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a Font for the given style, loading from Resources or falling back to OS fonts.
         /// </summary>
-        /// <param name="fontKind">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Font Get(rimrushFontKind fontKind, int fontSize)
         {
             var resourceFont = GetResourceFont(fontKind);
@@ -264,27 +235,27 @@ public enum rimrushTextStyle
                     break;
                 case rimrushFontKind.Griffy:
                     font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "Griffy", "Impact", "Arial Black", "Arial" },
+                        new[] { "Griffy", "Bungee", "Anton", "Arial Black", "Arial" },
                         fontSize);
                     break;
                 case rimrushFontKind.AgencyBold:
                     font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "Agency FB", "Bahnschrift SemiCondensed", "Impact", "Arial Black", "Arial" },
+                        new[] { "Barlow Condensed Bold", "Barlow Condensed", "Anton", "Arial Black", "Arial" },
                         fontSize);
                     break;
                 case rimrushFontKind.CfCrackBold:
                     font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "CfCrackBold", "Arial Black", "Impact", "Arial" },
+                        new[] { "Bungee", "Anton", "Arial Black", "Arial" },
                         fontSize);
                     break;
                 case rimrushFontKind.Impact2:
                     font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "Impact2", "Impact", "Arial Black", "Arial" },
+                        new[] { "Anton", "Arial Black", "Arial" },
                         fontSize);
                     break;
                 default:
                     font = Font.CreateDynamicFontFromOSFont(
-                        new[] { "Impact", "Arial Black", "Arial" },
+                        new[] { "Anton", "Arial Black", "Arial" },
                         fontSize);
                     break;
             }
@@ -295,11 +266,8 @@ public enum rimrushTextStyle
         }
 
         /// <summary>
-        /// Executes Get Resource Font for the rimrushFontCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Try to load the bundled font resource for a given font kind.
         /// </summary>
-        /// <param name="fontKind">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Font GetResourceFont(rimrushFontKind fontKind)
         {
             if (ResourceFonts.TryGetValue(fontKind, out var cached))
@@ -324,11 +292,8 @@ public enum rimrushTextStyle
         }
 
         /// <summary>
-        /// Executes Get Resource Path for the rimrushFontCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the Resources folder path for a bundled font.
         /// </summary>
-        /// <param name="fontKind">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetResourcePath(rimrushFontKind fontKind)
         {
             switch (fontKind)
@@ -351,10 +316,8 @@ public enum rimrushTextStyle
         }
 
         /// <summary>
-        /// Executes Prepare Font for the rimrushFontCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up font texture settings for crisp pixel-art rendering.
         /// </summary>
-        /// <param name="font">Input value used by this step of the workflow.</param>
         private static void PrepareFont(Font font)
         {
             if (font == null || font.material == null || font.material.mainTexture == null)
@@ -376,16 +339,8 @@ public static class rimrushFontMaterialCache
         private static Shader outlinedShader;
 
         /// <summary>
-        /// Executes Get for the rimrushFontMaterialCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a Material with outline and shadow settings applied, using the custom outlined shader.
         /// </summary>
-        /// <param name="font">Input value used by this step of the workflow.</param>
-        /// <param name="outlineColor">Input value used by this step of the workflow.</param>
-        /// <param name="outlinePixels">Input value used by this step of the workflow.</param>
-        /// <param name="shadowColor">Input value used by this step of the workflow.</param>
-        /// <param name="shadowOffset">Input value used by this step of the workflow.</param>
-        /// <param name="rasterScale">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static Material Get(
             Font font,
             Color? outlineColor,
@@ -457,11 +412,8 @@ public static class rimrushFontMaterialCache
         }
 
         /// <summary>
-        /// Executes Color Key for the rimrushFontMaterialCache workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build a hex color string for material cache keys.
         /// </summary>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string ColorKey(Color color)
         {
             var color32 = (Color32)color;
@@ -478,11 +430,8 @@ public static class rimrushSharedMaterialCache
     private static Material untexturedSpritesDefaultMaterial;
 
     /// <summary>
-    /// Executes Get Sprites Default for the rimrushSharedMaterialCache workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Return a shared Sprites/Default material for the given texture.
     /// </summary>
-    /// <param name="mainTexture">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     public static Material GetSpritesDefault(Texture mainTexture = null)
     {
         var shader = GetSpritesDefaultShader();
@@ -512,10 +461,8 @@ public static class rimrushSharedMaterialCache
     }
 
     /// <summary>
-    /// Executes Get Sprites Default Shader for the rimrushSharedMaterialCache workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Find and cache the Sprites/Default shader.
     /// </summary>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static Shader GetSpritesDefaultShader()
     {
         if (spritesDefaultShader == null)
@@ -533,13 +480,8 @@ public static class rimrushSharedMaterialCache
     }
 
     /// <summary>
-    /// Executes Create Shared Material for the rimrushSharedMaterialCache workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Create a new hide-and-dont-save material from the given shader and texture.
     /// </summary>
-    /// <param name="shader">Input value used by this step of the workflow.</param>
-    /// <param name="name">Input value used by this step of the workflow.</param>
-    /// <param name="mainTexture">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static Material CreateSharedMaterial(Shader shader, string name, Texture mainTexture)
     {
         var material = new Material(shader)
@@ -573,12 +515,8 @@ internal struct rimrushResolvedTextStyle
 internal static class rimrushTextStyles
 {
     /// <summary>
-    /// Executes Resolve for the rimrushTextStyles workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Return the resolved font, outline, and shadow settings for a text style and font size.
     /// </summary>
-    /// <param name="style">Input value used by this step of the workflow.</param>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     public static rimrushResolvedTextStyle Resolve(rimrushTextStyle style, int fontSize)
     {
         switch (style)
@@ -645,16 +583,8 @@ internal static class rimrushTextStyles
     }
 
     /// <summary>
-    /// Executes Create for the rimrushTextStyles workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Build a resolved text style struct from its component values.
     /// </summary>
-    /// <param name="fontKind">Input value used by this step of the workflow.</param>
-    /// <param name="rasterProfile">Input value used by this step of the workflow.</param>
-    /// <param name="outlineColor">Input value used by this step of the workflow.</param>
-    /// <param name="outlinePixels">Input value used by this step of the workflow.</param>
-    /// <param name="shadowColor">Input value used by this step of the workflow.</param>
-    /// <param name="shadowOffset">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static rimrushResolvedTextStyle Create(
         rimrushFontKind fontKind,
         rimrushTextRasterProfile rasterProfile,
@@ -681,19 +611,8 @@ public static class rimrushRender
         private static readonly Dictionary<string, Texture2D> PortraitBackplateTextures = new Dictionary<string, Texture2D>();
 
         /// <summary>
-        /// Executes Sprite for the rimrushRender workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a GameObject with a SpriteRenderer displaying the given atlas frame.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="atlas">Input value used by this step of the workflow.</param>
-        /// <param name="frame">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="anchorX">Input value used by this step of the workflow.</param>
-        /// <param name="anchorY">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static GameObject Sprite(string name, rimrushAtlas atlas, string frame, float x, float y, float anchorX, float anchorY, int sortingOrder, Transform parent = null)
         {
             var go = new GameObject(name);
@@ -710,18 +629,8 @@ public static class rimrushRender
         }
 
         /// <summary>
-        /// Executes Image for the rimrushRender workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a GameObject with a SpriteRenderer displaying the given texture.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="texture">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="anchorX">Input value used by this step of the workflow.</param>
-        /// <param name="anchorY">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         public static GameObject Image(string name, Texture2D texture, float x, float y, float anchorX, float anchorY, int sortingOrder, Transform parent = null)
         {
             var go = new GameObject(name);
@@ -867,20 +776,8 @@ public static class rimrushRender
         }
 
     /// <summary>
-    /// Executes Text for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Create a TextMesh with the given style, position, and color.
     /// </summary>
-    /// <param name="name">Input value used by this step of the workflow.</param>
-    /// <param name="text">Input value used by this step of the workflow.</param>
-    /// <param name="x">Input value used by this step of the workflow.</param>
-    /// <param name="y">Input value used by this step of the workflow.</param>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="color">Input value used by this step of the workflow.</param>
-    /// <param name="anchor">Input value used by this step of the workflow.</param>
-    /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-    /// <param name="parent">Input value used by this step of the workflow.</param>
-    /// <param name="style">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     public static TextMesh Text(
         string name,
         string text,
@@ -913,24 +810,8 @@ public static class rimrushRender
     }
 
     /// <summary>
-    /// Executes Text for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Create a TextMesh with explicit font and outline settings.
     /// </summary>
-    /// <param name="name">Input value used by this step of the workflow.</param>
-    /// <param name="text">Input value used by this step of the workflow.</param>
-    /// <param name="x">Input value used by this step of the workflow.</param>
-    /// <param name="y">Input value used by this step of the workflow.</param>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="color">Input value used by this step of the workflow.</param>
-    /// <param name="anchor">Input value used by this step of the workflow.</param>
-    /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-    /// <param name="parent">Input value used by this step of the workflow.</param>
-    /// <param name="fontKind">Input value used by this step of the workflow.</param>
-    /// <param name="outlineColor">Input value used by this step of the workflow.</param>
-    /// <param name="outlinePixels">Input value used by this step of the workflow.</param>
-    /// <param name="shadowColor">Input value used by this step of the workflow.</param>
-    /// <param name="shadowOffset">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     public static TextMesh Text(
         string name,
         string text,
@@ -967,25 +848,8 @@ public static class rimrushRender
     }
 
     /// <summary>
-    /// Executes Text Internal for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Build the TextMesh GameObject with font, material, and pixel transform.
     /// </summary>
-    /// <param name="name">Input value used by this step of the workflow.</param>
-    /// <param name="text">Input value used by this step of the workflow.</param>
-    /// <param name="x">Input value used by this step of the workflow.</param>
-    /// <param name="y">Input value used by this step of the workflow.</param>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="color">Input value used by this step of the workflow.</param>
-    /// <param name="anchor">Input value used by this step of the workflow.</param>
-    /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-    /// <param name="parent">Input value used by this step of the workflow.</param>
-    /// <param name="fontKind">Input value used by this step of the workflow.</param>
-    /// <param name="outlineColor">Input value used by this step of the workflow.</param>
-    /// <param name="outlinePixels">Input value used by this step of the workflow.</param>
-    /// <param name="shadowColor">Input value used by this step of the workflow.</param>
-    /// <param name="shadowOffset">Input value used by this step of the workflow.</param>
-    /// <param name="rasterProfile">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static TextMesh TextInternal(
         string name,
         string text,
@@ -1038,20 +902,8 @@ public static class rimrushRender
     }
 
     /// <summary>
-    /// Executes Tmp Text for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Create a TextMeshPro component with the given style, position, and color.
     /// </summary>
-    /// <param name="name">Input value used by this step of the workflow.</param>
-    /// <param name="text">Input value used by this step of the workflow.</param>
-    /// <param name="x">Input value used by this step of the workflow.</param>
-    /// <param name="y">Input value used by this step of the workflow.</param>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="color">Input value used by this step of the workflow.</param>
-    /// <param name="anchor">Input value used by this step of the workflow.</param>
-    /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-    /// <param name="parent">Input value used by this step of the workflow.</param>
-    /// <param name="style">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     public static TMP_Text TmpText(
         string name,
         string text,
@@ -1112,15 +964,8 @@ public static class rimrushRender
     }
 
         /// <summary>
-        /// Executes Apply Pixel Transform for the rimrushRender workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set a transform's world position from pixel coordinates, snapping to the screen pixel grid.
         /// </summary>
-        /// <param name="transform">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <param name="scale">Input value used by this step of the workflow.</param>
-        /// <param name="rotationDegrees">Input value used by this step of the workflow.</param>
         public static void ApplyPixelTransform(Transform transform, float x, float y, float z = 0f, float scale = 1f, float rotationDegrees = 0f)
         {
             transform.position = rimrushConstants.PixelToWorldSnapped(x, y, z);
@@ -1130,14 +975,8 @@ public static class rimrushRender
         }
 
     /// <summary>
-    /// Executes Resolve Raw Raster Profile for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Pick the font raster profile based on font size and whether outline/shadow is used.
     /// </summary>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="outlineColor">Input value used by this step of the workflow.</param>
-    /// <param name="outlinePixels">Input value used by this step of the workflow.</param>
-    /// <param name="shadowColor">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static rimrushTextRasterProfile ResolveRawRasterProfile(int fontSize, Color? outlineColor, float outlinePixels, Color? shadowColor)
     {
         var hasOutline = outlineColor.HasValue && outlineColor.Value.a > 0f && outlinePixels > 0f;
@@ -1156,12 +995,8 @@ public static class rimrushRender
     }
 
     /// <summary>
-    /// Executes Get Font Raster Size for the rimrushRender workflow.
-    /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+    /// Calculate the actual font texture raster size from the logical font size and raster profile.
     /// </summary>
-    /// <param name="fontSize">Input value used by this step of the workflow.</param>
-    /// <param name="rasterProfile">Input value used by this step of the workflow.</param>
-    /// <returns>Result produced for downstream logic in the current frame.</returns>
     private static int GetFontRasterSize(int fontSize, rimrushTextRasterProfile rasterProfile)
     {
         float multiplier;
@@ -1198,11 +1033,8 @@ public static class rimrushRender
     }
 
         /// <summary>
-        /// Executes Anchor To Alignment for the rimrushRender workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a TextAnchor enum to the legacy TextMesh alignment enum.
         /// </summary>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TextAlignment AnchorToAlignment(TextAnchor anchor)
         {
             switch (anchor)
@@ -1221,11 +1053,8 @@ public static class rimrushRender
         }
 
         /// <summary>
-        /// Executes Anchor To Tmp Alignment for the rimrushRender workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a TextAnchor enum to TextMeshPro alignment options.
         /// </summary>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TextAlignmentOptions AnchorToTmpAlignment(TextAnchor anchor)
         {
             switch (anchor)

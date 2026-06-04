@@ -1,5 +1,4 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushBuildTools 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 自动打包构建工具 / 在 Unity 编辑器里提供一键打包功能，自动把游戏构建到目标平台（Windows、Mac、Android 等）。省去手动设置构建选项的步骤。
 
 using System.Linq;
 using UnityEditor;
@@ -11,8 +10,7 @@ namespace rimrush.EditorTools
     public static class rimrushBuildTools
     {
         /// <summary>
-        /// Executes Build Windows for the rimrushBuildTools workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the game for Windows 64-bit using the scenes enabled in Build Settings.
         /// </summary>
         public static void BuildWindows()
         {

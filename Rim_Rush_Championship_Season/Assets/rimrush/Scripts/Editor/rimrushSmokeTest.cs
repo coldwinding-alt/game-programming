@@ -1,5 +1,4 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushSmokeTest 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 自动化冒烟测试 / 在编辑器中运行一系列基本功能测试，检查游戏的核心系统是否正常工作：角色数据是否完整、技能配置是否正确、图集能否加载、音频能否播放、UI 能否创建等。用来在发布前快速发现明显的问题。
 
 using System;
 using System.Collections.Generic;
@@ -14,8 +13,7 @@ namespace rimrush.EditorTools
     public static class rimrushSmokeTest
     {
         /// <summary>
-        /// Executes Run for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Run all smoke tests: validate resources, build a quick game, and report any errors.
         /// </summary>
         public static void Run()
         {
@@ -91,9 +89,9 @@ namespace rimrush.EditorTools
                 }
 
                 var ui = rimrushAtlasCache.Instance.Interface;
-                if (!ui.HasFrame("icon_ball0000") || !ui.HasFrame("icon_ball20000"))
+                if (!ui.HasFrame("EmblemsBg0000") || !ui.HasFrame("loginSelect0000"))
                 {
-                    errors.Add("Interface atlas did not expose expected skill UI frame keys.");
+                    errors.Add("Interface atlas did not expose the expected active frame keys.");
                 }
 
                 var skillFx = rimrushAtlasCache.Instance.SkillFx;
@@ -182,11 +180,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Check Resource for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that a resource exists at the given path and log an error if it's missing.
         /// </summary>
-        /// <param name="path">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void CheckResource<T>(string path, List<string> errors) where T : UnityEngine.Object
         {
             if (Resources.Load<T>(path) == null)
@@ -196,10 +191,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Native Menu Text Layer for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that the native TMP menu text layer can create headings and button labels.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateNativeMenuTextLayer(List<string> errors)
         {
             var root = new GameObject("NativeMenuTextSmokeRoot");
@@ -247,10 +240,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Single Player Narrative Definitions for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that all single-player narrative text entries and mode definitions are present.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateSinglePlayerNarrativeDefinitions(List<string> errors)
         {
             ValidateNarrativeTerm(rimrushSinglePlayerNarrative.ParkName, "park name", errors);
@@ -512,10 +503,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Ensure Text Mesh Pro Essential Resources for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Make sure TMP essential resources (settings and shader) are imported in the project.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void EnsureTextMeshProEssentialResources(List<string> errors)
         {
             var hasSettings = AssetDatabase.FindAssets("t:TMP_Settings").Length > 0;
@@ -549,10 +538,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Check Audio Resources for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that all expected audio clips exist in the Resources folder.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void CheckAudioResources(List<string> errors)
         {
             var audioPaths = new[]
@@ -585,10 +572,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Runtime Graphics Resource Reuse for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that runtime materials and meshes are shared and properly released.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateRuntimeGraphicsResourceReuse(List<string> errors)
         {
             ValidateSharedRuntimeMaterials(errors);
@@ -596,10 +581,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Help Panel Tutorial Entry for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that the help panel prefab has a Replay Tutorial button.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateHelpPanelTutorialEntry(List<string> errors)
         {
             var prefab = Resources.Load<rimrushHelpPanel>("rimrush/Prefabs/UI/RimrushHelpPanel");
@@ -638,10 +621,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Tutorial Mode Boot for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that tutorial mode creates a flow, overlay, and cleans up focus markers properly.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateTutorialModeBoot(List<string> errors)
         {
             var existingOverlay = UnityEngine.Object.FindObjectOfType<rimrushTutorialOverlay>();
@@ -735,10 +716,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Shared Runtime Materials for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that basket nets and radial icon meshes share materials instead of duplicating them.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateSharedRuntimeMaterials(List<string> errors)
         {
             var runtimeRoot = new GameObject("GraphicsReuseSmokeRoot");
@@ -772,8 +751,16 @@ namespace rimrush.EditorTools
                     }
                 }
 
-                new rimrushRadialIconMesh("EnergyFillSmokeA", rimrushAtlasCache.Instance.Interface, "icon_ball20000", 40f, 40f, 10, runtimeRoot.transform);
-                new rimrushRadialIconMesh("EnergyFillSmokeB", rimrushAtlasCache.Instance.Interface, "icon_ball20000", 72f, 40f, 10, runtimeRoot.transform);
+                var maskTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.SkillIcons.ScarecrowMask));
+                if (maskTexture == null)
+                {
+                    errors.Add("Runtime graphics reuse test could not load the standalone skill mask texture.");
+                }
+                else
+                {
+                    new rimrushRadialIconMesh("EnergyFillSmokeA", maskTexture, 40f, 40f, 10, runtimeRoot.transform, 40f);
+                    new rimrushRadialIconMesh("EnergyFillSmokeB", maskTexture, 72f, 40f, 10, runtimeRoot.transform, 40f);
+                }
 
                 var meshRenderers = runtimeRoot.GetComponentsInChildren<MeshRenderer>(true);
                 if (meshRenderers.Length < 2)
@@ -796,10 +783,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Game Runtime Mesh Release for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that game shutdown releases the radial icon dynamic mesh.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateGameRuntimeMeshRelease(List<string> errors)
         {
             var runtimeRoot = new GameObject("GraphicsReleaseSmokeRoot");
@@ -843,11 +828,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Blocked Shot Score Persistence for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that a blocked shot can still score after being deflected.
         /// </summary>
-        /// <param name="core">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateBlockedShotScorePersistence(rimrushGameCore core, List<string> errors)
         {
             if (core == null || core.Ball == null || core.PlayersRight == null || core.PlayersRight.Count == 0)
@@ -896,12 +878,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Ball Sprite Asset for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that a ball texture is 36x36 with transparent corners and no white halo.
         /// </summary>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="assetPath">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateBallSpriteAsset(string resourcePath, string assetPath, List<string> errors)
         {
             var texture = Resources.Load<Texture2D>(resourcePath);
@@ -945,28 +923,28 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Skill Icon Assets for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that every character's skill icon and charge mask textures exist and meet quality requirements.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateSkillIconAssets(List<string> errors)
         {
             var validatedImageKeys = new HashSet<string>();
             for (var characterId = 0; characterId < rimrushPlayersData.CharacterCount; characterId++)
             {
                 var skillDefinition = rimrushCharacterSkillsData.Get(characterId);
+                if (!skillDefinition.HasStandaloneIconArt)
+                {
+                    errors.Add($"Character {characterId} no longer provides standalone skill icon art.");
+                    continue;
+                }
+
                 ValidateSkillIconTexture(skillDefinition.IconImageKey, validatedImageKeys, errors);
                 ValidateSkillIconTexture(skillDefinition.ChargeMaskImageKey, validatedImageKeys, errors);
             }
         }
 
         /// <summary>
-        /// Executes Validate Skill Icon Texture for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Validate a single skill icon texture: exists, is large enough, and has correct import settings.
         /// </summary>
-        /// <param name="imageKey">Input value used by this step of the workflow.</param>
-        /// <param name="validatedImageKeys">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateSkillIconTexture(string imageKey, HashSet<string> validatedImageKeys, List<string> errors)
         {
             if (string.IsNullOrEmpty(imageKey) || !validatedImageKeys.Add(imageKey))
@@ -994,12 +972,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Standalone Ui Texture Import for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that a UI texture has mipmaps disabled, alpha transparency, and no compression.
         /// </summary>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="assetPath">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateStandaloneUiTextureImport(string resourcePath, string assetPath, List<string> errors)
         {
             if (!File.Exists(assetPath))
@@ -1040,12 +1014,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Platform Texture Settings for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that platform-specific texture settings override defaults and stay uncompressed.
         /// </summary>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="settings">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidatePlatformTextureSettings(string resourcePath, TextureImporterPlatformSettings settings, List<string> errors)
         {
             if (!settings.overridden)
@@ -1065,14 +1035,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Corner Alpha for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that a corner pixel of the ball texture is transparent for clean rotation.
         /// </summary>
-        /// <param name="texture">Input value used by this step of the workflow.</param>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateCornerAlpha(Texture2D texture, string resourcePath, int x, int y, List<string> errors)
         {
             if (texture.GetPixel(x, y).a > 0.03f)
@@ -1082,12 +1046,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Ball Bounds for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that the ball fills the entire 36x36 canvas with no empty border.
         /// </summary>
-        /// <param name="texture">Input value used by this step of the workflow.</param>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateBallBounds(Texture2D texture, string resourcePath, List<string> errors)
         {
             var minX = texture.width;
@@ -1118,12 +1078,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate No White Halo for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that semi-transparent pixels are not near-white, which would cause a visible halo.
         /// </summary>
-        /// <param name="texture">Input value used by this step of the workflow.</param>
-        /// <param name="resourcePath">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateNoWhiteHalo(Texture2D texture, string resourcePath, List<string> errors)
         {
             for (var y = 0; y < texture.height; y++)
@@ -1146,10 +1102,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Ball Selection State And Resolution for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Verify that ball selection persists correctly across quick, training, versus, and tournament modes.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateBallSelectionStateAndResolution(List<string> errors)
         {
             var inventory = rimrushInventory.Instance;
@@ -1256,10 +1210,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Difficulty Cycle And Skill Mapping for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that difficulty toggles cycle correctly and map to the expected AI skill levels.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateDifficultyCycleAndSkillMapping(List<string> errors)
         {
             var inventory = rimrushInventory.Instance;
@@ -1317,12 +1269,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Tournament Season Mode for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Run a full tournament at the given difficulty, verifying brackets, standings, and placements.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
-        /// <param name="difficulty">Input value used by this step of the workflow.</param>
-        /// <param name="difficultyLabel">Input value used by this step of the workflow.</param>
         private static void ValidateTournamentSeasonMode(List<string> errors, rimrushAiDifficulty difficulty, string difficultyLabel)
         {
             var tournament = new rimrushTournamentData();
@@ -1390,10 +1338,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Hard Tournament Skill Mapping for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that hard difficulty tournament rounds map to the expected escalating AI skills.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateHardTournamentSkillMapping(List<string> errors)
         {
             var tournament = new rimrushTournamentData();
@@ -1457,10 +1403,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Validate Hell Tournament Skill Mapping for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check that hell difficulty tournament rounds map to the expected maximum AI skills.
         /// </summary>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
         private static void ValidateHellTournamentSkillMapping(List<string> errors)
         {
             var tournament = new rimrushTournamentData();
@@ -1524,13 +1468,8 @@ namespace rimrush.EditorTools
         }
 
         /// <summary>
-        /// Executes Assert Opponent Skill for the rimrushSmokeTest workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Assert that the opponent's AI skill level matches the expected value.
         /// </summary>
-        /// <param name="matchData">Input value used by this step of the workflow.</param>
-        /// <param name="expectedSkill">Input value used by this step of the workflow.</param>
-        /// <param name="errors">Input value used by this step of the workflow.</param>
-        /// <param name="context">Input value used by this step of the workflow.</param>
         private static void AssertOpponentSkill(rimrushMatchData matchData, int expectedSkill, List<string> errors, string context)
         {
             if (matchData.Skills == null || matchData.Skills.Length < 2 || matchData.Skills[1] == null || matchData.Skills[1].Length == 0)

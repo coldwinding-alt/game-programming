@@ -16,16 +16,35 @@ namespace rimrush
         public readonly string LoreTitle;
         public readonly string LoreBody;
 
+        /// <summary>
+        /// Creates a story panel with a caption and art direction, using no image or lore.
+        /// </summary>
+        /// <param name="caption">The panel caption text.</param>
+        /// <param name="artDirection">Art direction notes for the panel.</param>
         public rimrushStoryPanelDefinition(string caption, string artDirection)
             : this(caption, artDirection, null, null, null)
         {
         }
 
+        /// <summary>
+        /// Creates a story panel with a caption, art direction, and image key, using no lore.
+        /// </summary>
+        /// <param name="caption">The panel caption text.</param>
+        /// <param name="artDirection">Art direction notes for the panel.</param>
+        /// <param name="imageKey">Image asset key for the panel art.</param>
         public rimrushStoryPanelDefinition(string caption, string artDirection, string imageKey)
             : this(caption, artDirection, imageKey, null, null)
         {
         }
 
+        /// <summary>
+        /// Creates a story panel with a caption, art direction, image key, and optional lore text.
+        /// </summary>
+        /// <param name="caption">The panel caption text.</param>
+        /// <param name="artDirection">Art direction notes for the panel.</param>
+        /// <param name="imageKey">Image asset key for the panel art.</param>
+        /// <param name="loreTitle">Title of the lore entry, or null for no lore.</param>
+        /// <param name="loreBodyLines">Lines of lore body text joined by newlines.</param>
         public rimrushStoryPanelDefinition(
             string caption,
             string artDirection,
@@ -42,6 +61,9 @@ namespace rimrush
                 : string.Join("\n", loreBodyLines);
         }
 
+        /// <summary>
+        /// Returns true if this panel has a lore title or lore body to display.
+        /// </summary>
         public bool HasLore
         {
             get { return !string.IsNullOrEmpty(LoreTitle) || !string.IsNullOrEmpty(LoreBody); }
@@ -60,6 +82,18 @@ namespace rimrush
         public readonly string WorldRole;
         public readonly rimrushStoryPanelDefinition[] OpeningComic;
 
+        /// <summary>
+        /// Creates a single-player mode definition with all narrative and presentation data.
+        /// </summary>
+        /// <param name="mode">The narrative mode type.</param>
+        /// <param name="modeName">Internal mode name.</param>
+        /// <param name="menuTitle">Title shown on the mode select menu.</param>
+        /// <param name="subtitle">Subtitle shown below the menu title.</param>
+        /// <param name="objective">Description of the mode's objective.</param>
+        /// <param name="tone">Tone guide for the mode's presentation.</param>
+        /// <param name="gameplayWrapper">Description of how gameplay is structured.</param>
+        /// <param name="worldRole">The mode's role in the game world narrative.</param>
+        /// <param name="openingComic">Story panels shown when the mode begins.</param>
         public rimrushSinglePlayerModeDefinition(
             rimrushSinglePlayerNarrativeMode mode,
             string modeName,
@@ -197,11 +231,21 @@ namespace rimrush
                         "park in front of the whole city.")
                 });
 
+        /// <summary>
+        /// Returns the mode definition for the given narrative mode type.
+        /// </summary>
+        /// <param name="mode">The narrative mode to look up.</param>
+        /// <returns>The mode definition for Adventure or Tournament.</returns>
         public static rimrushSinglePlayerModeDefinition GetMode(rimrushSinglePlayerNarrativeMode mode)
         {
             return mode == rimrushSinglePlayerNarrativeMode.Adventure ? Adventure : Tournament;
         }
 
+        /// <summary>
+        /// Returns the display title for the current tournament stage.
+        /// </summary>
+        /// <param name="tournament">The tournament data to read the stage from.</param>
+        /// <returns>A display title such as "DIVISIONS", "FINAL FOUR", or "GRAND FINAL".</returns>
         public static string GetTournamentStageTitle(rimrushTournamentData tournament)
         {
             if (tournament == null)
@@ -229,6 +273,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Returns a narrative description for the current tournament stage.
+        /// </summary>
+        /// <param name="tournament">The tournament data to read the stage from.</param>
+        /// <returns>A flavor text description matching the current stage.</returns>
         public static string GetTournamentStageDescription(rimrushTournamentData tournament)
         {
             if (tournament == null)
@@ -258,6 +307,11 @@ namespace rimrush
             }
         }
 
+        /// <summary>
+        /// Returns the narrative ending text for the given tournament placement.
+        /// </summary>
+        /// <param name="placement">The player's final placement (1 = champion).</param>
+        /// <returns>An ending description matching the placement.</returns>
         public static string GetTournamentPlacementEnding(int placement)
         {
             switch (placement)

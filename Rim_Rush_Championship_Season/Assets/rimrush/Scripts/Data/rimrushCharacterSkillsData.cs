@@ -1,3 +1,6 @@
+// 角色技能数据
+// 定义 8 个角色各自的专属技能：技能名称、冷却时间、效果描述。每个角色的技能都不一样，有的能加速，有的能增强投篮。
+
 using UnityEngine;
 
 namespace rimrush
@@ -33,6 +36,25 @@ namespace rimrush
         public readonly float ScoreRefundFraction;
         public readonly int FlatScoreBonus;
 
+        /// <summary>
+        /// Creates a new character skill definition with all visual, gameplay, and balance data.
+        /// </summary>
+        /// <param name="skillType">The type of skill.</param>
+        /// <param name="iconSuperId">Icon index used by the super meter UI.</param>
+        /// <param name="skillName">Display name of the skill.</param>
+        /// <param name="iconImageKey">Image key for the skill icon.</param>
+        /// <param name="chargeMaskImageKey">Image key for the charge mask overlay.</param>
+        /// <param name="activateNotice">Text shown when the skill is activated.</param>
+        /// <param name="scoreNotice">Text shown when the skill affects scoring.</param>
+        /// <param name="primaryColor">Primary UI color for the skill.</param>
+        /// <param name="secondaryColor">Secondary UI color for the skill.</param>
+        /// <param name="accentColor">Accent UI color for the skill.</param>
+        /// <param name="effectDuration">Duration of the skill effect in seconds.</param>
+        /// <param name="bonusDuration">Additional bonus duration in seconds.</param>
+        /// <param name="moveSpeedMultiplier">Movement speed multiplier while the skill is active.</param>
+        /// <param name="accuracyModifier">Accuracy bonus applied while the skill is active.</param>
+        /// <param name="scoreRefundFraction">Fraction of score refunded on a successful action.</param>
+        /// <param name="flatScoreBonus">Flat score bonus added on a successful action.</param>
         public rimrushCharacterSkillDefinition(
             rimrushCharacterSkillType skillType,
             int iconSuperId,
@@ -69,14 +91,26 @@ namespace rimrush
             FlatScoreBonus = flatScoreBonus;
         }
 
+        /// <summary>
+        /// Returns true if this skill uses a teleport dunk mechanic.
+        /// </summary>
         public bool UsesTeleportDunk =>
             SkillType == rimrushCharacterSkillType.BloodMoonBlink ||
             SkillType == rimrushCharacterSkillType.HexGate;
 
+        /// <summary>
+        /// Returns true if this skill uses a basket shield mechanic.
+        /// </summary>
         public bool UsesBasketShield => SkillType == rimrushCharacterSkillType.GhostSail;
 
+        /// <summary>
+        /// Returns true if this skill uses a dash mechanic.
+        /// </summary>
         public bool UsesDashSkill => SkillType == rimrushCharacterSkillType.SoulReap;
 
+        /// <summary>
+        /// Returns true if this skill requires possession of the ball to activate.
+        /// </summary>
         public bool UsesPossessionSkill =>
             SkillType == rimrushCharacterSkillType.CarnivalJackpot ||
             SkillType == rimrushCharacterSkillType.BloodMoonBlink ||
@@ -84,18 +118,30 @@ namespace rimrush
             SkillType == rimrushCharacterSkillType.HarvestTime ||
             SkillType == rimrushCharacterSkillType.HexGate;
 
+        /// <summary>
+        /// Returns true if this skill uses a freeze mechanic.
+        /// </summary>
         public bool UsesFreezeSkill => SkillType == rimrushCharacterSkillType.BadLuck;
 
+        /// <summary>
+        /// Returns true if this skill upgrades the score value of the next basket.
+        /// </summary>
         public bool UsesScoreUpgrade =>
             SkillType == rimrushCharacterSkillType.CarnivalJackpot ||
             SkillType == rimrushCharacterSkillType.HarvestTime;
 
+        /// <summary>
+        /// Returns true if the player must have the ball to activate this skill.
+        /// </summary>
         public bool RequiresBallToCast =>
             SkillType == rimrushCharacterSkillType.CarnivalJackpot ||
             SkillType == rimrushCharacterSkillType.BloodMoonBlink ||
             SkillType == rimrushCharacterSkillType.HarvestTime ||
             SkillType == rimrushCharacterSkillType.HexGate;
 
+        /// <summary>
+        /// Returns true if this skill has dedicated icon and charge mask art assets.
+        /// </summary>
         public bool HasStandaloneIconArt =>
             !string.IsNullOrEmpty(IconImageKey) &&
             !string.IsNullOrEmpty(ChargeMaskImageKey);
@@ -198,6 +244,12 @@ namespace rimrush
                 new Color32(0xFF, 0xD9, 0x74, 0xFF))
         };
 
+        /// <summary>
+        /// Returns the skill definition for the given character ID. Falls back to the first
+        /// skill if the ID is out of range.
+        /// </summary>
+        /// <param name="characterId">The character ID to look up.</param>
+        /// <returns>The skill definition for the character.</returns>
         public static rimrushCharacterSkillDefinition Get(int characterId)
         {
             return characterId >= 0 && characterId < Skills.Length

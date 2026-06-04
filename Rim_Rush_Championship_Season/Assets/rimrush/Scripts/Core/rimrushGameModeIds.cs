@@ -1,3 +1,6 @@
+// 游戏模式 ID 常量
+// 定义各种游戏模式的编号：随机快速匹配、快速匹配、训练模式、双人对战、教程。用来区分当前正在玩的是哪种模式。
+
 namespace rimrush
 {
     public static class rimrushGameModeIds

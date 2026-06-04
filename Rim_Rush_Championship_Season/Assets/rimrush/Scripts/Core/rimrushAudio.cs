@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAudio 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 游戏音效和背景音乐管理器
+// 负责播放音效、切换背景音乐、控制音量大小。所有声音播放都通过这个类来调用。
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,11 +18,10 @@ namespace rimrush
         public static rimrushAudio Instance { get; private set; }
 
         /// <summary>
-        /// Executes Create for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create or return the single shared audio manager instance.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="parent">The transform that this audio object will be attached to.</param>
+        /// <returns>The existing instance if one already exists, otherwise creates a new one.</returns>
         public static rimrushAudio Create(Transform parent)
         {
             if (Instance != null)
@@ -46,8 +45,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes On Destroy for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Clear the shared instance reference when this object is destroyed by Unity.
         /// </summary>
         private void OnDestroy()
         {
@@ -58,10 +56,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Play Music for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Start playing a background music track in a loop.
+        /// Does nothing if music is disabled or if the same track is already playing.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
+        /// <param name="key">The resource name of the music file.</param>
         public void PlayMusic(string key)
         {
             if (!MusicEnabled)
@@ -85,8 +83,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Stop Music for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Stop the currently playing background music.
         /// </summary>
         public void StopMusic()
         {
@@ -94,11 +91,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Play for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Play a short sound effect once. Does nothing if sound effects are disabled.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="volume">Input value used by this step of the workflow.</param>
+        /// <param name="key">The resource name of the sound file.</param>
+        /// <param name="volume">Volume from 0 (silent) to 1 (full loud).</param>
         public void Play(string key, float volume = 1f)
         {
             if (!SfxEnabled)
@@ -114,8 +110,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Toggle Music for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Turn background music on if it is off, or off if it is on.
         /// </summary>
         public void ToggleMusic()
         {
@@ -124,8 +119,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Toggle Sfx for the rimrushAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Turn sound effects on if they are off, or off if they are on.
         /// </summary>
         public void ToggleSfx()
         {

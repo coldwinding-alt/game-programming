@@ -1,5 +1,6 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushHelpPanel 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 帮助面板（按键说明和游戏规则）
+// 玩家按帮助按钮后弹出，有键盘操作和游戏规则两个页面。
+// 键盘页面可以点选不同动作，女巫角色会播放对应的演示动画。
 
 using TMPro;
 using UnityEngine;
@@ -35,7 +36,9 @@ namespace rimrush
         DemoPump,
         DemoDash,
         DemoSteal,
-        DemoBlock
+        DemoBlock,
+        QuickTestToggle,
+        QuickTestInfoToggle
     }
 
     [ExecuteAlways]
@@ -71,6 +74,12 @@ namespace rimrush
         [SerializeField] private TMP_Text demoCoachText;
         [SerializeField] private Transform witchMount;
         [SerializeField] private SpriteRenderer witchSpotlight;
+        [SerializeField] private rimrushHelpButton quickTestToggleButton;
+        [SerializeField] private SpriteRenderer quickTestTogglePlate;
+        [SerializeField] private TMP_Text quickTestToggleText;
+        [SerializeField] private rimrushHelpButton quickTestInfoButton;
+        [SerializeField] private GameObject quickTestInfoRoot;
+        [SerializeField] private TMP_Text quickTestInfoText;
 
         private DBLiteArmature witchArmature;
         private rimrushHelpPage currentPage = rimrushHelpPage.Keyboard;
@@ -80,6 +89,7 @@ namespace rimrush
         private float panelTime;
         private float demoTimer;
         private bool demoToggle;
+        private bool quickTestInfoVisible;
 #if UNITY_EDITOR
         private GameObject editorWitchPreviewRoot;
 #endif
@@ -96,8 +106,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Keyboard Page for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Open the help panel to the keyboard page. Creates one if none exists.
         /// </summary>
         public static void ShowKeyboardPage()
         {
@@ -109,8 +118,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Hide Active for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Close whichever help panel is currently open.
         /// </summary>
         public static void HideActive()
         {
@@ -122,8 +130,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Awake for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Remember this panel as the active one when the game starts.
         /// </summary>
         private void Awake()
         {
@@ -148,8 +155,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes On Enable for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Update the editor preview when the component is enabled.
         /// </summary>
         private void OnEnable()
         {
@@ -163,8 +169,7 @@ namespace rimrush
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Executes On Validate for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Refresh the editor preview when a value changes in the Inspector.
         /// </summary>
         private void OnValidate()
         {
@@ -179,8 +184,7 @@ namespace rimrush
 #endif
 
         /// <summary>
-        /// Executes On Destroy for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Clear the active panel reference when this object is destroyed.
         /// </summary>
         private void OnDestroy()
         {
@@ -191,8 +195,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Each frame: animate the panel, check buttons, update the demo, and handle Escape to close.
         /// </summary>
         private void Update()
         {
@@ -220,8 +223,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Late Update for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Make sure the witch character always renders on top of other sprites.
         /// </summary>
         private void LateUpdate()
         {
@@ -241,10 +243,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the single help panel page.
         /// </summary>
-        /// <param name="page">Input value used by this step of the workflow.</param>
         public void Show(rimrushHelpPage page)
         {
             if (panelRoot == null)
@@ -258,15 +258,14 @@ namespace rimrush
             transform.localScale = Vector3.one * 0.985f;
 
             EnsureInitialized();
-            SetPage(page);
+            SetPage(rimrushHelpPage.Keyboard);
+            SetQuickTestInfoVisible(false);
             SelectDemo(rimrushHelpDemo.Block, forceRestart: true);
         }
 
         /// <summary>
-        /// Executes Hide for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Hide the help panel. Plays a button sound by default.
         /// </summary>
-        /// <param name="playSound">Input value used by this step of the workflow.</param>
         public void Hide(bool playSound = true)
         {
             if (!visible)
@@ -287,8 +286,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Hide Immediate for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Hide the panel right away without playing any sound (used on startup).
         /// </summary>
         private void HideImmediate()
         {
@@ -300,8 +298,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Ensure Initialized for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up the witch model and pages the first time the panel is shown.
         /// </summary>
         private void EnsureInitialized()
         {
@@ -311,14 +308,15 @@ namespace rimrush
             }
 
             initialized = true;
+            HideLegacyTabs();
+            EnsureQuickTestToggle();
             BuildWitchPreview();
             SetPage(currentPage);
             SelectDemo(currentDemo, forceRestart: true);
         }
 
         /// <summary>
-        /// Executes Build Witch Preview for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create the witch character model so it can play demo animations.
         /// </summary>
         private void BuildWitchPreview()
         {
@@ -353,8 +351,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Panel Entrance for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Animate the panel opening with a quick scale bounce and a subtle spotlight pulse.
         /// </summary>
         private void UpdatePanelEntrance()
         {
@@ -370,8 +367,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Buttons for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check mouse clicks on every button each frame and route the hit to HandleButton.
         /// </summary>
         private void UpdateButtons()
         {
@@ -395,10 +391,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Handle Button for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Route a button click to the right action (close, switch tab, select demo, etc.).
         /// </summary>
-        /// <param name="action">Input value used by this step of the workflow.</param>
         private void HandleButton(rimrushHelpButtonAction action)
         {
             switch (action)
@@ -410,7 +404,7 @@ namespace rimrush
                     SetPage(rimrushHelpPage.Keyboard);
                     break;
                 case rimrushHelpButtonAction.RulesTab:
-                    SetPage(rimrushHelpPage.Rules);
+                    SetPage(rimrushHelpPage.Keyboard);
                     break;
                 case rimrushHelpButtonAction.ReplayTutorial:
                     HandleReplayTutorialRequest();
@@ -436,6 +430,15 @@ namespace rimrush
                 case rimrushHelpButtonAction.DemoBlock:
                     SelectDemo(rimrushHelpDemo.Block);
                     break;
+                case rimrushHelpButtonAction.QuickTestToggle:
+                    rimrushQuickTestSettings.Enabled = !rimrushQuickTestSettings.Enabled;
+                    RefreshQuickTestToggle();
+                    UpdateDemoSelections();
+                    break;
+                case rimrushHelpButtonAction.QuickTestInfoToggle:
+                    SetQuickTestInfoVisible(!quickTestInfoVisible);
+                    UpdateDemoSelections();
+                    break;
             }
         }
 
@@ -451,25 +454,23 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Page for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Keep the help panel on the single controls page.
         /// </summary>
-        /// <param name="page">Input value used by this step of the workflow.</param>
         private void SetPage(rimrushHelpPage page)
         {
-            currentPage = page;
+            currentPage = rimrushHelpPage.Keyboard;
             if (keyboardPageRoot != null)
             {
-                keyboardPageRoot.SetActive(page == rimrushHelpPage.Keyboard);
+                keyboardPageRoot.SetActive(true);
             }
 
             if (rulesPageRoot != null)
             {
-                rulesPageRoot.SetActive(page == rimrushHelpPage.Rules);
+                rulesPageRoot.SetActive(false);
             }
 
-            SetTabVisual(keyboardTabPlate, keyboardTabText, page == rimrushHelpPage.Keyboard);
-            SetTabVisual(rulesTabPlate, rulesTabText, page == rimrushHelpPage.Rules);
+            HideLegacyTabs();
+            RefreshQuickTestToggle();
 
             if (buttons != null)
             {
@@ -482,20 +483,16 @@ namespace rimrush
                     }
 
                     button.SetSelected(
-                        button.Action == rimrushHelpButtonAction.KeyboardTab && page == rimrushHelpPage.Keyboard ||
-                        button.Action == rimrushHelpButtonAction.RulesTab && page == rimrushHelpPage.Rules ||
+                        button.Action == rimrushHelpButtonAction.QuickTestToggle && rimrushQuickTestSettings.Enabled ||
+                        button.Action == rimrushHelpButtonAction.QuickTestInfoToggle && quickTestInfoVisible ||
                         IsDemoButtonSelected(button.Action));
                 }
             }
         }
 
         /// <summary>
-        /// Executes Set Tab Visual for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Highlight the selected tab by changing its plate and text colors.
         /// </summary>
-        /// <param name="plate">Input value used by this step of the workflow.</param>
-        /// <param name="label">Input value used by this step of the workflow.</param>
-        /// <param name="selected">Input value used by this step of the workflow.</param>
         private static void SetTabVisual(SpriteRenderer plate, TMP_Text label, bool selected)
         {
             if (plate != null)
@@ -513,12 +510,202 @@ namespace rimrush
             }
         }
 
+        private void HideLegacyTabs()
+        {
+            SetButtonRootActive(keyboardTabPlate, false);
+            SetButtonRootActive(rulesTabPlate, false);
+        }
+
+        private void EnsureQuickTestToggle()
+        {
+            if (panelRoot == null || !Application.isPlaying)
+            {
+                return;
+            }
+
+            var tab = Resources.Load<Sprite>("rimrush/Help/help_tab");
+            var card = Resources.Load<Sprite>("rimrush/Help/help_card");
+            if (quickTestToggleButton == null)
+            {
+                var root = new GameObject("QuickTestToggle");
+                root.transform.SetParent(panelRoot.transform, false);
+
+                const float x = 604f;
+                const float y = 58f;
+                const float width = 160f;
+                const float height = 34f;
+                quickTestTogglePlate = AddRuntimeSprite("QuickTestTogglePlate", tab, x, y, 0.84f, width, height, 915, root.transform);
+                quickTestToggleText = rimrushRender.TmpText(
+                    "QuickTestToggleLabel",
+                    string.Empty,
+                    x,
+                    y + 1f,
+                    10,
+                    new Color32(0xE9, 0xF3, 0xFF, 0xFF),
+                    TextAnchor.MiddleCenter,
+                    935,
+                    root.transform,
+                    rimrushTextStyle.TournamentAccent);
+
+                quickTestToggleButton = root.AddComponent<rimrushHelpButton>();
+                quickTestToggleButton.Configure(
+                    rimrushHelpButtonAction.QuickTestToggle,
+                    new Vector2(x, y),
+                    new Vector2(width, height),
+                    root.transform,
+                    new[] { quickTestTogglePlate },
+                    new[] { quickTestToggleText },
+                    new Color32(0x22, 0x30, 0x4C, 0xF2),
+                    new Color32(0x36, 0x4C, 0x70, 0xFF),
+                    new Color32(0x2D, 0xE6, 0xA3, 0xEE),
+                    new Color32(0xE9, 0xF3, 0xFF, 0xFF),
+                    new Color32(0xFF, 0xD6, 0x6A, 0xFF),
+                    new Color32(0x14, 0x1B, 0x25, 0xFF),
+                    1.035f);
+                AppendButton(quickTestToggleButton);
+            }
+
+            if (quickTestInfoButton == null)
+            {
+                var infoRoot = new GameObject("QuickTestInfoButton");
+                infoRoot.transform.SetParent(panelRoot.transform, false);
+                const float infoX = 704f;
+                const float infoY = 58f;
+                const float infoSize = 26f;
+                var infoPlate = AddRuntimeSprite("QuickTestInfoButtonPlate", tab, infoX, infoY, 0.84f, infoSize, infoSize, 916, infoRoot.transform);
+                var infoLabel = rimrushRender.TmpText(
+                    "QuickTestInfoButtonLabel",
+                    "?",
+                    infoX,
+                    infoY + 1f,
+                    13,
+                    new Color32(0xE9, 0xF3, 0xFF, 0xFF),
+                    TextAnchor.MiddleCenter,
+                    936,
+                    infoRoot.transform,
+                    rimrushTextStyle.TournamentAccent);
+
+                quickTestInfoButton = infoRoot.AddComponent<rimrushHelpButton>();
+                quickTestInfoButton.Configure(
+                    rimrushHelpButtonAction.QuickTestInfoToggle,
+                    new Vector2(infoX, infoY),
+                    new Vector2(infoSize, infoSize),
+                    infoRoot.transform,
+                    new[] { infoPlate },
+                    new[] { infoLabel },
+                    new Color32(0x22, 0x30, 0x4C, 0xF2),
+                    new Color32(0x36, 0x4C, 0x70, 0xFF),
+                    new Color32(0x2D, 0xE6, 0xA3, 0xEE),
+                    new Color32(0xE9, 0xF3, 0xFF, 0xFF),
+                    new Color32(0xFF, 0xD6, 0x6A, 0xFF),
+                    new Color32(0x14, 0x1B, 0x25, 0xFF),
+                    1.035f);
+                AppendButton(quickTestInfoButton);
+            }
+
+            if (quickTestInfoRoot == null)
+            {
+                quickTestInfoRoot = new GameObject("QuickTestInfoPanel");
+                quickTestInfoRoot.transform.SetParent(panelRoot.transform, false);
+                AddRuntimeSprite("QuickTestInfoPanelPlate", card, 596f, 113f, 0.842f, 292f, 72f, 912, quickTestInfoRoot.transform);
+                quickTestInfoText = rimrushRender.TmpText(
+                    "QuickTestInfoText",
+                    QuickTestInfoCopy(),
+                    466f,
+                    113f,
+                    9,
+                    new Color32(0xF4, 0xF7, 0xFF, 0xFF),
+                    TextAnchor.MiddleLeft,
+                    936,
+                    quickTestInfoRoot.transform,
+                    rimrushTextStyle.TournamentBody);
+            }
+
+            SetQuickTestInfoVisible(false);
+        }
+
+        private void RefreshQuickTestToggle()
+        {
+            SetText(quickTestToggleText, rimrushQuickTestSettings.Enabled ? "FAST TEST: ON" : "FAST TEST: OFF");
+            quickTestToggleButton?.SetSelected(rimrushQuickTestSettings.Enabled);
+        }
+
+        private void SetQuickTestInfoVisible(bool visible)
+        {
+            quickTestInfoVisible = visible;
+            if (quickTestInfoRoot != null)
+            {
+                quickTestInfoRoot.SetActive(visible);
+            }
+
+            quickTestInfoButton?.SetSelected(visible);
+        }
+
+        private static string QuickTestInfoCopy()
+        {
+            return "DEV / REVIEW TEST\n15s matches + no skill cooldowns.\nQuickly try the full game flow.";
+        }
+
+        private void AppendButton(rimrushHelpButton button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (buttons == null)
+            {
+                buttons = new[] { button };
+                return;
+            }
+
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] == button)
+                {
+                    return;
+                }
+            }
+
+            var length = buttons.Length;
+            System.Array.Resize(ref buttons, length + 1);
+            buttons[length] = button;
+        }
+
+        private static void SetButtonRootActive(SpriteRenderer plate, bool active)
+        {
+            if (plate == null)
+            {
+                return;
+            }
+
+            var root = plate.transform.parent != null ? plate.transform.parent.gameObject : plate.gameObject;
+            if (root != null)
+            {
+                root.SetActive(active);
+            }
+        }
+
+        private static SpriteRenderer AddRuntimeSprite(string name, Sprite sprite, float x, float y, float z, float width, float height, int sortingOrder, Transform parent)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = sortingOrder;
+            var spriteWidth = sprite != null ? Mathf.Max(1f, sprite.rect.width) : 1f;
+            var spriteHeight = sprite != null ? Mathf.Max(1f, sprite.rect.height) : 1f;
+            go.transform.position = rimrushConstants.PixelToWorldSnapped(x, y, z);
+            go.transform.localScale = new Vector3(
+                rimrushConstants.UnitsPerPixel * width / spriteWidth,
+                rimrushConstants.UnitsPerPixel * height / spriteHeight,
+                1f);
+            return renderer;
+        }
+
         /// <summary>
-        /// Executes Select Demo for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Choose which move to demonstrate (move, jump, shoot, pump, dash, steal, block).
         /// </summary>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <param name="forceRestart">Input value used by this step of the workflow.</param>
         private void SelectDemo(rimrushHelpDemo demo, bool forceRestart = false)
         {
             if (!forceRestart && currentDemo == demo)
@@ -536,10 +723,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Demo for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Restart the demo animation when the timer runs out.
         /// </summary>
-        /// <param name="dt">Input value used by this step of the workflow.</param>
         private void UpdateDemo(float dt)
         {
             if (witchArmature == null || currentPage != rimrushHelpPage.Keyboard)
@@ -556,8 +741,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Restart Demo Animation for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Play the witch animation for the currently selected demo.
         /// </summary>
         private void RestartDemoAnimation()
         {
@@ -599,11 +783,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Demo Repeat For for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return how long (in seconds) each demo animation lasts before repeating.
         /// </summary>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float DemoRepeatFor(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -626,8 +807,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Demo Copy for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Update the title, description, and coach tip text for the selected demo.
         /// </summary>
         private void UpdateDemoCopy()
         {
@@ -637,11 +817,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Demo Title for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the display title for each demo type (e.g. "MOVE", "JUMP").
         /// </summary>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoTitle(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -664,11 +841,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Demo Description for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the key instructions for each demo type.
         /// </summary>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoDescription(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -691,11 +865,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Demo Coach Note for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a short coaching tip for each demo type.
         /// </summary>
-        /// <param name="demo">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string DemoCoachNote(rimrushHelpDemo demo)
         {
             switch (demo)
@@ -718,8 +889,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Demo Selections for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Highlight the button and row for the currently selected demo.
         /// </summary>
         private void UpdateDemoSelections()
         {
@@ -751,19 +921,16 @@ namespace rimrush
                 if (button != null)
                 {
                     button.SetSelected(
-                        button.Action == rimrushHelpButtonAction.KeyboardTab && currentPage == rimrushHelpPage.Keyboard ||
-                        button.Action == rimrushHelpButtonAction.RulesTab && currentPage == rimrushHelpPage.Rules ||
+                        button.Action == rimrushHelpButtonAction.QuickTestToggle && rimrushQuickTestSettings.Enabled ||
+                        button.Action == rimrushHelpButtonAction.QuickTestInfoToggle && quickTestInfoVisible ||
                         IsDemoButtonSelected(button.Action));
                 }
             }
         }
 
         /// <summary>
-        /// Executes Is Demo Button Selected for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check if a button matches the currently selected demo.
         /// </summary>
-        /// <param name="action">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool IsDemoButtonSelected(rimrushHelpButtonAction action)
         {
             return action == rimrushHelpButtonAction.DemoMove && currentDemo == rimrushHelpDemo.Move ||
@@ -776,8 +943,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Apply Witch Sorting Order for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Bump the witch's sorting order so she renders in front of the panel background.
         /// </summary>
         private void ApplyWitchSortingOrder()
         {
@@ -785,10 +951,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Apply Witch Sorting Order for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Bump every sprite on the given armature so it draws on top of other UI.
         /// </summary>
-        /// <param name="armature">Input value used by this step of the workflow.</param>
         private static void ApplyWitchSortingOrder(DBLiteArmature armature)
         {
             if (armature == null)
@@ -808,10 +972,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Hide Preview Ball for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Hide the ball sprite from the witch preview so only the character is visible.
         /// </summary>
-        /// <param name="armature">Input value used by this step of the workflow.</param>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
             if (armature == null)
@@ -824,11 +986,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Text for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Safely set text on a TextMeshPro label (handles null gracefully).
         /// </summary>
-        /// <param name="textMesh">Input value used by this step of the workflow.</param>
-        /// <param name="value">Input value used by this step of the workflow.</param>
         private static void SetText(TMP_Text textMesh, string value)
         {
             if (textMesh == null)
@@ -841,11 +1000,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Find Active Panel for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Find the active help panel, or spawn one from the prefab if createFallback is true.
         /// </summary>
-        /// <param name="createFallback">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushHelpPanel FindActivePanel(bool createFallback)
         {
             if (activePanel != null)
@@ -872,10 +1028,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Find Scene Panel for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Look for an existing help panel already placed in the current scene.
         /// </summary>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushHelpPanel FindScenePanel()
         {
             var panels = Resources.FindObjectsOfTypeAll<rimrushHelpPanel>();
@@ -893,23 +1047,8 @@ namespace rimrush
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Executes Editor Configure for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Wire up all serialized references from the prefab builder (editor only).
         /// </summary>
-        /// <param name="panelRootObject">Input value used by this step of the workflow.</param>
-        /// <param name="keyboardPage">Input value used by this step of the workflow.</param>
-        /// <param name="rulesPage">Input value used by this step of the workflow.</param>
-        /// <param name="configuredButtons">Input value used by this step of the workflow.</param>
-        /// <param name="keyboardTab">Input value used by this step of the workflow.</param>
-        /// <param name="rulesTab">Input value used by this step of the workflow.</param>
-        /// <param name="keyboardLabel">Input value used by this step of the workflow.</param>
-        /// <param name="rulesLabel">Input value used by this step of the workflow.</param>
-        /// <param name="demoRows">Input value used by this step of the workflow.</param>
-        /// <param name="demoTitle">Input value used by this step of the workflow.</param>
-        /// <param name="demoDescription">Input value used by this step of the workflow.</param>
-        /// <param name="demoCoach">Input value used by this step of the workflow.</param>
-        /// <param name="configuredWitchMount">Input value used by this step of the workflow.</param>
-        /// <param name="configuredWitchSpotlight">Input value used by this step of the workflow.</param>
         public void EditorConfigure(
             GameObject panelRootObject,
             GameObject keyboardPage,
@@ -924,7 +1063,13 @@ namespace rimrush
             TMP_Text demoDescription,
             TMP_Text demoCoach,
             Transform configuredWitchMount,
-            SpriteRenderer configuredWitchSpotlight)
+            SpriteRenderer configuredWitchSpotlight,
+            rimrushHelpButton configuredQuickTestToggleButton,
+            SpriteRenderer configuredQuickTestTogglePlate,
+            TMP_Text configuredQuickTestToggleText,
+            rimrushHelpButton configuredQuickTestInfoButton,
+            GameObject configuredQuickTestInfoRoot,
+            TMP_Text configuredQuickTestInfoText)
         {
             panelRoot = panelRootObject;
             keyboardPageRoot = keyboardPage;
@@ -940,11 +1085,16 @@ namespace rimrush
             demoCoachText = demoCoach;
             witchMount = configuredWitchMount;
             witchSpotlight = configuredWitchSpotlight;
+            quickTestToggleButton = configuredQuickTestToggleButton;
+            quickTestTogglePlate = configuredQuickTestTogglePlate;
+            quickTestToggleText = configuredQuickTestToggleText;
+            quickTestInfoButton = configuredQuickTestInfoButton;
+            quickTestInfoRoot = configuredQuickTestInfoRoot;
+            quickTestInfoText = configuredQuickTestInfoText;
         }
 
         /// <summary>
-        /// Executes Apply Editor Preview State for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show a live preview of the panel in the Unity editor (not at runtime).
         /// </summary>
         private void ApplyEditorPreviewState()
         {
@@ -978,16 +1128,16 @@ namespace rimrush
                 rulesPageRoot.SetActive(false);
             }
 
-            SetTabVisual(keyboardTabPlate, keyboardTabText, true);
-            SetTabVisual(rulesTabPlate, rulesTabText, false);
+            HideLegacyTabs();
+            RefreshQuickTestToggle();
+            SetQuickTestInfoVisible(false);
             UpdateDemoCopy();
             UpdateDemoSelections();
             EnsureEditorWitchPreview();
         }
 
         /// <summary>
-        /// Executes Ensure Editor Witch Preview for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create or reuse a witch preview for the editor scene view.
         /// </summary>
         private void EnsureEditorWitchPreview()
         {
@@ -1038,8 +1188,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Destroy Editor Witch Preview for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Remove the editor-only witch preview object.
         /// </summary>
         private void DestroyEditorWitchPreview()
         {
@@ -1071,10 +1220,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Set Editor Preview Hide Flags for the rimrushHelpPanel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Mark editor preview objects so they are not saved into the scene or build.
         /// </summary>
-        /// <param name="root">Input value used by this step of the workflow.</param>
         private static void SetEditorPreviewHideFlags(GameObject root)
         {
             if (root == null)

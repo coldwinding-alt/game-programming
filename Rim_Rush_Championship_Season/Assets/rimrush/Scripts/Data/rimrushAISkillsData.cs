@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushAISkillsData 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// AI 技能参数表
+// 根据 12 个难度等级，定义 AI 在每个等级下的投篮命中率、抢断概率、反应速度等数值。难度越高，AI 越厉害。
 
 using UnityEngine;
 
@@ -350,11 +350,10 @@ namespace rimrush
         public static int MaxSkillIndex => Profiles.Length - 1;
 
         /// <summary>
-        /// Executes Get for the rimrushAISkillsData workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the AI skill profile for the given difficulty index. Clamps to the valid range.
         /// </summary>
-        /// <param name="skillIndex">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="skillIndex">Zero-based difficulty index (0 = easiest, MaxSkillIndex = hardest).</param>
+        /// <returns>The AI skill profile for that difficulty level.</returns>
         public static rimrushAISkillProfile Get(int skillIndex)
         {
             var index = Mathf.Clamp(skillIndex, 0, Profiles.Length - 1);

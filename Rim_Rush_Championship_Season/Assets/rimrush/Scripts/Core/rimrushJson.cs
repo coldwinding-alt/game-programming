@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushJson 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 简易 JSON 解析器
+// 自己写的 JSON 解析工具，不依赖外部库。能把 JSON 字符串解析成字典和列表，也能把字典和列表转回 JSON 字符串。用于保存和读取游戏数据。
 
 using System;
 using System.Collections.Generic;
@@ -11,11 +11,11 @@ namespace rimrush
     public static class rimrushJson
     {
         /// <summary>
-        /// Executes Parse for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Parses a JSON string into a dictionary, list, string, number, bool, or null.
+        /// Returns null if the input is empty or contains invalid JSON.
         /// </summary>
-        /// <param name="json">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="json">The raw JSON text to parse.</param>
+        /// <returns>The parsed object, or null on failure.</returns>
         public static object Parse(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -28,59 +28,54 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes As Dict for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Casts a parsed JSON object to a string-keyed dictionary, or returns null if it is not a dictionary.
         /// </summary>
-        /// <param name="value">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="value">A parsed JSON object.</param>
+        /// <returns>The dictionary, or null if the value is not a dictionary.</returns>
         public static Dictionary<string, object> AsDict(object value)
         {
             return value as Dictionary<string, object>;
         }
 
         /// <summary>
-        /// Executes As List for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Casts a parsed JSON object to a list, or returns null if it is not a list.
         /// </summary>
-        /// <param name="value">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="value">A parsed JSON object.</param>
+        /// <returns>The list, or null if the value is not a list.</returns>
         public static List<object> AsList(object value)
         {
             return value as List<object>;
         }
 
         /// <summary>
-        /// Executes Dict for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Looks up a nested dictionary value by key from a parent dictionary. Returns null if the key is missing or the value is not a dictionary.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="dict">The parent dictionary to search in.</param>
+        /// <param name="key">The key to look up.</param>
+        /// <returns>The nested dictionary, or null.</returns>
         public static Dictionary<string, object> Dict(Dictionary<string, object> dict, string key)
         {
             return dict != null && dict.TryGetValue(key, out var value) ? AsDict(value) : null;
         }
 
         /// <summary>
-        /// Executes List for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Looks up a list value by key from a dictionary. Returns null if the key is missing or the value is not a list.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="dict">The dictionary to search in.</param>
+        /// <param name="key">The key to look up.</param>
+        /// <returns>The list, or null.</returns>
         public static List<object> List(Dictionary<string, object> dict, string key)
         {
             return dict != null && dict.TryGetValue(key, out var value) ? AsList(value) : null;
         }
 
         /// <summary>
-        /// Executes String for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Reads a string value from a dictionary by key. Returns the fallback if the key is missing or the value is null.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="fallback">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="dict">The dictionary to read from.</param>
+        /// <param name="key">The key whose string value to return.</param>
+        /// <param name="fallback">Value returned when the key is missing or null.</param>
+        /// <returns>The string value, or the fallback.</returns>
         public static string String(Dictionary<string, object> dict, string key, string fallback = "")
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -92,13 +87,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Float for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Reads a float value from a dictionary by key. Converts number types automatically. Returns the fallback if missing or null.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="fallback">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="dict">The dictionary to read from.</param>
+        /// <param name="key">The key whose float value to return.</param>
+        /// <param name="fallback">Value returned when the key is missing or null.</param>
+        /// <returns>The float value, or the fallback.</returns>
         public static float Float(Dictionary<string, object> dict, string key, float fallback = 0f)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -110,13 +104,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Int for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Reads an integer value from a dictionary by key. Converts number types automatically. Returns the fallback if missing or null.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="fallback">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="dict">The dictionary to read from.</param>
+        /// <param name="key">The key whose integer value to return.</param>
+        /// <param name="fallback">Value returned when the key is missing or null.</param>
+        /// <returns>The integer value, or the fallback.</returns>
         public static int Int(Dictionary<string, object> dict, string key, int fallback = 0)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -128,13 +121,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Bool for the rimrushJson workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Reads a boolean value from a dictionary by key. Returns the fallback if the key is missing, null, or not a boolean.
         /// </summary>
-        /// <param name="dict">Input value used by this step of the workflow.</param>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="fallback">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="dict">The dictionary to read from.</param>
+        /// <param name="key">The key whose boolean value to return.</param>
+        /// <param name="fallback">Value returned when the key is missing or not a boolean.</param>
+        /// <returns>The boolean value, or the fallback.</returns>
         public static bool Bool(Dictionary<string, object> dict, string key, bool fallback = false)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -151,21 +143,19 @@ namespace rimrush
             private int index;
 
             /// <summary>
-            /// Executes rimrush Json Reader for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Creates a reader that will parse the given JSON string character by character.
             /// </summary>
-            /// <param name="source">Input value used by this step of the workflow.</param>
+            /// <param name="source">The raw JSON text to read.</param>
             public rimrushJsonReader(string source)
             {
                 this.source = source;
             }
 
             /// <summary>
-            /// Executes Try Read Document for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a complete JSON document. Returns true if the entire input was consumed as valid JSON.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The parsed result (dictionary, list, string, number, bool, or null).</param>
+            /// <returns>True if parsing succeeded and the entire input was used.</returns>
             public bool TryReadDocument(out object value)
             {
                 value = null;
@@ -180,11 +170,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Value for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads the next JSON value (object, array, string, number, bool, or null) from the current position.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The parsed value.</param>
+            /// <returns>True if a valid JSON value was read.</returns>
             private bool TryReadValue(out object value)
             {
                 value = null;
@@ -214,11 +203,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Object for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a JSON object (starting with '{') into a string-keyed dictionary.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The resulting dictionary, or null on failure.</param>
+            /// <returns>True if the object was parsed successfully.</returns>
             private bool TryReadObject(out object value)
             {
                 var map = new Dictionary<string, object>();
@@ -270,11 +258,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Array for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a JSON array (starting with '[') into a list of objects.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The resulting list, or null on failure.</param>
+            /// <returns>True if the array was parsed successfully.</returns>
             private bool TryReadArray(out object value)
             {
                 var items = new List<object>();
@@ -314,11 +301,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read String for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a JSON string (wrapped in double quotes) as a boxed object.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The string value wrapped in an object.</param>
+            /// <returns>True if the string was parsed successfully.</returns>
             private bool TryReadString(out object value)
             {
                 value = null;
@@ -332,11 +318,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read String Value for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a JSON string and handles escape sequences (like \n, \t, \uXXXX).
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The decoded string, or null on failure.</param>
+            /// <returns>True if the string was parsed successfully.</returns>
             private bool TryReadStringValue(out string value)
             {
                 value = null;
@@ -377,11 +362,11 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Append Escape Sequence for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads one escape character after a backslash and appends the decoded character to the builder.
+            /// Supports \", \\, \/, \b, \f, \n, \r, \t, and \uXXXX.
             /// </summary>
-            /// <param name="builder">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="builder">The StringBuilder to append the decoded character to.</param>
+            /// <returns>True if the escape sequence was valid.</returns>
             private bool TryAppendEscapeSequence(StringBuilder builder)
             {
                 if (IsAtEnd)
@@ -423,11 +408,11 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Append Unicode for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a \uXXXX escape sequence and appends the decoded Unicode character(s) to the builder.
+            /// Handles surrogate pairs (two consecutive \u sequences for characters above U+FFFF).
             /// </summary>
-            /// <param name="builder">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="builder">The StringBuilder to append the decoded character(s) to.</param>
+            /// <returns>True if the hex digits were valid.</returns>
             private bool TryAppendUnicode(StringBuilder builder)
             {
                 if (!TryReadHexQuad(out var firstUnit))
@@ -462,11 +447,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Hex Quad for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads exactly four hexadecimal characters and converts them to an integer value.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The decoded 16-bit integer.</param>
+            /// <returns>True if four valid hex digits were read.</returns>
             private bool TryReadHexQuad(out int value)
             {
                 value = 0;
@@ -490,13 +474,12 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Keyword for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Attempts to match a literal keyword (like "true", "false", or "null") and returns the corresponding value.
             /// </summary>
-            /// <param name="keyword">Input value used by this step of the workflow.</param>
-            /// <param name="replacement">Input value used by this step of the workflow.</param>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="keyword">The keyword text to match (e.g. "true").</param>
+            /// <param name="replacement">The C# value to return on a match (e.g. true for "true", null for "null").</param>
+            /// <param name="value">The replacement value if matched, or null.</param>
+            /// <returns>True if the keyword was matched at the current position.</returns>
             private bool TryReadKeyword(string keyword, object replacement, out object value)
             {
                 value = null;
@@ -511,11 +494,11 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Number for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads a JSON number (integer or decimal, with optional sign and exponent).
+            /// Returns a long for whole numbers or a double for decimals.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The parsed number as a long or double.</param>
+            /// <returns>True if a valid number was read.</returns>
             private bool TryReadNumber(out object value)
             {
                 value = null;
@@ -573,10 +556,9 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Integer Digits for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads the integer part of a number (one or more digits, with no leading zeros except for "0" itself).
             /// </summary>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <returns>True if at least one digit was read.</returns>
             private bool TryReadIntegerDigits()
             {
                 if (IsAtEnd)
@@ -605,10 +587,9 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Try Read Decimal Digits for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Reads one or more digits for the fractional or exponent part of a number.
             /// </summary>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <returns>True if at least one digit was read.</returns>
             private bool TryReadDecimalDigits()
             {
                 var start = index;
@@ -621,11 +602,10 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Matches for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Checks whether the given keyword appears at the current read position without advancing.
             /// </summary>
-            /// <param name="keyword">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="keyword">The text to match against.</param>
+            /// <returns>True if the keyword is found at the current position.</returns>
             private bool Matches(string keyword)
             {
                 if (index + keyword.Length > source.Length)
@@ -645,8 +625,7 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Skip Whitespace for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Advances past any spaces, tabs, and newlines until a non-whitespace character is reached.
             /// </summary>
             private void SkipWhitespace()
             {
@@ -657,21 +636,19 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Read Char for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Returns the character at the current position and advances to the next position.
             /// </summary>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <returns>The character that was read.</returns>
             private char ReadChar()
             {
                 return source[index++];
             }
 
             /// <summary>
-            /// Executes Try Consume for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// If the current character matches the expected one, advances past it and returns true. Otherwise returns false.
             /// </summary>
-            /// <param name="expected">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="expected">The character to match.</param>
+            /// <returns>True if the character was found and consumed.</returns>
             private bool TryConsume(char expected)
             {
                 if (IsAtEnd || source[index] != expected)
@@ -684,33 +661,30 @@ namespace rimrush
             }
 
             /// <summary>
-            /// Executes Is Number Start for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Returns true if the character could be the start of a JSON number (a digit or a minus sign).
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The character to test.</param>
+            /// <returns>True if the character is '-' or a digit.</returns>
             private static bool IsNumberStart(char value)
             {
                 return value == '-' || char.IsDigit(value);
             }
 
             /// <summary>
-            /// Executes Is Non Zero Digit for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Returns true if the character is a digit from 1 to 9 (not zero).
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+            /// <param name="value">The character to test.</param>
+            /// <returns>True if the character is between '1' and '9'.</returns>
             private static bool IsNonZeroDigit(char value)
             {
                 return value >= '1' && value <= '9';
             }
 
             /// <summary>
-            /// Executes Decode Hex Digit for the rimrushJsonReader workflow.
-            /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+            /// Converts a single hexadecimal character (0-9, a-f, A-F) to its integer value.
             /// </summary>
-            /// <param name="value">Input value used by this step of the workflow.</param>
-            /// <returns>Result produced for downstream logic in the current frame.</returns>
+            /// <param name="value">The hex character to decode.</param>
+            /// <returns>The integer value (0-15), or -1 if the character is not a valid hex digit.</returns>
             private static int DecodeHexDigit(char value)
             {
                 if (value >= '0' && value <= '9')

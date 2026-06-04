@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushMatchProcessor 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+// 投篮和得分判定逻辑
+// 处理篮球是否投进篮筐的检测，计算得几分（2 分还是 3 分），判断球有没有碰到篮筐边缘，以及补篮和盖帽后的得分。
 
 namespace rimrush
 {
@@ -22,8 +22,7 @@ namespace rimrush
         public bool IsHuman => isHuman;
 
         /// <summary>
-        /// Executes Reset for the rimrushMatchProcessor workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Clears all shot and block tracking state, preparing for a new play.
         /// </summary>
         public void Reset()
         {
@@ -35,12 +34,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Shoot for the rimrushMatchProcessor workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Records that a shot was taken. Resets previous state and stores who shot, from which side, and the throw type.
         /// </summary>
-        /// <param name="side">Input value used by this step of the workflow.</param>
-        /// <param name="shotByHuman">Input value used by this step of the workflow.</param>
-        /// <param name="shotThrowType">Input value used by this step of the workflow.</param>
+        /// <param name="side">Which side of the court the shooter is on (-1 = left, 1 = right).</param>
+        /// <param name="shotByHuman">True if the shot was taken by a human player, false for AI.</param>
+        /// <param name="shotThrowType">0 = long-range shot, positive = normal shot, negative = special.</param>
         public void Shoot(int side, bool shotByHuman, int shotThrowType, int shooterPlayerNo = -1)
         {
             Reset();
@@ -51,11 +49,10 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Block for the rimrushMatchProcessor workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Records that a block was attempted. This lets a scored ball still count as 2 points if it was deflected by the blocker.
         /// </summary>
-        /// <param name="side">Input value used by this step of the workflow.</param>
-        /// <param name="blockedByHuman">Input value used by this step of the workflow.</param>
+        /// <param name="side">Which side the blocking player is on (-1 = left, 1 = right).</param>
+        /// <param name="blockedByHuman">True if the block was by a human player, false for AI.</param>
         public void Block(int side, bool blockedByHuman)
         {
             // Preserve the current shot/sensor chain so a blocked ball can still
@@ -65,11 +62,11 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Process Sensor for the rimrushMatchProcessor workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Processes a basket sensor trigger. The upper sensor must be hit before the lower sensor
+        /// for the basket to count as a valid score.
         /// </summary>
-        /// <param name="sensorType">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="sensorType">0 = upper sensor, nonzero = lower sensor.</param>
+        /// <returns>True if the ball scored (upper then lower sensor were both triggered).</returns>
         public bool ProcessSensor(int sensorType)
         {
             if (!canScore)
@@ -95,12 +92,12 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Resolve Points For Score for the rimrushMatchProcessor workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Calculates how many points a successful basket is worth. Blocked shots that still go in
+        /// are always worth 2 points; long-range shots are worth 3; everything else uses the fallback value.
         /// </summary>
-        /// <param name="scoringSide">Input value used by this step of the workflow.</param>
-        /// <param name="fallbackPoints">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="scoringSide">Which side scored (-1 = left, 1 = right).</param>
+        /// <param name="fallbackPoints">Default point value (usually 2 or 3 based on distance).</param>
+        /// <returns>The number of points awarded for this basket.</returns>
         public int ResolvePointsForScore(int scoringSide, int fallbackPoints)
         {
             // Scores armed by a self-block chain are settled as 2 points.

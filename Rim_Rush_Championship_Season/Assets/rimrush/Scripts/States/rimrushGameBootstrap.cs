@@ -1,5 +1,5 @@
-// 文件作用：这个脚本负责本模块的核心逻辑与协作调度。
-// 概括：rimrushGameBootstrap 用来处理对应子系统的关键流程，先看这里能快速定位功能入口。
+﻿// 游戏启动器和菜单界面控制器
+// 管理从主菜单到比赛开始的所有界面：选择 1 人或 2 人模式、选择角色和篮球皮肤、选择难度、进入冒险模式或锦标赛、显示故事漫画、锦标赛对阵图和颁奖画面。也负责创建摄像机和音频系统。
 
 using System.Text;
 using UnityEngine;
@@ -14,6 +14,7 @@ namespace rimrush
         {
             PlayerCount,
             MatchType,
+            SinglePlayerCharacterSetup,
             StoryIntro,
             AdventurePreview,
             AdventureMap,
@@ -285,8 +286,7 @@ namespace rimrush
         private Texture2D adventureTreasureMapTexture;
 
         /// <summary>
-        /// Executes Awake for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up the camera, audio, and show the main menu when the game starts.
         /// </summary>
         private void Awake()
         {
@@ -354,8 +354,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Run each frame: update the game if a match is active, or handle menu input if we are on a menu screen.
         /// </summary>
         private void Update()
         {
@@ -460,15 +459,14 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Handle Menu Escape for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Handle the Escape key on each menu screen. Goes back to the previous screen or cancels the current action.
         /// </summary>
         private void HandleMenuEscape()
         {
             switch (currentScreen)
             {
                 case rimrushBootstrapScreen.MatchType:
-                    ShowPlayerCountMenu();
+                    ShowSinglePlayerCharacterSetup();
                     break;
                 case rimrushBootstrapScreen.StoryIntro:
                     if (storyIntroLoreOpen)
@@ -486,6 +484,7 @@ namespace rimrush
                 case rimrushBootstrapScreen.TournamentSetup:
                     ShowMatchTypeMenu();
                     break;
+                case rimrushBootstrapScreen.SinglePlayerCharacterSetup:
                 case rimrushBootstrapScreen.TwoPlayerSetup:
                 case rimrushBootstrapScreen.TrainingSetup:
                     ShowPlayerCountMenu();
@@ -502,8 +501,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Player Count Menu for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the main menu with buttons for 1 Player, 2 Player, Tutorial, and Training.
         /// </summary>
         private void ShowPlayerCountMenu()
         {
@@ -516,7 +514,7 @@ namespace rimrush
             {
                 pendingParticipantMode = rimrushParticipantMode.OnePlayer;
                 inventory.SetParticipantMode(pendingParticipantMode);
-                ShowMatchTypeMenu();
+                ShowSinglePlayerCharacterSetup();
             }, runtimeRoot));
 
             menuButtons.Add(new rimrushMenuButton("2 PLAYER", rimrushConstants.Width2, 306f, 228f, 52f, () =>
@@ -530,9 +528,49 @@ namespace rimrush
             menuButtons.Add(new rimrushMenuButton("TRAINING", rimrushConstants.Width2, 426f, 228f, 52f, ShowTrainingSetup, runtimeRoot));
         }
 
+        private void ShowSinglePlayerCharacterSetup()
+        {
+            currentScreen = rimrushBootstrapScreen.SinglePlayerCharacterSetup;
+            pendingParticipantMode = rimrushParticipantMode.OnePlayer;
+            rimrushInventory.Instance.SetParticipantMode(pendingParticipantMode);
+            BeginMenuScreen(false, false, "bg10000");
+            AddTitle("SELECT CHARACTER", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
+
+            CreatePanel("SinglePlayerCharacterPanel", rimrushConstants.Width2, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
+            CreateCharacterSelector(
+                "SinglePlayer",
+                "CHARACTER",
+                rimrushConstants.Width2,
+                quickCharacterId,
+                () =>
+                {
+                    quickCharacterId = WrapCharacter(quickCharacterId, -1);
+                    ShowSinglePlayerCharacterSetup();
+                },
+                () =>
+                {
+                    quickCharacterId = WrapCharacter(quickCharacterId, 1);
+                    ShowSinglePlayerCharacterSetup();
+                },
+                306f,
+                3.85f,
+                398f);
+
+            menuButtons.Add(new rimrushMenuButton("BACK", 312f, 452f, 150f, 42f, ShowPlayerCountMenu, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("NEXT", 488f, 452f, 150f, 42f, ConfirmSinglePlayerCharacter, runtimeRoot));
+        }
+
+        private void ConfirmSinglePlayerCharacter()
+        {
+            tournamentCharacterId = quickCharacterId;
+            var inventory = rimrushInventory.Instance;
+            inventory.SetQuickSelection(quickCharacterId);
+            inventory.SetTournamentSelection(tournamentCharacterId);
+            ShowMatchTypeMenu();
+        }
+
         /// <summary>
-        /// Executes Show Match Type Menu for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the mode choice screen with Adventure (Story Run) and Tournament (Season Run) cards.
         /// </summary>
         private void ShowMatchTypeMenu()
         {
@@ -565,7 +603,7 @@ namespace rimrush
                 "ENTER CUP",
                 ShowTournamentStoryIntro);
 
-            menuButtons.Add(new rimrushMenuButton("BACK", rimrushConstants.Width2, 442f, 180f, 42f, ShowPlayerCountMenu, runtimeRoot));
+            menuButtons.Add(new rimrushMenuButton("BACK", rimrushConstants.Width2, 442f, 180f, 42f, ShowSinglePlayerCharacterSetup, runtimeRoot));
         }
 
         private void ShowAdventureStoryIntro()
@@ -575,7 +613,7 @@ namespace rimrush
 
         private void ShowTournamentStoryIntro()
         {
-            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Tournament, ShowTournamentSetup);
+            ShowSinglePlayerStoryIntro(rimrushSinglePlayerNarrativeMode.Tournament, StartTournamentFlow);
         }
 
         private void ShowSinglePlayerStoryIntro(
@@ -1555,8 +1593,8 @@ namespace rimrush
                 $"{key}_ModeLabel",
                 routeLabel,
                 centerX,
-                239f,
-                11,
+                206f,
+                13,
                 accentColor,
                 TextAnchor.MiddleCenter,
                 20,
@@ -1606,8 +1644,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Single Player Setup for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the quick match setup screen where the player picks a character, ball skin, and difficulty.
         /// </summary>
         private void ShowSinglePlayerSetup()
         {
@@ -1672,8 +1709,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Training Setup for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the training mode setup screen where the player picks a character and ball skin.
         /// </summary>
         private void ShowTrainingSetup()
         {
@@ -1728,8 +1764,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Two Player Setup for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the two-player setup screen where both players pick their characters and a shared ball skin.
         /// </summary>
         private void ShowTwoPlayerSetup()
         {
@@ -1818,8 +1853,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Tournament Setup for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the tournament setup screen where the player picks a character before entering the bracket.
         /// </summary>
         private void ShowTournamentSetup()
         {
@@ -1906,8 +1940,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Quick Match Flow for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save the quick match choices and launch the match.
         /// </summary>
         private void StartQuickMatchFlow()
         {
@@ -1920,8 +1953,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Training Flow for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save the training choices and launch the training session.
         /// </summary>
         private void StartTrainingFlow()
         {
@@ -1934,8 +1966,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tutorial Flow for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save the training character selection and launch the tutorial.
         /// </summary>
         private void StartTutorialFlow()
         {
@@ -1962,8 +1993,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tournament Flow for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save the tournament character selection and start the tournament bracket.
         /// </summary>
         private void StartTournamentFlow()
         {
@@ -1981,8 +2011,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Menu Controls Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Open the keyboard controls help panel.
         /// </summary>
         private void ShowMenuControlsPanel()
         {
@@ -1990,10 +2019,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Handle Pending Tutorial Action for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Check if the player chose to replay the tutorial, start training, or start a quick match from the tutorial outro.
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool HandlePendingTutorialAction()
         {
             var inventory = rimrushInventory.Instance;
@@ -2018,8 +2045,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Tournament Finals Flow for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Begin the tournament finals stage and show the updated bracket.
         /// </summary>
         private void StartTournamentFinalsFlow()
         {
@@ -2028,8 +2054,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Two Player Match for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Save the two-player character choices and launch the versus match.
         /// </summary>
         private void StartTwoPlayerMatch()
         {
@@ -2039,8 +2064,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Tournament Bracket for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the tournament bracket screen with all current matches and standings.
         /// </summary>
         private void ShowTournamentBracket()
         {
@@ -2052,6 +2076,7 @@ namespace rimrush
             var titleFontSize = regularSeasonScreen ? 32 : 30;
             var subtitleY = regularSeasonScreen ? 72f : 62f;
             var subtitleFontSize = regularSeasonScreen ? 16 : 14;
+            var statusText = GetTournamentStatusText(tournament);
 
             var backgroundFrame = tournament.Completed || !regularSeasonScreen
                 ? "bg10000"
@@ -2062,10 +2087,16 @@ namespace rimrush
                 titleY,
                 titleFontSize,
                 new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            AddSubtitle(
-                GetTournamentStatusText(tournament),
+            CreateMenuText(
+                $"{statusText}_Subtitle",
+                statusText,
+                rimrushConstants.Width2,
                 subtitleY,
-                subtitleFontSize);
+                subtitleFontSize,
+                regularSeasonScreen ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
+                TextAnchor.MiddleCenter,
+                19,
+                rimrushTextStyle.Subtitle);
             CreateTournamentBracketBoard(tournament);
             CreateTournamentSeasonBanner(tournament);
 
@@ -2109,8 +2140,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Show Tournament Awards for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show the end-of-season awards ceremony with placement ribbons and trophies.
         /// </summary>
         private void ShowTournamentAwards()
         {
@@ -2135,8 +2165,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Start Gameplay for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Clear the menu scene and create a new match game object.
         /// </summary>
         private void StartGameplay()
         {
@@ -2149,12 +2178,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Begin Menu Screen for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Set up a fresh menu screen with background, optional logo, and controls hint.
         /// </summary>
-        /// <param name="showLogo">Input value used by this step of the workflow.</param>
-        /// <param name="showControls">Input value used by this step of the workflow.</param>
-        /// <param name="backgroundFrame">Input value used by this step of the workflow.</param>
         private void BeginMenuScreen(bool showLogo, bool showControls, string backgroundFrame)
         {
             ClearRuntime();
@@ -2235,8 +2260,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Enable Gameplay Presentation for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Switch the camera to pixel-perfect gameplay mode.
         /// </summary>
         private void EnableGameplayPresentation()
         {
@@ -2253,8 +2277,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Enable Native Menu Presentation for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Switch the camera to native-resolution menu mode so text stays sharp.
         /// </summary>
         private void EnableNativeMenuPresentation()
         {
@@ -2264,10 +2287,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Refresh Native Menu Viewport for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Recalculate the camera viewport when the window is resized in native menu mode.
         /// </summary>
-        /// <param name="force">Input value used by this step of the workflow.</param>
         private void RefreshNativeMenuViewport(bool force = false)
         {
             if (!usingNativeUiPresentation || mainCamera == null)
@@ -2305,13 +2326,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Add Title for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Place a large title label at the top of a menu screen.
         /// </summary>
-        /// <param name="title">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
         private void AddTitle(string title, float y, int fontSize, Color color)
         {
             CreateMenuText(
@@ -2327,12 +2343,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Add Subtitle for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Place a smaller subtitle label below the title on a menu screen.
         /// </summary>
-        /// <param name="subtitle">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
         private void AddSubtitle(string subtitle, float y, int fontSize = 18)
         {
             CreateMenuText(
@@ -2348,19 +2360,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Menu Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create a text label on a menu screen using the native text layer when available.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="text">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="style">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateMenuText(
             string name,
             string text,
@@ -2538,46 +2539,24 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Should Use Native Menu Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return true if the native text layer is active and can render text.
         /// </summary>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private bool ShouldUseNativeMenuText(Transform parent)
         {
             return nativeMenuTextLayer != null && parent != null && nativeMenuTextLayer.Owns(parent);
         }
 
         /// <summary>
-        /// Executes Create Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a semi-transparent dark panel rectangle on a menu screen.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="tint">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint)
         {
             return CreatePanel(name, x, y, width, height, sortingOrder, tint, runtimeRoot);
         }
 
         /// <summary>
-        /// Executes Create Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a semi-transparent dark panel rectangle on a menu screen.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="tint">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
             var standalonePanel = TryCreateStandaloneTintPanel(name, x, y, width, height, sortingOrder, tint, parent);
@@ -2653,11 +2632,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Options Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the ball skin and difficulty selector panel used on setup screens.
         /// </summary>
-        /// <param name="prefix">Input value used by this step of the workflow.</param>
-        /// <param name="centerX">Input value used by this step of the workflow.</param>
         private void CreateOptionsPanel(string prefix, float centerX)
         {
             CreateMenuText(
@@ -2673,17 +2649,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Ball Selector for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show left/right arrows and a ball preview so the player can pick a ball skin.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="centerX">Input value used by this step of the workflow.</param>
-        /// <param name="selection">Input value used by this step of the workflow.</param>
-        /// <param name="previousBallAction">Input value used by this step of the workflow.</param>
-        /// <param name="nextBallAction">Input value used by this step of the workflow.</param>
-        /// <param name="headerY">Input value used by this step of the workflow.</param>
-        /// <param name="previewY">Input value used by this step of the workflow.</param>
-        /// <param name="labelY">Input value used by this step of the workflow.</param>
         private void CreateBallSelector(
             string key,
             float centerX,
@@ -2729,11 +2696,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Hell Difficulty Warning for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Display a warning message when the hardest difficulty is selected.
         /// </summary>
-        /// <param name="centerX">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
         private void CreateHellDifficultyWarning(float centerX, float y)
         {
             CreateMenuText(
@@ -2749,18 +2713,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Character Selector for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show a character portrait with left/right arrows and name label for picking a fighter.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="header">Input value used by this step of the workflow.</param>
-        /// <param name="centerX">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="previousCharacterAction">Input value used by this step of the workflow.</param>
-        /// <param name="nextCharacterAction">Input value used by this step of the workflow.</param>
-        /// <param name="previewY">Input value used by this step of the workflow.</param>
-        /// <param name="previewScale">Input value used by this step of the workflow.</param>
-        /// <param name="nameY">Input value used by this step of the workflow.</param>
         private void CreateCharacterSelector(
             string key,
             string header,
@@ -2845,15 +2799,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Ball Preview for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Render a small preview of the selected ball skin.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="theme">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
         private void CreateBallPreview(string name, rimrushBallTheme theme, float x, float y, float targetPixels, int sortingOrder)
         {
             var sprite = rimrushGameplaySpriteLoader.LoadBallThemeSprite(theme, 0.5f, 0.5f) ??
@@ -2876,14 +2823,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Preview Player for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Show a live animated character model on a setup screen.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="scale">Input value used by this step of the workflow.</param>
         private void CreatePreviewPlayer(string key, int characterId, float x, float y, float scale)
         {
             var previewScale = scale * PreviewScaleFactor * rimrushPlayersData.GetCharacterPreviewScaleMultiplier(characterId);
@@ -2908,10 +2849,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Bracket Board for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw the full tournament bracket with season banners and playoff rounds.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
         private void CreateTournamentBracketBoard(rimrushTournamentData tournament)
         {
             if (tournament.CurrentStage == rimrushTournamentStage.RegularSeason)
@@ -2929,6 +2868,11 @@ namespace rimrush
         private void CreateTournamentSeasonBanner(rimrushTournamentData tournament)
         {
             var title = rimrushSinglePlayerNarrative.GetTournamentStageTitle(tournament);
+            if (title == "DIVISIONS")
+            {
+                return;
+            }
+
             CreatePanel(
                 "TournamentSeasonBannerPanel",
                 rimrushConstants.Width2,
@@ -2950,10 +2894,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Regular Season Board for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw the regular season standings table with win/loss records.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
         private void CreateTournamentRegularSeasonBoard(rimrushTournamentData tournament)
         {
             CreatePanel(
@@ -2970,15 +2912,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Division Board for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw one division column in the season standings with team entries.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="title">Input value used by this step of the workflow.</param>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <param name="divisionIndex">Input value used by this step of the workflow.</param>
         private void CreateTournamentDivisionBoard(string key, float x, float y, string title, rimrushTournamentData tournament, int divisionIndex)
         {
             const float boardWidth = 316f;
@@ -3140,18 +3075,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Standings Body Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a text label inside a standings row cell.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="text">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private TextMesh CreateStandingsBodyText(
             string name,
             string text,
@@ -3184,18 +3109,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Standings Accent Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add a highlighted text label inside a standings row cell.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="text">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="fontSize">Input value used by this step of the workflow.</param>
-        /// <param name="color">Input value used by this step of the workflow.</param>
-        /// <param name="anchor">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private TextMesh CreateStandingsAccentText(
             string name,
             string text,
@@ -3228,10 +3143,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Playoff Board for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw the playoff bracket with semifinal and final match panels.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
         private void CreateTournamentPlayoffBoard(rimrushTournamentData tournament)
         {
             const float playoffBackdropY = 232f;
@@ -3282,15 +3195,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Playoff Match Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a single playoff match card showing two player slots.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="title">Input value used by this step of the workflow.</param>
-        /// <param name="match">Input value used by this step of the workflow.</param>
-        /// <param name="current">Input value used by this step of the workflow.</param>
         private void CreateTournamentPlayoffMatchPanel(string key, float x, float y, string title, rimrushTournamentMatchResult match, bool current)
         {
             const float panelWidth = 180f;
@@ -3372,19 +3278,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Playoff Entry for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw one player slot inside a playoff match card with portrait and name.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="winner">Input value used by this step of the workflow.</param>
-        /// <param name="badgeX">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="nameX">Input value used by this step of the workflow.</param>
-        /// <param name="scoreX">Input value used by this step of the workflow.</param>
-        /// <param name="score">Input value used by this step of the workflow.</param>
-        /// <param name="showScore">Input value used by this step of the workflow.</param>
-        /// <param name="current">Input value used by this step of the workflow.</param>
         private void CreateTournamentPlayoffEntry(
             string key,
             int characterId,
@@ -3435,10 +3330,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Summary Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw the results summary at the bottom of the bracket with player status.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
         private void CreateTournamentSummaryPanel(rimrushTournamentData tournament)
         {
             var summaryCompleted = tournament.Completed;
@@ -3536,19 +3429,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Badge for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a small labeled badge (e.g. WIN, LOSS, SEED) on the bracket.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="glowScale">Input value used by this step of the workflow.</param>
-        /// <param name="badgeScale">Input value used by this step of the workflow.</param>
-        /// <param name="portraitPixels">Input value used by this step of the workflow.</param>
-        /// <param name="glowColor">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateTournamentBadge(
             string key,
             int characterId,
@@ -3593,34 +3475,24 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Format Winning Percentage for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a win count and total games into a percentage string like "75.0%".
         /// </summary>
-        /// <param name="value">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string FormatWinningPercentage(float value)
         {
             return value.ToString("0.000");
         }
 
         /// <summary>
-        /// Executes Match Includes Player for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return true if the given match has the player character in either slot.
         /// </summary>
-        /// <param name="match">Input value used by this step of the workflow.</param>
-        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
         private static bool MatchIncludesPlayer(rimrushTournamentMatchResult match, int playerCharacterId)
         {
             return match != null && (match.LeftCharacterId == playerCharacterId || match.RightCharacterId == playerCharacterId);
         }
 
         /// <summary>
-        /// Executes Get Player Playoff Match for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Find which playoff match contains the player.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static rimrushTournamentMatchResult GetPlayerPlayoffMatch(rimrushTournamentData tournament)
         {
             if (MatchIncludesPlayer(tournament.SemiFinalResults[0], tournament.PlayerCharacterId))
@@ -3637,12 +3509,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Matchup Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a short label like "P1 vs P3" for a bracket match.
         /// </summary>
-        /// <param name="match">Input value used by this step of the workflow.</param>
-        /// <param name="fallback">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetMatchupText(rimrushTournamentMatchResult match, string fallback)
         {
             if (match == null || match.LeftCharacterId < 0 || match.RightCharacterId < 0)
@@ -3654,10 +3522,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Scene for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Build the full awards ceremony screen with podiums, trophies, and banners.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsScene(rimrushTournamentData tournament)
         {
             ResetTournamentAwardsState();
@@ -3804,11 +3670,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Group for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a group of awards items at a given position with a label.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateTournamentAwardsGroup(string name)
         {
             var group = new GameObject(name);
@@ -3817,15 +3680,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Badge for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a small badge used in the awards ceremony.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="placement">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="champion">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsBadge(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
             rimrushRender.PortraitBackplate(
@@ -3855,15 +3711,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Lane Label for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a lane label in the awards ceremony.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="placement">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="champion">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsLaneLabel(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
             var panelTint = GetTournamentAwardsPlateTint(placement, champion);
@@ -3897,18 +3746,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Character Group for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a group of character portraits in the awards ceremony.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="placement">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="scale">Input value used by this step of the workflow.</param>
-        /// <param name="z">Input value used by this step of the workflow.</param>
-        /// <param name="shadowScale">Input value used by this step of the workflow.</param>
-        /// <param name="glowAlpha">Input value used by this step of the workflow.</param>
-        /// <param name="landingDelay">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsCharacterGroup(
             string key,
             TournamentAwardsPlacement placement,
@@ -3973,11 +3812,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Build Tournament Awards Placements for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Create the ordered list of placement data for the awards ceremony.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private TournamentAwardsPlacement[] BuildTournamentAwardsPlacements(rimrushTournamentData tournament)
         {
             return new[]
@@ -3989,13 +3825,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Awards Placement for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a single placement entry in the awards ceremony.
         /// </summary>
-        /// <param name="placement">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="playerCharacterId">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static TournamentAwardsPlacement CreateTournamentAwardsPlacement(int placement, int characterId, int playerCharacterId)
         {
             Color accentColor = placement == 1
@@ -4021,15 +3852,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Register Tournament Awards Animation for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Add an item to the awards animation queue so it slides in with a delay.
         /// </summary>
-        /// <param name="root">Input value used by this step of the workflow.</param>
-        /// <param name="startOffsetPixels">Input value used by this step of the workflow.</param>
-        /// <param name="delay">Input value used by this step of the workflow.</param>
-        /// <param name="duration">Input value used by this step of the workflow.</param>
-        /// <param name="startScale">Input value used by this step of the workflow.</param>
-        /// <param name="fade">Input value used by this step of the workflow.</param>
         private void RegisterTournamentAwardsAnimation(Transform root, Vector2 startOffsetPixels, float delay, float duration, float startScale = 0.94f, bool fade = true)
         {
             if (root == null)
@@ -4072,10 +3896,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Update Tournament Awards Sequence for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Tick the awards entrance animations each frame.
         /// </summary>
-        /// <param name="deltaTime">Input value used by this step of the workflow.</param>
         private void UpdateTournamentAwardsSequence(float deltaTime)
         {
             if (currentScreen != rimrushBootstrapScreen.TournamentAwards || runtimeRoot == null)
@@ -4114,11 +3936,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Apply Tournament Awards Alpha for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Fade all awards sprites and text to a given opacity.
         /// </summary>
-        /// <param name="item">Input value used by this step of the workflow.</param>
-        /// <param name="alpha">Input value used by this step of the workflow.</param>
         private static void ApplyTournamentAwardsAlpha(TournamentAwardsAnimatedItem item, float alpha)
         {
             alpha = Mathf.Clamp01(alpha);
@@ -4152,22 +3971,16 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Pixel Offset To Local for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Convert a pixel-space offset to a local-space offset relative to a parent transform.
         /// </summary>
-        /// <param name="pixelOffset">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static Vector3 PixelOffsetToLocal(Vector2 pixelOffset)
         {
             return new Vector3(pixelOffset.x * rimrushConstants.UnitsPerPixel, -pixelOffset.y * rimrushConstants.UnitsPerPixel, 0f);
         }
 
         /// <summary>
-        /// Executes Ease Out Back01 for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Apply an overshoot ease curve. Returns values that briefly exceed 1 before settling.
         /// </summary>
-        /// <param name="value">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static float EaseOutBack01(float value)
         {
             value = Mathf.Clamp01(value);
@@ -4177,11 +3990,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Match Loser Character Id for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the character id of the loser in a given match.
         /// </summary>
-        /// <param name="match">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetMatchLoserCharacterId(rimrushTournamentMatchResult match)
         {
             if (match == null || !match.Completed)
@@ -4203,11 +4013,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Tournament Awards Player Message for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the congratulatory or consolation message for the player placement.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetTournamentAwardsPlayerMessage(rimrushTournamentData tournament)
         {
             switch (tournament.PlayerPlacement)
@@ -4259,11 +4066,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Placement Short Label for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a short ordinal like "1st", "2nd", "3rd" for a placement number.
         /// </summary>
-        /// <param name="placement">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetPlacementShortLabel(int placement)
         {
             switch (placement)
@@ -4280,33 +4084,16 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Portrait for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a character portrait sprite at the given position and scale.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder)
         {
             return CreateTournamentPortrait(name, characterId, x, y, targetPixels, sortingOrder, runtimeRoot);
         }
 
         /// <summary>
-        /// Executes Create Tournament Portrait for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a character portrait sprite at the given position and scale.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="targetPixels">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
             var targetSize = targetPixels * rimrushPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
@@ -4334,14 +4121,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Tournament Mini Badge for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a small badge used in tournament displays.
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
         private void CreateTournamentMiniBadge(string key, int characterId, float x, float y, int sortingOrder)
         {
             rimrushRender.PortraitBackplate(
@@ -4359,37 +4140,16 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Framed Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a bordered panel rectangle on a menu screen.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="frame">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="tint">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint)
         {
             return CreateFramedPanel(name, frame, x, y, width, height, sortingOrder, tint, runtimeRoot);
         }
 
         /// <summary>
-        /// Executes Create Framed Panel for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a bordered panel rectangle on a menu screen.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="frame">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="tint">Input value used by this step of the workflow.</param>
-        /// <param name="parent">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
             var standalonePanel = TryCreateStandaloneFrame(name, frame, x, y, width, height, sortingOrder, tint, parent);
@@ -4751,16 +4511,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Horizontal Connector for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a horizontal line connecting two bracket positions.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="startX">Input value used by this step of the workflow.</param>
-        /// <param name="endX">Input value used by this step of the workflow.</param>
-        /// <param name="y">Input value used by this step of the workflow.</param>
-        /// <param name="highlighted">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="thickness">Input value used by this step of the workflow.</param>
         private void CreateHorizontalConnector(string name, float startX, float endX, float y, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
             var left = Mathf.Min(startX, endX);
@@ -4778,16 +4530,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Vertical Connector for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw a vertical line connecting two bracket positions.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="x">Input value used by this step of the workflow.</param>
-        /// <param name="startY">Input value used by this step of the workflow.</param>
-        /// <param name="endY">Input value used by this step of the workflow.</param>
-        /// <param name="highlighted">Input value used by this step of the workflow.</param>
-        /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        /// <param name="thickness">Input value used by this step of the workflow.</param>
         private void CreateVerticalConnector(string name, float x, float startY, float endY, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
             var top = Mathf.Min(startY, endY);
@@ -4805,15 +4549,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Create Elbow Connector for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Draw an L-shaped line connecting two bracket positions.
         /// </summary>
-        /// <param name="name">Input value used by this step of the workflow.</param>
-        /// <param name="startX">Input value used by this step of the workflow.</param>
-        /// <param name="startY">Input value used by this step of the workflow.</param>
-        /// <param name="endX">Input value used by this step of the workflow.</param>
-        /// <param name="endY">Input value used by this step of the workflow.</param>
-        /// <param name="highlighted">Input value used by this step of the workflow.</param>
         private void CreateElbowConnector(string name, float startX, float startY, float endX, float endY, bool highlighted)
         {
             var midX = (startX + endX) * 0.5f;
@@ -4823,14 +4560,8 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Get Compact Font Size for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a smaller font size if the text is too long for the available width.
         /// </summary>
-        /// <param name="text">Input value used by this step of the workflow.</param>
-        /// <param name="shortSize">Input value used by this step of the workflow.</param>
-        /// <param name="mediumSize">Input value used by this step of the workflow.</param>
-        /// <param name="longSize">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetCompactFontSize(string text, int shortSize, int mediumSize, int longSize)
         {
             if (string.IsNullOrEmpty(text))
@@ -4852,8 +4583,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Reset Tournament Awards State for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Clear all awards animation data so the ceremony can be rebuilt.
         /// </summary>
         private void ResetTournamentAwardsState()
         {
@@ -4865,8 +4595,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Seed Two Player Selection for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Pick default characters for the two-player setup so both sides start with different fighters.
         /// </summary>
         private void SeedTwoPlayerSelection()
         {
@@ -4876,8 +4605,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Clear Runtime for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Destroy all menu or gameplay objects and reset the scene.
         /// </summary>
         private void ClearRuntime()
         {
@@ -4907,8 +4635,7 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Toggle Background Music for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Mute or unmute the background music.
         /// </summary>
         private static void ToggleBackgroundMusic()
         {
@@ -4916,29 +4643,23 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes No Op Action for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Empty placeholder callback that does nothing.
         /// </summary>
         private static void NoOpAction()
         {
         }
 
         /// <summary>
-        /// Executes Get Music Icon Index for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return 0 if music is playing, 1 if muted (used to pick the right button icon).
         /// </summary>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int GetMusicIconIndex()
         {
             return rimrushAudio.Instance != null && rimrushAudio.Instance.MusicEnabled ? 0 : 1;
         }
 
         /// <summary>
-        /// Executes Get Tournament Status Text for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return a status line like "SEASON RUN / ROUND 3" for the bracket header.
         /// </summary>
-        /// <param name="tournament">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string GetTournamentStatusText(rimrushTournamentData tournament)
         {
             if (tournament.Completed)
@@ -4987,23 +4708,16 @@ namespace rimrush
         }
 
         /// <summary>
-        /// Executes Character Name Or Tbd for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Return the character name, or "TBD" if the slot is empty.
         /// </summary>
-        /// <param name="characterId">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static string CharacterNameOrTbd(int characterId)
         {
             return characterId >= 0 ? rimrushPlayersData.GetCharacterName(characterId) : "TBD";
         }
 
         /// <summary>
-        /// Executes Wrap Character for the TournamentStandingsRowViewModel workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// Move to the next or previous character id, wrapping around the full roster.
         /// </summary>
-        /// <param name="currentCharacterId">Input value used by this step of the workflow.</param>
-        /// <param name="direction">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
         private static int WrapCharacter(int currentCharacterId, int direction)
         {
             return rimrushPlayersData.StepCharacterId(currentCharacterId, direction);
