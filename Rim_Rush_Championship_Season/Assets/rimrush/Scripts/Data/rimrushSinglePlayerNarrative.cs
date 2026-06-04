@@ -100,7 +100,7 @@ namespace rimrush
         public const string TournamentSubtitle = "Win the season and become the Lantern Champion.";
         public const string TournamentResultSubtitle = "MOON LANTERN RESULT";
         public const string TournamentSeasonCompleteTitle = "SEASON COMPLETE";
-        public const string TournamentFormatLine = "FORMAT: 8 PLAYERS / 2 DIVISIONS";
+        public const string TournamentFormatLine = "8 PLAYERS / 2 DIVISIONS";
         public const string AdventurePreviewStatus = "PARK MAP PLAYABLE";
         public const string TournamentPreviewStatus = "FULL SEASON PLAYABLE";
         public const string TournamentSeasonBanner = "PUBLIC CHAMPIONSHIP SEASON";
@@ -217,13 +217,13 @@ namespace rimrush
             switch (tournament.CurrentStage)
             {
                 case rimrushTournamentStage.RegularSeason:
-                    return tournament.RegularSeasonCompleted ? "FINAL FOUR POSTER" : "DIVISION NIGHTS";
+                    return tournament.RegularSeasonCompleted ? "FINAL FOUR" : "DIVISIONS";
                 case rimrushTournamentStage.SemiFinal:
-                    return "FINAL FOUR CEREMONY";
+                    return "FINAL FOUR";
                 case rimrushTournamentStage.ThirdPlace:
-                    return "BRONZE STAGE";
+                    return "3RD PLACE";
                 case rimrushTournamentStage.Final:
-                    return "GRAND DOME FINAL";
+                    return "GRAND FINAL";
                 default:
                     return TournamentSeasonBanner;
             }

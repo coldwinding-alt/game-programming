@@ -118,6 +118,7 @@ namespace rimrush
         private bool blockRetryPending;
         private float blockRetryAt;
         private bool putbackJumped;
+        private bool putbackWindowOpened;
         private bool putbackAttempted;
         private float putbackAttemptStartedAt;
         private bool putbackScored;
@@ -540,6 +541,7 @@ namespace rimrush
             ResetStep(fullIntro);
             currentStep = TutorialStep.Putback;
             putbackJumped = false;
+            putbackWindowOpened = false;
             putbackAttempted = false;
             putbackAttemptStartedAt = 0f;
             putbackScored = false;
@@ -552,14 +554,13 @@ namespace rimrush
                 1f,
                 -1f);
             core.Ball.TutorialLaunchPutbackBounce(player.Side, 7.5f);
-            player.TutorialPrimePutbackDunk();
             overlay.ShowStep(
                 7,
                 TotalSteps,
                 "PUTBACK",
                 string.Empty,
                 string.Empty,
-                "Read the rim bounce. Press B near it.",
+                "Wait for the bounce. Then W + B.",
                 "W",
                 "B");
         }
@@ -938,35 +939,58 @@ namespace rimrush
                 return;
             }
 
+            var ball = core.Ball;
+            var putbackWindowLive = player != null && player.IsTutorialPutbackBallInWindow(ball);
+            if (putbackWindowLive && !putbackWindowOpened)
+            {
+                putbackWindowOpened = true;
+                player.TutorialPrimePutbackDunk();
+                overlay.UpdateCopy(
+                    "ATTACK THE BOUNCE",
+                    "Ball is coming back up.",
+                    "W + B NOW",
+                    "Jump right into the rebound window.",
+                    "W",
+                    "B");
+                overlay.ShowFeedback("Now. Go off the bounce.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
+            }
+
             if (player != null && !player.IsGrounded && !putbackJumped)
             {
                 putbackJumped = true;
-                overlay.UpdateCopy(
-                    "PRESS B",
-                    "Near the ball.",
-                    "FINISH PUTBACK",
-                    "Press B by rebound.",
-                    "B");
-                overlay.ShowFeedback("Press B now.", new Color32(0xFF, 0xD1, 0x76, 0xFF), ActionFeedbackDuration);
+                if (!putbackWindowOpened)
+                {
+                    overlay.ShowFeedback("Wait for the bounce first.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                }
             }
 
             if (activeTimer >= 2.4f && !stepHintShown)
             {
                 stepHintShown = true;
-                overlay.ShowFeedback("Jump, then B by ball.", new Color32(0xFF, 0xD1, 0x76, 0xFF), HintFeedbackDuration);
+                overlay.ShowFeedback(
+                    putbackWindowOpened ? "Ball is up. W + B." : "Let it bounce, then W + B.",
+                    new Color32(0xFF, 0xD1, 0x76, 0xFF),
+                    HintFeedbackDuration);
+            }
+
+            if (putbackWindowOpened && !putbackAttempted && !putbackWindowLive)
+            {
+                BeginPutback(false);
+                overlay.ShowFeedback("Missed the bounce. Attack the pop-up.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                return;
             }
 
             if (putbackAttempted && activeTimer - putbackAttemptStartedAt >= PutbackRetryWindow)
             {
                 BeginPutback(false);
-                overlay.ShowFeedback("Good try. Meet the ball earlier.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                overlay.ShowFeedback("Good read. Finish it right off the bounce.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
                 return;
             }
 
-            if (!putbackAttempted && activeTimer >= PutbackIdleRetryWindow)
+            if (!putbackWindowOpened && !putbackAttempted && activeTimer >= PutbackIdleRetryWindow)
             {
                 BeginPutback(false);
-                overlay.ShowFeedback("W, then B near ball.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
+                overlay.ShowFeedback("Let it bounce, then attack.", new Color32(0xFF, 0xB6, 0x6B, 0xFF), RetryFeedbackDuration);
             }
         }
 

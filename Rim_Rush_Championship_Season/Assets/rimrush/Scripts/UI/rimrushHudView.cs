@@ -162,8 +162,8 @@ namespace rimrush
 
             scoreboardRoot = CreateHudRoot("ScoreboardRoot", parent);
             CreateScoreboardBackdrop(scoreboardRoot.transform);
-            CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.235f, 81, scoreboardRoot.transform);
-            CreatePortraitAura("RightPortraitAura", ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, 0.235f, 81, scoreboardRoot.transform);
+            CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.34f, 80, scoreboardRoot.transform);
+            CreatePortraitAura("RightPortraitAura", ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, 0.34f, 80, scoreboardRoot.transform);
             CreateCharacterPortrait("LeftPortrait", matchData.CharacterIds[0], ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, scoreboardRoot.transform);
             CreateCharacterPortrait("RightPortrait", matchData.CharacterIds[1], ScoreboardCenterX + PortraitOffsetX, PortraitBaseY, PortraitTargetPixels, PortraitSortingOrder, scoreboardRoot.transform);
 
@@ -390,15 +390,15 @@ namespace rimrush
                 "PostMatchLeftAura",
                 rimrushConstants.Width2 - PostMatchPortraitOffsetX,
                 PostMatchPortraitY,
-                0.24f,
-                134,
+                0.36f,
+                132,
                 postMatchCardRoot.transform);
             postMatchRightAura = CreatePortraitAura(
                 "PostMatchRightAura",
                 rimrushConstants.Width2 + PostMatchPortraitOffsetX,
                 PostMatchPortraitY,
-                0.24f,
-                134,
+                0.36f,
+                132,
                 postMatchCardRoot.transform);
             postMatchLeftPortrait = CreateCharacterPortrait(
                 "PostMatchLeftPortrait",
@@ -538,8 +538,8 @@ namespace rimrush
                 CreatePauseFrame("PauseBoardFallback", "btn_bg0000", rimrushConstants.Width2, PauseBoardY, 456f, 150f, 145, pauseOverlayRoot.transform, new Color(0.22f, 0.84f, 0.95f, 0.94f));
             }
 
-            CreatePortraitAura("PauseLeftPortraitAura", rimrushConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.46f, 146, pauseOverlayRoot.transform);
-            CreatePortraitAura("PauseRightPortraitAura", rimrushConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.46f, 146, pauseOverlayRoot.transform);
+            CreatePortraitAura("PauseLeftPortraitAura", rimrushConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.66f, 144, pauseOverlayRoot.transform);
+            CreatePortraitAura("PauseRightPortraitAura", rimrushConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, 0.66f, 144, pauseOverlayRoot.transform);
             pauseLeftPortrait = CreateCharacterPortrait("PauseLeftPortrait", matchData.CharacterIds[0], rimrushConstants.Width2 - PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
             pauseRightPortrait = CreateCharacterPortrait("PauseRightPortrait", matchData.CharacterIds[1], rimrushConstants.Width2 + PausePortraitOffsetX, PauseBoardY + PausePortraitOffsetY, PausePortraitPixels, 147, pauseOverlayRoot.transform);
             pauseTitleText = rimrushRender.Text(
@@ -1735,28 +1735,17 @@ namespace rimrush
         private static GameObject CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
         {
             const float legacyAuraPixels = 150f;
-            var auraTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.Ui.EmblemOrb));
-            if (auraTexture != null)
-            {
-                var standaloneAura = rimrushRender.Image(name, auraTexture, x, y, 0.5f, 0.5f, sortingOrder, parent);
-                standaloneAura.transform.localScale = new Vector3(
-                    rimrushConstants.UnitsPerPixel * legacyAuraPixels * scale / Mathf.Max(1f, auraTexture.width),
-                    rimrushConstants.UnitsPerPixel * legacyAuraPixels * scale / Mathf.Max(1f, auraTexture.height),
-                    1f);
-                standaloneAura.GetComponent<SpriteRenderer>().color = new Color32(0x46, 0xFF, 0xF0, 0x95);
-                return standaloneAura;
-            }
-
-            var interfaceAtlas = rimrushAtlasCache.Instance.Interface;
-            if (interfaceAtlas == null || !interfaceAtlas.HasFrame("EmblemsBg0000"))
-            {
-                return null;
-            }
-
-            var aura = rimrushRender.Sprite(name, interfaceAtlas, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
-            aura.transform.localScale *= scale;
-            aura.GetComponent<SpriteRenderer>().color = new Color32(0x46, 0xFF, 0xF0, 0x95);
-            return aura;
+            var diameterPixels = legacyAuraPixels * scale;
+            return rimrushRender.PortraitBackplate(
+                name,
+                x,
+                y,
+                diameterPixels,
+                sortingOrder,
+                parent,
+                new Color(0.16f, 0.96f, 0.9f, 0.28f),
+                new Color(0.01f, 0.025f, 0.06f, 0.92f),
+                new Color(0.48f, 1f, 0.94f, 0.95f));
         }
 
         /// <summary>
@@ -1836,7 +1825,7 @@ namespace rimrush
 
     public sealed class rimrushMenuButton
     {
-        private readonly Rect rect;
+        private Rect rect;
         private readonly System.Action action;
         private readonly GameObject sprite;
         private readonly TextMesh label;
@@ -2041,6 +2030,17 @@ namespace rimrush
             }
         }
 
+        public void SetPosition(float x, float y)
+        {
+            rect = new Rect(x - rect.width * 0.5f, y - rect.height * 0.5f, rect.width, rect.height);
+            SetTransformPosition(sprite != null ? sprite.transform : null, x, y);
+
+            if (labelTransform != null)
+            {
+                SetTransformPosition(labelTransform, x, y + 1f);
+            }
+        }
+
         /// <summary>
         /// Executes Set Background Visible for the rimrushMenuButton workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -2068,6 +2068,23 @@ namespace rimrush
             {
                 nativeLabel.gameObject.SetActive(visible && labelVisible);
             }
+        }
+
+        private static void SetTransformPosition(Transform transform, float x, float y)
+        {
+            if (transform == null)
+            {
+                return;
+            }
+
+            var rectTransform = transform as RectTransform;
+            if (rectTransform != null)
+            {
+                rimrushNativeMenuTextLayer.SetPixelPosition(rectTransform, x, y);
+                return;
+            }
+
+            transform.position = rimrushConstants.PixelToWorldSnapped(x, y, transform.position.z);
         }
     }
 

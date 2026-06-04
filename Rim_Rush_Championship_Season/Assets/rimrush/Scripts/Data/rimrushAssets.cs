@@ -61,8 +61,8 @@ namespace rimrush
 
             public static class SkillIcons
             {
-                public const string ReaperAcolyte = "SkillIcons/reaper_acolyte_skill_icon";
-                public const string ReaperAcolyteMask = "SkillIcons/reaper_acolyte_skill_charge_mask";
+                public const string Reaper = "SkillIcons/reaper_skill_icon";
+                public const string ReaperMask = "SkillIcons/reaper_skill_charge_mask";
                 public const string GhostClown = "SkillIcons/ghost_clown_skill_icon";
                 public const string GhostClownMask = "SkillIcons/ghost_clown_skill_charge_mask";
                 public const string SkullPirate = "SkillIcons/skull_pirate_skill_icon";

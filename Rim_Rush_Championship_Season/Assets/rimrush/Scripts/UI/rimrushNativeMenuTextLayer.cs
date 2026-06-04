@@ -146,6 +146,16 @@ namespace rimrush
             return textComponent;
         }
 
+        public static void SetPixelPosition(RectTransform rectTransform, float x, float y)
+        {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.anchoredPosition = PixelToViewportPosition(x, y);
+        }
+
         /// <summary>
         /// Executes Dispose for the rimrushNativeMenuTextLayer workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.

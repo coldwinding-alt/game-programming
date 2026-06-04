@@ -676,7 +676,10 @@ internal static class rimrushTextStyles
 }
 
 public static class rimrushRender
-{
+    {
+        private const int PortraitBackplateTextureSize = 192;
+        private static readonly Dictionary<string, Texture2D> PortraitBackplateTextures = new Dictionary<string, Texture2D>();
+
         /// <summary>
         /// Executes Sprite for the rimrushRender workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
@@ -735,6 +738,132 @@ public static class rimrushRender
             renderer.sortingOrder = sortingOrder;
             ApplyPixelTransform(go.transform, x, y);
             return go;
+        }
+
+        public static GameObject PortraitBackplate(
+            string name,
+            float x,
+            float y,
+            float diameterPixels,
+            int sortingOrder,
+            Transform parent,
+            Color glowColor,
+            Color fillColor,
+            Color ringColor)
+        {
+            var root = new GameObject(name);
+            if (parent != null)
+            {
+                root.transform.SetParent(parent, false);
+            }
+
+            ApplyPixelTransform(root.transform, x, y);
+            var safeDiameter = Mathf.Max(1f, diameterPixels);
+            AddPortraitBackplateLayer(
+                $"{name}_Glow",
+                GetPortraitBackplateTexture("glow", 0f, 0.98f, 0.28f, true),
+                safeDiameter * 1.22f,
+                sortingOrder,
+                root.transform,
+                glowColor);
+            AddPortraitBackplateLayer(
+                $"{name}_Fill",
+                GetPortraitBackplateTexture("fill", 0f, 0.86f, 0.025f, false),
+                safeDiameter * 0.88f,
+                sortingOrder + 1,
+                root.transform,
+                fillColor);
+            AddPortraitBackplateLayer(
+                $"{name}_Ring",
+                GetPortraitBackplateTexture("ring", 0.78f, 0.96f, 0.02f, false),
+                safeDiameter,
+                sortingOrder + 2,
+                root.transform,
+                ringColor);
+            AddPortraitBackplateLayer(
+                $"{name}_InnerRing",
+                GetPortraitBackplateTexture("inner_ring", 0.68f, 0.72f, 0.018f, false),
+                safeDiameter * 0.92f,
+                sortingOrder + 2,
+                root.transform,
+                new Color(0.55f, 1f, 0.95f, Mathf.Min(0.62f, ringColor.a * 0.62f)));
+            return root;
+        }
+
+        private static void AddPortraitBackplateLayer(
+            string name,
+            Texture2D texture,
+            float diameterPixels,
+            int sortingOrder,
+            Transform parent,
+            Color tint)
+        {
+            var layer = new GameObject(name);
+            layer.transform.SetParent(parent, false);
+            layer.transform.localPosition = Vector3.zero;
+            layer.transform.localRotation = Quaternion.identity;
+            layer.transform.localScale = new Vector3(
+                diameterPixels / Mathf.Max(1f, texture.width),
+                diameterPixels / Mathf.Max(1f, texture.height),
+                1f);
+
+            var sprite = UnityEngine.Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                1f,
+                0,
+                SpriteMeshType.FullRect);
+            sprite.name = texture.name;
+            var renderer = layer.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sortingOrder = sortingOrder;
+            renderer.color = tint;
+        }
+
+        private static Texture2D GetPortraitBackplateTexture(string key, float innerRadius, float outerRadius, float softness, bool glow)
+        {
+            if (PortraitBackplateTextures.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var texture = new Texture2D(PortraitBackplateTextureSize, PortraitBackplateTextureSize, TextureFormat.RGBA32, false)
+            {
+                name = $"PortraitBackplate_{key}",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var pixels = new Color32[PortraitBackplateTextureSize * PortraitBackplateTextureSize];
+            var center = (PortraitBackplateTextureSize - 1) * 0.5f;
+            var radiusScale = Mathf.Max(1f, center);
+
+            for (var y = 0; y < PortraitBackplateTextureSize; y++)
+            {
+                for (var x = 0; x < PortraitBackplateTextureSize; x++)
+                {
+                    var dx = (x - center) / radiusScale;
+                    var dy = (y - center) / radiusScale;
+                    var distance = Mathf.Sqrt(dx * dx + dy * dy);
+                    var outerAlpha = 1f - Mathf.SmoothStep(outerRadius - softness, outerRadius, distance);
+                    var innerAlpha = innerRadius <= 0f
+                        ? 1f
+                        : Mathf.SmoothStep(innerRadius, innerRadius + softness, distance);
+                    var alpha = Mathf.Clamp01(outerAlpha * innerAlpha);
+                    if (glow)
+                    {
+                        alpha *= Mathf.Clamp01(1f - distance / Mathf.Max(0.0001f, outerRadius));
+                        alpha = Mathf.Pow(alpha, 1.55f);
+                    }
+
+                    pixels[y * PortraitBackplateTextureSize + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            PortraitBackplateTextures[key] = texture;
+            return texture;
         }
 
     /// <summary>

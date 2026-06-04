@@ -90,8 +90,9 @@ namespace rimrush
         private const float PreviewArmatureYOffset = -24f;
         private const float PreviewArmatureScale = 0.82f;
         private const float NativeUiAspect = rimrushConstants.DisplayW / (float)rimrushConstants.DisplayH;
-        private const float MenuLogoScaleX = 0.78f;
-        private const float MenuLogoScaleY = 0.68f;
+        private const float MenuLogoCenterY = 96f;
+        private const float MenuLogoMaxWidth = 280f;
+        private const float MenuLogoMaxHeight = 188f;
         private const float TournamentBoardX = rimrushConstants.Width2;
         private const float TournamentBoardY = 250f;
         private const float TournamentBoardScale = 0.92f;
@@ -201,17 +202,26 @@ namespace rimrush
         private const float StoryIntroPauseY = 456f;
         private const float StoryIntroSkipX = 748f;
         private const float StoryIntroSkipY = 456f;
-        private const float StoryIntroLoreButtonX = 734f;
+        private const float StoryIntroLoreButtonX = 776f;
         private const float StoryIntroLoreButtonY = 234f;
+        private const float StoryIntroLoreOpenButtonX = StoryIntroLorePanelX;
+        private const float StoryIntroLoreOpenButtonY = StoryIntroLorePanelY + 108f;
         private const float StoryIntroLoreButtonHitWidth = 112f;
-        private const float StoryIntroLoreButtonHitHeight = 40f;
-        private const float StoryIntroLoreIconOffsetX = -32f;
-        private const float StoryIntroLoreLabelOffsetX = -4f;
+        private const float StoryIntroLoreButtonHitHeight = 80f;
+        private const float StoryIntroLoreIconOffsetX = 0f;
+        private const float StoryIntroLoreIconOffsetY = -18f;
+        private const float StoryIntroLoreLabelOffsetX = 0f;
+        private const float StoryIntroLoreLabelOffsetY = 18f;
+        private const float StoryIntroLoreOpenLabelOffsetX = 0f;
+        private const float StoryIntroLoreOpenLabelOffsetY = 0f;
         private const float StoryIntroLoreIconSize = 42f;
         private const float StoryIntroLorePanelX = 638f;
         private const float StoryIntroLorePanelY = 236f;
         private const float StoryIntroLorePanelWidth = 228f;
         private const float StoryIntroLorePanelHeight = 304f;
+        private static readonly Color StoryIntroLoreClosedLabelColor = new Color(0.98f, 0.95f, 0.86f, 0.98f);
+        private static readonly Color StoryIntroLoreOpenLabelColor = new Color32(0x72, 0x43, 0x1B, 0xFF);
+        private static readonly Color StoryIntroLorePageTagColor = new Color32(0x8B, 0x5B, 0x2B, 0xFF);
         private const float LegacyMenuBackgroundWidth = 1398f;
         private const float LegacyMenuBackgroundHeight = 480f;
         private const float LegacyTintPanelSourcePixels = 10f;
@@ -499,7 +509,6 @@ namespace rimrush
         {
             currentScreen = rimrushBootstrapScreen.PlayerCount;
             BeginMenuScreen(true, false, "bg2blue0000");
-            AddTitle("SELECT MODE", 136f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
             CreatePanel("PlayersPanel", rimrushConstants.Width2, 336f, 304f, 286f, 8, new Color(0.05f, 0.08f, 0.1f, 0.72f));
 
             var inventory = rimrushInventory.Instance;
@@ -530,9 +539,6 @@ namespace rimrush
             currentScreen = rimrushBootstrapScreen.MatchType;
             pendingParticipantMode = rimrushParticipantMode.OnePlayer;
             BeginMenuScreen(true, false, "bg10000");
-            AddTitle("1 PLAYER", 126f, 34, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            AddSubtitle("SOLO ROUTES", 162f, 15);
-
             CreateSinglePlayerModeCard(
                 "Adventure",
                 rimrushSinglePlayerNarrative.Adventure,
@@ -1306,15 +1312,30 @@ namespace rimrush
                 rimrushTextStyle.TournamentBody);
             CreatePanel("AdventurePosterDivider", AdventurePosterX, 306f, AdventurePosterWidth - 68f, 2f, 13, new Color(1f, 0.63f, 0.22f, 0.28f));
             CreateMenuText(
-                "AdventurePosterMechanic",
-                level.MechanicTitle,
+                "AdventurePosterBallHeader",
+                "BALL",
                 AdventurePosterX,
-                326f,
-                GetCompactFontSize(level.MechanicTitle, 13, 11, 10),
-                unlocked ? new Color32(0xF1, 0xF8, 0xFF, 0xFF) : new Color32(0xCF, 0xD7, 0xDE, 0xFF),
+                324f,
+                11,
+                unlocked ? new Color32(0xCD, 0xF0, 0x0F, 0xFF) : new Color32(0x9E, 0xAA, 0xB6, 0xFF),
                 TextAnchor.MiddleCenter,
                 14,
                 rimrushTextStyle.TournamentAccent);
+            CreatePanel(
+                "AdventurePosterBallGlow",
+                AdventurePosterX,
+                346f,
+                44f,
+                44f,
+                13,
+                completed ? new Color(0.56f, 0.98f, 0.66f, 0.12f) : unlocked ? new Color(1f, 0.64f, 0.22f, 0.12f) : new Color(0.72f, 0.78f, 0.86f, 0.08f));
+            CreateBallPreview(
+                "AdventurePosterBallPreview",
+                rimrushBallCatalog.PreviewTheme(level.BallSelection),
+                AdventurePosterX,
+                346f,
+                34f,
+                14);
             CreateAdventureDifficultySelector();
         }
 
@@ -1809,7 +1830,6 @@ namespace rimrush
 
             BeginMenuScreen(false, false, "bg2blue0000");
             AddTitle(rimrushSinglePlayerNarrative.Tournament.MenuTitle, 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
-            AddSubtitle(rimrushSinglePlayerNarrative.TournamentSeasonBanner, 88f, 13);
 
             CreatePanel("SelectPanel", 220f, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreatePanel("OptionsPanel", 575f, 278f, 228f, 214f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
@@ -1840,26 +1860,6 @@ namespace rimrush
                 186f,
                 12,
                 Color.white,
-                TextAnchor.MiddleCenter,
-                20,
-                rimrushTextStyle.TournamentBody);
-            CreateMenuText(
-                "TournamentSeasonHook",
-                rimrushSinglePlayerNarrative.TournamentSeasonHook,
-                575f,
-                366f,
-                10,
-                new Color32(0xCC, 0xE5, 0xF0, 0xFF),
-                TextAnchor.MiddleCenter,
-                20,
-                rimrushTextStyle.TournamentBody);
-            CreateMenuText(
-                "TournamentAdventureLink",
-                rimrushSinglePlayerNarrative.CupLinkToAdventure,
-                575f,
-                389f,
-                9,
-                new Color32(0xD8, 0xE6, 0xF0, 0xFF),
                 TextAnchor.MiddleCenter,
                 20,
                 rimrushTextStyle.TournamentBody);
@@ -2048,10 +2048,10 @@ namespace rimrush
             var tournament = inventory.Tournament;
             currentScreen = tournament.Completed ? rimrushBootstrapScreen.TournamentComplete : rimrushBootstrapScreen.TournamentBracket;
             var regularSeasonScreen = tournament.CurrentStage == rimrushTournamentStage.RegularSeason;
-            var titleY = regularSeasonScreen ? 42f : 34f;
+            var titleY = regularSeasonScreen ? 44f : 34f;
             var titleFontSize = regularSeasonScreen ? 32 : 30;
-            var subtitleY = regularSeasonScreen ? 76f : 62f;
-            var subtitleFontSize = regularSeasonScreen ? 18 : 14;
+            var subtitleY = regularSeasonScreen ? 72f : 62f;
+            var subtitleFontSize = regularSeasonScreen ? 16 : 14;
 
             var backgroundFrame = tournament.Completed || !regularSeasonScreen
                 ? "bg10000"
@@ -2086,7 +2086,6 @@ namespace rimrush
                     rimrushInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                 }, runtimeRoot));
-                menuButtons.Add(new rimrushMenuButton(rimrushSinglePlayerNarrative.ComicReplayButton, 368f, 452f, 168f, 42f, ShowTournamentBracketComicReplay, runtimeRoot));
 
                 if (tournament.RegularSeasonCompleted)
                 {
@@ -2094,7 +2093,7 @@ namespace rimrush
                 }
                 else
                 {
-                    menuButtons.Add(new rimrushMenuButton($"PLAY ROUND {tournament.CurrentRegularSeasonRoundIndex + 1}", 634f, 452f, 190f, 42f, StartGameplay, runtimeRoot));
+                    menuButtons.Add(new rimrushMenuButton("PLAY", 634f, 452f, 190f, 42f, StartGameplay, runtimeRoot));
                 }
             }
             else
@@ -2184,11 +2183,12 @@ namespace rimrush
                 var logoTexture = Resources.Load<Texture2D>(rimrushAssets.Images.ResourcePath(rimrushAssets.Images.GameLogo));
                 if (logoTexture != null)
                 {
-                    var logo = rimrushRender.Image("Logo", logoTexture, rimrushConstants.Width2, 68f, 0.5f, 0.5f, 20, runtimeRoot);
-                    logo.transform.localScale = new Vector3(
-                        logo.transform.localScale.x * MenuLogoScaleX,
-                        logo.transform.localScale.y * MenuLogoScaleY,
-                        1f);
+                    var logoScale = Mathf.Min(
+                        MenuLogoMaxWidth / Mathf.Max(1f, logoTexture.width),
+                        MenuLogoMaxHeight / Mathf.Max(1f, logoTexture.height));
+                    var logo = rimrushRender.Image("Logo", logoTexture, rimrushConstants.Width2, MenuLogoCenterY, 0.5f, 0.5f, 20, runtimeRoot);
+                    var logoWorldScale = rimrushConstants.UnitsPerPixel * logoScale;
+                    logo.transform.localScale = new Vector3(logoWorldScale, logoWorldScale, 1f);
                 }
             }
 
@@ -2417,7 +2417,6 @@ namespace rimrush
 
         private GameObject CreateStoryIntroLoreButtonLabel(string text, float x, float y)
         {
-            var labelColor = new Color(0.98f, 0.95f, 0.86f, 0.98f);
             if (ShouldUseNativeMenuText(runtimeRoot))
             {
                 var nativeText = nativeMenuTextLayer?.CreateText(
@@ -2426,8 +2425,8 @@ namespace rimrush
                     x,
                     y,
                     18,
-                    labelColor,
-                    TextAnchor.MiddleLeft,
+                    StoryIntroLoreClosedLabelColor,
+                    TextAnchor.MiddleCenter,
                     rimrushTextStyle.TournamentAccent);
                 return nativeText != null ? nativeText.gameObject : null;
             }
@@ -2438,8 +2437,8 @@ namespace rimrush
                 x,
                 y,
                 18,
-                labelColor,
-                TextAnchor.MiddleLeft,
+                StoryIntroLoreClosedLabelColor,
+                TextAnchor.MiddleCenter,
                 56,
                 runtimeRoot,
                 rimrushTextStyle.TournamentAccent);
@@ -2465,6 +2464,77 @@ namespace rimrush
             {
                 legacyText.text = text;
             }
+        }
+
+        private void SetStoryIntroLoreButtonLabelColor(Color color)
+        {
+            if (storyIntroLoreLabelObject == null)
+            {
+                return;
+            }
+
+            var nativeText = storyIntroLoreLabelObject.GetComponent<TMPro.TMP_Text>();
+            if (nativeText != null)
+            {
+                nativeText.color = color;
+                return;
+            }
+
+            var legacyText = storyIntroLoreLabelObject.GetComponent<TextMesh>();
+            if (legacyText != null)
+            {
+                legacyText.color = color;
+            }
+        }
+
+        private void RefreshStoryIntroLoreButtonLayout(bool isVisible)
+        {
+            var buttonX = isVisible ? StoryIntroLoreOpenButtonX : StoryIntroLoreButtonX;
+            var buttonY = isVisible ? StoryIntroLoreOpenButtonY : StoryIntroLoreButtonY;
+            var labelOffsetX = isVisible ? StoryIntroLoreOpenLabelOffsetX : StoryIntroLoreLabelOffsetX;
+            var labelOffsetY = isVisible ? StoryIntroLoreOpenLabelOffsetY : StoryIntroLoreLabelOffsetY;
+            storyIntroLoreButton?.SetPosition(buttonX, buttonY);
+            SetStoryIntroLoreLabelPosition(
+                buttonX + labelOffsetX,
+                buttonY + labelOffsetY);
+            SetStoryIntroLoreArtOffset(
+                buttonX - StoryIntroLoreButtonX,
+                buttonY - StoryIntroLoreButtonY);
+        }
+
+        private void SetStoryIntroLoreLabelPosition(float x, float y)
+        {
+            if (storyIntroLoreLabelObject == null)
+            {
+                return;
+            }
+
+            var nativeText = storyIntroLoreLabelObject.GetComponent<TMPro.TMP_Text>();
+            if (nativeText != null)
+            {
+                rimrushNativeMenuTextLayer.SetPixelPosition(nativeText.rectTransform, x, y);
+                return;
+            }
+
+            storyIntroLoreLabelObject.transform.position = rimrushConstants.PixelToWorldSnapped(
+                x,
+                y,
+                storyIntroLoreLabelObject.transform.position.z);
+        }
+
+        private void SetStoryIntroLoreArtOffset(float pixelOffsetX, float pixelOffsetY)
+        {
+            if (storyIntroLoreArtRoot == null)
+            {
+                return;
+            }
+
+            var origin = rimrushConstants.PixelToWorldSnapped(0f, 0f);
+            var offset = rimrushConstants.PixelToWorldSnapped(pixelOffsetX, pixelOffsetY);
+            storyIntroLoreArtRoot.transform.localPosition = new Vector3(
+                offset.x - origin.x,
+                offset.y - origin.y,
+                0f);
         }
 
         /// <summary>
@@ -2859,35 +2929,24 @@ namespace rimrush
         private void CreateTournamentSeasonBanner(rimrushTournamentData tournament)
         {
             var title = rimrushSinglePlayerNarrative.GetTournamentStageTitle(tournament);
-            var description = rimrushSinglePlayerNarrative.GetTournamentStageDescription(tournament);
             CreatePanel(
                 "TournamentSeasonBannerPanel",
                 rimrushConstants.Width2,
-                104f,
-                424f,
-                44f,
+                98f,
+                204f,
+                24f,
                 18,
-                new Color(0.03f, 0.06f, 0.1f, 0.84f));
+                new Color(0.03f, 0.06f, 0.1f, 0.74f));
             CreateMenuText(
                 "TournamentSeasonBannerTitle",
                 title,
                 rimrushConstants.Width2,
-                95f,
-                13,
+                98f,
+                11,
                 new Color32(0xD7, 0xF2, 0x4A, 0xFF),
                 TextAnchor.MiddleCenter,
                 19,
                 rimrushTextStyle.TournamentAccent);
-            CreateMenuText(
-                "TournamentSeasonBannerDescription",
-                description,
-                rimrushConstants.Width2,
-                116f,
-                10,
-                new Color32(0xD8, 0xE6, 0xF0, 0xFF),
-                TextAnchor.MiddleCenter,
-                19,
-                rimrushTextStyle.TournamentBody);
         }
 
         /// <summary>
@@ -2922,10 +2981,16 @@ namespace rimrush
         /// <param name="divisionIndex">Input value used by this step of the workflow.</param>
         private void CreateTournamentDivisionBoard(string key, float x, float y, string title, rimrushTournamentData tournament, int divisionIndex)
         {
-            const float boardWidth = 292f;
+            const float boardWidth = 316f;
             const float boardHeight = 322f;
             const float rowHeight = 34f;
             const float rowSpacing = 42f;
+            const float rankXOffset = -111f;
+            const float badgeXOffset = -76f;
+            const float nameXOffset = -52f;
+            const float winsXOffset = 70f;
+            const float lossesXOffset = 104f;
+            const float qualifiedXOffset = 122f;
 
             CreateFramedPanel(
                 $"{key}_Frame",
@@ -2940,7 +3005,7 @@ namespace rimrush
                 $"{key}_Shade",
                 x,
                 y + 3f,
-                boardWidth - 74f,
+                boardWidth - 62f,
                 boardHeight - 92f,
                 10,
                 new Color(0.02f, 0.05f, 0.07f, 0.36f));
@@ -2960,16 +3025,15 @@ namespace rimrush
                 $"{key}_Header",
                 x,
                 headerY,
-                boardWidth - 98f,
+                boardWidth - 68f,
                 24f,
                 11,
                 new Color(0.15f, 0.67f, 0.82f, 0.92f));
 
-            CreateStandingsAccentText($"{key}_HeaderRank", "#", x - 102f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
-            CreateStandingsAccentText($"{key}_HeaderTeam", "TEAM", x - 52f, headerY + 1f, 12, Color.white, TextAnchor.MiddleLeft, 12);
-            CreateStandingsAccentText($"{key}_HeaderW", "W", x + 58f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
-            CreateStandingsAccentText($"{key}_HeaderL", "L", x + 90f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
-            CreateStandingsAccentText($"{key}_HeaderPct", "PCT", x + 124f, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderRank", "#", x + rankXOffset, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderTeam", "TEAM", x + nameXOffset, headerY + 1f, 12, Color.white, TextAnchor.MiddleLeft, 12);
+            CreateStandingsAccentText($"{key}_HeaderW", "W", x + winsXOffset, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
+            CreateStandingsAccentText($"{key}_HeaderL", "L", x + lossesXOffset, headerY + 1f, 12, Color.white, TextAnchor.MiddleCenter, 12);
 
             var standings = tournament.GetDivisionStandings(divisionIndex);
             for (var i = 0; i < standings.Length; i++)
@@ -3000,7 +3064,7 @@ namespace rimrush
                     $"{key}_Row_{i}",
                     x,
                     rowY,
-                    boardWidth - 110f,
+                    boardWidth - 68f,
                     rowHeight,
                     11,
                     rowTint);
@@ -3008,7 +3072,7 @@ namespace rimrush
                 CreateStandingsAccentText(
                     $"{key}_Rank_{i}",
                     (i + 1).ToString(),
-                    x - 102f,
+                    x + rankXOffset,
                     rowY + 1f,
                     16,
                     Color.white,
@@ -3023,7 +3087,7 @@ namespace rimrush
                 CreateTournamentBadge(
                     $"{key}_Badge_{i}",
                     entry.CharacterId,
-                    x - 72f,
+                    x + badgeXOffset,
                     rowY,
                     12,
                     TournamentStandingsGlowScale,
@@ -3035,7 +3099,7 @@ namespace rimrush
                 CreateStandingsBodyText(
                     $"{key}_Name_{i}",
                     name,
-                    x - 48f,
+                    x + nameXOffset,
                     rowY + 1f,
                     GetCompactFontSize(name, 13, 12, 11),
                     Color.white,
@@ -3044,7 +3108,7 @@ namespace rimrush
                 CreateStandingsAccentText(
                     $"{key}_W_{i}",
                     entry.Wins.ToString(),
-                    x + 58f,
+                    x + winsXOffset,
                     rowY + 1f,
                     14,
                     qualified ? new Color32(0xD7, 0xF2, 0x4A, 0xFF) : Color.white,
@@ -3053,18 +3117,9 @@ namespace rimrush
                 CreateStandingsAccentText(
                     $"{key}_L_{i}",
                     entry.Losses.ToString(),
-                    x + 90f,
+                    x + lossesXOffset,
                     rowY + 1f,
                     14,
-                    Color.white,
-                    TextAnchor.MiddleCenter,
-                    12);
-                CreateStandingsBodyText(
-                    $"{key}_Pct_{i}",
-                    FormatWinningPercentage(entry.Percentage),
-                    x + 124f,
-                    rowY + 1f,
-                    12,
                     Color.white,
                     TextAnchor.MiddleCenter,
                     12);
@@ -3074,7 +3129,7 @@ namespace rimrush
                     CreateStandingsAccentText(
                         $"{key}_Qualified_{i}",
                         "Q",
-                        x + 152f,
+                        x + qualifiedXOffset,
                         rowY + 1f,
                         12,
                         new Color32(0xD7, 0xF2, 0x4A, 0xFF),
@@ -3387,9 +3442,9 @@ namespace rimrush
         private void CreateTournamentSummaryPanel(rimrushTournamentData tournament)
         {
             var summaryCompleted = tournament.Completed;
-            var summaryWidth = summaryCompleted ? 312f : 292f;
-            var summaryHeight = summaryCompleted ? 72f : 50f;
-            var summaryY = summaryCompleted ? TournamentSummaryY : TournamentSummaryY + 2f;
+            var summaryWidth = summaryCompleted ? 312f : 328f;
+            var summaryHeight = summaryCompleted ? 72f : 40f;
+            var summaryY = summaryCompleted ? TournamentSummaryY : TournamentSummaryY + 6f;
             CreateFramedPanel(
                 "TournamentSummaryPanel",
                 "btn_bg0000",
@@ -3469,21 +3524,12 @@ namespace rimrush
                 detail = GetMatchupText(tournament.FinalResult, "FINAL");
             }
 
-            CreateStandingsAccentText(
-                "TournamentSummaryHeadline",
-                headline,
-                rimrushConstants.Width2,
-                summaryY - 8f,
-                13,
-                new Color32(0xD7, 0xF2, 0x4A, 0xFF),
-                TextAnchor.MiddleCenter,
-                17);
             CreateStandingsBodyText(
                 "TournamentSummaryDetail",
-                detail,
+                $"{headline} - {detail}",
                 rimrushConstants.Width2,
-                summaryY + 10f,
-                GetCompactFontSize(detail, 12, 11, 10),
+                summaryY + 2f,
+                GetCompactFontSize($"{headline} - {detail}", 12, 11, 10),
                 Color.white,
                 TextAnchor.MiddleCenter,
                 17);
@@ -3520,17 +3566,29 @@ namespace rimrush
                 parent = runtimeRoot;
             }
 
-            var glow = rimrushRender.Sprite($"{key}_Glow", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
-            glow.transform.localScale *= glowScale;
-            glow.GetComponent<SpriteRenderer>().color = glowColor;
-
-            var badge = rimrushRender.Sprite($"{key}_Badge", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder + 1, parent);
-            badge.transform.localScale *= badgeScale;
-            badge.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.94f);
+            const float legacyBadgePixels = 150f;
+            var badgePixels = Mathf.Max(
+                portraitPixels + 10f,
+                Mathf.Max(legacyBadgePixels * badgeScale, legacyBadgePixels * glowScale * 0.82f));
+            var ringColor = new Color(
+                Mathf.Clamp01(0.48f + glowColor.r * 0.55f),
+                Mathf.Clamp01(0.48f + glowColor.g * 0.55f),
+                Mathf.Clamp01(0.48f + glowColor.b * 0.55f),
+                0.96f);
+            rimrushRender.PortraitBackplate(
+                $"{key}_Badge",
+                x,
+                y,
+                badgePixels,
+                sortingOrder,
+                parent,
+                glowColor,
+                new Color(0.01f, 0.025f, 0.06f, characterId >= 0 ? 0.94f : 0.62f),
+                ringColor);
 
             if (characterId >= 0)
             {
-                CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, portraitPixels, sortingOrder + 2, parent);
+                CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, portraitPixels, sortingOrder + 3, parent);
             }
         }
 
@@ -3770,13 +3828,16 @@ namespace rimrush
         /// <param name="parent">Input value used by this step of the workflow.</param>
         private void CreateTournamentAwardsBadge(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
-            var glow = rimrushRender.Sprite($"{key}_Glow", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, 15, parent);
-            glow.transform.localScale *= champion ? 0.56f : 0.46f;
-            glow.GetComponent<SpriteRenderer>().color = placement.GlowColor;
-
-            var badge = rimrushRender.Sprite($"{key}_Badge", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, 16, parent);
-            badge.transform.localScale *= champion ? 0.42f : 0.38f;
-            badge.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, champion ? 0.98f : 0.92f);
+            rimrushRender.PortraitBackplate(
+                $"{key}_Badge",
+                x,
+                y,
+                champion ? 64f : 58f,
+                14,
+                parent,
+                placement.GlowColor,
+                new Color(0.01f, 0.025f, 0.06f, champion ? 0.96f : 0.9f),
+                new Color(placement.AccentColor.r, placement.AccentColor.g, placement.AccentColor.b, champion ? 0.98f : 0.9f));
 
             CreateTournamentPortrait($"{key}_Portrait", placement.CharacterId, x, y + 1f, champion ? 46f : 40f, 17, parent);
 
@@ -4283,15 +4344,18 @@ namespace rimrush
         /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
         private void CreateTournamentMiniBadge(string key, int characterId, float x, float y, int sortingOrder)
         {
-            var glow = rimrushRender.Sprite($"{key}_Glow", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, runtimeRoot);
-            glow.transform.localScale *= 0.28f;
-            glow.GetComponent<SpriteRenderer>().color = new Color(1f, 0.77f, 0.32f, 0.32f);
+            rimrushRender.PortraitBackplate(
+                $"{key}_Badge",
+                x,
+                y,
+                38f,
+                sortingOrder,
+                runtimeRoot,
+                new Color(1f, 0.77f, 0.32f, 0.32f),
+                new Color(0.01f, 0.025f, 0.06f, 0.94f),
+                new Color(1f, 0.9f, 0.55f, 0.96f));
 
-            var badge = rimrushRender.Sprite($"{key}_Badge", rimrushAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder + 1, runtimeRoot);
-            badge.transform.localScale *= 0.24f;
-            badge.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.94f);
-
-            CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, 28f, sortingOrder + 2);
+            CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, 28f, sortingOrder + 3);
         }
 
         /// <summary>
@@ -4425,6 +4489,7 @@ namespace rimrush
             }
 
             var loreIconX = StoryIntroLoreButtonX + StoryIntroLoreIconOffsetX;
+            var loreIconY = StoryIntroLoreButtonY + StoryIntroLoreIconOffsetY;
             var loreLabelX = StoryIntroLoreButtonX + StoryIntroLoreLabelOffsetX;
 
             storyIntroLoreButton = new rimrushMenuButton(
@@ -4440,7 +4505,10 @@ namespace rimrush
             storyIntroLoreButton.SetBackgroundVisible(false);
             storyIntroLoreButton.SetLabelVisible(false);
             menuButtons.Add(storyIntroLoreButton);
-            storyIntroLoreLabelObject = CreateStoryIntroLoreButtonLabel("lore", loreLabelX, StoryIntroLoreButtonY + 1f);
+            storyIntroLoreLabelObject = CreateStoryIntroLoreButtonLabel(
+                "lore",
+                loreLabelX,
+                StoryIntroLoreButtonY + StoryIntroLoreLabelOffsetY);
 
             storyIntroLoreArtRoot = new GameObject("StoryIntroLoreArt");
             storyIntroLoreArtRoot.transform.SetParent(runtimeRoot, false);
@@ -4448,7 +4516,7 @@ namespace rimrush
                     "StoryIntroLoreIcon",
                     rimrushAssets.Images.Ui.EmblemOrb,
                     loreIconX,
-                    StoryIntroLoreButtonY - 2f,
+                    loreIconY,
                     StoryIntroLoreIconSize,
                     StoryIntroLoreIconSize,
                     23,
@@ -4458,7 +4526,7 @@ namespace rimrush
             CreatePanel(
                 "StoryIntroLoreGlyph",
                 loreIconX,
-                StoryIntroLoreButtonY - 4f,
+                loreIconY - 2f,
                 18f,
                 13f,
                 24,
@@ -4467,7 +4535,7 @@ namespace rimrush
             CreatePanel(
                 "StoryIntroLoreGlyphLine1",
                 loreIconX,
-                StoryIntroLoreButtonY - 7f,
+                loreIconY - 5f,
                 10f,
                 2f,
                 25,
@@ -4476,7 +4544,7 @@ namespace rimrush
             CreatePanel(
                 "StoryIntroLoreGlyphLine2",
                 loreIconX,
-                StoryIntroLoreButtonY - 4f,
+                loreIconY - 2f,
                 11f,
                 2f,
                 25,
@@ -4485,7 +4553,7 @@ namespace rimrush
             CreatePanel(
                 "StoryIntroLoreGlyphLine3",
                 loreIconX,
-                StoryIntroLoreButtonY - 1f,
+                loreIconY + 1f,
                 9f,
                 2f,
                 25,
@@ -4595,7 +4663,7 @@ namespace rimrush
                 StoryIntroLorePanelX,
                 StoryIntroLorePanelY - 118f,
                 11,
-                storyIntroAccentColor,
+                StoryIntroLorePageTagColor,
                 TextAnchor.MiddleCenter,
                 30,
                 rimrushTextStyle.TournamentAccent);
@@ -4646,6 +4714,11 @@ namespace rimrush
                 storyIntroLoreRoot.SetActive(isVisible);
             }
 
+            if (storyIntroLoreArtRoot != null)
+            {
+                storyIntroLoreArtRoot.SetActive(!isVisible);
+            }
+
             for (var i = 0; i < storyIntroLoreTextObjects.Count; i++)
             {
                 if (storyIntroLoreTextObjects[i] != null)
@@ -4654,7 +4727,9 @@ namespace rimrush
                 }
             }
 
+            RefreshStoryIntroLoreButtonLayout(isVisible);
             SetStoryIntroLoreButtonLabelText(isVisible ? "hide" : "lore");
+            SetStoryIntroLoreButtonLabelColor(isVisible ? StoryIntroLoreOpenLabelColor : StoryIntroLoreClosedLabelColor);
             if (storyIntroLoreIconRenderer != null)
             {
                 storyIntroLoreIconRenderer.color = isVisible

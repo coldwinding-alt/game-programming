@@ -46,9 +46,9 @@ class CharacterRefresh:
 REPLACEMENTS = (
     CharacterRefresh(
         internal_id="pumpkin",
-        visible_name="REAPER ACOLYTE",
-        portrait_source="reaper_acolyte_icon_source.png",
-        gameplay_source="reaper_acolyte_icon_source.png",
+        visible_name="REAPER",
+        portrait_source="reaper_icon_source.png",
+        gameplay_source="reaper_icon_source.png",
         body_theme="reaper",
         body_style_source="blackcat",
         leg_style_source="blackcat",

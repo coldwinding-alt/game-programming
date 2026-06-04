@@ -1,6 +1,6 @@
 # Test Log
 
-Updated: `2026-05-26`
+Updated: `2026-06-04`
 
 ## Current Baseline
 
@@ -14,6 +14,7 @@ Updated: `2026-05-26`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-06-04 | Release smoke after reaper refresh and menu/HUD polish (`rimrushSmokeTest.Run`) | Pass | Revalidated the current release candidate in Unity `2022.3.62f3c1` batch mode from a disposable validation workspace because the main project was already open in another editor instance; the renamed `REAPER` art assets, refreshed logo, single-player/menu updates, and HUD/native text changes all passed the repository smoke suite |
 | 2026-05-26 | DragonBones animation smoothing fix | Pass | Corrected the custom DragonBones runtime so transform keyframes with missing `tweenEasing` or `tweenEasing: 0` are treated as linear interpolation instead of hard frame holds, which matches the DragonBones data format and smooths player motion significantly; re-ran `rimrushSmokeTest.Run` successfully in Unity batch mode |
 | 2026-05-26 | Gameplay `Esc` pause remap | Pass | Removed the gameplay-level `Esc` shortcut that immediately bounced back to the player-count menu, routed `Esc` through the same pause toggle path as `P`, updated the README controls note, and re-ran `rimrushSmokeTest.Run` successfully in Unity batch mode |
 | 2026-05-26 | TMP-native menu and tournament text pass (`rimrushSmokeTest.Run` in a temporary test workspace) | Pass | Added a screen-space native menu text layer backed by `TextMeshProUGUI`, switched menu/setup/bracket button labels and small tournament text off legacy `TextMesh`, imported the official TMP essential resources under `Assets/TextMesh Pro`, and verified the updated build with a batch smoke in a temporary test workspace because the main project was already open in another Unity instance |

@@ -32,7 +32,7 @@ class SkillIconBuild:
 
 
 SKILLS: tuple[SkillIconBuild, ...] = (
-    SkillIconBuild("REAPER ACOLYTE", "reaper_acolyte_skill_source.png", "reaper_acolyte", (66, 240, 228), scale=0.94, anchor_x=0.54, anchor_y=0.52),
+    SkillIconBuild("REAPER", "reaper_skill_source.png", "reaper", (66, 240, 228), scale=0.94, anchor_x=0.54, anchor_y=0.52),
     SkillIconBuild("GHOST CLOWN", "ghost_clown_skill_source.png", "ghost_clown", (82, 228, 255), scale=0.91, anchor_x=0.5, anchor_y=0.52),
     SkillIconBuild("SKULL PIRATE", "skull_pirate_skill_source.png", "skull_pirate", (112, 244, 220), scale=0.9, anchor_x=0.5, anchor_y=0.54),
     SkillIconBuild("VAMPIRE", "vampire_skill_source.png", "vampire", (255, 82, 110), scale=0.9, anchor_x=0.5, anchor_y=0.52),

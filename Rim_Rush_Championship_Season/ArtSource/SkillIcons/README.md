@@ -4,7 +4,7 @@ This folder stores the June 2026 high-resolution source art used to rebuild the 
 
 ## Mapping
 
-- `reaper_acolyte_skill_source.png` -> `REAPER ACOLYTE` / `DASH STEAL`
+- `reaper_skill_source.png` -> `REAPER` / `DASH STEAL`
 - `ghost_clown_skill_source.png` -> `GHOST CLOWN` / `BLINK DUNK`
 - `skull_pirate_skill_source.png` -> `SKULL PIRATE` / `HOOP SHIELD`
 - `vampire_skill_source.png` -> `VAMPIRE` / `BLINK DUNK`

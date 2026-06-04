@@ -5,7 +5,7 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 ## Current Playable Scope
 
 - Character-based roster with `8` playable characters:
-  - `REAPER ACOLYTE`
+  - `REAPER`
   - `GHOST CLOWN`
   - `SKULL PIRATE`
   - `VAMPIRE`
@@ -53,8 +53,6 @@ Unity 2022 coursework project for a Halloween-themed `1v1` arcade basketball gam
 
 ## Repository Guide
 
-- `DOCS/SPRINT_PLAN.md` - current development kanban, iteration focus, and delivery status
-- `DOCS/PROJECT_FRAMING.md` - coursework-facing project positioning, implementation scope, and agile management summary
 - `TEST_LOG.md` - current verification log, smoke-test baseline, and known follow-up items
 - `ASSET_CREDITS.md` - source notes for the active resource files used by the build
 - `DOCS/COURSEWORK_ASSET_REVIEW.md` - coursework-facing asset review, audio source register, and current provenance risks

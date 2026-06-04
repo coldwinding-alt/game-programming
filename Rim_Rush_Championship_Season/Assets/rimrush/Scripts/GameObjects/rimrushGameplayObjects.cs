@@ -2411,10 +2411,11 @@ namespace rimrush
         private const float TeamDepthStep = 0.01f;
         private const float PlayerDepthStep = 0.0025f;
         private const float ShadowDepthBiasScale = 0.25f;
-        private const float TutorialPutbackCatchWindowX = 112f;
-        private const float TutorialPutbackCatchWindowY = 132f;
-        private const float TutorialPutbackDunkYBonus = 48f;
-        private const float TutorialPutbackCompletionChance = 0.94f;
+        private const float TutorialPutbackCatchWindowX = 140f;
+        private const float TutorialPutbackCatchWindowY = 172f;
+        private const float TutorialPutbackDunkYBonus = 60f;
+        private const float TutorialPutbackMaxBallVelocityY = 180f;
+        private const float TutorialPutbackCompletionChance = 1f;
 
         private enum BlockPumpPhase
         {
@@ -3179,6 +3180,14 @@ namespace rimrush
         {
             tutorialPutbackDunkPrimed = true;
             tutorialDunkCompletionChanceOverride = Mathf.Max(tutorialDunkCompletionChanceOverride, TutorialPutbackCompletionChance);
+        }
+
+        public bool IsTutorialPutbackBallInWindow(rimrushBallObject ball)
+        {
+            return ball != null &&
+                   ball.IsInGame &&
+                   ball.State == "bounce" &&
+                   ball.Velocity.y <= TutorialPutbackMaxBallVelocityY;
         }
 
         public void TutorialSetAirMotionTimeScale(float scale)
@@ -4860,7 +4869,7 @@ namespace rimrush
                 return false;
             }
 
-            if (ball.State == "inHands" || ball.State == "score" || ball.State == "alleyOop")
+            if (ball.State == "inHands" || ball.State == "score" || ball.State == "alleyOop" || !IsTutorialPutbackBallInWindow(ball))
             {
                 return false;
             }

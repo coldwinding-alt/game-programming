@@ -10,7 +10,8 @@ namespace rimrush
     {
         private const int ActiveCharacterSkinCount = 8;
         private const float PortraitAtlasSourceScale = 4f;
-        private const int PortraitVariantSampleGrid = 4;
+        private const int PortraitCropPaddingPixels = 6;
+        private const byte PortraitVisibleAlphaThreshold = 8;
         private const float GlobalCharacterModelScaleMultiplier = 1.08f;
 
         private sealed class rimrushCharacterDefinition
@@ -33,12 +34,11 @@ namespace rimrush
         }
 
         private static DBLiteTextureAtlas portraitAtlas;
-        private static readonly Dictionary<string, Sprite> PortraitVariantSprites = new Dictionary<string, Sprite>();
-        private static readonly Dictionary<string, Texture2D> PortraitVariantTextures = new Dictionary<string, Texture2D>();
+        private static readonly Dictionary<string, Sprite> PortraitDisplaySprites = new Dictionary<string, Sprite>();
 
         private static readonly rimrushCharacterDefinition[] CharacterDefinitions =
         {
-            new rimrushCharacterDefinition { DisplayName = "REAPER ACOLYTE", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_pumpkin", HeadOffsetX = 0.75f, HeadOffsetY = 9f, HeadScale = 1.02f, ModelScaleMultiplier = 1.08f, PreviewScaleMultiplier = 1f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 8f },
+            new rimrushCharacterDefinition { DisplayName = "REAPER", SkinIndex = 0, FormIndex = 0, SuperId = 3, Enabled = true, PortraitSpriteName = "custom_head_pumpkin", HeadOffsetX = 0.75f, HeadOffsetY = 9f, HeadScale = 1.02f, ModelScaleMultiplier = 1.08f, PreviewScaleMultiplier = 1f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 8f },
             new rimrushCharacterDefinition { DisplayName = "GHOST CLOWN", SkinIndex = 1, FormIndex = 1, SuperId = 0, Enabled = true, PortraitSpriteName = "custom_head_frankenstein", HeadOffsetX = 4.5f, HeadOffsetY = 1f, HeadScale = 1f, ModelScaleMultiplier = 1.06f, PreviewScaleMultiplier = 0.99f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
             new rimrushCharacterDefinition { DisplayName = "SKULL PIRATE", SkinIndex = 2, FormIndex = 2, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_mummy", HeadOffsetX = 1.5f, HeadOffsetY = 0f, HeadScale = 1.02f, ModelScaleMultiplier = 1.07f, PreviewScaleMultiplier = 1f, PreviewOffsetY = -2f, PortraitScaleMultiplier = 0.98f, PortraitOffsetY = 9f },
             new rimrushCharacterDefinition { DisplayName = "VAMPIRE", SkinIndex = 3, FormIndex = 3, SuperId = 2, Enabled = true, PortraitSpriteName = "custom_head_vampire", HeadOffsetY = -10.5f, HeadScale = 0.95f, PreviewScaleMultiplier = 0.96f, PortraitScaleMultiplier = 1f, PortraitOffsetY = 12f },
@@ -244,19 +244,7 @@ namespace rimrush
                 return null;
             }
 
-            var requestedMaxPixels = Mathf.RoundToInt(desiredMaxPixels);
-            if (requestedMaxPixels <= 0)
-            {
-                return baseSprite;
-            }
-
-            var baseMaxPixels = Mathf.RoundToInt(Mathf.Max(baseSprite.rect.width, baseSprite.rect.height));
-            if (requestedMaxPixels >= baseMaxPixels)
-            {
-                return baseSprite;
-            }
-
-            return GetOrCreatePortraitVariantSprite(definition.PortraitSpriteName, baseSprite, requestedMaxPixels);
+            return GetOrCreatePortraitDisplaySprite(definition.PortraitSpriteName, baseSprite);
         }
 
         /// <summary>
@@ -422,23 +410,22 @@ namespace rimrush
                 return null;
             }
 
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
             portraitAtlas = DBLiteTextureAtlas.Parse(rimrushAssets.Portraits.UiAtlas, texture, textureJsonAsset.text);
             return portraitAtlas;
         }
 
         /// <summary>
-        /// Executes Get Or Create Portrait Variant Sprite for the rimrushCharacterDefinition workflow.
+        /// Executes Get Or Create Portrait Display Sprite for the rimrushCharacterDefinition workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
         /// <param name="portraitSpriteName">Input value used by this step of the workflow.</param>
         /// <param name="baseSprite">Input value used by this step of the workflow.</param>
-        /// <param name="maxPixels">Input value used by this step of the workflow.</param>
         /// <returns>Result produced for downstream logic in the current frame.</returns>
-        private static Sprite GetOrCreatePortraitVariantSprite(string portraitSpriteName, Sprite baseSprite, int maxPixels)
+        private static Sprite GetOrCreatePortraitDisplaySprite(string portraitSpriteName, Sprite baseSprite)
         {
-            var safeMaxPixels = Mathf.Max(1, maxPixels);
-            var cacheKey = $"{portraitSpriteName}@{safeMaxPixels}";
-            if (PortraitVariantSprites.TryGetValue(cacheKey, out var cached))
+            if (PortraitDisplaySprites.TryGetValue(portraitSpriteName, out var cached))
             {
                 return cached;
             }
@@ -446,121 +433,78 @@ namespace rimrush
             var texture = baseSprite.texture;
             if (texture == null || !texture.isReadable)
             {
-                Debug.LogWarning($"Portrait atlas texture must be readable to build portrait variants: {portraitSpriteName}");
+                Debug.LogWarning($"Portrait atlas texture must be readable to crop UI portraits: {portraitSpriteName}");
                 return baseSprite;
             }
 
-            var variantTexture = BuildPortraitVariantTexture(texture, baseSprite.rect, safeMaxPixels, cacheKey);
-            if (variantTexture == null)
+            var visibleRect = CalculatePortraitVisibleRect(texture, baseSprite.rect);
+            if (visibleRect.width <= 0.0001f || visibleRect.height <= 0.0001f)
             {
                 return baseSprite;
             }
 
+            var baseCenter = baseSprite.rect.center;
+            var pivot = new Vector2(
+                Mathf.InverseLerp(visibleRect.xMin, visibleRect.xMax, baseCenter.x),
+                Mathf.InverseLerp(visibleRect.yMin, visibleRect.yMax, baseCenter.y));
             var sprite = UnityEngine.Sprite.Create(
-                variantTexture,
-                new Rect(0f, 0f, variantTexture.width, variantTexture.height),
-                new Vector2(0.5f, 0.5f),
-                1f,
+                texture,
+                visibleRect,
+                pivot,
+                baseSprite.pixelsPerUnit,
                 0,
                 SpriteMeshType.FullRect);
-            sprite.name = cacheKey;
+            sprite.name = $"{portraitSpriteName}_ui_crop";
 
-            PortraitVariantTextures[cacheKey] = variantTexture;
-            PortraitVariantSprites[cacheKey] = sprite;
+            PortraitDisplaySprites[portraitSpriteName] = sprite;
             return sprite;
         }
 
         /// <summary>
-        /// Executes Build Portrait Variant Texture for the rimrushCharacterDefinition workflow.
+        /// Executes Calculate Portrait Visible Rect for the rimrushCharacterDefinition workflow.
         /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
         /// </summary>
-        /// <param name="sourceTexture">Input value used by this step of the workflow.</param>
         /// <param name="sourceRect">Input value used by this step of the workflow.</param>
-        /// <param name="maxPixels">Input value used by this step of the workflow.</param>
-        /// <param name="textureName">Input value used by this step of the workflow.</param>
         /// <returns>Result produced for downstream logic in the current frame.</returns>
-        private static Texture2D BuildPortraitVariantTexture(Texture2D sourceTexture, Rect sourceRect, int maxPixels, string textureName)
+        private static Rect CalculatePortraitVisibleRect(Texture2D sourceTexture, Rect sourceRect)
         {
-            var sourceMaxPixels = Mathf.Max(sourceRect.width, sourceRect.height);
-            if (sourceMaxPixels <= 0.0001f)
+            var xStart = Mathf.Clamp(Mathf.FloorToInt(sourceRect.xMin), 0, sourceTexture.width - 1);
+            var xEnd = Mathf.Clamp(Mathf.CeilToInt(sourceRect.xMax), xStart + 1, sourceTexture.width);
+            var yStart = Mathf.Clamp(Mathf.FloorToInt(sourceRect.yMin), 0, sourceTexture.height - 1);
+            var yEnd = Mathf.Clamp(Mathf.CeilToInt(sourceRect.yMax), yStart + 1, sourceTexture.height);
+            var pixels = sourceTexture.GetPixels32();
+            var minX = xEnd;
+            var maxX = xStart - 1;
+            var minY = yEnd;
+            var maxY = yStart - 1;
+
+            for (var y = yStart; y < yEnd; y++)
             {
-                return null;
-            }
-
-            var scale = Mathf.Min(1f, maxPixels / sourceMaxPixels);
-            var width = Mathf.Max(1, Mathf.RoundToInt(sourceRect.width * scale));
-            var height = Mathf.Max(1, Mathf.RoundToInt(sourceRect.height * scale));
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, false)
-            {
-                name = textureName,
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
-
-            texture.SetPixels32(DownsamplePortraitPixels(sourceTexture, sourceRect, width, height));
-            texture.Apply(false, true);
-            return texture;
-        }
-
-        /// <summary>
-        /// Executes Downsample Portrait Pixels for the rimrushCharacterDefinition workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
-        /// </summary>
-        /// <param name="sourceTexture">Input value used by this step of the workflow.</param>
-        /// <param name="sourceRect">Input value used by this step of the workflow.</param>
-        /// <param name="width">Input value used by this step of the workflow.</param>
-        /// <param name="height">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
-        private static Color32[] DownsamplePortraitPixels(Texture2D sourceTexture, Rect sourceRect, int width, int height)
-        {
-            var output = new Color32[width * height];
-            var sampleCount = PortraitVariantSampleGrid * PortraitVariantSampleGrid;
-            var inverseSampleCount = 1f / sampleCount;
-
-            for (var y = 0; y < height; y++)
-            {
-                for (var x = 0; x < width; x++)
+                var rowOffset = y * sourceTexture.width;
+                for (var x = xStart; x < xEnd; x++)
                 {
-                    var accumulatedAlpha = 0f;
-                    var accumulatedRed = 0f;
-                    var accumulatedGreen = 0f;
-                    var accumulatedBlue = 0f;
-
-                    for (var sampleY = 0; sampleY < PortraitVariantSampleGrid; sampleY++)
+                    if (pixels[rowOffset + x].a <= PortraitVisibleAlphaThreshold)
                     {
-                        var v = (y + (sampleY + 0.5f) / PortraitVariantSampleGrid) / height;
-                        for (var sampleX = 0; sampleX < PortraitVariantSampleGrid; sampleX++)
-                        {
-                            var u = (x + (sampleX + 0.5f) / PortraitVariantSampleGrid) / width;
-                            var sourceU = (sourceRect.x + u * sourceRect.width) / sourceTexture.width;
-                            var sourceV = (sourceRect.y + v * sourceRect.height) / sourceTexture.height;
-                            var color = sourceTexture.GetPixelBilinear(sourceU, sourceV);
-                            accumulatedAlpha += color.a;
-                            accumulatedRed += color.r * color.a;
-                            accumulatedGreen += color.g * color.a;
-                            accumulatedBlue += color.b * color.a;
-                        }
-                    }
-
-                    var alpha = accumulatedAlpha * inverseSampleCount;
-                    var index = y * width + x;
-                    if (alpha <= 0.0001f)
-                    {
-                        output[index] = new Color32(0, 0, 0, 0);
                         continue;
                     }
 
-                    var normalizedAlpha = Mathf.Clamp01(alpha);
-                    var rgbDivisor = Mathf.Max(accumulatedAlpha, 0.0001f);
-                    output[index] = new Color(
-                        Mathf.Clamp01(accumulatedRed / rgbDivisor),
-                        Mathf.Clamp01(accumulatedGreen / rgbDivisor),
-                        Mathf.Clamp01(accumulatedBlue / rgbDivisor),
-                        normalizedAlpha);
+                    minX = Mathf.Min(minX, x);
+                    maxX = Mathf.Max(maxX, x);
+                    minY = Mathf.Min(minY, y);
+                    maxY = Mathf.Max(maxY, y);
                 }
             }
 
-            return output;
+            if (maxX < minX || maxY < minY)
+            {
+                return sourceRect;
+            }
+
+            minX = Mathf.Max(xStart, minX - PortraitCropPaddingPixels);
+            maxX = Mathf.Min(xEnd - 1, maxX + PortraitCropPaddingPixels);
+            minY = Mathf.Max(yStart, minY - PortraitCropPaddingPixels);
+            maxY = Mathf.Min(yEnd - 1, maxY + PortraitCropPaddingPixels);
+            return new Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
         }
 
         /// <summary>
