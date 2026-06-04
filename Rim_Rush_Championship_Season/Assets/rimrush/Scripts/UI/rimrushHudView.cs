@@ -1058,9 +1058,8 @@ namespace rimrush
                 : new Color32(0xDB, 0xE4, 0xF1, 0xFF);
             postMatchSubtitleText.color = new Color32(0xCB, 0xD9, 0xE4, 0xFF);
             postMatchScoreText.color = new Color32(0xFF, 0xF3, 0xD8, 0xFF);
-            postMatchWinnerTagText.color = new Color32(0xFF, 0xDE, 0x98, 0xFF);
             SetText(postMatchSubtitleText, GetPostMatchSubtitle(inventory, postMatchWinnerSide));
-            SetText(postMatchWinnerTagText, $"WINNER: {winnerName}");
+            SetText(postMatchWinnerTagText, string.Empty);
             postMatchLeftNameText.color = postMatchWinnerSide == -1
                 ? new Color32(0xFF, 0xDE, 0x99, 0xFF)
                 : new Color32(0xD8, 0xE0, 0xEC, 0xFF);
@@ -1863,7 +1862,16 @@ namespace rimrush
         /// <param name="action">Input value used by this step of the workflow.</param>
         /// <param name="parent">Input value used by this step of the workflow.</param>
         /// <param name="sortingOrder">Input value used by this step of the workflow.</param>
-        public rimrushMenuButton(string text, float x, float y, float width, float height, System.Action action, Transform parent, int sortingOrder = 50)
+        public rimrushMenuButton(
+            string text,
+            float x,
+            float y,
+            float width,
+            float height,
+            System.Action action,
+            Transform parent,
+            int sortingOrder = 50,
+            rimrushTextStyle labelStyle = rimrushTextStyle.ButtonLabel)
         {
             this.action = action;
             rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
@@ -1901,7 +1909,7 @@ namespace rimrush
                     fontSize,
                     Color.white,
                     TextAnchor.MiddleCenter,
-                    rimrushTextStyle.ButtonLabel);
+                    labelStyle);
                 labelTransform = nativeLabel.rectTransform;
             }
             else
@@ -1916,7 +1924,7 @@ namespace rimrush
                     TextAnchor.MiddleCenter,
                     sortingOrder + 30,
                     parent,
-                    rimrushTextStyle.ButtonLabel);
+                    labelStyle);
                 labelTransform = label.transform;
             }
 

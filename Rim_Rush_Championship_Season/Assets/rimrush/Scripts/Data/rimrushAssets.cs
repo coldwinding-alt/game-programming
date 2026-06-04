@@ -33,6 +33,7 @@ namespace rimrush
                 public const string EnergyButtonPlate = "UI/energy_button_plate";
                 public const string EmblemOrb = "UI/emblem_orb";
                 public const string PanelFillSoft = "UI/panel_fill_soft";
+                public const string AdventureTreasureMapBg = "UI/adventure_treasure_map_bg";
                 public const string AwardsShowcasePanel = "UI/awards_showcase_panel";
                 public const string AwardsResultPlaque = "UI/awards_result_plaque";
                 public const string AwardsPodiumBase = "UI/awards_podium_base";
@@ -171,28 +172,28 @@ namespace rimrush
 
         public static class Sounds
         {
-            public const string MenuMusic = "24_TrackSnd";
-            public const string MWhistle = "2_M_Whistle";
-            public const string MBuzzer = "9_M_Buzzer";
-            public const string MCountdown = "19_M_Countdown";
+            public const string MenuMusic = "bgm";
+            public const string MWhistle = "whistle";
+            public const string MBuzzer = "buzzer";
+            public const string MCountdown = "countdown";
 
-            public const string PTeleport = "4_P_Teleport";
-            public const string PSwoosh = "5_P_Swoosh";
-            public const string PEnergy = "6_P_Energy";
-            public const string PStunned = "7_P_Stunned";
-            public const string PMegaStart = "11_P_MegaStart";
-            public const string PShield = "13_P_Shield";
-            public const string PDash = "17_P_Dash";
-            public const string PSuperDash = "18_P_SuperDash";
+            public const string PTeleport = "teleport";
+            public const string PSwoosh = "swoosh";
+            public const string PEnergy = "energy";
+            public const string PStunned = "stunned";
+            public const string PMegaStart = "mega_dunk";
+            public const string PShield = "shield";
+            public const string PDash = "dash";
+            public const string PSuperDash = "super_dash";
 
-            public const string BSteel = "8_B_Steel";
-            public const string BRing = "10_B_Ring";
-            public const string BBounce = "16_B_Bounce";
-            public const string BNet = "21_B_NET";
-            public const string BBrick = "22_B_Brick";
-            public const string BBasket = "23_B_Basket";
+            public const string BSteel = "clash";
+            public const string BRing = "rim_hit";
+            public const string BBounce = "ball_bounce";
+            public const string BNet = "net";
+            public const string BBrick = "brick";
+            public const string BBasket = "basket";
 
-            public const string Button = "20_ButtonSnd";
+            public const string Button = "button";
         }
     }
 }

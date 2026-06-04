@@ -395,6 +395,11 @@ namespace rimrush
 
         public void StartAdventureMatch(rimrushAdventureData adventure)
         {
+            StartAdventureMatch(adventure, rimrushAiDifficulty.Normal);
+        }
+
+        public void StartAdventureMatch(rimrushAdventureData adventure, rimrushAiDifficulty difficulty)
+        {
             ResetAll();
             if (adventure == null || !adventure.Active || adventure.Completed || !adventure.HasPendingPlayerMatch)
             {
@@ -410,7 +415,7 @@ namespace rimrush
                 rimrushPlayersData.SanitizeCharacterId(level.WardenCharacterId)
             };
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
-            Skills = new[] { new[] { 0 }, new[] { Mathf.Clamp(level.OpponentSkill, 0, rimrushAISkillsData.MaxSkillIndex) } };
+            Skills = new[] { new[] { 0 }, new[] { GetAdventureOpponentSkill(level, difficulty) } };
         }
 
         /// <summary>
@@ -463,6 +468,29 @@ namespace rimrush
                 default:
                     return 2;
             }
+        }
+
+        private static int GetAdventureOpponentSkill(rimrushAdventureLevelDefinition level, rimrushAiDifficulty difficulty)
+        {
+            var baseSkill = level != null ? level.OpponentSkill : 0;
+            int adjustedSkill;
+            switch (difficulty)
+            {
+                case rimrushAiDifficulty.Easy:
+                    adjustedSkill = baseSkill - 1;
+                    break;
+                case rimrushAiDifficulty.Hard:
+                    adjustedSkill = baseSkill + 2;
+                    break;
+                case rimrushAiDifficulty.Hell:
+                    adjustedSkill = baseSkill + 4;
+                    break;
+                default:
+                    adjustedSkill = baseSkill;
+                    break;
+            }
+
+            return Mathf.Clamp(adjustedSkill, 0, rimrushAISkillsData.MaxSkillIndex);
         }
 
         /// <summary>
@@ -917,7 +945,7 @@ namespace rimrush
                 return false;
             }
 
-            MatchData.StartAdventureMatch(Adventure);
+            MatchData.StartAdventureMatch(Adventure, Difficulty);
             MatchPrepared = true;
             return MatchData.Pb != null && MatchData.Pb.Length >= 2 && MatchData.Pb[1].Length > 0;
         }
@@ -929,7 +957,7 @@ namespace rimrush
                 return false;
             }
 
-            MatchData.StartAdventureMatch(Adventure);
+            MatchData.StartAdventureMatch(Adventure, Difficulty);
             MatchPrepared = true;
             return true;
         }

@@ -13,17 +13,38 @@ namespace rimrush
         public readonly string Caption;
         public readonly string ArtDirection;
         public readonly string ImageKey;
+        public readonly string LoreTitle;
+        public readonly string LoreBody;
 
         public rimrushStoryPanelDefinition(string caption, string artDirection)
-            : this(caption, artDirection, null)
+            : this(caption, artDirection, null, null, null)
         {
         }
 
         public rimrushStoryPanelDefinition(string caption, string artDirection, string imageKey)
+            : this(caption, artDirection, imageKey, null, null)
+        {
+        }
+
+        public rimrushStoryPanelDefinition(
+            string caption,
+            string artDirection,
+            string imageKey,
+            string loreTitle,
+            params string[] loreBodyLines)
         {
             Caption = caption;
             ArtDirection = artDirection;
             ImageKey = imageKey;
+            LoreTitle = loreTitle ?? string.Empty;
+            LoreBody = loreBodyLines == null || loreBodyLines.Length == 0
+                ? string.Empty
+                : string.Join("\n", loreBodyLines);
+        }
+
+        public bool HasLore
+        {
+            get { return !string.IsNullOrEmpty(LoreTitle) || !string.IsNullOrEmpty(LoreBody); }
         }
     }
 
@@ -103,15 +124,33 @@ namespace rimrush
                     new rimrushStoryPanelDefinition(
                         "Moon Lantern Park opens on Halloween night.",
                         "Fullscreen comic page: neon gates, pumpkin lights, and a court flaring to life.",
-                        rimrushAssets.Images.Story.AdventureComicPage01),
+                        rimrushAssets.Images.Story.AdventureComicPage01,
+                        "THE PARK AWAKENS",
+                        "Halloween wakes Moon Lantern",
+                        "Park in one sweep of neon.",
+                        "Crowd noise, court lights, and",
+                        "pumpkin fire all feed the Heart",
+                        "Lantern above the dome."),
                     new rimrushStoryPanelDefinition(
                         "The Heart Lantern fails and the park locks itself shut.",
                         "Fullscreen comic page: the dome flickers, gates chain shut, and Sigils scatter.",
-                        rimrushAssets.Images.Story.AdventureComicPage02),
+                        rimrushAssets.Images.Story.AdventureComicPage02,
+                        "MIDNIGHT LOCKDOWN",
+                        "Then the Heart Lantern stutters.",
+                        "Chains drop across the gates,",
+                        "the protocol wakes, and every",
+                        "Lantern Sigil is thrown into a",
+                        "different Warden district."),
                     new rimrushStoryPanelDefinition(
                         "Win the duel, take the Sigil, and keep moving.",
                         "Fullscreen comic page: the first Warden duel begins and the escape route lights up.",
-                        rimrushAssets.Images.Story.AdventureComicPage03)
+                        rimrushAssets.Images.Story.AdventureComicPage03,
+                        "THE FIRST RULE",
+                        "The park leaves only one way",
+                        "forward: beat each Warden in a",
+                        "1v1 duel, reclaim the Sigil,",
+                        "and stay ahead of dawn before",
+                        "the route goes dark for good.")
                 });
 
         public static readonly rimrushSinglePlayerModeDefinition Tournament =
@@ -129,15 +168,33 @@ namespace rimrush
                     new rimrushStoryPanelDefinition(
                         "One year later, Moon Lantern Park reopens.",
                         "Fullscreen comic page: crowds return to a brighter Halloween basketball park.",
-                        rimrushAssets.Images.Story.TournamentComicPage01),
+                        rimrushAssets.Images.Story.TournamentComicPage01,
+                        "THE LIGHTS RETURN",
+                        "A year later, the locked park",
+                        "reopens brighter than ever.",
+                        "What used to be a hidden ritual",
+                        "is now promoted as the city's",
+                        "biggest Halloween night event."),
                     new rimrushStoryPanelDefinition(
                         "The Wardens return as star players.",
                         "Fullscreen comic page: trophies, abstract brackets, and Warden athletes under spotlights.",
-                        rimrushAssets.Images.Story.TournamentComicPage02),
+                        rimrushAssets.Images.Story.TournamentComicPage02,
+                        "WARDENS ON STAGE",
+                        "The old Wardens step back in",
+                        "under spotlights as division",
+                        "stars. Every public match still",
+                        "quietly keeps the restored Heart",
+                        "Lantern burning overhead."),
                     new rimrushStoryPanelDefinition(
                         "Your season begins under the main dome.",
                         "Fullscreen comic page: the trophy, Heart Lantern, and first match ignite the dome.",
-                        rimrushAssets.Images.Story.TournamentComicPage03)
+                        rimrushAssets.Images.Story.TournamentComicPage03,
+                        "CHASE THE CUP",
+                        "Now you enter the dome as the",
+                        "next challenger. Win the season,",
+                        "lift the Moon Lantern Cup, and",
+                        "earn the right to guard the",
+                        "park in front of the whole city.")
                 });
 
         public static rimrushSinglePlayerModeDefinition GetMode(rimrushSinglePlayerNarrativeMode mode)

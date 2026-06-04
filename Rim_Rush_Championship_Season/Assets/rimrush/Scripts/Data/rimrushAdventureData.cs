@@ -30,6 +30,8 @@ namespace rimrush
         public readonly rimrushBallSelection BallSelection;
         public readonly int OpponentSkill;
         public readonly string VictoryBeat;
+        public readonly string[] VictoryLines;
+        public readonly string[] DefeatLines;
 
         public rimrushAdventureLevelDefinition(
             int index,
@@ -45,7 +47,8 @@ namespace rimrush
             float mapY,
             rimrushBallSelection ballSelection,
             int opponentSkill,
-            string victoryBeat)
+            string[] victoryLines,
+            string[] defeatLines)
         {
             Index = index;
             AreaName = areaName;
@@ -60,7 +63,22 @@ namespace rimrush
             MapY = mapY;
             BallSelection = ballSelection;
             OpponentSkill = opponentSkill;
-            VictoryBeat = victoryBeat;
+            VictoryLines = victoryLines ?? new string[0];
+            DefeatLines = defeatLines ?? new string[0];
+            VictoryBeat = VictoryLines.Length > 0 ? VictoryLines[0] : string.Empty;
+        }
+
+        public string GetRandomResultLine(bool playerWon)
+        {
+            var pool = playerWon ? VictoryLines : DefeatLines;
+            if (pool != null && pool.Length > 0)
+            {
+                return pool[Random.Range(0, pool.Length)];
+            }
+
+            return playerWon
+                ? "Take the Lantern Sigil and keep moving."
+                : "The Lantern Sigil stays out of reach.";
         }
     }
 
@@ -72,122 +90,210 @@ namespace rimrush
                 0,
                 "PUMPKIN GATEWAY",
                 5,
-                "First Sigil, clear and welcoming.",
+                "First gate.",
                 rimrushAdventureMechanic.BasicDuel,
                 "BASIC DUEL",
-                "Classic 1v1 rules. Win the gate and claim the first Sigil.",
-                "Locked front gate, pumpkin lamps, and a simple court poster.",
+                "Pure 1v1. Take the Sigil.",
+                "Pumpkin gate and court lights.",
                 new[] { "1V1", "SIGIL", "GATE" },
-                128f,
-                332f,
+                102f,
+                336f,
                 rimrushBallSelection.PumpkinEmber,
                 1,
-                "The first Lantern Sigil snaps into the park map."),
+                new[]
+                {
+                    "You got me. Take the first Sigil and follow the lantern trail.",
+                    "Heh, lucky hands. The Pumpkin Gate will answer that Sigil.",
+                    "The park picked you tonight. Go on before the fog closes in."
+                },
+                new[]
+                {
+                    "Too soft. The Pumpkin Gate stays shut.",
+                    "You want out of Moon Lantern Park? Win the court first.",
+                    "Come back with steadier hands, challenger."
+                }),
             new rimrushAdventureLevelDefinition(
                 1,
                 "CANDY ARCH STREET",
                 7,
-                "Light, quick, and agile.",
+                "Fast lane.",
                 rimrushAdventureMechanic.CandyCharge,
                 "CANDY CHARGE",
-                "Your super meter gains a steady candy boost.",
-                "Candy stalls, bright arches, and a fast Black Cat poster.",
+                "Super meter fills faster.",
+                "Candy arches and fast lanes.",
                 new[] { "CANDY", "CHARGE", "BOOST" },
-                214f,
-                272f,
+                168f,
+                286f,
                 rimrushBallSelection.CandySwirl,
                 2,
-                "The broadcast admits the lockdown is an old park ritual, not a normal outage."),
+                new[]
+                {
+                    "Fast feet. Fine, the street Sigil is yours.",
+                    "You kept up. Take the Sigil before the candy lights fade.",
+                    "Not bad. The lockdown route just opened one more turn."
+                },
+                new[]
+                {
+                    "Too slow. Candy Arch eats late runners.",
+                    "You chased me and lost the lane.",
+                    "No Sigil for you. Try again when you can keep the pace."
+                }),
             new rimrushAdventureLevelDefinition(
                 2,
                 "LAUGHING MIRROR HOUSE",
                 1,
-                "Noisy, playful, and theatrical.",
+                "Trick court.",
                 rimrushAdventureMechanic.DoubleHoop,
                 "DOUBLE RIM",
-                "When the mirror lights up, made baskets score double.",
-                "Comic mirror panels, carnival bulbs, and a glowing second rim sign.",
+                "Lit mirrors double made baskets.",
+                "Mirror panels and second-rim lights.",
                 new[] { "RIM X2", "TIMED", "RUSH" },
-                304f,
-                326f,
+                238f,
+                334f,
                 rimrushBallSelection.EvilEye,
                 3,
-                "A mirror reflection shows the Pumpkin Heart Lantern flickering above the main dome."),
+                new[]
+                {
+                    "Ha! You beat the joke. Take the mirror Sigil.",
+                    "Well played. Even the glass says that round was yours.",
+                    "The Heart Lantern saw that shot. Go claim the next court."
+                },
+                new[]
+                {
+                    "The mirrors laughed before I did.",
+                    "You bit on every trick. Come back sharper.",
+                    "No encore yet. The mirror house keeps its Sigil."
+                }),
             new rimrushAdventureLevelDefinition(
                 3,
                 "CANDLE HALL",
                 4,
-                "Warm, ceremonial, and rhythmic.",
+                "Ritual hall.",
                 rimrushAdventureMechanic.CandleCircle,
                 "CANDLE RING",
-                "Candle heat slowly feeds both players' super meters.",
-                "A long candle corridor with glowing floor rings and gold smoke.",
+                "Both meters slowly warm up.",
+                "Candle rings and gold smoke.",
                 new[] { "CANDLE", "CHARGE", "TEMPO" },
-                390f,
-                246f,
+                306f,
+                254f,
                 rimrushBallSelection.JackOLantern,
                 4,
-                "The recovered Sigils begin pointing toward the main dome."),
+                new[]
+                {
+                    "The flames bend for winners. Take the candle Sigil.",
+                    "You stayed calm in the glow. The route ahead is yours.",
+                    "A steady hand earns steady fire. Go while the wax still burns."
+                },
+                new[]
+                {
+                    "Your rhythm broke before the candles did.",
+                    "The hall stays dim until you prove your nerve.",
+                    "Too restless. Come back when your game stops flickering."
+                }),
             new rimrushAdventureLevelDefinition(
                 4,
                 "FOG DOCK",
                 2,
-                "Sideways motion, mist, and drifting shots.",
+                "Mist drift.",
                 rimrushAdventureMechanic.FogWind,
                 "FOG WIND",
-                "A light wind nudges airborne balls sideways.",
-                "Foggy dock planks, lantern buoys, and a pirate court banner.",
+                "Airborne balls drift sideways.",
+                "Dock planks and lantern buoys.",
                 new[] { "WIND", "BALL", "DRIFT" },
-                482f,
-                318f,
+                372f,
+                314f,
                 rimrushBallSelection.GhoulGreen,
                 5,
-                "The map reveals that the public Cup was built from this same hidden ritual."),
+                new[]
+                {
+                    "A clean raid. Take the dock Sigil and sail on.",
+                    "You stole that one fair and square. The mist parts for you.",
+                    "Ha! Even the tide liked that finish. Keep moving."
+                },
+                new[]
+                {
+                    "Blown off course. The dock keeps its Sigil.",
+                    "The mist fooled your aim and I took the rest.",
+                    "You'll need sturdier sea legs than that, challenger."
+                }),
             new rimrushAdventureLevelDefinition(
                 5,
                 "BLOOD MOON TERRACE",
                 3,
-                "Pressure rises under a red moon.",
+                "Red pressure.",
                 rimrushAdventureMechanic.BloodMoon,
                 "BLOOD MOON",
-                "During moon pulses, match tempo speeds up.",
-                "A moonlit terrace washed in red light and long court shadows.",
+                "Moon pulses speed up the match.",
+                "Red moonlight and long shadows.",
                 new[] { "MOON", "SPEED", "PULSE" },
-                572f,
-                260f,
+                436f,
+                250f,
                 rimrushBallSelection.MoonlitViolet,
                 6,
-                "The Pumpkin Heart Lantern brightens whenever a duel reaches its peak."),
+                new[]
+                {
+                    "Impressive. Take the terrace Sigil before the red moon turns.",
+                    "You survived the pressure. The Heart Lantern will remember it.",
+                    "Very well. The night yields one more key to you."
+                },
+                new[]
+                {
+                    "The red moon thinned your courage.",
+                    "You rushed the dark and the dark answered.",
+                    "Not enough bite. The terrace stays mine."
+                }),
             new rimrushAdventureLevelDefinition(
                 6,
                 "CLOCKTOWER GRAVEYARD",
                 0,
-                "Late-route pressure and defensive focus.",
+                "Final-minute clutch.",
                 rimrushAdventureMechanic.HarvestTime,
                 "HARVEST TIME",
-                "In the final 15 seconds, every made basket gains +1.",
-                "Clock hands, low fog, and a final-minute Reaper poster.",
+                "Last 15 seconds: baskets are +1.",
+                "Clock hands and low fog.",
                 new[] { "LAST 15", "+1", "CLUTCH" },
-                654f,
-                332f,
+                492f,
+                336f,
                 rimrushBallSelection.Cursed8Ball,
                 7,
-                "One last Sigil remains before the main dome unlocks."),
+                new[]
+                {
+                    "You lived through the closing seconds. Take the graveyard Sigil.",
+                    "Clutch enough. The last path to the dome is open.",
+                    "The clock spared you tonight. Go claim the final court."
+                },
+                new[]
+                {
+                    "When the clock tightened, so did your game.",
+                    "The graveyard keeps the next gate shut.",
+                    "You blinked at the harvest bell. Try the last seconds again."
+                }),
             new rimrushAdventureLevelDefinition(
                 7,
                 "MOON LANTERN DOME",
                 6,
-                "Final stage, bright and ceremonial.",
+                "Final dome.",
                 rimrushAdventureMechanic.MoonLanternMix,
                 "MOON MIX",
-                "The final duel rotates Candy, Double Rim, Fog Wind, and Blood Moon beats.",
-                "Main dome spotlights, the Heart Lantern, and the Witch on center court.",
+                "Rules rotate until the dome opens.",
+                "Heart Lantern and center court.",
                 new[] { "MIX", "FINAL", "DOME" },
-                728f,
-                248f,
+                502f,
+                236f,
                 rimrushBallSelection.Random,
                 8,
-                "The Pumpkin Heart Lantern steadies, and Moon Lantern Park opens its gate before dawn.")
+                new[]
+                {
+                    "Then the park chooses you. Take the final Sigil and open the gates.",
+                    "The Heart Lantern heard that win. Go now, before dawn slips away.",
+                    "You earned the last light. Leave this dome before it changes its mind."
+                },
+                new[]
+                {
+                    "So close. The dome still answers to me.",
+                    "The final light will not wake for a half-finished run.",
+                    "No gate opens tonight. Return when you can finish the ritual."
+                })
         };
 
         public static int LevelCount => Levels.Length;

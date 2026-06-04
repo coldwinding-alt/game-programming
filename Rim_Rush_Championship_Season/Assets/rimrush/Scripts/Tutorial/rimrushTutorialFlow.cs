@@ -431,6 +431,7 @@ namespace rimrush
             pumpBitePending = false;
             pumpJumpIssued = false;
             PrepareScriptedStep();
+            core.Ball.TutorialClearGuaranteedScore();
             core.TutorialResetScenario(
                 new Vector2(276f, rimrushObjectsData.PlayerIndentY),
                 new Vector2(426f, rimrushObjectsData.PlayerIndentY),
@@ -1204,6 +1205,7 @@ namespace rimrush
                         pumpStage = PumpStage.Finish;
                         pumpBitePending = true;
                         player.TutorialPrimePerfectShot();
+                        core.Ball.TutorialSetGuaranteedScore();
                         overlay.UpdateCopy(
                             "RELEASE + B",
                             "Defender jumped.",
