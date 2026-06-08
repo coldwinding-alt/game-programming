@@ -11,6 +11,10 @@ namespace mlp
         private readonly Transform root;
         private readonly List<mlpPlayerObject> playersLeft = new List<mlpPlayerObject>();
         private readonly List<mlpPlayerObject> playersRight = new List<mlpPlayerObject>();
+        private const float AdventureDoubleRimCycle = 12f;
+        private const float AdventureDoubleRimActiveTime = 6f;
+        private const float AdventureBloodMoonTimeScale = 1.14f;
+        private const float AdventureFogWindForce = 30f;
         private mlpArenaObject arena;
         private mlpBasketObject basketLeft;
         private mlpBasketObject basketRight;
@@ -1041,7 +1045,7 @@ namespace mlp
 
             var mechanic = GetActiveAdventureMechanic();
             return mechanic == mlpAdventureMechanic.BloodMoon && IsAdventureMechanicCurrentlyActive(mechanic)
-                ? 1.14f
+                ? AdventureBloodMoonTimeScale
                 : 1f;
         }
 
@@ -1120,7 +1124,7 @@ namespace mlp
             }
 
             var direction = Mathf.Sin((matchTime + 0.7f) * 1.35f) >= 0f ? 1f : -1f;
-            Ball.Velocity.x += direction * 42f * dt;
+            Ball.Velocity.x += direction * AdventureFogWindForce * dt;
         }
 
         private string ResolveAdventureScoreModifier(ref int points)
@@ -1184,9 +1188,11 @@ namespace mlp
                 case mlpAdventureMechanic.BasicDuel:
                     return true;
                 case mlpAdventureMechanic.DoubleHoop:
-                    return Mathf.Repeat(matchTime, 18f) < 7f;
+                    return (adventureLevel != null &&
+                            adventureLevel.Mechanic == mlpAdventureMechanic.MoonLanternMix) ||
+                           Mathf.Repeat(matchTime, AdventureDoubleRimCycle) < AdventureDoubleRimActiveTime;
                 case mlpAdventureMechanic.BloodMoon:
-                    return Mathf.Repeat(matchTime, 20f) < 8f;
+                    return true;
                 case mlpAdventureMechanic.HarvestTime:
                     return RemainingMatchTime <= 15f;
                 default:
@@ -1199,17 +1205,17 @@ namespace mlp
             switch (mechanic)
             {
                 case mlpAdventureMechanic.CandyCharge:
-                    return "CANDY CHARGE";
+                    return "CANDY CHARGE ACTIVE";
                 case mlpAdventureMechanic.DoubleHoop:
-                    return "DOUBLE RIM";
+                    return "DOUBLE RIM ACTIVE";
                 case mlpAdventureMechanic.CandleCircle:
-                    return "CANDLE RING";
+                    return "CANDLE RING ACTIVE";
                 case mlpAdventureMechanic.FogWind:
-                    return "FOG WIND";
+                    return "FOG WIND ACTIVE";
                 case mlpAdventureMechanic.BloodMoon:
-                    return "BLOOD MOON";
+                    return "BLOOD MOON ACTIVE";
                 case mlpAdventureMechanic.HarvestTime:
-                    return "HARVEST TIME";
+                    return "HARVEST TIME ACTIVE";
                 default:
                     return "WARDEN DUEL";
             }

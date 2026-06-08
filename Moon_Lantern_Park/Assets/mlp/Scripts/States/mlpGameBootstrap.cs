@@ -187,6 +187,9 @@ namespace mlp
         private const float AdventureMapPanelY = 238f;
         private const float AdventureMapPanelWidth = 574f;
         private const float AdventureMapPanelHeight = 348f;
+        private const float AdventureMechanicInfoY = 421f;
+        private const float AdventureMechanicInfoWidth = 540f;
+        private const float AdventureMechanicInfoHeight = 18f;
         private const float AdventurePosterX = 702f;
         private const float AdventurePosterY = 270f;
         private const float AdventurePosterWidth = 184f;
@@ -1119,6 +1122,7 @@ namespace mlp
 
             CreateAdventureTreasureMapFrame();
             CreateAdventureRouteMap(adventure);
+            CreateAdventureMechanicInfo(adventureSelectedLevelIndex);
             CreateAdventureLevelPoster(adventure, adventureSelectedLevelIndex);
             if (adventure.Completed)
             {
@@ -1193,6 +1197,38 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 18,
                 mlpTextStyle.TournamentAccent);
+        }
+
+        private void CreateAdventureMechanicInfo(int selectedLevelIndex)
+        {
+            var level = mlpAdventureCatalog.GetLevel(selectedLevelIndex);
+            var mechanicLine = $"{level.MechanicTitle} - {level.MechanicSummary}";
+            CreatePanel(
+                "AdventureMechanicInfoShadow",
+                AdventureMapPanelX + 2f,
+                AdventureMechanicInfoY + 3f,
+                AdventureMechanicInfoWidth,
+                AdventureMechanicInfoHeight,
+                20,
+                new Color(0.02f, 0.01f, 0f, 0.34f));
+            CreatePanel(
+                "AdventureMechanicInfoPanel",
+                AdventureMapPanelX,
+                AdventureMechanicInfoY,
+                AdventureMechanicInfoWidth,
+                AdventureMechanicInfoHeight,
+                21,
+                new Color(0.11f, 0.05f, 0.02f, 0.62f));
+            CreateMenuText(
+                "AdventureMechanicInfoText",
+                mechanicLine,
+                AdventureMapPanelX,
+                AdventureMechanicInfoY,
+                GetCompactFontSize(mechanicLine, 12, 11, 10),
+                new Color32(0xFF, 0xE2, 0xA0, 0xFF),
+                TextAnchor.MiddleCenter,
+                22,
+                mlpTextStyle.TournamentBody);
         }
 
         private Texture2D GetAdventureTreasureMapTexture()
@@ -4245,7 +4281,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a small badge used in tournament displays.
+        /// 绘制锦标赛中使用的小型头像徽章。
         /// </summary>
         private void CreateTournamentMiniBadge(string key, int characterId, float x, float y, int sortingOrder)
         {
@@ -4264,7 +4300,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a bordered panel rectangle on a menu screen.
+        /// 在菜单界面上绘制一个带边框的面板矩形。
         /// </summary>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint)
         {
@@ -4272,7 +4308,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a bordered panel rectangle on a menu screen.
+        /// 在菜单界面上绘制一个带边框的面板矩形（可指定父对象）。
         /// </summary>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
@@ -4635,7 +4671,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a horizontal line connecting two bracket positions.
+        /// 绘制连接两个对阵位置的水平线段。
         /// </summary>
         private void CreateHorizontalConnector(string name, float startX, float endX, float y, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
@@ -4654,7 +4690,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a vertical line connecting two bracket positions.
+        /// 绘制连接两个对阵位置的垂直线段。
         /// </summary>
         private void CreateVerticalConnector(string name, float x, float startY, float endY, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
@@ -4673,7 +4709,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw an L-shaped line connecting two bracket positions.
+        /// 绘制连接两个对阵位置的 L 形折线。
         /// </summary>
         private void CreateElbowConnector(string name, float startX, float startY, float endX, float endY, bool highlighted)
         {
@@ -4684,7 +4720,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a smaller font size if the text is too long for the available width.
+        /// 根据文本长度返回合适的字号，文本越长字号越小，防止超出可用宽度。
         /// </summary>
         private static int GetCompactFontSize(string text, int shortSize, int mediumSize, int longSize)
         {
@@ -4707,7 +4743,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clear all awards animation data so the ceremony can be rebuilt.
+        /// 清除所有颁奖动画数据，以便重新构建颁奖仪式。
         /// </summary>
         private void ResetTournamentAwardsState()
         {
@@ -4719,7 +4755,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Pick default characters for the two-player setup so both sides start with different fighters.
+        /// 为双人模式选择默认角色，确保双方使用不同的角色开局。
         /// </summary>
         private void SeedTwoPlayerSelection()
         {
@@ -4729,7 +4765,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Destroy all menu or gameplay objects and reset the scene.
+        /// 销毁所有菜单和游戏对象，重置整个场景。
         /// </summary>
         private void ClearRuntime()
         {
@@ -4763,7 +4799,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mute or unmute the background music.
+        /// 切换背景音乐的静音状态（开启或关闭）。
         /// </summary>
         private static void ToggleBackgroundMusic()
         {
@@ -4771,14 +4807,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// Empty placeholder callback that does nothing.
+        /// 空占位回调，不执行任何操作。
         /// </summary>
         private static void NoOpAction()
         {
         }
 
         /// <summary>
-        /// Return 0 if music is playing, 1 if muted (used to pick the right button icon).
+        /// 返回音乐图标索引：0 = 正在播放，1 = 已静音（用于切换按钮图标）。
         /// </summary>
         private static int GetMusicIconIndex()
         {
@@ -4786,7 +4822,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a status line like "SEASON RUN / ROUND 3" for the bracket header.
+        /// 返回锦标赛状态文字，如 "ROUND 3" 或 "GRAND FINAL"，用于对阵图标题显示。
         /// </summary>
         private static string GetTournamentStatusText(mlpTournamentData tournament)
         {
@@ -4836,7 +4872,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the character name, or "TBD" if the slot is empty.
+        /// 返回角色名称，如果槽位为空则返回 "TBD"（待定）。
         /// </summary>
         private static string CharacterNameOrTbd(int characterId)
         {
@@ -4844,7 +4880,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Move to the next or previous character id, wrapping around the full roster.
+        /// 切换到下一个或上一个角色 ID，到达末尾时自动循环回到开头。
         /// </summary>
         private static int WrapCharacter(int currentCharacterId, int direction)
         {

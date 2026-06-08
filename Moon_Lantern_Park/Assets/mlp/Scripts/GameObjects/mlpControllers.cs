@@ -36,6 +36,8 @@ namespace mlp
         private float lastRightDown = -10f;
         private float lastLeftUp = -10f;
         private float lastRightUp = -10f;
+        private int pendingDashDirection;
+        private float pendingDashTimer;
 
         public int CurrentMove { get; private set; }
         public bool CurrentJump { get; private set; }
@@ -61,6 +63,19 @@ namespace mlp
         {
             CurrentMove = 0;
             CurrentDash = 0;
+            if (pendingDashTimer > 0f)
+            {
+                pendingDashTimer = Mathf.Max(0f, pendingDashTimer - dt);
+                if (pendingDashTimer > 0f)
+                {
+                    CurrentDash = pendingDashDirection;
+                }
+                else
+                {
+                    pendingDashDirection = 0;
+                }
+            }
+
             var leftDown = controls.MoveLeftKey;
             var rightDown = controls.MoveRightKey;
             var currentTime = Time.time;
@@ -81,7 +96,7 @@ namespace mlp
                 if (currentTime - lastLeftDown <= mlpObjectsData.DashDoubleTapWindow
                     || currentTime - lastLeftUp <= mlpObjectsData.DashDoubleTapWindow)
                 {
-                    CurrentDash = -1;
+                    QueueDash(-1);
                 }
 
                 lastLeftDown = currentTime;
@@ -92,7 +107,7 @@ namespace mlp
                 if (currentTime - lastRightDown <= mlpObjectsData.DashDoubleTapWindow
                     || currentTime - lastRightUp <= mlpObjectsData.DashDoubleTapWindow)
                 {
-                    CurrentDash = 1;
+                    QueueDash(1);
                 }
 
                 lastRightDown = currentTime;
@@ -112,6 +127,13 @@ namespace mlp
             CurrentAction = Input.GetKey(controls.ActionKey);
             CurrentBlockOrPump = Input.GetKey(controls.BlockKey);
             CurrentSuper = Input.GetKey(controls.SuperKey);
+        }
+
+        private void QueueDash(int direction)
+        {
+            pendingDashDirection = direction;
+            pendingDashTimer = mlpObjectsData.DashInputBuffer;
+            CurrentDash = direction;
         }
 
         /// <summary>
@@ -182,6 +204,8 @@ namespace mlp
             lastRightDown = -10f;
             lastLeftUp = -10f;
             lastRightUp = -10f;
+            pendingDashDirection = 0;
+            pendingDashTimer = 0f;
             CurrentMove = 0;
             CurrentDash = 0;
             CurrentJump = false;
@@ -202,6 +226,8 @@ namespace mlp
         /// </summary>
         public void PlayerOnDashEnd()
         {
+            pendingDashDirection = 0;
+            pendingDashTimer = 0f;
         }
 
         /// <summary>

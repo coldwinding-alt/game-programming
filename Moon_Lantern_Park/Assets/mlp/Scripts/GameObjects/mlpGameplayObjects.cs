@@ -11,12 +11,12 @@ namespace mlp
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
 
         /// <summary>
-        /// Load the sprite for a themed ball, falling back to the default atlas if the theme has no dedicated resource.
+        /// 加载主题篮球的精灵，如果该主题没有专属资源则回退到默认图集。
         /// </summary>
-        /// <param name="theme">the ball visual theme to look up</param>
-        /// <param name="anchorX">horizontal sprite pivot in 0-1 range</param>
-        /// <param name="anchorY">vertical sprite pivot in 0-1 range</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="theme">要查找的篮球视觉主题</param>
+        /// <param name="anchorX">精灵水平锚点，范围 0-1</param>
+        /// <param name="anchorY">精灵垂直锚点，范围 0-1</param>
+        /// <returns>加载到的精灵，未找到时返回 null。</returns>
         public static Sprite LoadBallThemeSprite(mlpBallTheme theme, float anchorX, float anchorY)
         {
             var resourcePath = mlpAssets.Images.BallTheme(theme);
@@ -26,14 +26,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load a gameplay sprite from Resources, falling back to the atlas lookup when the direct resource path is missing.
+        /// 从 Resources 加载游戏精灵，直接资源路径缺失时回退到图集查找。
         /// </summary>
-        /// <param name="resourcePath">the resource path under the Images folder</param>
-        /// <param name="anchorX">horizontal sprite pivot in 0-1 range</param>
-        /// <param name="anchorY">vertical sprite pivot in 0-1 range</param>
-        /// <param name="fallbackAtlas">atlas to search when the direct resource path is missing</param>
-        /// <param name="fallbackFrame">atlas frame name used as a fallback sprite</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="resourcePath">Images 文件夹下的资源路径</param>
+        /// <param name="anchorX">精灵水平锚点，范围 0-1</param>
+        /// <param name="anchorY">精灵垂直锚点，范围 0-1</param>
+        /// <param name="fallbackAtlas">直接资源路径缺失时搜索的图集</param>
+        /// <param name="fallbackFrame">用作回退精灵的图集帧名称</param>
+        /// <returns>加载到的精灵，未找到时返回 null。</returns>
         public static Sprite LoadGameplaySprite(
             string resourcePath,
             float anchorX,
@@ -53,12 +53,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load a texture from Resources and create a Sprite, caching the result so repeated requests return instantly.
+        /// 从 Resources 加载纹理并创建 Sprite，缓存结果以便重复请求时立即返回。
         /// </summary>
-        /// <param name="resourcePath">the resource path under the Images folder</param>
-        /// <param name="anchorX">horizontal sprite pivot in 0-1 range</param>
-        /// <param name="anchorY">vertical sprite pivot in 0-1 range</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="resourcePath">Images 文件夹下的资源路径</param>
+        /// <param name="anchorX">精灵水平锚点，范围 0-1</param>
+        /// <param name="anchorY">精灵垂直锚点，范围 0-1</param>
+        /// <returns>创建的精灵，加载失败时返回 null。</returns>
         public static Sprite LoadImageSprite(string resourcePath, float anchorX, float anchorY)
         {
             if (string.IsNullOrEmpty(resourcePath))
@@ -79,7 +79,7 @@ namespace mlp
             }
 
             var rect = new Rect(0f, 0f, texture.width, texture.height);
-            // Keep the themed ball aligned to the original atlas ball bounds when it rotates in gameplay.
+            // 使主题篮球在比赛中旋转时保持与原始图集篮球边界对齐。
             var sprite = Sprite.Create(texture, rect, new Vector2(anchorX, 1f - anchorY), 1f, 0, SpriteMeshType.FullRect);
             sprite.name = texture.name;
             SpriteCache[cacheKey] = sprite;
@@ -95,9 +95,9 @@ namespace mlp
         public GameObject Graphic { get; }
 
         /// <summary>
-        /// Create the arena backdrop sprite and scale it to the logical gameplay dimensions.
+        /// 创建球场背景精灵并缩放到逻辑比赛尺寸。
         /// </summary>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpArenaObject(Transform parent)
         {
             Graphic = new GameObject("ArenaObject");
@@ -115,10 +115,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Keeps high-resolution standalone arena art at the same logical gameplay size as the legacy atlas frame.
+        /// 将高分辨率独立球场素材保持在与旧版图集帧相同的逻辑比赛尺寸。
         /// </summary>
-        /// <param name="transform">the transform to scale</param>
-        /// <param name="sprite">the sprite whose pixel dimensions drive the scale</param>
+        /// <param name="transform">要缩放的 Transform</param>
+        /// <param name="sprite">像素尺寸驱动缩放的精灵</param>
         private static void ApplyArenaLogicalScale(Transform transform, Sprite sprite)
         {
             if (sprite == null || sprite.rect.width <= 0f || sprite.rect.height <= 0f)
@@ -147,10 +147,10 @@ namespace mlp
         public float Height => mlpObjectsData.BasketHeight;
 
         /// <summary>
-        /// Create the basket (hoop) for one side of the court, including rim, front-ear, and net.
+        /// 创建球场一侧的篮筐，包括篮圈、前沿耳和篮网。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpBasketObject(int side, Transform parent)
         {
             this.side = side;
@@ -159,9 +159,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tick the net animation each frame, letting the sway decay over time.
+        /// 每帧更新篮网动画，使摆动随时间衰减。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         public void Update(float dt)
         {
             netPulse = Mathf.Max(0f, netPulse - dt * 2f);
@@ -169,7 +169,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Trigger a net-sway pulse so the net ripples after a ball passes through.
+        /// 触发篮网摆动脉冲，使篮球穿过时篮网产生波纹效果。
         /// </summary>
         public void HitNet()
         {
@@ -177,7 +177,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Hide the front-ear graphic so it does not draw over the ball during dunks.
+        /// 隐藏前沿耳图形，避免扣篮时遮挡篮球。
         /// </summary>
         public void HideEar()
         {
@@ -188,7 +188,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Restore the front-ear graphic after a dunk or special move completes.
+        /// 扣篮或特殊技能完成后恢复前沿耳图形。
         /// </summary>
         public void ShowEar()
         {
@@ -199,9 +199,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Build all basket visual children: the rim sprite, the front-ear overlay, and ten LineRenderer net strands.
+        /// 构建篮筐的所有视觉子对象：篮圈精灵、前沿耳覆盖层和十条 LineRenderer 篮网线。
         /// </summary>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         private void CreateGraphic(Transform parent)
         {
             graphic = new GameObject(side == -1 ? "BasketLeft" : "BasketRight");
@@ -253,7 +253,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reposition the ten net-strand LineRenderers to simulate a swaying net mesh.
+        /// 重新定位十条篮网 LineRenderer 以模拟摆动的篮网网格。
         /// </summary>
         private void UpdateNetLines()
         {
@@ -295,11 +295,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set the start and end world positions for a single net-strand LineRenderer.
+        /// 设置单条篮网 LineRenderer 的起始和结束世界坐标。
         /// </summary>
-        /// <param name="index">the net line renderer index (0-9)</param>
-        /// <param name="a">the first line endpoint</param>
-        /// <param name="b">the second line endpoint</param>
+        /// <param name="index">篮网线条渲染器索引（0-9）</param>
+        /// <param name="a">线条第一个端点</param>
+        /// <param name="b">线条第二个端点</param>
         private void SetLine(int index, Vector2 a, Vector2 b)
         {
             netLines[index].SetPosition(0, mlpConstants.PixelToWorld(a.x, a.y, 0.03f));
@@ -348,10 +348,10 @@ namespace mlp
             State != "score";
 
         /// <summary>
-        /// Create the basketball sprite and its shadow, then reset to the starting position.
+        /// 创建篮球精灵及其阴影，然后重置到起始位置。
         /// </summary>
-        /// <param name="gameCore">the central game logic coordinator</param>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="gameCore">中央游戏逻辑协调器</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpBallObject(mlpGameCore gameCore, Transform parent)
         {
             this.gameCore = gameCore;
@@ -377,7 +377,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset the ball to centre-court with an upward velocity, ready for a new round.
+        /// 将篮球重置到中场位置并赋予向上速度，为新一轮做好准备。
         /// </summary>
         public void Restart()
         {
@@ -394,9 +394,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Instantly place the ball at a given position with zero velocity, used during scripted tutorial moments.
+        /// 将篮球瞬间放置在指定位置且速度为零，用于教程中的脚本化时刻。
         /// </summary>
-        /// <param name="position">the world position</param>
+        /// <param name="position">世界坐标</param>
         public void TutorialSnapTo(Vector2 position)
         {
             Position = position;
@@ -440,9 +440,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Put the ball in a player's hands, hiding the ball and shadow sprites.
+        /// 将篮球放入球员手中，隐藏篮球和阴影精灵。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
         public void TakeInHands(int side)
         {
             Side = side;
@@ -457,10 +457,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Release the ball from a player's hands at a slight forward-and-down velocity.
+        /// 以略微向前向下的速度将篮球从球员手中释放。
         /// </summary>
-        /// <param name="playerPosition">the player's current world position</param>
-        /// <param name="direction">the movement or throw direction (-1 or 1)</param>
+        /// <param name="playerPosition">球员当前的世界坐标</param>
+        /// <param name="direction">移动或投掷方向（-1 或 1）</param>
         public void FromHands(Vector2 playerPosition, float direction)
         {
             Position = playerPosition;
@@ -490,13 +490,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// Launch the ball toward the basket with arc physics, applying accuracy dispersion based on distance and movement.
+        /// 以抛物线物理将篮球投向篮筐，根据距离和移动速度应用精度偏移。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
-        /// <param name="x">the horizontal coordinate in pixel space</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
-        /// <param name="playerVelocityX">the shooter's horizontal velocity at release</param>
-        /// <param name="accuracy">shot accuracy modifier (lower is more accurate)</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
+        /// <param name="x">像素空间中的水平坐标</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
+        /// <param name="playerVelocityX">投手出手时的水平速度</param>
+        /// <param name="accuracy">投篮精度修正值（越低越准）</param>
         public void Shoot(int side, float x, float y, float playerVelocityX, float accuracy)
         {
             Side = side;
@@ -530,10 +530,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Animate the ball through a dunk trajectory; if the dunk is completed, prime the score sensor so it counts immediately.
+        /// 播放篮球扣篮轨迹动画；扣篮完成时预先激活得分传感器以便立即计分。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
-        /// <param name="completed">true when the dunk animation finishes cleanly</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
+        /// <param name="completed">扣篮动画顺利结束时为 true</param>
         public void Dunk(int side, bool completed)
         {
             Side = side;
@@ -549,8 +549,8 @@ namespace mlp
             guaranteedDunkScore = completed;
             if (completed)
             {
-                // Completed dunks should resolve as made baskets once the ball is released.
-                // Priming the upper sensor avoids false "down-first" misses from coarse substeps.
+                // 完成的扣篮应在篮球释放后计为成功进球。
+                // 预先激活上传感器可避免因粗略子步长导致的"先下后上"误判。
                 upperSensorPassed = true;
                 scoreArmedSide = side;
                 gameCore.MatchProcessor.ProcessSensor(0);
@@ -561,11 +561,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Knock the ball away after a steal, giving it velocity in the steal direction.
+        /// 抢断后将篮球击飞，赋予其抢断方向的速度。
         /// </summary>
-        /// <param name="playerPosition">the player's current world position</param>
-        /// <param name="distanceFactor">a multiplier based on the steal distance</param>
-        /// <param name="direction">the movement or throw direction (-1 or 1)</param>
+        /// <param name="playerPosition">球员当前的世界坐标</param>
+        /// <param name="distanceFactor">基于抢断距离的倍率</param>
+        /// <param name="direction">移动或投掷方向（-1 或 1）</param>
         public void ApplySteal(Vector2 playerPosition, float distanceFactor, int direction)
         {
             Position = playerPosition;
@@ -583,9 +583,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Estimate where the ball will hit the floor by solving the parabolic trajectory equation for the landing time.
+        /// 通过求解抛物线轨迹方程的落地时间，估算篮球将落在地面的位置。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>预测的落地 X 坐标。</returns>
         public float PredictFloorLandingX()
         {
             if (!IsInGame)
@@ -633,9 +633,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Bounce the ball away after a block, reversing its direction relative to the blocker.
+        /// 盖帽后将篮球弹开，使其方向相对于盖帽者反转。
         /// </summary>
-        /// <param name="blocker">the player who blocked the shot</param>
+        /// <param name="blocker">执行盖帽的球员</param>
         public void ApplyBlock(mlpPlayerObject blocker)
         {
             var direction = Position.x >= blocker.Position.x ? 1f : -1f;
@@ -647,8 +647,8 @@ namespace mlp
             State = "block";
             physicsRemoved = false;
             alleyOopPlayer = null;
-            // Keep the current shot armed so a clean block that still drops
-            // through the original hoop can be scored by the sensor chain.
+            // 保持当前投篮激活状态，使干净的盖帽后篮球仍能穿过
+            // 原始篮筐时被传感器链计分。
             gameCore.MatchProcessor.Block(blocker.Side, blocker.IsHuman);
             Show();
             UpdateGraphic();
@@ -658,12 +658,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// Launch the ball on an alley-oop arc toward a designated catch point, tracked by the alley-oop player reference.
+        /// 将篮球沿空接弧线投向指定接球点，由空接球员引用跟踪。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
-        /// <param name="x">the horizontal coordinate in pixel space</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
-        /// <param name="player">the owning player object</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
+        /// <param name="x">像素空间中的水平坐标</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
+        /// <param name="player">拥有空接的球员对象</param>
         public void AlleyOop(int side, float x, float y, mlpPlayerObject player)
         {
             Side = side;
@@ -685,7 +685,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Hide the ball and stop its physics simulation, used during cut-scenes or transitions.
+        /// 隐藏篮球并停止其物理模拟，用于过场动画或场景转换期间。
         /// </summary>
         public void RemoveFromPhysics()
         {
@@ -696,7 +696,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Re-enable the ball physics and visibility after it was removed.
+        /// 在篮球被移除后重新启用其物理和可见性。
         /// </summary>
         public void ReturnToPhysics()
         {
@@ -706,9 +706,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Deflect the ball away from a shield skill with a randomised bounce.
+        /// 将篮球从护盾技能弹开，带随机弹跳效果。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
         public void OnShieldCollision(int side)
         {
             if (State == "score")
@@ -724,11 +724,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Advance ball physics each frame: apply gravity, run sub-stepped collision against floor/walls/basket/shield, and update the sprite position.
+        /// 每帧推进篮球物理：应用重力，对地面/墙壁/篮筐/护盾进行子步碰撞检测，并更新精灵位置。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
-        /// <param name="basketLeft">the left-side basket object</param>
-        /// <param name="basketRight">the right-side basket object</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="basketLeft">左侧篮筐对象</param>
+        /// <param name="basketRight">右侧篮筐对象</param>
         public void Update(float dt, mlpBasketObject basketLeft, mlpBasketObject basketRight)
         {
             if (State == "inHands" || physicsRemoved)
@@ -782,7 +782,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Bounce the ball off the floor plane and dampen horizontal speed.
+        /// 使篮球从地面反弹并衰减水平速度。
         /// </summary>
         private void ResolveFloorBounce()
         {
@@ -800,7 +800,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Bounce the ball off the left and right wall boundaries.
+        /// 使篮球从左右墙壁边界反弹。
         /// </summary>
         private void ResolveWallBounce()
         {
@@ -812,10 +812,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check all basket collisions for one side: backboard, left rim, right rim, and score sensors.
+        /// 检测一侧篮筐的所有碰撞：篮板、左篮圈、右篮圈和得分传感器。
         /// </summary>
-        /// <param name="basket">the basket object to check collisions against</param>
-        /// <param name="scoringSide">the side that would score if the ball drops through</param>
+        /// <param name="basket">要检测碰撞的篮筐对象</param>
+        /// <param name="scoringSide">篮球穿过篮筐时得分的一侧</param>
         private void ResolveBasket(mlpBasketObject basket, int scoringSide)
         {
             if (basket == null)
@@ -830,9 +830,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reflect the ball off the backboard glass plane if it reaches the glass region.
+        /// 当篮球到达篮板玻璃区域时使其从篮板玻璃平面反射。
         /// </summary>
-        /// <param name="basket">the basket object to check collisions against</param>
+        /// <param name="basket">要检测碰撞的篮筐对象</param>
         private void ResolveBackboardCollision(mlpBasketObject basket)
         {
             var glassTop = basket.Height + mlpObjectsData.GlassY;
@@ -869,10 +869,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Push the ball out of a rim collision circle and apply restitution to the velocity.
+        /// 将篮球推出篮圈碰撞圆并对速度应用弹性恢复系数。
         /// </summary>
-        /// <param name="rimCenter">centre of the rim collision circle in pixel space</param>
-        /// <param name="basket">the basket object to check collisions against</param>
+        /// <param name="rimCenter">像素空间中篮圈碰撞圆的中心</param>
+        /// <param name="basket">要检测碰撞的篮筐对象</param>
         private void ResolveRimCollision(Vector2 rimCenter, mlpBasketObject basket)
         {
             var combinedRadius = mlpObjectsData.BallRadius + mlpObjectsData.BasketPartRadius;
@@ -908,10 +908,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check whether the ball passed through the upper and lower score sensors in the correct order to count a basket.
+        /// 检测篮球是否按正确顺序穿过上下得分传感器以计为进球。
         /// </summary>
-        /// <param name="basket">the basket object to check collisions against</param>
-        /// <param name="scoringSide">the side that would score if the ball drops through</param>
+        /// <param name="basket">要检测碰撞的篮筐对象</param>
+        /// <param name="scoringSide">篮球穿过篮筐时得分的一侧</param>
         private void ProcessScoreSensors(mlpBasketObject basket, int scoringSide)
         {
             if (!canScore)
@@ -948,10 +948,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Score immediately if the ball is close enough to the basket centre during a guaranteed dunk.
+        /// 在保证扣篮期间，如果篮球足够接近篮筐中心则立即得分。
         /// </summary>
-        /// <param name="basketLeft">the left-side basket object</param>
-        /// <param name="basketRight">the right-side basket object</param>
+        /// <param name="basketLeft">左侧篮筐对象</param>
+        /// <param name="basketRight">右侧篮筐对象</param>
         private void TryResolveGuaranteedDunkScore(mlpBasketObject basketLeft, mlpBasketObject basketRight)
         {
             if (!canScore || !guaranteedDunkScore || scoreArmedSide == 0)
@@ -978,9 +978,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mark the ball as scored and notify the match processor.
+        /// 标记篮球已得分并通知比赛处理器。
         /// </summary>
-        /// <param name="scoringSide">the side that would score if the ball drops through</param>
+        /// <param name="scoringSide">篮球穿过篮筐时得分的一侧</param>
         private void CommitScore(int scoringSide)
         {
             CancelScoreAttempt();
@@ -990,7 +990,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset all score-tracking flags so the ball can attempt another shot.
+        /// 重置所有得分追踪标志，使篮球可以尝试下一次投篮。
         /// </summary>
         private void CancelScoreAttempt()
         {
@@ -1012,13 +1012,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// Test whether the swept ball trajectory intersects a rectangular score sensor region.
+        /// 测试篮球扫掠轨迹是否与矩形得分传感器区域相交。
         /// </summary>
-        /// <param name="start">the start position of the ball trajectory</param>
-        /// <param name="end">the end position of the ball trajectory</param>
-        /// <param name="centerX">the horizontal centre of the score sensor</param>
-        /// <param name="topY">the top Y coordinate of the score sensor</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="start">篮球轨迹的起始位置</param>
+        /// <param name="end">篮球轨迹的结束位置</param>
+        /// <param name="centerX">得分传感器的水平中心</param>
+        /// <param name="topY">得分传感器的顶部 Y 坐标</param>
+        /// <returns>操作成功时返回 true；否则返回 false。</returns>
         private static bool TouchesSensor(Vector2 start, Vector2 end, float centerX, float topY)
         {
             var minX = centerX - mlpObjectsData.SensorHalf - mlpObjectsData.BallRadius;
@@ -1029,15 +1029,15 @@ namespace mlp
         }
 
         /// <summary>
-        /// Use Cohen-Sutherland line clipping to check if a moving point crosses a rectangle.
+        /// 使用 Cohen-Sutherland 线段裁剪算法检测移动点是否穿过矩形。
         /// </summary>
-        /// <param name="start">the start position of the ball trajectory</param>
-        /// <param name="end">the end position of the ball trajectory</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="start">轨迹的起始位置</param>
+        /// <param name="end">轨迹的结束位置</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>线段与矩形相交时返回 true；否则返回 false。</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -1055,27 +1055,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return true when a 2D point lies inside the given axis-aligned rectangle.
+        /// 当二维点位于给定轴对齐矩形内部时返回 true。
         /// </summary>
-        /// <param name="point">the attack X position (0 means auto-select)</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="point">要检测的二维点</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>点在矩形内部时返回 true；否则返回 false。</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
         /// <summary>
-        /// Clip one component of a line segment against a slab boundary for Cohen-Sutherland clipping.
+        /// 对线段的一个分量进行 Cohen-Sutherland 裁剪的平板边界裁剪。
         /// </summary>
-        /// <param name="p">the direction component of the clipping slab</param>
-        /// <param name="q">the distance component of the clipping slab</param>
-        /// <param name="tMin">the current minimum parametric clipping value</param>
-        /// <param name="tMax">the current maximum parametric clipping value</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="p">裁剪平板的方向分量</param>
+        /// <param name="q">裁剪平板的距离分量</param>
+        /// <param name="tMin">当前最小参数裁剪值</param>
+        /// <param name="tMax">当前最大参数裁剪值</param>
+        /// <returns>线段未被完全裁剪时返回 true；否则返回 false。</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))
@@ -1113,7 +1113,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Switch the ball state to basket unless it is already in the score state.
+        /// 将篮球状态切换为"basket"，除非已经处于得分状态。
         /// </summary>
         private void SetBasketState()
         {
@@ -1124,9 +1124,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Play the appropriate basket sound (swish, rim hit, or backboard) with a cooldown for rapid collisions.
+        /// 播放相应的篮筐音效（入网声、篮圈撞击声或篮板声），快速碰撞时带冷却时间。
         /// </summary>
-        /// <param name="type">the collision sound type (0=swish, 1=rim, 2=backboard)</param>
+        /// <param name="type">碰撞音效类型（0=入网声，1=篮圈撞击，2=篮板）</param>
         private void PlayBasketSound(int type)
         {
             if (type != 0 && collisionSoundCooldown > 0f)
@@ -1154,9 +1154,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clear all score-arming flags and optionally arm the ball for the next scoring attempt.
+        /// 清除所有得分激活标志，并可选择性地为下一次投篮激活得分传感器。
         /// </summary>
-        /// <param name="armed">true to arm scoring sensors for the next shot</param>
+        /// <param name="armed">为 true 时激活得分传感器以准备下一次投篮</param>
         private void ResetScoring(bool armed)
         {
             canScore = armed;
@@ -1167,12 +1167,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// Compute the launch velocity needed to arc the ball from a given position to the target basket.
+        /// 计算将篮球从给定位置抛物线投向目标篮筐所需的发射速度。
         /// </summary>
-        /// <param name="x">the horizontal coordinate in pixel space</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
-        /// <param name="offset">horizontal offset added to the basket centre</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="x">像素空间中的水平坐标</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
+        /// <param name="offset">叠加到篮筐中心的水平偏移</param>
+        /// <returns>计算得到的发射速度向量。</returns>
         private Vector2 CalcThrowVel(float x, float y, float offset)
         {
             float targetX;
@@ -1219,14 +1219,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// Solve the parabolic trajectory to produce a velocity that travels from (x,y) to the target with a given arc height.
+        /// 求解抛物线轨迹，产生从 (x,y) 以给定弧高到达目标的速度。
         /// </summary>
-        /// <param name="x">the horizontal coordinate in pixel space</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
-        /// <param name="targetX">the horizontal target position</param>
-        /// <param name="targetY">the vertical target position</param>
-        /// <param name="arc">the peak arc height above the release point</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="x">像素空间中的水平坐标</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
+        /// <param name="targetX">目标的水平位置</param>
+        /// <param name="targetY">目标的垂直位置</param>
+        /// <param name="arc">出手点上方的最高弧高</param>
+        /// <returns>计算得到的速度向量。</returns>
         private Vector2 CalcVel(float x, float y, float targetX, float targetY, float arc)
         {
             var gravity = mlpObjectsData.Gravity.y * mlpObjectsData.BallGravMass;
@@ -1238,13 +1238,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// Roll a random shot dispersion value based on distance, height, running speed, and player accuracy.
+        /// 根据距离、高度、跑动速度和球员精度随机生成投篮偏移值。
         /// </summary>
-        /// <param name="distance">the estimated distance to the target basket</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
-        /// <param name="running">dispersion added by the player's movement speed</param>
-        /// <param name="accuracy">shot accuracy modifier (lower is more accurate)</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="distance">到目标篮筐的估算距离</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
+        /// <param name="running">球员移动速度带来的额外偏移</param>
+        /// <param name="accuracy">投篮精度修正值（越低越准）</param>
+        /// <returns>计算得到的偏移系数。</returns>
         private float CalcDispersion(float distance, float y, float running, float accuracy)
         {
             if (accuracy <= -0.5f)
@@ -1295,7 +1295,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mark the ball to become visible on the next graphic update.
+        /// 标记篮球在下一次图形更新时变为可见。
         /// </summary>
         private void Show()
         {
@@ -1303,9 +1303,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Pick the themed ball sprite if available, otherwise fall back to the default atlas ball frame.
+        /// 选择主题篮球精灵（如有），否则回退到默认图集篮球帧。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>解析到的篮球精灵。</returns>
         private Sprite ResolveBallSprite()
         {
             var themedSprite = mlpGameplaySpriteLoader.LoadBallThemeSprite(gameCore.MatchData.BallTheme, 0.5f, 0.5f);
@@ -1313,7 +1313,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Move the ball and shadow GameObjects to the current physics position each frame.
+        /// 每帧将篮球和阴影 GameObject 移动到当前物理位置。
         /// </summary>
         private void UpdateGraphic()
         {
@@ -1360,9 +1360,9 @@ namespace mlp
         private float phaseTime;
 
         /// <summary>
-        /// Build the teleport visual effect with black expand, centre dot, animation frames, and white flash.
+        /// 构建传送视觉特效，包括黑色扩展、中心点、动画帧和白色闪光。
         /// </summary>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpTeleportFx(Transform parent, mlpCharacterSkillDefinition skillDefinition)
         {
             this.skillDefinition = skillDefinition;
@@ -1405,10 +1405,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Begin the teleport animation sequence at a given world position.
+        /// 在指定世界坐标处开始传送动画序列。
         /// </summary>
-        /// <param name="x">the horizontal coordinate in pixel space</param>
-        /// <param name="y">the vertical coordinate in pixel space</param>
+        /// <param name="x">像素空间中的水平坐标</param>
+        /// <param name="y">像素空间中的垂直坐标</param>
         public void StartPlay(float x, float y)
         {
             phase = TeleportPhase.BlackExpand;
@@ -1427,9 +1427,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Advance the teleport animation through its phase machine each frame.
+        /// 每帧推进传送动画的状态机。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         public void Update(float dt)
         {
             if (phase == TeleportPhase.Hidden)
@@ -1472,7 +1472,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Immediately stop the teleport effect and hide all renderers.
+        /// 立即停止传送特效并隐藏所有渲染器。
         /// </summary>
         public void Hide()
         {
@@ -1487,7 +1487,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Expand the black circle from small to medium during the first teleport phase.
+        /// 在传送第一阶段将黑色圆圈从小扩展到中等大小。
         /// </summary>
         private void UpdateBlackExpand()
         {
@@ -1498,7 +1498,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Collapse the black circle while spinning, then show the animation frames.
+        /// 旋转的同时收缩黑色圆圈，然后显示动画帧。
         /// </summary>
         private void UpdateBlackCollapse()
         {
@@ -1514,7 +1514,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Play a three-stage white flash that expands and then shrinks to nothing.
+        /// 播放三阶段白色闪光：先扩展然后收缩至消失。
         /// </summary>
         private void UpdateWhiteFlash()
         {
@@ -1539,10 +1539,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply an ease-in-back curve with slight overshoot for a bouncy animation feel.
+        /// 应用带轻微过冲的 ease-in-back 曲线，产生弹性动画效果。
         /// </summary>
-        /// <param name="t">the normalised progress value (0 to 1)</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="t">归一化进度值（0 到 1）</param>
+        /// <returns>计算得到的缓动值。</returns>
         private static float EaseInBack(float t)
         {
             const float overshoot = 1.70158f;
@@ -1599,11 +1599,11 @@ namespace mlp
         private float alpha = 1f;
 
         /// <summary>
-        /// Create the shield skill visual effect for one side of the court.
+        /// 创建球场一侧的护盾技能视觉特效。
         /// </summary>
-        /// <param name="side">the court side (-1 for left, 1 for right)</param>
-        /// <param name="basket">the basket object to check collisions against</param>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="side">球场侧（-1 为左侧，1 为右侧）</param>
+        /// <param name="basket">要检测碰撞的篮筐对象</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpShieldObject(int side, mlpBasketObject basket, Transform parent, mlpCharacterSkillDefinition skillDefinition)
         {
             this.side = side;
@@ -1637,7 +1637,7 @@ namespace mlp
         public bool CanActivate => phase == ShieldPhase.Hidden;
 
         /// <summary>
-        /// Start the shield intro animation: drop the blur sprite in from above and play the shield sound.
+        /// 开始护盾入场动画：从上方滑入模糊精灵并播放护盾音效。
         /// </summary>
         public void Activate()
         {
@@ -1659,9 +1659,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Advance the shield through its intro, active, and fading phases each frame.
+        /// 每帧推进护盾的入场、激活和消退阶段。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         public void Update(float dt)
         {
             if (phase == ShieldPhase.Hidden)
@@ -1708,7 +1708,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Immediately hide the shield and restore the basket front-ear graphic.
+        /// 立即隐藏护盾并恢复篮筐前沿耳图形。
         /// </summary>
         public void Reset()
         {
@@ -1724,10 +1724,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the ball overlaps the shield collision rectangle and deflect it if so.
+        /// 检测篮球是否与护盾碰撞矩形重叠，如果是则将其弹开。
         /// </summary>
-        /// <param name="ball">the ball object to check or affect</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="ball">要检测或影响的篮球对象</param>
+        /// <returns>成功阻挡篮球时返回 true；否则返回 false。</returns>
         public bool TryBlockBall(mlpBallObject ball)
         {
             if (!IsBlocking || ball == null || ball.State == "score")
@@ -1751,7 +1751,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Position the shield graphic at the basket origin each frame, flipping horizontally for the correct side.
+        /// 每帧将护盾图形定位到篮筐原点，根据所在侧水平翻转。
         /// </summary>
         private void UpdateGraphic()
         {
@@ -1774,7 +1774,7 @@ namespace mlp
         private float AnimationDuration => frames.Length / AnimationFps;
 
         /// <summary>
-        /// Animate the blur sprite dropping from above with an ease-out-back curve.
+        /// 使用 ease-out-back 曲线播放模糊精灵从上方落下的动画。
         /// </summary>
         private void UpdateIntro()
         {
@@ -1790,7 +1790,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Cycle through the shield animation frames at the configured frame rate.
+        /// 按配置的帧率循环播放护盾动画帧。
         /// </summary>
         private void UpdateActive()
         {
@@ -1811,7 +1811,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tint all shield renderers with the current fade alpha and skill theme colours.
+        /// 使用当前淡出透明度和技能主题颜色为所有护盾渲染器着色。
         /// </summary>
         private void ApplyAlpha()
         {
@@ -1821,12 +1821,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create a child GameObject with a SpriteRenderer at a given sorting order.
+        /// 创建带有 SpriteRenderer 的子 GameObject，使用指定的排序层级。
         /// </summary>
-        /// <param name="name">the name of the child GameObject</param>
-        /// <param name="sortingOrder">the sprite sorting order for draw priority</param>
-        /// <param name="sprite">the sprite whose pixel dimensions drive the scale</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="name">子 GameObject 的名称</param>
+        /// <param name="sortingOrder">精灵排序层级，决定绘制优先级</param>
+        /// <param name="sprite">像素尺寸驱动缩放的精灵</param>
+        /// <returns>创建的 SpriteRenderer 组件。</returns>
         private SpriteRenderer CreateRenderer(string name, int sortingOrder, Sprite sprite)
         {
             var child = new GameObject(name);
@@ -1839,10 +1839,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply an ease-out-back curve with slight overshoot for a bouncy animation feel.
+        /// 应用带轻微过冲的 ease-out-back 曲线，产生弹性动画效果。
         /// </summary>
-        /// <param name="t">the normalised progress value (0 to 1)</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="t">归一化进度值（0 到 1）</param>
+        /// <returns>计算得到的缓动值。</returns>
         private static float EaseOutBack(float t)
         {
             const float overshoot = 1.70158f;
@@ -1862,15 +1862,15 @@ namespace mlp
         }
 
         /// <summary>
-        /// Use Cohen-Sutherland line clipping to check if a moving point crosses a rectangle.
+        /// 使用 Cohen-Sutherland 线段裁剪算法检测移动点是否穿过矩形。
         /// </summary>
-        /// <param name="start">the start position of the ball trajectory</param>
-        /// <param name="end">the end position of the ball trajectory</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="start">轨迹的起始位置</param>
+        /// <param name="end">轨迹的结束位置</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>线段与矩形相交时返回 true；否则返回 false。</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -1888,27 +1888,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return true when a 2D point lies inside the given axis-aligned rectangle.
+        /// 当二维点位于给定轴对齐矩形内部时返回 true。
         /// </summary>
-        /// <param name="point">the attack X position (0 means auto-select)</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="point">要检测的二维点</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>点在矩形内部时返回 true；否则返回 false。</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
         /// <summary>
-        /// Clip one component of a line segment against a slab boundary for Cohen-Sutherland clipping.
+        /// 对线段的一个分量进行 Cohen-Sutherland 裁剪的平板边界裁剪。
         /// </summary>
-        /// <param name="p">the direction component of the clipping slab</param>
-        /// <param name="q">the distance component of the clipping slab</param>
-        /// <param name="tMin">the current minimum parametric clipping value</param>
-        /// <param name="tMax">the current maximum parametric clipping value</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="p">裁剪平板的方向分量</param>
+        /// <param name="q">裁剪平板的距离分量</param>
+        /// <param name="tMin">当前最小参数裁剪值</param>
+        /// <param name="tMax">当前最大参数裁剪值</param>
+        /// <returns>线段未被完全裁剪时返回 true；否则返回 false。</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))
@@ -2123,6 +2123,9 @@ namespace mlp
 
         private void ResetRendererLayout()
         {
+            glowRenderer.enabled = true;
+            coreRenderer.enabled = true;
+            accentRenderer.enabled = true;
             glowRenderer.transform.localPosition = Vector3.zero;
             glowRenderer.transform.localRotation = Quaternion.identity;
             coreRenderer.transform.localPosition = Vector3.zero;
@@ -2162,17 +2165,13 @@ namespace mlp
                 ? Mathf.Lerp(0.72f, 1f, t)
                 : Mathf.Lerp(0.92f, 1.08f, Mathf.Sin(t * Mathf.PI));
 
-            SetRendererPixelSize(glowRenderer, 118f * stretch, 34f);
+            glowRenderer.enabled = false;
             SetRendererPixelSize(coreRenderer, 150f * stretch, 44f);
-            SetRendererPixelSize(accentRenderer, 162f * stretch, 50f);
+            accentRenderer.enabled = false;
 
-            glowRenderer.transform.localPosition = new Vector3(8f, -3f, 0f);
             coreRenderer.transform.localPosition = new Vector3(18f, -4f, 0f);
-            accentRenderer.transform.localPosition = new Vector3(24f, -5f, 0f);
 
-            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.1f + Mathf.Sin(Time.time * 12f) * 0.015f);
             coreRenderer.color = WithAlpha(Color.white, 0.68f * fade);
-            accentRenderer.color = WithAlpha(Color.white, 0.5f * fade);
         }
 
         private void UpdateFreezeFx(float t)
@@ -2351,6 +2350,9 @@ namespace mlp
         private const float ReboundMagnetCatchDistanceY = 72f;
         private const float ReboundMagnetMinSpeed = 560f;
         private const float ReboundMagnetMaxSpeed = 920f;
+        private const float GuaranteedBlockHoldDuration = 0.22f;
+        private const float GuaranteedBlockHorizontalOffset = 20f;
+        private const float GuaranteedBlockHandsOffsetY = 64f;
 
         private enum BlockPumpPhase
         {
@@ -2367,7 +2369,8 @@ namespace mlp
             MegaRecover,
             SuperDashTravel,
             AlleyTeleportOut,
-            AlleyTeleportIn
+            AlleyTeleportIn,
+            GuaranteedBlockHold
         }
 
         private readonly GameObject graphic;
@@ -2453,6 +2456,7 @@ namespace mlp
         private mlpPlayerObject teamMate;
         private bool hellOpeningChargeApplied;
         private bool hellNativeSuperRefundPending;
+        private bool guaranteedBlockPickupLocked;
         private bool scoreUpgradeActive;
         private bool scoreUpgradePendingShot;
         private bool tutorialPerfectShotPrimed;
@@ -2548,15 +2552,15 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set up a player character with sprite, shadow, armature, controller, and skill effects.
+        /// 设置玩家角色，包括精灵、阴影、骨骼动画、控制器和技能特效。
         /// </summary>
-        /// <param name="gameCore">the central game logic coordinator</param>
-        /// <param name="teamIndex">the team index (0 for left, 1 for right)</param>
-        /// <param name="characterId">the character identifier used to look up the skill definition</param>
-        /// <param name="playerNo">the player number within the team (0 or 1)</param>
-        /// <param name="playerBrain">the brain string that determines the controller type</param>
-        /// <param name="skillLevel">the numeric AI skill level (higher is harder)</param>
-        /// <param name="parent">the parent transform to attach visual children to</param>
+        /// <param name="gameCore">中央游戏逻辑协调器</param>
+        /// <param name="teamIndex">队伍索引（0 为左侧，1 为右侧）</param>
+        /// <param name="characterId">用于查找技能定义的角色标识符</param>
+        /// <param name="playerNo">队伍内的玩家编号（0 或 1）</param>
+        /// <param name="playerBrain">决定控制器类型的脑字符串</param>
+        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpPlayerObject(mlpGameCore gameCore, int teamIndex, int characterId, int playerNo, string playerBrain, int skillLevel, Transform parent)
         {
             GameCore = gameCore;
@@ -2653,7 +2657,7 @@ namespace mlp
                     : mlpAIController.CreateForBrain(this, playerBrain, skillLevel);
 
             energyBar = IsHuman ? new mlpEnergyBarView(parent, brainSlot, skillDefinition, superCoolDown) : null;
-            teleportFx = skillDefinition.UsesTeleportDunk ? new mlpTeleportFx(parent, skillDefinition) : null;
+            teleportFx = (skillDefinition.UsesTeleportDunk || skillDefinition.UsesGuaranteedBlockSkill) ? new mlpTeleportFx(parent, skillDefinition) : null;
             shield = skillDefinition.UsesBasketShield || hellEnhanced
                 ? new mlpShieldObject(Side, Side == -1 ? gameCore.BasketLeft : gameCore.BasketRight, parent, skillDefinition)
                 : null;
@@ -2663,7 +2667,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clean up runtime-only resources like the energy bar when the match ends.
+        /// 比赛结束时清理仅在运行时使用的资源（如能量条）。
         /// </summary>
         public void ReleaseRuntimeResources()
         {
@@ -2671,9 +2675,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset all player state for a new round: position, dash, stun, dunk, super, and skill timers.
+        /// 为新一轮重置所有玩家状态：位置、冲刺、眩晕、扣篮、超能力和技能计时器。
         /// </summary>
-        /// <param name="startSide">the side the player starts on after a reset</param>
+        /// <param name="startSide">重置后玩家所在的起始侧</param>
         public void Restart(int startSide)
         {
             WithBall = false;
@@ -2720,6 +2724,7 @@ namespace mlp
             superDashHits.Clear();
             isSuperShot = false;
             hellNativeSuperRefundPending = false;
+            guaranteedBlockPickupLocked = false;
             scoreUpgradeActive = false;
             scoreUpgradePendingShot = false;
             tutorialPerfectShotPrimed = false;
@@ -2774,9 +2779,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Run the full player update loop: input, physics, dash, jump, throw, steal, block, and animation.
+        /// 运行完整的玩家更新循环：输入、物理、冲刺、跳跃、投掷、抢断、盖帽和动画。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         public void Update(float dt)
         {
             teleportFx?.Update(dt);
@@ -2994,6 +2999,7 @@ namespace mlp
                     {
                         canThrow = true;
                         controller.PlayerOnGround();
+                        guaranteedBlockPickupLocked = false;
                         if (!WithBall)
                         {
                             canTakeInHands = true;
@@ -3030,9 +3036,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update cooldowns and input readiness during the pre-match countdown without moving the player.
+        /// 在赛前倒计时期间更新冷却时间和输入就绪状态，不移动玩家。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         public void TickPreMatch(float dt)
         {
             teleportFx?.Update(dt);
@@ -3055,7 +3061,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Pick up the ball, update controller signals, and play the holding animation.
+        /// 拾取篮球，更新控制器信号，并播放持球动画。
         /// </summary>
         public void TakeBallInHands()
         {
@@ -3081,10 +3087,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Instantly place the player at a given position and facing, used in scripted tutorial moments.
+        /// 将玩家瞬间放置在指定位置和朝向，用于教程中的脚本化时刻。
         /// </summary>
-        /// <param name="position">the world position</param>
-        /// <param name="facing">the facing direction (-1 or 1)</param>
+        /// <param name="position">世界坐标</param>
+        /// <param name="facing">朝向方向（-1 或 1）</param>
         public void TutorialSnapTo(Vector2 position, float facing)
         {
             Position = position;
@@ -3100,7 +3106,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Immediately fill the super meter to full so the player can activate their skill.
+        /// 立即将超能力量表充满，使玩家可以激活技能。
         /// </summary>
         public void TutorialChargeSuper()
         {
@@ -3119,7 +3125,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Enable the tutorial perfect-shot flag so the next shot will be perfectly accurate.
+        /// 启用教程完美投篮标志，使下一次投篮完全精准。
         /// </summary>
         public void TutorialPrimePerfectShot()
         {
@@ -3159,7 +3165,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Release the ball from this player without throwing it, resetting throw-related state.
+        /// 从该球员手中释放篮球但不投掷，重置投掷相关状态。
         /// </summary>
         public void FreeBall()
         {
@@ -3196,7 +3202,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Handle the ball becoming loose: reset throw/block state and tell the controller.
+        /// 处理篮球变为自由状态：重置投掷/盖帽状态并通知控制器。
         /// </summary>
         public void NotifyBallLoose()
         {
@@ -3212,10 +3218,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Notify the controller that someone picked up the ball, updating attack/defend strategy.
+        /// 通知控制器有人拾取了篮球，更新进攻/防守策略。
         /// </summary>
-        /// <param name="holderSide">the side of the player who picked up the ball</param>
-        /// <param name="holderPlayerNo">the player number of the current ball holder</param>
+        /// <param name="holderSide">拾取篮球的球员所在侧</param>
+        /// <param name="holderPlayerNo">当前持球者的球员编号</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
             if (scoreUpgradePendingShot)
@@ -3236,10 +3242,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Notify the controller that a shot was taken, updating rebound and block strategy.
+        /// 通知控制器有人投篮了，更新篮板和盖帽策略。
         /// </summary>
-        /// <param name="shotSide">the side of the player who took the shot</param>
-        /// <param name="shooterPlayerNo">the player number of the player who shot</param>
+        /// <param name="shotSide">投篮球员所在侧</param>
+        /// <param name="shooterPlayerNo">投篮球员的编号</param>
         public void NotifyBallShot(int shotSide, int shooterPlayerNo)
         {
             if (scoreUpgradeActive && shotSide == Side && shooterPlayerNo == playerNo)
@@ -3261,7 +3267,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Notify the controller that the ball is in a neutral state (not held, not shot).
+        /// 通知控制器篮球处于中立状态（未持球，未投篮）。
         /// </summary>
         public void NotifyBallOthers()
         {
@@ -3271,16 +3277,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// Attempt to activate the player's super skill if conditions are met.
+        /// 尝试在玩家满足条件时激活超能技能。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>成功激活时返回 true；否则返回 false。</returns>
         public bool SuperShot()
         {
             return TryStartSuper(true);
         }
 
         /// <summary>
-        /// Begin the teleport-out phase of an alley-oop super after the ball reaches the catch point.
+        /// 篮球到达接球点后开始空接超能的传送出场阶段。
         /// </summary>
         public void ContinueAlleyOop()
         {
@@ -3298,10 +3304,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player's shield skill can block the given ball.
+        /// 检测玩家的护盾技能是否能阻挡给定的篮球。
         /// </summary>
-        /// <param name="ball">the ball object to check or affect</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="ball">要检测或影响的篮球对象</param>
+        /// <returns>成功阻挡时返回 true；否则返回 false。</returns>
         public bool TryShieldBall(mlpBallObject ball)
         {
             return shield != null && shield.TryBlockBall(ball);
@@ -3383,28 +3389,28 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the extra steal range granted by Hell difficulty enhancements.
+        /// 返回地狱难度增强提供的额外抢断范围。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>额外抢断距离。</returns>
         public float GetStealDistanceBonus()
         {
             return hellEnhanced ? aiDifficultyTuning.StealRangeBonus : 0f;
         }
 
         /// <summary>
-        /// Return the physics mass used for ground-level player-to-player collisions.
+        /// 返回地面级玩家间碰撞使用的物理质量。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>碰撞物理质量值。</returns>
         public float GetCollisionMass()
         {
             return HasGroundBlockBody ? GroundBlockCollisionMass : GroundCollisionMass;
         }
 
         /// <summary>
-        /// Return true if this player is moving toward the other player's position.
+        /// 当该玩家正朝另一名球员的位置移动时返回 true。
         /// </summary>
-        /// <param name="other">the other player to check movement against</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="other">要检测移动方向的另一名球员</param>
+        /// <returns>正在朝对方移动时返回 true；否则返回 false。</returns>
         public bool IsMovingToward(mlpPlayerObject other)
         {
             if (other == null)
@@ -3422,10 +3428,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Is Dashing Into.
+        /// 检测是否正在冲刺冲向另一名球员。
         /// </summary>
-        /// <param name="other">the other player to check movement against</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="other">要检测冲刺方向的另一名球员</param>
+        /// <returns>正在冲刺冲向对方时返回 true；否则返回 false。</returns>
         public bool IsDashingInto(mlpPlayerObject other)
         {
             if (!IsDashing || other == null)
@@ -3443,7 +3449,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Interrupt Dash By Block.
+        /// 因盖帽而中断冲刺。
         /// </summary>
         public void InterruptDashByBlock()
         {
@@ -3470,9 +3476,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply Horizontal Separation.
+        /// 应用水平分离力。
         /// </summary>
-        /// <param name="delta">the delta</param>
+        /// <param name="delta">分离偏移量</param>
         public void ApplyHorizontalSeparation(float delta)
         {
             if (Mathf.Abs(delta) <= 0.001f)
@@ -3485,7 +3491,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// On Stolen.
+        /// 被抢断时的处理。
         /// </summary>
         public void OnStolen()
         {
@@ -3493,10 +3499,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check To Be Stolen.
+        /// 检测是否可被抢断。
         /// </summary>
-        /// <param name="thiefX">the thief x</param>
-        /// <param name="thiefFacingScaleX">the thief facing scale x</param>
+        /// <param name="thiefX">抢断者的 X 坐标</param>
+        /// <param name="thiefFacingScaleX">抢断者的朝向 X 缩放</param>
         /// <param name="stealDistance">the steal distance</param>
         /// <returns>The computed result.</returns>
         public float CheckToBeStolen(float thiefX, float thiefFacingScaleX, float stealDistance)
@@ -3519,11 +3525,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Get Be Stolen.
+        /// 执行被抢断的逻辑。
         /// </summary>
-        /// <param name="thiefX">the thief x</param>
-        /// <param name="applyBallSteal">the apply ball steal</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="thiefX">抢断者的 X 坐标</param>
+        /// <param name="applyBallSteal">是否应用篮球抢断效果</param>
+        /// <returns>之前持球时返回 true；否则返回 false。</returns>
         public bool GetBeStolen(float thiefX, bool applyBallSteal = true)
         {
             if (removedFromPlay)
@@ -3562,10 +3568,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check Loose Ball Pickup.
+        /// 检测是否可以拾取自由球。
         /// </summary>
-        /// <param name="ball">the ball object to check or affect</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="ball">要检测的篮球对象</param>
+        /// <returns>可拾取时返回距离平方；否则返回 -1。</returns>
         public float CheckLooseBallPickup(mlpBallObject ball)
         {
             if (ball == null || !ball.CanBeTakenInHands || !CanTakeInHands)
@@ -3585,10 +3591,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try Block Ball.
+        /// 尝试盖帽阻挡篮球。
         /// </summary>
-        /// <param name="ball">the ball object to check or affect</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="ball">要检测或影响的篮球对象</param>
+        /// <returns>成功阻挡时返回 true；否则返回 false。</returns>
         public bool TryBlockBall(mlpBallObject ball)
         {
             if (!jumpBlockActive || ball == null || !ball.IsBlockable || ball.Side == Side || removedFromPlay || isSuperShot)
@@ -3622,10 +3628,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try Start Super.
+        /// 尝试启动超能技能。
         /// </summary>
-        /// <param name="pressed">the pressed</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="pressed">是否按下超能键</param>
+        /// <returns>成功启动时返回 true；否则返回 false。</returns>
         private bool TryStartSuper(bool pressed)
         {
             RefreshQuickTestSuperReady();
@@ -3699,9 +3705,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try Use Hell Bonus Super Dash.
+        /// 尝试使用地狱加成超能冲刺。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>成功使用时返回 true；否则返回 false。</returns>
         public bool TryUseHellBonusSuperDash()
         {
             if (!CanUseHellBonusSuperDash || GameCore.IsSuperShot || isSuperShot || removedFromPlay || !IsGrounded || stunTimer > 0f || isDunking)
@@ -3717,9 +3723,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try Use Hell Bonus Shield.
+        /// 尝试使用地狱加成护盾。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>成功使用时返回 true；否则返回 false。</returns>
         public bool TryUseHellBonusShield()
         {
             if (!CanUseHellBonusShield || GameCore.IsSuperShot || isSuperShot || removedFromPlay || stunTimer > 0f || isDunking)
@@ -3735,9 +3741,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Start Super.
+        /// 启动超能状态。
         /// </summary>
-        /// <param name="consumeNativeCharge">the consume native charge</param>
+        /// <param name="consumeNativeCharge">是否消耗原生充能</param>
         private void StartSuper(bool consumeNativeCharge)
         {
             isSuperShot = true;
@@ -3762,7 +3768,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// End Super.
+        /// 结束超能状态。
         /// </summary>
         private void EndSuper()
         {
@@ -3789,7 +3795,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make Mega Dunk.
+        /// 执行超级扣篮。
         /// </summary>
         private void MakeMegaDunk()
         {
@@ -3808,7 +3814,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Continue Super Dunk.
+        /// 继续超级扣篮的恢复阶段。
         /// </summary>
         private void ContinueSuperDunk()
         {
@@ -3821,7 +3827,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// End Super Dunk.
+        /// 结束超级扣篮。
         /// </summary>
         private void EndSuperDunk()
         {
@@ -3844,7 +3850,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make Shield.
+        /// 释放护盾技能。
         /// </summary>
         private void MakeShield()
         {
@@ -3893,17 +3899,67 @@ namespace mlp
         private void MakeGuaranteedBlock()
         {
             var ball = GameCore.Ball;
-            if (CanUseGuaranteedBlockBall(ball))
+            if (!CanUseGuaranteedBlockBall(ball))
             {
-                facingDirection = ball.Position.x >= Position.x ? 1f : -1f;
-                ball.ApplyBlock(this);
+                EndSuper();
+                return;
             }
 
+            canDoAction = false;
+            canTakeInHands = false;
+            canThrow = false;
+            WithBall = false;
+            Velocity = Vector2.zero;
+            dashTimer = 0f;
+            blockPumpPhase = BlockPumpPhase.None;
+            jumpBlockActive = false;
+            Position = GetGuaranteedBlockPosition(ball);
+            IsGrounded = Position.y >= mlpObjectsData.PlayerIndentY - 0.5f;
+            facingDirection = ball.Position.x >= Position.x ? 1f : -1f;
+            teleportFx?.StartPlay(Position.x, Position.y - GuaranteedBlockHandsOffsetY);
+            mlpAudio.Instance?.Play(mlpAssets.Sounds.PTeleport);
+            PlayState("blockStart");
+            ball.ApplyBlock(this);
+            GameCore.ShowHudBonusNotice(skillDefinition.ScoreNotice, 0.95f);
+            guaranteedBlockPickupLocked = !IsGrounded;
+            superPhase = SuperPhase.GuaranteedBlockHold;
+            superTimer = 0f;
+            superDuration = GuaranteedBlockHoldDuration;
+            actionLatch = Mathf.Max(actionLatch, GuaranteedBlockHoldDuration);
+        }
+
+        private Vector2 GetGuaranteedBlockPosition(mlpBallObject ball)
+        {
+            var targetX = Mathf.Clamp(
+                ball.Position.x - ball.Side * GuaranteedBlockHorizontalOffset,
+                20f,
+                mlpConstants.Width - 20f);
+            var targetY = Mathf.Clamp(
+                ball.Position.y + GuaranteedBlockHandsOffsetY,
+                mlpObjectsData.BasketHeight - 18f,
+                mlpObjectsData.PlayerIndentY);
+            return new Vector2(targetX, targetY);
+        }
+
+        private void FinishGuaranteedBlock()
+        {
+            Velocity = Vector2.zero;
+            canDoAction = true;
+            canThrow = true;
+            if (Position.y >= mlpObjectsData.PlayerIndentY - 0.5f)
+            {
+                Position.y = mlpObjectsData.PlayerIndentY;
+                IsGrounded = true;
+            }
+
+            guaranteedBlockPickupLocked = !IsGrounded;
+            canTakeInHands = !WithBall && !guaranteedBlockPickupLocked;
+            PlayState(IsGrounded ? "blockEnd" : "fly1");
             EndSuper();
         }
 
         /// <summary>
-        /// Make Alley Oop.
+        /// 执行空接超能。
         /// </summary>
         private void MakeAlleyOop()
         {
@@ -3926,7 +3982,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Start Alley Oop.
+        /// 开始空接投掷。
         /// </summary>
         private void StartAlleyOop()
         {
@@ -3943,7 +3999,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Finish Alley Teleport Out.
+        /// 完成空接传送出场。
         /// </summary>
         private void FinishAlleyTeleportOut()
         {
@@ -3965,7 +4021,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make Super Dash.
+        /// 执行超能冲刺。
         /// </summary>
         private void MakeSuperDash()
         {
@@ -4028,7 +4084,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Continue Super Dash.
+        /// 继续超能冲刺。
         /// </summary>
         private void ContinueSuperDash()
         {
@@ -4043,9 +4099,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Super.
+        /// 更新超能状态。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         private void UpdateSuper(float dt)
         {
             switch (superPhase)
@@ -4087,13 +4143,21 @@ namespace mlp
                         ContinueSuperDunk();
                     }
                     break;
+                case SuperPhase.GuaranteedBlockHold:
+                    superTimer += dt;
+                    Velocity = Vector2.zero;
+                    if (superTimer >= superDuration)
+                    {
+                        FinishGuaranteedBlock();
+                    }
+                    break;
             }
 
             UpdateGraphic();
         }
 
         /// <summary>
-        /// Update Super Dash Travel.
+        /// 更新超能冲刺移动过程。
         /// </summary>
         private void UpdateSuperDashTravel()
         {
@@ -4140,7 +4204,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Acquire Ball During Super Dash.
+        /// 在超能冲刺期间获取篮球。
         /// </summary>
         private void AcquireBallDuringSuperDash()
         {
@@ -4168,7 +4232,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make Throw.
+        /// 执行投篮。
         /// </summary>
         private void MakeThrow()
         {
@@ -4201,7 +4265,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Begin Floor Throw.
+        /// 开始地面投篮。
         /// </summary>
         private void BeginFloorThrow()
         {
@@ -4215,7 +4279,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Begin Steal.
+        /// 开始抢断。
         /// </summary>
         private void BeginSteal()
         {
@@ -4240,7 +4304,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resolve Steal Attempt.
+        /// 结算抢断尝试。
         /// </summary>
         private void ResolveStealAttempt()
         {
@@ -4260,9 +4324,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Steal Animation.
+        /// 更新抢断动画。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">帧间隔时间（秒）</param>
         private void UpdateStealAnimation(float dt)
         {
             facingDirection = stealFacingDirection;
@@ -4288,7 +4352,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Finish Steal Animation.
+        /// 结束抢断动画。
         /// </summary>
         private void FinishStealAnimation()
         {
@@ -4312,9 +4376,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Cancel Steal Animation.
+        /// 取消抢断动画。
         /// </summary>
-        /// <param name="restorePickup">the restore pickup</param>
+        /// <param name="restorePickup">是否恢复拾取能力</param>
         private void CancelStealAnimation(bool restorePickup)
         {
             stealAnimationActive = false;
@@ -4328,7 +4392,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Facing.
+        /// 更新朝向。
         /// </summary>
         private void UpdateFacing()
         {
@@ -4351,9 +4415,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Play State.
+        /// 播放指定的动画状态。
         /// </summary>
-        /// <param name="state">the state</param>
+        /// <param name="state">动画状态名称</param>
         private void PlayState(string state)
         {
             if (visualState == state)
@@ -4366,9 +4430,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set State At Start.
+        /// 将动画状态设置到起始帧。
         /// </summary>
-        /// <param name="state">the state</param>
+        /// <param name="state">动画状态名称</param>
         private void SetStateAtStart(string state)
         {
             visualState = state;
@@ -4376,10 +4440,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// On Animation Frame Event.
+        /// 动画帧事件回调。
         /// </summary>
-        /// <param name="animationName">the animation name</param>
-        /// <param name="eventName">the event name</param>
+        /// <param name="animationName">动画名称</param>
+        /// <param name="eventName">事件名称</param>
         private void OnAnimationFrameEvent(string animationName, string eventName)
         {
             armature?.RefreshPose();
@@ -4418,9 +4482,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// On Animation Complete.
+        /// 动画完成回调。
         /// </summary>
-        /// <param name="animationName">the animation name</param>
+        /// <param name="animationName">动画名称</param>
         private void OnAnimationComplete(string animationName)
         {
             switch (animationName)
@@ -4616,7 +4680,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Graphic.
+        /// 更新图形显示。
         /// </summary>
         private void UpdateGraphic()
         {
@@ -4664,7 +4728,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create Fallback Avatar.
+        /// 创建备用角色形象。
         /// </summary>
         private void CreateFallbackAvatar()
         {
@@ -4684,9 +4748,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Start Dash.
+        /// 开始冲刺。
         /// </summary>
-        /// <param name="direction">the movement or throw direction (-1 or 1)</param>
+        /// <param name="direction">移动或投掷方向（-1 或 1）</param>
         private void StartDash(int direction)
         {
             dashDirection = direction;
@@ -4701,9 +4765,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Dash Buffer.
+        /// 更新冲刺缓冲。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">时间增量（秒）</param>
         private void UpdateDashBuffer(float dt)
         {
             if (controller.CurrentDash != 0)
@@ -4727,7 +4791,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Begin Block Or Pump.
+        /// 开始防守或假动作。
         /// </summary>
         private void BeginBlockOrPump()
         {
@@ -4751,7 +4815,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Activate Jump Block.
+        /// 激活跳跃封盖。
         /// </summary>
         private void ActivateJumpBlock()
         {
@@ -4760,9 +4824,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Should Prime Jump Block.
+        /// 判断是否应预备跳跃封盖。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>条件满足时返回 true；否则返回 false。</returns>
         private bool ShouldPrimeJumpBlock()
         {
             if (!needBlock)
@@ -4781,7 +4845,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Jump Block Threat.
+        /// 更新跳跃封盖威胁状态。
         /// </summary>
         private void UpdateJumpBlockThreat()
         {
@@ -4792,9 +4856,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Block Or Pump.
+        /// 更新防守或假动作状态。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">时间增量（秒）</param>
         private void UpdateBlockOrPump(float dt)
         {
             Velocity.x = 0f;
@@ -4857,9 +4921,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try Start Dunk.
+        /// 尝试开始扣篮。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>操作成功时返回 true；否则返回 false。</returns>
         private bool TryStartDunk()
         {
             var dunkType = GetDunkType();
@@ -4963,9 +5027,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Get Dunk Type.
+        /// 获取扣篮类型。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>计算得出的扣篮类型。</returns>
         private int GetDunkType()
         {
             var paintStart = Side == 1 ? mlpObjectsData.PaintStartX : mlpConstants.Width - mlpObjectsData.PaintMiddleX;
@@ -4985,19 +5049,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// Dunk Target X.
+        /// 获取扣篮目标 X 坐标。
         /// </summary>
-        /// <returns>The computed result.</returns>
+        /// <returns>计算得出的目标 X 坐标。</returns>
         private float DunkTargetX()
         {
             return Side == 1 ? mlpObjectsData.DunkX : mlpConstants.Width - mlpObjectsData.DunkX;
         }
 
         /// <summary>
-        /// Dunk Duration.
+        /// 获取扣篮持续时间。
         /// </summary>
-        /// <param name="dunkType">the dunk type</param>
-        /// <returns>The computed result.</returns>
+        /// <param name="dunkType">扣篮类型</param>
+        /// <returns>计算得出的持续时间。</returns>
         private static float DunkDuration(int dunkType)
         {
             return dunkType == 2
@@ -5008,9 +5072,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update Dunk.
+        /// 更新扣篮状态。
         /// </summary>
-        /// <param name="dt">delta time in seconds</param>
+        /// <param name="dt">时间增量（秒）</param>
         private void UpdateDunk(float dt)
         {
             dunkTimer += dt;
@@ -5034,7 +5098,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Release Dunk Ball.
+        /// 释放扣篮篮球。
         /// </summary>
         private void ReleaseDunkBall()
         {
@@ -5063,7 +5127,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Restore Ball Pickup If Ready.
+        /// 条件满足时恢复拾球能力。
         /// </summary>
         private void RestoreBallPickupIfReady()
         {
@@ -5072,13 +5136,23 @@ namespace mlp
                 return;
             }
 
+            if (guaranteedBlockPickupLocked)
+            {
+                if (!IsGrounded)
+                {
+                    return;
+                }
+
+                guaranteedBlockPickupLocked = false;
+            }
+
             canTakeInHands = true;
         }
 
         /// <summary>
-        /// Is Under Glass.
+        /// 判断是否在篮板下方。
         /// </summary>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <returns>在篮板下方时返回 true；否则返回 false。</returns>
         private bool IsUnderGlass()
         {
             return Side == -1
@@ -5087,15 +5161,15 @@ namespace mlp
         }
 
         /// <summary>
-        /// Swept Point Intersects Rect.
+        /// 判断扫掠点线段是否与矩形相交。
         /// </summary>
-        /// <param name="start">the start position of the ball trajectory</param>
-        /// <param name="end">the end position of the ball trajectory</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="start">球轨迹的起点</param>
+        /// <param name="end">球轨迹的终点</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>相交时返回 true；否则返回 false。</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
@@ -5113,27 +5187,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// Point Inside Rect.
+        /// 判断点是否在矩形内。
         /// </summary>
-        /// <param name="point">the attack X position (0 means auto-select)</param>
-        /// <param name="minX">the left boundary of the test rectangle</param>
-        /// <param name="maxX">the right boundary of the test rectangle</param>
-        /// <param name="minY">the bottom boundary of the test rectangle</param>
-        /// <param name="maxY">the top boundary of the test rectangle</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="point">待检测的点</param>
+        /// <param name="minX">测试矩形的左边界</param>
+        /// <param name="maxX">测试矩形的右边界</param>
+        /// <param name="minY">测试矩形的下边界</param>
+        /// <param name="maxY">测试矩形的上边界</param>
+        /// <returns>点在矩形内时返回 true；否则返回 false。</returns>
         private static bool PointInsideRect(Vector2 point, float minX, float maxX, float minY, float maxY)
         {
             return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
         }
 
         /// <summary>
-        /// Clip Segment.
+        /// 裁剪线段（Cohen-Sutherland 算法）。
         /// </summary>
-        /// <param name="p">the direction component of the clipping slab</param>
-        /// <param name="q">the distance component of the clipping slab</param>
-        /// <param name="tMin">the current minimum parametric clipping value</param>
-        /// <param name="tMax">the current maximum parametric clipping value</param>
-        /// <returns>True when the requested operation succeeds; otherwise false.</returns>
+        /// <param name="p">裁剪平面的方向分量</param>
+        /// <param name="q">裁剪平面的距离分量</param>
+        /// <param name="tMin">当前最小参数裁剪值</param>
+        /// <param name="tMax">当前最大参数裁剪值</param>
+        /// <returns>线段未被完全裁剪时返回 true；否则返回 false。</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
             if (Mathf.Approximately(p, 0f))

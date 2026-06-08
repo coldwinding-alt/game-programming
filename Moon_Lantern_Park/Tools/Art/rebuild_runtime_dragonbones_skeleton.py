@@ -538,632 +538,451 @@ def loop_pose(duration: int, *, with_ball: bool) -> list[dict]:
 
 
 # ============================================================
-# 主骨骼动画定义函数
+# Active main armature animation builders
 # ============================================================
 
-def main_idle() -> dict:
-    """
-    生成无球站立动画
+def player_armature_base() -> dict:
+    """Return the minimal main armature shell for the active runtime data."""
+    return {"name": "playerSmall"}
 
-    角色自然站立，身体轻微上下浮动，头部微动，
-    双手自然下垂并轻微摆动。24帧循环，淡入0.1秒。
 
-    返回:
-        idle动画定义
-    """
-    duration = 24
+def event_slots(duration: int, visible_until: int, *, front: bool = False) -> list[dict]:
+    slots = with_ball_slots(duration, front=front)
+    visible_until = max(1, min(duration - 1, visible_until))
+    hidden_after = max(1, duration - visible_until)
+    slots[0] = {"name": "ball", "displayFrame": [frame(visible_until, value=0), frame(hidden_after, value=-1)]}
+    if front:
+        slots[1] = {"name": "ball_front", "displayFrame": [frame(visible_until, value=0), frame(hidden_after, value=-1)]}
+    return slots
+
+
+def custom_idle() -> dict:
+    duration = 22
     bones = [
-        track("body", translate=translate_frames((8, 0, 0), (8, 0, -2), (8, 0, 0))),
-        track("head", translate=translate_frames((8, 0, 0), (8, 1, -3), (8, 0, 0)), rotate=rotate_frames((8, 0), (8, -3), (8, 0))),
-        track("left hand", translate=translate_frames((8, 0, 0), (8, -2, -2), (8, 0, 0)), rotate=rotate_frames((8, 4), (8, 12), (8, 4))),
-        track("right hand", translate=translate_frames((8, 0, 0), (8, 2, -1), (8, 0, 0)), rotate=rotate_frames((8, -4), (8, -12), (8, -4))),
+        track("body", translate=translate_frames((6, 0, 0), (5, 0.4, 1.8), (6, -0.3, 0.4), (5, 0, 0)), scale=scale_frames((6, 1, 1), (5, 0.99, 1.015), (6, 1.005, 0.995), (5, 1, 1))),
+        track("head", translate=translate_frames((6, -0.4, -0.5), (5, 0.5, -2.2), (6, 0.2, -1.0), (5, -0.4, -0.5)), rotate=rotate_frames((6, -1.5), (5, 2.0), (6, 0.8), (5, -1.5))),
+        track("left hand", translate=translate_frames((6, -1.2, 0.4), (5, -2.4, 2.3), (6, -0.6, 1.0), (5, -1.2, 0.4)), rotate=rotate_frames((6, 6), (5, 13), (6, 8), (5, 6))),
+        track("right hand", translate=translate_frames((6, 1.3, 0.8), (5, 2.0, 2.0), (6, 0.8, 1.4), (5, 1.3, 0.8)), rotate=rotate_frames((6, -7), (5, -14), (6, -9), (5, -7))),
+        track("left leg", translate=translate_frames((11, 0.5, 0.3), (11, 0, 0)), rotate=rotate_frames((11, -2), (11, 0))),
+        track("right leg", translate=translate_frames((11, -0.5, 0), (11, 0, 0.2)), rotate=rotate_frames((11, 2), (11, 0))),
     ]
-    return animation("idle", duration, loop=True, bones=bones, slots=loop_pose(duration, with_ball=False), fade=0.1)
+    return animation("idle", duration, loop=True, bones=bones, slots=loop_pose(duration, with_ball=False), fade=0.08)
 
 
-def main_run() -> dict:
-    """
-    生成无球跑步动画
-
-    角色奔跑时身体上下弹跳，双腿交替迈步，双臂自然摆动。
-    18帧循环，节奏较快以体现运动感。
-
-    返回:
-        run动画定义
-    """
-    duration = 18
+def custom_run() -> dict:
+    duration = 21
     bones = [
-        track("body", translate=translate_frames((5, 0, 1), (4, 0, -6), (5, 0, 1), (4, 0, -6))),
-        track("head", translate=translate_frames((5, 1, 1), (4, -1, -7), (5, 2, 2), (4, -1, -7)), rotate=rotate_frames((5, 5), (4, -7), (5, 5), (4, -7))),
-        track("left leg", translate=translate_frames((5, 10, -4), (4, -15, -10), (5, 12, -4), (4, -17, -10)), rotate=rotate_frames((5, -32), (4, 36), (5, -32), (4, 36))),
-        track("right leg", translate=translate_frames((5, -13, -8), (4, 18, -5), (5, -15, -8), (4, 20, -5)), rotate=rotate_frames((5, 38), (4, -28), (5, 38), (4, -28))),
-        track("left hand", translate=translate_frames((5, 10, -6), (4, -6, 2), (5, 9, -7), (4, -5, 1)), rotate=rotate_frames((5, -15), (4, 20), (5, -15), (4, 20))),
-        track("right hand", translate=translate_frames((5, -7, 2), (4, 10, -6), (5, -8, 1), (4, 11, -7)), rotate=rotate_frames((5, 18), (4, -22), (5, 18), (4, -22))),
+        track("body", translate=translate_frames((2, 1.4, -3.4), (2, 0.9, -1.8), (2, 0.2, 0.5), (2, 0.6, -1.6), (2, 1.3, -3.8), (2, 0.9, -1.7), (2, 0.2, 0.6), (2, 0.6, -1.5), (2, 1.4, -3.6), (2, 1.0, -1.9), (1, 1.5, -3.7)), rotate=rotate_frames((2, -4), (2, -2), (2, 1), (2, 3), (2, 4), (2, 2), (2, -1), (2, -3), (2, -4), (2, -2), (1, -4.5))),
+        track("head", translate=translate_frames((2, 2.2, -6.6), (2, 1.7, -4.5), (2, 0.8, -1.8), (2, 1.2, -3.9), (2, 2.1, -6.8), (2, 1.6, -4.3), (2, 0.7, -1.7), (2, 1.2, -3.8), (2, 2.2, -6.7), (2, 1.7, -4.4), (1, 2.3, -6.9)), rotate=rotate_frames((2, -6), (2, -3), (2, 1), (2, 4), (2, 6), (2, 3), (2, -1), (2, -4), (2, -6), (2, -3), (1, -6.5))),
+        track("left leg", translate=translate_frames((2, 13, -5), (2, 8, -2), (2, 1, 1), (2, -7, 0), (2, -13, 1), (2, -9, 2), (2, -2, -8), (2, 5, -15), (2, 12, -13), (2, 15, -8), (1, 14, -6)), rotate=rotate_frames((2, -32), (2, -16), (2, 0), (2, 18), (2, 34), (2, 24), (2, 6), (2, -14), (2, -28), (2, -36), (1, -34))),
+        track("right leg", translate=translate_frames((2, -13, 1), (2, -8, 2), (2, -1, -8), (2, 6, -15), (2, 13, -13), (2, 15, -6), (2, 9, -2), (2, 2, 0), (2, -6, 0), (2, -12, 1), (1, -14, 1)), rotate=rotate_frames((2, 34), (2, 22), (2, 4), (2, -16), (2, -30), (2, -34), (2, -18), (2, 0), (2, 18), (2, 32), (1, 35))),
+        track("left hand", translate=translate_frames((2, -7, 2), (2, -5, 1), (2, 0, -1), (2, 6, -5), (2, 10, -7), (2, 8, -5), (2, 2, -2), (2, -4, 1), (2, -8, 2), (2, -9, 2), (1, -8, 2)), rotate=rotate_frames((2, 24), (2, 16), (2, 4), (2, -12), (2, -24), (2, -18), (2, -4), (2, 12), (2, 24), (2, 27), (1, 25))),
+        track("right hand", translate=translate_frames((2, 9, -5), (2, 7, -4), (2, 1, -1), (2, -5, 2), (2, -8, 3), (2, -6, 2), (2, 0, -1), (2, 6, -5), (2, 10, -7), (2, 9, -5), (1, 9, -6)), rotate=rotate_frames((2, -22), (2, -16), (2, -3), (2, 14), (2, 24), (2, 16), (2, 4), (2, -12), (2, -24), (2, -22), (1, -23))),
     ]
-    return animation("run", duration, loop=True, bones=bones, slots=loop_pose(duration, with_ball=False), fade=0.1)
+    return animation("run", duration, loop=True, bones=bones, slots=loop_pose(duration, with_ball=False), fade=0.08)
 
 
-def main_idle_wb() -> dict:
-    """
-    生成持球站立动画（with_ball = wb）
-
-    角色持球站立，左手托球上下弹动，身体轻微摇晃。
-    包含"floor0"事件（球触地时机）。18帧循环。
-
-    返回:
-        idle_wb动画定义
-    """
-    duration = 18
+def custom_idle_wb() -> dict:
+    duration = 13
     bones = [
-        track("body", translate=translate_frames((6, 0, 0), (6, 0, -2), (6, 0, 0))),
-        track("head", translate=translate_frames((6, 1, 0), (6, 2, -2), (6, 1, 0)), rotate=rotate_frames((6, 4), (6, 9), (6, 4))),
-        track("left hand", translate=translate_frames((6, 8, -18), (6, 8, 4), (6, 8, -18)), rotate=rotate_frames((6, -36), (6, -8), (6, -36))),
-        track("right hand", translate=translate_frames((6, -1, 2), (6, 2, 5), (6, -1, 2)), rotate=rotate_frames((6, 8), (6, 18), (6, 8))),
-        track("ball", translate=translate_frames((6, 0, 0), (6, 0, 30), (6, 0, 0)), scale=scale_frames((6, 1, 1), (6, 1.2, 0.68), (6, 1, 1))),
+        track("body", translate=translate_frames((4, 0, -1), (3, 0.5, 1.5), (3, 0, -0.5), (3, 0, -1)), rotate=rotate_frames((4, -2), (3, 2), (3, -1), (3, -2))),
+        track("head", translate=translate_frames((4, 1, -3), (3, 1.5, 0.5), (3, 1, -2), (3, 1, -3)), rotate=rotate_frames((4, 3), (3, -2), (3, 2), (3, 3))),
+        track("left hand", translate=translate_frames((4, 5, -18), (3, 7, -4), (3, 5, -16), (3, 5, -18)), rotate=rotate_frames((4, -34), (3, -14), (3, -32), (3, -34))),
+        track("right hand", translate=translate_frames((4, -4, -5), (3, 2, 0), (3, -2, -4), (3, -4, -5)), rotate=rotate_frames((4, 16), (3, 8), (3, 14), (3, 16))),
+        track("ball", translate=translate_frames((4, 1, 0), (3, 2, 24), (3, 1, 2), (3, 1, 0)), scale=scale_frames((4, 1, 1), (3, 1.14, 0.76), (3, 1.02, 0.96), (3, 1, 1))),
     ]
-    return animation(
-        "idle_wb",
-        duration,
-        loop=True,
-        bones=bones,
-        slots=with_ball_slots(duration),
-        frames=event_frames(duration, 9, "floor0"),
-        fade=0.1,
-    )
+    return animation("idle_wb", duration, loop=True, bones=bones, slots=with_ball_slots(duration), frames=event_frames(duration, 6, "floor0"), fade=0.06)
 
 
-def main_run_wb() -> dict:
-    """
-    生成持球跑步动画
-
-    角色持球奔跑，球在手中上下弹跳，身体前倾。
-    包含"floor"事件。14帧循环，节奏紧凑。
-
-    返回:
-        run_wb动画定义
-    """
-    duration = 14
+def custom_run_wb() -> dict:
+    duration = 21
     bones = [
-        track("body", translate=translate_frames((3, 3, -8), (4, 5, -2), (3, 2, -9), (4, 4, -1)), rotate=rotate_frames((3, -4), (4, 6), (3, -4), (4, 6))),
-        track("head", translate=translate_frames((3, 5, -10), (4, 10, -2), (3, 5, -10), (4, 9, -2)), rotate=rotate_frames((3, -10), (4, 3), (3, -10), (4, 3))),
-        track("left leg", translate=translate_frames((3, 14, -16), (4, -8, -4), (3, 16, -12), (4, -10, -5)), rotate=rotate_frames((3, -42), (4, 28), (3, -34), (4, 34))),
-        track("right leg", translate=translate_frames((3, -18, -12), (4, 18, 0), (3, -16, -14), (4, 16, 0)), rotate=rotate_frames((3, 54), (4, -10), (3, 48), (4, -14))),
-        track("left hand", translate=translate_frames((7, 11, -26), (7, 13, 0)), rotate=rotate_frames((7, -40), (7, -15))),
-        track("right hand", translate=translate_frames((7, -6, -15), (7, 2, -4)), rotate=rotate_frames((7, 42), (7, 18))),
-        track("ball", translate=translate_frames((7, 4, -4), (3, 6, 28), (4, 5, -4)), scale=scale_frames((7, 1, 1), (3, 1.25, 0.6), (4, 1, 1))),
+        track("body", translate=translate_frames((2, 1.6, -4.0), (2, 1.0, -2.1), (2, 0.2, 0.2), (2, 0.7, -1.9), (2, 1.5, -4.2), (2, 1.0, -2.0), (2, 0.2, 0.3), (2, 0.7, -1.8), (2, 1.6, -4.1), (2, 1.1, -2.2), (1, 1.7, -4.3)), rotate=rotate_frames((2, -5), (2, -3), (2, 0), (2, 2), (2, 4), (2, 2), (2, -1), (2, -3), (2, -5), (2, -3), (1, -5.5))),
+        track("head", translate=translate_frames((2, 2.8, -7.3), (2, 2.1, -5.1), (2, 1.0, -2.4), (2, 1.7, -4.6), (2, 2.8, -7.5), (2, 2.0, -5.0), (2, 0.9, -2.3), (2, 1.6, -4.5), (2, 2.8, -7.4), (2, 2.1, -5.1), (1, 2.9, -7.6)), rotate=rotate_frames((2, -7), (2, -4), (2, 0), (2, 3), (2, 5), (2, 3), (2, -1), (2, -4), (2, -7), (2, -4), (1, -7.5))),
+        track("left leg", translate=translate_frames((2, 12, -6), (2, 7, -3), (2, 1, 0), (2, -6, 0), (2, -12, 1), (2, -8, 1), (2, -2, -7), (2, 5, -13), (2, 11, -12), (2, 14, -7), (1, 13, -7)), rotate=rotate_frames((2, -30), (2, -15), (2, 0), (2, 16), (2, 32), (2, 22), (2, 5), (2, -12), (2, -26), (2, -32), (1, -32))),
+        track("right leg", translate=translate_frames((2, -12, 1), (2, -7, 1), (2, -1, -7), (2, 6, -13), (2, 12, -12), (2, 14, -7), (2, 8, -3), (2, 2, 0), (2, -6, 0), (2, -12, 1), (1, -13, 1)), rotate=rotate_frames((2, 32), (2, 21), (2, 4), (2, -14), (2, -28), (2, -32), (2, -16), (2, 0), (2, 16), (2, 32), (1, 33))),
+        track("left hand", translate=translate_frames((2, 7, -20), (2, 8, -15), (2, 9, -7), (2, 9, -2), (2, 8, -11), (2, 7, -18), (2, 6, -21), (2, 7, -16), (2, 8, -7), (2, 8, -2), (1, 7, -21)), rotate=rotate_frames((2, -40), (2, -34), (2, -24), (2, -16), (2, -27), (2, -36), (2, -42), (2, -35), (2, -24), (2, -16), (1, -42))),
+        track("right hand", translate=translate_frames((2, -4, -7), (2, -3, -5), (2, 0, -2), (2, 2, 0), (2, 0, -2), (2, -3, -5), (2, -4, -7), (2, -2, -5), (2, 1, -2), (2, 2, 0), (1, -4, -8)), rotate=rotate_frames((2, 26), (2, 22), (2, 15), (2, 10), (2, 15), (2, 22), (2, 26), (2, 22), (2, 15), (2, 10), (1, 27))),
+        track("ball", translate=translate_frames((2, 2, -3), (2, 3, 7), (2, 4, 24), (2, 4, 13), (2, 5, -1), (2, 6, -12), (2, 5, -2), (2, 4, 8), (2, 4, 25), (2, 4, 12), (1, 2, -4)), scale=scale_frames((2, 1, 1), (2, 1.05, 0.92), (2, 1.22, 0.64), (2, 1.08, 0.88), (2, 1, 1), (2, 0.96, 1.04), (2, 1, 1), (2, 1.05, 0.92), (2, 1.22, 0.64), (2, 1.08, 0.88), (1, 1, 1))),
     ]
-    return animation(
-        "run_wb",
-        duration,
-        loop=True,
-        bones=bones,
-        slots=with_ball_slots(duration),
-        frames=event_frames(duration, 7, "floor"),
-        fade=0.1,
-    )
+    return animation("run_wb", duration, loop=True, bones=bones, slots=with_ball_slots(duration), frames=event_frames(duration, 5, "floor"), fade=0.08)
 
 
-def jump_like(name: str, *, with_ball: bool, duration: int, lift: float, rotate: float = 0.0) -> dict:
-    """
-    生成跳跃类动画的通用模板
-
-    跳跃动画包含多个阶段（jump、fly1~fly5），每个阶段的上升高度和旋转角度不同，
-    通过参数组合生成不同的变体。角色在空中双臂上举，双腿蜷缩。
-
-    参数:
-        name: 动画名称
-        with_ball: 是否持球
-        duration: 动画帧数
-        lift: 上升高度（像素值，越大跳得越高）
-        rotate: 空中旋转角度
-
-    返回:
-        跳跃动画定义
-    """
+def custom_air_pose(name: str, *, with_ball: bool, duration: int = 1, lift: float = 0, tilt: float = 0, ball_high: bool = False) -> dict:
     slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
+    left_arm_y = -44 if with_ball and ball_high else -36 if with_ball else -32
+    right_arm_y = -42 if with_ball and ball_high else -34 if with_ball else -30
     bones = [
-        track("body", translate=translate_frames((duration - 1, 0, -lift), (1, 0, -lift)), rotate=rotate_frames((duration, rotate))),
-        track("head", translate=translate_frames((duration - 1, 2, -lift - 6), (1, 2, -lift - 6)), rotate=rotate_frames((duration, rotate * 0.8))),
-        track("left hand", translate=translate_frames((duration - 1, 8, -lift - 30), (1, 8, -lift - 30)), rotate=rotate_frames((duration, -70 + rotate))),
-        track("right hand", translate=translate_frames((duration - 1, -4, -lift - 8), (1, -4, -lift - 8)), rotate=rotate_frames((duration, 45 + rotate))),
-        track("left leg", translate=translate_frames((duration, 5, -8)), rotate=rotate_frames((duration, 45))),
-        track("right leg", translate=translate_frames((duration, -4, -8)), rotate=rotate_frames((duration, 68))),
+        track("body", translate=translate_frames((duration, 1.5, -lift)), rotate=rotate_frames((duration, tilt))),
+        track("head", translate=translate_frames((duration, 2.5, -lift - 6)), rotate=rotate_frames((duration, tilt * 0.6))),
+        track("left hand", translate=translate_frames((duration, 5, -lift + left_arm_y)), rotate=rotate_frames((duration, -78 + tilt))),
+        track("right hand", translate=translate_frames((duration, 10, -lift + right_arm_y)), rotate=rotate_frames((duration, -74 + tilt))),
+        track("left leg", translate=translate_frames((duration, 7, -5)), rotate=rotate_frames((duration, 32))),
+        track("right leg", translate=translate_frames((duration, -5, -6)), rotate=rotate_frames((duration, 54))),
     ]
     if with_ball:
-        bones.append(track("ball", translate=translate_frames((duration, 5, -lift - 2)), rotate=rotate_frames((duration, 35))))
+        bones.append(track("ball", translate=translate_frames((duration, 8, -lift - (44 if ball_high else 34))), rotate=rotate_frames((duration, 18))))
     return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
 
-def landing_like(name: str, *, with_ball: bool) -> dict:
-    """
-    生成落地动画
+def custom_jump(name: str, *, with_ball: bool) -> dict:
+    duration = 6
+    slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
+    bones = [
+        track("body", translate=translate_frames((2, 0, 4), (2, 1, -12), (2, 1, -20)), scale=scale_frames((2, 1.04, 0.94), (2, 0.98, 1.04), (2, 1, 1))),
+        track("head", translate=translate_frames((2, 0, 2), (2, 2, -15), (2, 2, -25)), rotate=rotate_frames((2, 4), (2, -6), (2, -4))),
+        track("left hand", translate=translate_frames((2, 2, -10), (2, 4, -36), (2, 5, -48)), rotate=rotate_frames((2, -18), (2, -68), (2, -86))),
+        track("right hand", translate=translate_frames((2, -2, -10), (2, 8, -34), (2, 10, -47)), rotate=rotate_frames((2, 18), (2, -58), (2, -82))),
+        track("left leg", translate=translate_frames((2, 5, 3), (2, 7, -4), (2, 5, -8)), rotate=rotate_frames((2, 18), (2, 42), (2, 50))),
+        track("right leg", translate=translate_frames((2, -5, 3), (2, -5, -4), (2, -4, -8)), rotate=rotate_frames((2, -16), (2, 38), (2, 58))),
+    ]
+    if with_ball:
+        bones.append(track("ball", translate=translate_frames((2, 2, -8), (2, 7, -31), (2, 8, -43)), rotate=rotate_frames((2, 0), (2, 16), (2, 24))))
+    return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
-    角色落地时身体先压缩再弹回，模拟缓冲效果。
-    8帧，先下压后回弹，同时身体略微变扁再恢复。
 
-    参数:
-        name: 动画名称
-        with_ball: 是否持球
+def custom_landing(name: str, *, with_ball: bool) -> dict:
+    duration = 7
+    slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
+    bones = [
+        track("body", translate=translate_frames((2, 0, 5), (3, 0, 1), (2, 0, 0)), scale=scale_frames((2, 1.05, 0.9), (3, 0.98, 1.05), (2, 1, 1))),
+        track("head", translate=translate_frames((2, 1, 3), (3, 0.5, -1), (2, 0, 0)), rotate=rotate_frames((2, 6), (3, -2), (2, 0))),
+        track("left leg", translate=translate_frames((2, 4, 2), (3, 1, 0), (2, 0, 0)), rotate=rotate_frames((2, 24), (3, 6), (2, 0))),
+        track("right leg", translate=translate_frames((2, -3, 2), (3, -1, 0), (2, 0, 0)), rotate=rotate_frames((2, 20), (3, 5), (2, 0))),
+        track("left hand", rotate=rotate_frames((2, -16), (3, 3), (2, 0))),
+        track("right hand", rotate=rotate_frames((2, 18), (3, -4), (2, 0))),
+    ]
+    if with_ball:
+        bones.append(track("ball", translate=translate_frames((2, 3, -12), (3, 1, 1), (2, 0, 0))))
+    return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
-    返回:
-        落地动画定义
-    """
+
+def custom_throw_land() -> dict:
     duration = 8
-    slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
+    release = 4
+    slots = event_slots(duration, release)
     bones = [
-        track("body", translate=translate_frames((3, 0, -6), (3, 0, 4), (2, 0, 0)), scale=scale_frames((3, 1.04, 0.92), (3, 0.98, 1.08), (2, 1, 1))),
-        track("head", translate=translate_frames((3, 2, -8), (3, 1, 4), (2, 0, 0)), rotate=rotate_frames((3, -8), (3, 3), (2, 0))),
-        track("left leg", translate=translate_frames((3, 6, -5), (3, 2, 2), (2, 0, 0)), rotate=rotate_frames((3, 35), (3, 10), (2, 0))),
-        track("right leg", translate=translate_frames((3, -5, -4), (3, -2, 2), (2, 0, 0)), rotate=rotate_frames((3, 28), (3, 8), (2, 0))),
+        track("body", translate=translate_frames((2, -1, 1), (2, 0, -8), (2, 2, -10), (2, 0, 0)), rotate=rotate_frames((2, 4), (2, -10), (2, -6), (2, 0))),
+        track("head", translate=translate_frames((2, 0, -1), (2, 2, -12), (2, 3, -14), (2, 0, 0)), rotate=rotate_frames((2, 5), (2, -12), (2, -7), (2, 0))),
+        track("left hand", translate=translate_frames((2, 4, -22), (2, 5, -40), (2, 5, -50), (2, 1, -12)), rotate=rotate_frames((2, -48), (2, -76), (2, -96), (2, -25))),
+        track("right hand", translate=translate_frames((2, -2, -20), (2, 8, -39), (2, 10, -50), (2, 4, -12)), rotate=rotate_frames((2, 34), (2, -64), (2, -94), (2, -34))),
+        track("left leg", translate=translate_frames((2, 4, 0), (2, 5, -2), (2, 2, -1), (2, 0, 0)), rotate=rotate_frames((2, 16), (2, 20), (2, 10), (2, 0))),
+        track("right leg", translate=translate_frames((2, -3, 0), (2, -4, -1), (2, -2, 0), (2, 0, 0)), rotate=rotate_frames((2, -8), (2, -12), (2, -4), (2, 0))),
+        track("ball", translate=translate_frames((2, 6, -26), (2, 8, -43), (1, 20, -52), (3, 36, -55)), scale=scale_frames((2, 1, 1), (2, 1.04, 0.96), (1, 1.08, 0.88), (3, 1, 1))),
     ]
-    if with_ball:
-        bones.append(track("ball", translate=translate_frames((3, 4, -20), (3, 2, 4), (2, 0, 0))))
-    return animation(name, duration, bones=bones, slots=slots, fade=0.01)
+    return animation("throw_land", duration, bones=bones, slots=slots, frames=event_frames(duration, release, "throw"), fade=0.01)
 
 
-def throw_land() -> dict:
-    """
-    生成投篮落地动画
-
-    角色在空中完成投篮动作后落地。动画分两阶段：
-    1. 前5帧：准备投篮姿态，手臂后摆蓄力
-    2. 后5帧：投篮出手，球飞出，触发"throw"事件
-
-    球在第5帧后从显示中消失（display_value切换为-1）。
-
-    返回:
-        throw_land动画定义
-    """
-    duration = 10
-    slots = with_ball_slots(duration)
-    # 球在前5帧显示，后5帧隐藏（模拟投出）
-    slots[0] = {
-        "name": "ball",
-        "displayFrame": [frame(5, value=0), frame(5, value=-1)],
-    }
+def custom_dunk(name: str, duration: int, event_at: int, *, style: int) -> dict:
+    visual_release_frame = max(1, event_at - 1)
+    slots = event_slots(duration, visual_release_frame, front=True)
+    slots[0] = slot_track("ball", display_value=-1, duration=duration)
+    wind = 4 if style == 1 else 6
+    lift = max(1, event_at - wind - 2)
+    push = 2
+    finish = max(1, duration - wind - lift - push)
+    reach = 42 + style * 6
+    side = -1 if style == 2 else 1
+    release_x = 20 + style * 2.5
+    release_y = -reach - 52
     bones = [
-        track("body", translate=translate_frames((4, 0, -4), (3, 1, -8), (3, 0, 0))),
-        track("head", translate=translate_frames((4, 2, -4), (3, 2, -10), (3, 0, 0)), rotate=rotate_frames((4, 5), (3, -8), (3, 0))),
-        track("left hand", translate=translate_frames((4, 8, -24), (3, -10, -12), (3, 2, 0)), rotate=rotate_frames((4, -55), (3, -105), (3, 8))),
-        track("right hand", translate=translate_frames((4, 4, -4), (3, 34, -24), (3, 0, 0)), rotate=rotate_frames((4, 20), (3, -95), (3, 0))),
-        track("ball", translate=translate_frames((5, 2, -2), (1, 30, -24), (4, 34, -32)), rotate=rotate_frames((5, 0), (1, 75), (4, 120))),
-    ]
-    return animation(
-        "throw_land",
-        duration,
-        bones=bones,
-        slots=slots,
-        frames=event_frames(duration, 5, "throw"),
-        fade=0.01,
-    )
-
-
-def dunk(name: str, duration: int, windup: float, reach: float) -> dict:
-    """
-    生成扣篮动画
-
-    角色起跳后单手或双手将球扣入篮筐。
-    动画包含蓄力阶段和扣篮阶段，在指定帧触发"dunk"事件。
-    球和球前景插槽在扣篮出手后隐藏。
-
-    参数:
-        name: 动画名称（dunk1/dunk2/dunk3）
-        duration: 动画总帧数
-        windup: 蓄力阶段的上升高度
-        reach: 扣篮时的最高到达高度
-
-    返回:
-        扣篮动画定义
-    """
-    event_at = max(7, duration - 5)
-    slots = with_ball_slots(duration, front=True)
-    # 球在扣篮出手后隐藏
-    slots[0] = {
-        "name": "ball",
-        "displayFrame": [frame(event_at, value=0), frame(duration - event_at, value=-1)],
-    }
-    slots[1] = {
-        "name": "ball_front",
-        "displayFrame": [frame(event_at, value=0), frame(duration - event_at, value=-1)],
-    }
-    bones = [
-        track("body", translate=translate_frames((5, 0, -windup), (duration - 5, 4, -reach)), rotate=rotate_frames((5, -8), (duration - 5, 8))),
-        track("head", translate=translate_frames((5, 1, -windup - 8), (duration - 5, 5, -reach - 10)), rotate=rotate_frames((5, -10), (duration - 5, 10))),
-        track("left hand", translate=translate_frames((5, 10, -windup - 25), (duration - 5, 8, -reach - 52)), rotate=rotate_frames((5, -65), (duration - 5, -92))),
-        track("right hand", translate=translate_frames((5, -6, -windup - 5), (duration - 5, 28, -reach - 48)), rotate=rotate_frames((5, 35), (duration - 5, -82))),
-        track("ball", translate=translate_frames((event_at, 20, -reach - 45), (duration - event_at, 28, -reach - 55)), scale=scale_frames((event_at, 1.05, 1.05), (duration - event_at, 0.9, 0.9))),
-        track("ball_front", translate=translate_frames((event_at, 20, -reach - 45), (duration - event_at, 28, -reach - 55))),
+        track("body", translate=translate_frames((wind, -3 * side, -16), (lift, 4 * side, -reach), (push, 6 * side, -reach - 4), (finish, 2 * side, -reach + 10)), rotate=rotate_frames((wind, -9 * side), (lift, 12 * side), (push, 15 * side), (finish, 4 * side)), scale=scale_frames((wind, 1.04, 0.96), (lift, 0.97, 1.08), (push, 0.96, 1.1), (finish, 1, 1))),
+        track("head", translate=translate_frames((wind, -3 * side, -23), (lift, 5 * side, -reach - 15), (push, 6 * side, -reach - 18), (finish, 1.5 * side, -reach - 2)), rotate=rotate_frames((wind, -10 * side), (lift, 13 * side), (push, 15 * side), (finish, 4 * side))),
+        track("left hand", translate=translate_frames((wind, 3, -47), (lift, 8 - style, -reach - 56), (push, release_x - 5, release_y + 2), (finish, -2 * side, -reach - 22)), rotate=rotate_frames((wind, -82), (lift, -112 + style * 3), (push, -128 + style * 4), (finish, -38))),
+        track("right hand", translate=translate_frames((wind, -2, -43), (lift, release_x - 4, -reach - 50), (push, release_x, release_y), (finish, 10, -reach - 20)), rotate=rotate_frames((wind, -54), (lift, -104), (push, -126), (finish, -32))),
+        track("left leg", translate=translate_frames((wind, 7, -7), (lift, -8 * side, -12), (push, -10 * side, -13), (finish, 4, -4)), rotate=rotate_frames((wind, 34), (lift, 66), (push, 72), (finish, 24))),
+        track("right leg", translate=translate_frames((wind, -6, -8), (lift, 14 * side, -8), (push, 16 * side, -7), (finish, -4, -3)), rotate=rotate_frames((wind, 46), (lift, -22 * side), (push, -30 * side), (finish, 10))),
+        track("ball", translate=translate_frames((wind, 9 + style, -58 - style * 3), (lift, release_x - 6, -reach - 45), (push, release_x, release_y), (finish, release_x + 2, release_y - 5)), scale=scale_frames((wind, 1.08, 1.08), (lift, 1.16, 1.16), (push, 1.02, 1.02), (finish, 0.86, 0.86))),
+        track("ball_front", translate=translate_frames((wind, 9 + style, -58 - style * 3), (lift, release_x - 6, -reach - 45), (push, release_x, release_y), (finish, release_x + 2, release_y - 5)), scale=scale_frames((wind, 1.08, 1.08), (lift, 1.16, 1.16), (push, 1.02, 1.02), (finish, 0.86, 0.86))),
     ]
     return animation(name, duration, bones=bones, slots=slots, frames=event_frames(duration, event_at, "dunk"), fade=0.01)
 
 
-def steal() -> dict:
-    """
-    生成抢断动画
-
-    角色快速伸出右手试图抢夺对手的球。
-    12帧，右手快速前伸后收回，在第7帧触发"action"事件。
-
-    返回:
-        steal动画定义
-    """
-    duration = 12
+def custom_steal() -> dict:
+    duration = 13
     bones = [
-        track("body", translate=translate_frames((4, 0, -2), (4, 12, -4), (4, 0, 0)), rotate=rotate_frames((4, 0), (4, -8), (4, 0))),
-        track("head", translate=translate_frames((4, 0, -2), (4, 15, -6), (4, 0, 0)), rotate=rotate_frames((4, 0), (4, -12), (4, 0))),
-        track("right hand", translate=translate_frames((4, 0, 0), (4, 42, -10), (4, 0, 0)), rotate=rotate_frames((4, 0), (4, -70), (4, 0))),
-        track("left hand", translate=translate_frames((4, 0, 0), (4, -8, 4), (4, 0, 0)), rotate=rotate_frames((4, 0), (4, 22), (4, 0))),
+        track("body", translate=translate_frames((2, 0, 0), (3, -4, 1), (3, 12, -3), (2, 20, -7), (3, 0, 0)), rotate=rotate_frames((2, 0), (3, 6), (3, -8), (2, -14), (3, 0))),
+        track("head", translate=translate_frames((2, 0, -1), (3, -2, 0), (3, 15, -6), (2, 23, -9), (3, 0, 0)), rotate=rotate_frames((2, 0), (3, 5), (3, -12), (2, -17), (3, 0))),
+        track("right hand", translate=translate_frames((2, -4, 2), (3, -20, 7), (3, 30, -12), (2, 70, -20), (3, 2, 0)), rotate=rotate_frames((2, 12), (3, 42), (3, -60), (2, -112), (3, 0))),
+        track("left hand", translate=translate_frames((2, 0, 0), (3, -7, 3), (3, -14, 5), (2, -18, 7), (3, 0, 0)), rotate=rotate_frames((2, 0), (3, 18), (3, 28), (2, 34), (3, 0))),
+        track("left leg", translate=translate_frames((2, 0, 0), (3, -3, 1), (3, 10, -2), (2, 14, -4), (3, 0, 0)), rotate=rotate_frames((2, 0), (3, 8), (3, -18), (2, -24), (3, 0))),
+        track("right leg", translate=translate_frames((2, 0, 0), (3, 4, 2), (3, -8, 2), (2, -12, 3), (3, 0, 0)), rotate=rotate_frames((2, 0), (3, 14), (3, 22), (2, 28), (3, 0))),
     ]
-    return animation(
-        "steal",
-        duration,
-        bones=bones,
-        slots=hidden_optional_slots(duration),
-        frames=event_frames(duration, 7, "action"),
-        fade=0.01,
-    )
+    return animation("steal", duration, bones=bones, slots=hidden_optional_slots(duration), frames=event_frames(duration, 8, "action"), fade=0.01)
 
 
-def pump_block(name: str, *, pump: bool, start: bool) -> dict:
-    """
-    生成假动作或盖帽的起始/结束动画
-
-    假动作（pump）：角色双手持球向上抬起再放下，用于晃过防守者。
-    盖帽（block）：角色双手上举试图阻挡对方投篮，眼睛和特效会激活。
-
-    参数:
-        name: 动画名称
-        pump: True=假动作, False=盖帽
-        start: True=起始阶段, False=结束阶段
-
-    返回:
-        假动作/盖帽动画定义
-    """
-    duration = 7
+def custom_pump_block(name: str, *, pump: bool, start: bool) -> dict:
+    duration = 4 if pump else (3 if start else 5)
     slots = with_ball_slots(duration) if pump else hidden_optional_slots(duration)
     if not pump:
-        # 盖帽时激活眼睛和眩晕特效
-        slots[2] = slot_track("eyes", display_value=1, duration=duration)
-        slots[5] = slot_track("effects stun", display_value=1, duration=duration)
-    height = -12 if start else 0
-    arms = -62 if start else -10
+        if start:
+            bones = [
+                track("body", translate=translate_frames((duration, 0, 9)), scale=scale_frames((duration, 1.05, 0.9))),
+                track("head", translate=translate_frames((duration, 0.5, 5)), rotate=rotate_frames((duration, 5))),
+                track("left hand", translate=translate_frames((duration, 4, -8)), rotate=rotate_frames((duration, -18))),
+                track("right hand", translate=translate_frames((duration, -4, -8)), rotate=rotate_frames((duration, 18))),
+                track("left leg", translate=translate_frames((duration, 3, 5)), rotate=rotate_frames((duration, 12))),
+                track("right leg", translate=translate_frames((duration, -3, 5)), rotate=rotate_frames((duration, -10))),
+            ]
+        else:
+            bones = [
+                track("body", translate=translate_frames((2, 0, 9), (3, 0, 0)), scale=scale_frames((2, 1.05, 0.9), (3, 1, 1))),
+                track("head", translate=translate_frames((2, 0.5, 5), (3, 0, 0)), rotate=rotate_frames((2, 5), (3, 0))),
+                track("left hand", translate=translate_frames((2, 4, -8), (3, 0, 0)), rotate=rotate_frames((2, -18), (3, 0))),
+                track("right hand", translate=translate_frames((2, -4, -8), (3, 0, 0)), rotate=rotate_frames((2, 18), (3, 0))),
+                track("left leg", translate=translate_frames((2, 3, 5), (3, 0, 0)), rotate=rotate_frames((2, 12), (3, 0))),
+                track("right leg", translate=translate_frames((2, -3, 5), (3, 0, 0)), rotate=rotate_frames((2, -10), (3, 0))),
+            ]
+        return animation(name, duration, bones=bones, slots=slots, fade=0.01)
+
+    arm_y = -34 if start else -6
+    body_y = -8 if start else 0
     bones = [
-        track("body", translate=translate_frames((duration, 0, height)), scale=scale_frames((duration, 1.03 if start else 1, 0.96 if start else 1))),
-        track("head", translate=translate_frames((duration, 1, height - 2)), rotate=rotate_frames((duration, -4 if start else 0))),
-        track("left hand", translate=translate_frames((duration, 5, arms)), rotate=rotate_frames((duration, -70 if start else 0))),
-        track("right hand", translate=translate_frames((duration, -5, arms)), rotate=rotate_frames((duration, 70 if start else 0))),
+        track("body", translate=translate_frames((duration, 0, body_y)), scale=scale_frames((duration, 1.02 if start else 1, 0.97 if start else 1))),
+        track("head", translate=translate_frames((duration, 1, body_y - 3)), rotate=rotate_frames((duration, -3 if start else 0))),
+        track("left hand", translate=translate_frames((duration, 6, arm_y)), rotate=rotate_frames((duration, -68 if start else -5))),
+        track("right hand", translate=translate_frames((duration, -5, arm_y)), rotate=rotate_frames((duration, 66 if start else 4))),
     ]
     if pump:
-        # 假动作时球也跟着上下移动
-        bones.append(track("ball", translate=translate_frames((duration, 0, -30 if start else 0)), scale=scale_frames((duration, 1.18 if start else 1, 0.72 if start else 1))))
+        bones.append(track("ball", translate=translate_frames((duration, 2, -26 if start else 0)), scale=scale_frames((duration, 1.12 if start else 1, 0.78 if start else 1))))
     return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
 
-def dash(name: str, *, with_ball: bool) -> dict:
-    """
-    生成冲刺动画
-
-    角色快速向前冲刺，身体前倾，双腿大步迈开。
-    8帧循环，激活眩晕特效作为速度线条。
-
-    参数:
-        name: 动画名称
-        with_ball: 是否持球
-
-    返回:
-        冲刺动画定义
-    """
-    duration = 8
+def custom_dash(name: str, *, with_ball: bool) -> dict:
+    duration = 11
     slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
     slots[5] = slot_track("effects stun", display_value=1, duration=duration)
     bones = [
-        track("body", translate=translate_frames((4, 10, -6), (4, 0, -2)), rotate=rotate_frames((4, -12), (4, 0))),
-        track("head", translate=translate_frames((4, 14, -8), (4, 2, -2)), rotate=rotate_frames((4, -16), (4, 0))),
-        track("left leg", translate=translate_frames((4, -18, -6), (4, 8, -2)), rotate=rotate_frames((4, 58), (4, -24))),
-        track("right leg", translate=translate_frames((4, 20, -8), (4, -6, -2)), rotate=rotate_frames((4, -46), (4, 22))),
+        track("body", translate=translate_frames((3, 13, -6), (4, 7, -4), (4, 1, -1)), rotate=rotate_frames((3, -17), (4, -10), (4, 0))),
+        track("head", translate=translate_frames((3, 17, -8), (4, 9, -5), (4, 1, -1)), rotate=rotate_frames((3, -21), (4, -12), (4, 0))),
+        track("left leg", translate=translate_frames((3, -17, -6), (4, -6, -2), (4, 7, -2)), rotate=rotate_frames((3, 60), (4, 16), (4, -22))),
+        track("right leg", translate=translate_frames((3, 22, -9), (4, 11, -5), (4, -5, -2)), rotate=rotate_frames((3, -52), (4, -18), (4, 20))),
+        track("left hand", translate=translate_frames((3, 9, -13), (4, 2, -8), (4, 0, 0)), rotate=rotate_frames((3, -42), (4, -18), (4, 0))),
+        track("right hand", translate=translate_frames((3, 14, -8), (4, 7, -4), (4, 0, 0)), rotate=rotate_frames((3, 34), (4, 18), (4, 0))),
     ]
     if with_ball:
-        bones.append(track("ball", translate=translate_frames((4, 8, -4), (4, 0, 0))))
-    return animation(name, duration, loop=True, bones=bones, slots=slots, fade=0.01)
+        bones.append(track("ball", translate=translate_frames((3, 11, -5), (4, 6, -2), (4, 0, 0)), rotate=rotate_frames((3, 35), (4, 20), (4, 0))))
+    return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
 
-def dig(name: str, *, phase: int) -> dict:
-    """
-    生成挖球动画
-
-    角色蹲下用挖掘手和挖掘腿尝试从对手手中挖球。
-    三个阶段（dig1/dig2/dig3）的伸展距离递增。
-
-    参数:
-        name: 动画名称
-        phase: 挖球阶段（1/2/3），越大伸展越远
-
-    返回:
-        挖球动画定义
-    """
-    duration = 8
+def custom_dig(name: str, *, phase: int, duration: int) -> dict:
     slots = hidden_optional_slots(duration)
-    # 激活挖掘手和挖掘腿插槽
     slots[3] = slot_track("dighand", display_value=0, duration=duration)
     slots[4] = slot_track("digleg", display_value=0, duration=duration)
-    reach = phase * 8
+    reach = 12 + phase * 8
+    mid = max(3, duration // 2)
+    end = max(1, duration - mid)
     bones = [
-        track("body", translate=translate_frames((duration, 5 + reach, -4))),
-        track("head", translate=translate_frames((duration, 6 + reach, -8)), rotate=rotate_frames((duration, -10))),
-        track("dighand", translate=translate_frames((duration, 34 + reach, -8)), rotate=rotate_frames((duration, -64))),
-        track("digleg", translate=translate_frames((duration, -8, -4)), rotate=rotate_frames((duration, 34))),
+        track("body", translate=translate_frames((mid, reach * 0.35, 5), (end, 0, 0)), rotate=rotate_frames((mid, -9), (end, 0))),
+        track("head", translate=translate_frames((mid, reach * 0.45, 2), (end, 0, 0)), rotate=rotate_frames((mid, -14), (end, 0))),
+        track("dighand", translate=translate_frames((mid, reach + 24, -5), (end, 0, 0)), rotate=rotate_frames((mid, -68), (end, 0))),
+        track("digleg", translate=translate_frames((mid, -8, 4), (end, 0, 0)), rotate=rotate_frames((mid, 38), (end, 0))),
+        track("left hand", translate=translate_frames((mid, -5, 2), (end, 0, 0)), rotate=rotate_frames((mid, 18), (end, 0))),
     ]
     return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
 
-def stun() -> dict:
-    """
-    生成眩晕动画
-
-    角色被击晕后身体左右摇晃，眼睛显示眩晕图案，
-    头顶有旋转的星星特效。20帧循环。
-
-    返回:
-        stun动画定义
-    """
-    duration = 20
+def custom_stun() -> dict:
+    duration = 33
     slots = hidden_optional_slots(duration)
-    # 激活眩晕眼睛、眩晕特效和星星特效
     slots[2] = slot_track("eyes", display_value=0, duration=duration)
     slots[5] = slot_track("effects stun", display_value=0, duration=duration)
     slots[6] = slot_track("effects stun star", display_value=0, duration=duration)
     bones = [
-        track("body", translate=translate_frames((5, -2, 0), (5, 2, -2), (5, -2, 0), (5, 2, -2))),
-        track("head", translate=translate_frames((5, -3, -2), (5, 3, -3), (5, -3, -2), (5, 3, -3)), rotate=rotate_frames((5, -8), (5, 8), (5, -8), (5, 8))),
-        track("effects stun star", rotate=rotate_frames((5, 0), (5, 90), (5, 180), (5, 270))),
+        track("body", translate=translate_frames((5, -3, 1), (5, 3, -2), (5, -2, 1), (5, 2, -1), (13, 0, 0)), rotate=rotate_frames((5, -4), (5, 5), (5, -5), (5, 4), (13, 0))),
+        track("head", translate=translate_frames((5, -5, -1), (5, 5, -3), (5, -4, -1), (5, 4, -3), (13, 0, 0)), rotate=rotate_frames((5, -11), (5, 12), (5, -10), (5, 10), (13, 0))),
+        track("left hand", rotate=rotate_frames((5, 16), (5, -12), (5, 14), (5, -10), (13, 0))),
+        track("right hand", rotate=rotate_frames((5, -16), (5, 12), (5, -14), (5, 10), (13, 0))),
+        track("effects stun star", rotate=rotate_frames((6, 0), (6, 110), (6, 220), (6, 330), (9, 480))),
     ]
-    return animation("stun", duration, loop=True, bones=bones, slots=slots, fade=0.01)
+    return animation("stun", duration, bones=bones, slots=slots, fade=0.01)
 
 
-def mood(name: str, *, happy: bool) -> dict:
-    """
-    生成情绪动画（开心或悲伤）
-
-    开心（happiness）：角色身体上抬，双手张开。
-    悲伤（sad/sad0）：角色身体下沉，头部低垂，显示悲伤特效。
-
-    参数:
-        name: 动画名称
-        happy: True=开心, False=悲伤
-
-    返回:
-        情绪动画定义
-    """
-    duration = 24
-    bend = -5 if happy else 7
-    lift = -4 if happy else 2
+def custom_mood(name: str, *, happy: bool, duration: int, loop: bool) -> dict:
     slots = hidden_optional_slots(duration)
     if not happy:
-        # 悲伤时激活特效（值5对应眼泪）
         slots[5] = slot_track("effects stun", display_value=5, duration=duration)
-    bones = [
-        track("body", translate=translate_frames((12, 0, lift), (12, 0, 0))),
-        track("head", translate=translate_frames((12, 0, lift - 2), (12, 0, 0)), rotate=rotate_frames((12, bend), (12, 0))),
-        track("left hand", rotate=rotate_frames((12, -20 if happy else 18), (12, 0))),
-        track("right hand", rotate=rotate_frames((12, 20 if happy else -18), (12, 0))),
-    ]
-    return animation(name, duration, loop=True, bones=bones, slots=slots, fade=0.1)
+    if happy:
+        bones = [
+            track("body", translate=translate_frames((5, 0, -5), (5, 0, -1), (5, 0, -6), (duration - 15, 0, -1)), rotate=rotate_frames((5, -5), (5, 5), (5, -4), (duration - 15, 4))),
+            track("head", translate=translate_frames((5, 0, -9), (5, 0, -4), (5, 0, -10), (duration - 15, 0, -4)), rotate=rotate_frames((5, -8), (5, 6), (5, -6), (duration - 15, 5))),
+            track("left hand", translate=translate_frames((5, 4, -26), (5, 8, -12), (5, 5, -28), (duration - 15, 8, -12)), rotate=rotate_frames((5, -76), (5, -30), (5, -80), (duration - 15, -28))),
+            track("right hand", translate=translate_frames((5, -4, -25), (5, -8, -10), (5, -5, -27), (duration - 15, -8, -10)), rotate=rotate_frames((5, 74), (5, 28), (5, 78), (duration - 15, 28))),
+        ]
+    else:
+        split = max(1, duration // 2)
+        bones = [
+            track("body", translate=translate_frames((split, 0, 5), (duration - split, 0, 3)), rotate=rotate_frames((split, 4), (duration - split, 2))),
+            track("head", translate=translate_frames((split, 0, 8), (duration - split, 0, 5)), rotate=rotate_frames((split, 12), (duration - split, 8))),
+            track("left hand", translate=translate_frames((split, -2, 4), (duration - split, 0, 2)), rotate=rotate_frames((split, 22), (duration - split, 12))),
+            track("right hand", translate=translate_frames((split, 2, 4), (duration - split, 0, 2)), rotate=rotate_frames((split, -22), (duration - split, -12))),
+        ]
+    return animation(name, duration, loop=loop, bones=bones, slots=slots, fade=0.06)
 
 
-def mega(name: str, *, end: bool = False, fly: bool = False) -> dict:
-    """
-    生成超级扣篮动画
-
-    超级扣篮是游戏中最华丽的扣篮动作，角色飞到极高位置后猛烈扣下。
-    包含三种变体：
-    - megadunk：扣篮主体动作，触发"mega"事件
-    - megadunk_fly：空中飞行阶段，循环播放
-    - megadunk_end：扣篮结束落地
-
-    参数:
-        name: 动画名称
-        end: 是否为结束阶段
-        fly: 是否为飞行阶段（循环播放）
-
-    返回:
-        超级扣篮动画定义
-    """
-    duration = 18 if not end else 12
-    slots = with_ball_slots(duration, front=True)
-    # 激活眼睛和火焰特效（值7对应火焰）
+def custom_mega(name: str, *, end: bool = False, fly: bool = False) -> dict:
+    if end:
+        duration = 10
+        slots = event_slots(duration, 4)
+        slots[2] = slot_track("eyes", display_value=1, duration=duration)
+        slots[5] = slot_track("effects stun", display_value=7, duration=duration)
+        bones = [
+            track("body", translate=translate_frames((4, 6, -38), (3, 2, -18), (3, 0, 0)), rotate=rotate_frames((4, 16), (3, 8), (3, 0))),
+            track("head", translate=translate_frames((4, 7, -48), (3, 2, -22), (3, 0, 0)), rotate=rotate_frames((4, 18), (3, 8), (3, 0))),
+            track("left hand", translate=translate_frames((4, 6, -64), (3, 4, -26), (3, 0, 0)), rotate=rotate_frames((4, -92), (3, -36), (3, 0))),
+            track("right hand", translate=translate_frames((4, 28, -60), (3, 12, -24), (3, 0, 0)), rotate=rotate_frames((4, -84), (3, -30), (3, 0))),
+            track("ball", translate=translate_frames((4, 27, -64), (3, 28, -70), (3, 0, 0)), scale=scale_frames((4, 1.25, 1.25), (3, 0.8, 0.8), (3, 1, 1))),
+        ]
+        return animation("megadunk_end", duration, bones=bones, slots=slots, frames=event_frames(duration, 4, "mega"), fade=0.01)
+    duration = 5 if not fly else 1
+    slots = with_ball_slots(duration)
     slots[2] = slot_track("eyes", display_value=1, duration=duration)
     slots[5] = slot_track("effects stun", display_value=7, duration=duration)
     bones = [
-        track("body", translate=translate_frames((duration, 4 if not end else 0, -28 if not end else 0)), rotate=rotate_frames((duration, 12 if not end else 0))),
-        track("head", translate=translate_frames((duration, 4 if not end else 0, -36 if not end else 0)), rotate=rotate_frames((duration, 14 if not end else 0))),
-        track("left hand", translate=translate_frames((duration, 6, -55 if not end else -5)), rotate=rotate_frames((duration, -80 if not end else 0))),
-        track("right hand", translate=translate_frames((duration, 24 if not end else 0, -50 if not end else 0)), rotate=rotate_frames((duration, -70 if not end else 0))),
-        track("ball", translate=translate_frames((duration, 22 if not end else 0, -54 if not end else 0)), scale=scale_frames((duration, 1.3 if not end else 1, 1.3 if not end else 1))),
+        track("body", translate=translate_frames((duration, 5, -34)), rotate=rotate_frames((duration, 13))),
+        track("head", translate=translate_frames((duration, 6, -44)), rotate=rotate_frames((duration, 16))),
+        track("left hand", translate=translate_frames((duration, 4, -62)), rotate=rotate_frames((duration, -88))),
+        track("right hand", translate=translate_frames((duration, 24, -58)), rotate=rotate_frames((duration, -76))),
+        track("left leg", translate=translate_frames((duration, -8, -6)), rotate=rotate_frames((duration, 54))),
+        track("right leg", translate=translate_frames((duration, 10, -5)), rotate=rotate_frames((duration, 24))),
+        track("ball", translate=translate_frames((duration, 23, -61)), scale=scale_frames((duration, 1.18, 1.18))),
     ]
-    frames = event_frames(duration, duration - 3, "mega") if name == "megadunk" else None
-    return animation(name, duration, loop=fly, bones=bones, slots=slots, frames=frames, fade=0.01)
+    return animation(name, duration, loop=fly, bones=bones, slots=slots, fade=0.01)
 
 
-def md(name: str, *, with_ball: bool, start: bool, end: bool) -> dict:
-    """
-    生成超级扣篮的起始/中间/结束阶段动画（md = mega dunk的缩写）
-
-    超级扣篮分为三个阶段，每个阶段有持球和无球两种变体：
-    - md_start/md_start_wb：起始蓄力阶段（7帧）
-    - md_mid/md_mid_wb：中间飞行阶段（14帧，循环）
-    - md_end/md_end_wb：结束落地阶段（7帧）
-
-    参数:
-        name: 动画名称
-        with_ball: 是否持球
-        start: 是否为起始阶段
-        end: 是否为结束阶段
-
-    返回:
-        超级扣篮阶段动画定义
-    """
-    duration = 7 if start or end else 14
+def custom_md(name: str, *, with_ball: bool, start: bool, end: bool) -> dict:
+    duration = 5 if start or end else 1
     slots = with_ball_slots(duration) if with_ball else hidden_optional_slots(duration)
-    # 激活眼睛和特效
-    slots[2] = slot_track("eyes", display_value=1, duration=duration)
-    slots[5] = slot_track("effects stun", display_value=1, duration=duration)
-    offset = 18 if start else -10 if end else 8
+    if start:
+        x, y, rot = 16, -9, -18
+    elif end:
+        x, y, rot = -7, 2, 6
+    else:
+        x, y, rot = 8, -7, -12
     bones = [
-        track("body", translate=translate_frames((duration, offset, -8)), rotate=rotate_frames((duration, -16 if not end else 5))),
-        track("head", translate=translate_frames((duration, offset + 4, -10)), rotate=rotate_frames((duration, -18 if not end else 6))),
-        track("left leg", translate=translate_frames((duration, -12, -4)), rotate=rotate_frames((duration, 55))),
-        track("right leg", translate=translate_frames((duration, 20, -4)), rotate=rotate_frames((duration, -45))),
+        track("body", translate=translate_frames((duration, x, y)), rotate=rotate_frames((duration, rot))),
+        track("head", translate=translate_frames((duration, x + 3, y - 4)), rotate=rotate_frames((duration, rot * 0.9))),
+        track("left leg", translate=translate_frames((duration, -10, -4)), rotate=rotate_frames((duration, 46))),
+        track("right leg", translate=translate_frames((duration, 16, -5)), rotate=rotate_frames((duration, -38))),
+        track("left hand", translate=translate_frames((duration, 8, -18)), rotate=rotate_frames((duration, -44))),
+        track("right hand", translate=translate_frames((duration, 14, -10)), rotate=rotate_frames((duration, 26))),
     ]
     if with_ball:
-        bones.append(track("ball", translate=translate_frames((duration, offset, -6))))
-    return animation(name, duration, loop=not start and not end, bones=bones, slots=slots, fade=0.01)
+        bones.append(track("ball", translate=translate_frames((duration, x + 4, y - 9))))
+    return animation(name, duration, bones=bones, slots=slots, fade=0.01)
 
-
-# ============================================================
-# 骨骼和子骨骼构建函数
-# ============================================================
 
 def main_armature() -> dict:
-    """
-    构建主骨骼（playerSmall）的完整定义
-
-    主骨骼包含：
-    - 13个骨骼节点（身体各部位+特效挂载点）
-    - 13个插槽（控制各部位的显示层级和初始状态）
-    - 皮肤配置（定义每个插槽的候选显示对象）
-    - 42个动画（覆盖所有游戏动作）
-
-    骨骼层级结构：
-    body（根骨骼）
-    ├── head
-    │   ├── eyes（眩晕眼睛）
-    │   └── effects stun star（星星特效）
-    ├── left hand
-    ├── right hand
-    ├── left leg
-    ├── right leg
-    ├── dighand（挖掘手）
-    ├── digleg（挖掘腿）
-    ├── ball（手持球）
-    ├── ball_front（前景球）
-    └── effects stun（眩晕/火焰/眼泪特效）
-
-    返回:
-        主骨骼完整定义字典
-    """
-    bones = [
-        bone("left leg", 7, -9),
-        bone("left hand", 18, -31),
-        bone("body", 0, -32),
-        bone("right leg", -8, -8),
-        bone("head", 0, -72),
-        bone("right hand", -23, -30, 10),
-        bone("dighand", -30, -30),
-        bone("digleg", -12, -7),
-        bone("ball", 31, -52, 4),
-        bone("ball_front", 12, -18, 78),
-        bone("effects stun", 0, -71),
-        bone("eyes", 0, -76),
-        bone("effects stun star", -18, -73, -12),
+    data = player_armature_base()
+    data["bone"] = [
+        bone("left leg", 4.04, -7.95),
+        bone("left hand", 16.75, -28.86),
+        bone("body", -5.37, -29.66),
+        bone("right leg", -4.69, -5.04),
+        bone("head", -6.56, -71.81),
+        bone("right hand", -25.99, -27.14, 15),
+        bone("dighand", -34.09, -28.86),
+        bone("digleg", -11.25, -5.04),
+        {"inheritScale": False, "name": "ball", "transform": {"x": 34.19, "y": -51.43, "scX": 0.9, "scY": 1.1077}},
+        {"inheritScale": False, "name": "ball_front", "transform": {"x": 11.21, "y": -16.97, "skX": 77.73, "skY": 77.73, "scX": 0.9985, "scY": 0.9984}},
+        bone("effects stun", -7.48, -70.19),
+        bone("eyes", 2.91, -76.32, 13.81),
+        bone("effects stun star", -18.86, -73.59, -15),
     ]
-    slots = [
+    data["slot"] = [
         slot("left leg"),
         slot("left hand"),
         slot("body"),
         slot("right leg"),
-        slot("ball", display_index=-1),        # 默认隐藏
+        slot("ball"),
         slot("head"),
-        slot("ball_front", display_index=-1),  # 默认隐藏
+        slot("ball_front"),
         slot("right hand"),
-        slot("eyes", display_index=-1),        # 默认隐藏
-        slot("dighand", display_index=-1),     # 默认隐藏
-        slot("digleg", display_index=-1),      # 默认隐藏
-        slot("effects stun", display_index=-1),      # 默认隐藏
-        slot("effects stun star", display_index=-1), # 默认隐藏
+        slot("eyes"),
+        slot("dighand"),
+        slot("digleg"),
+        slot("effects stun"),
+        slot("effects stun star"),
     ]
-
-    # 皮肤配置：定义每个插槽可以显示的所有候选项
-    skin = [
-        # 身体部件使用子骨骼（armature）类型，运行时通过切换动画名来选择角色
-        skin_slot("left leg", [display("dbanims/LegsDB", type_="armature")]),
-        skin_slot("left hand", [display("dbanims/LeftHandDB", type_="armature")]),
-        skin_slot("body", [display("BodyDB", type_="armature")]),
-        skin_slot("right leg", [display("dbanims/LegsDB", type_="armature")]),
-        # 球使用图片类型
-        skin_slot("ball", [display(".Game/ball/BallClip")]),
-        skin_slot("head", [display("HeadsDB", type_="armature")]),
-        skin_slot("ball_front", [display(".Game/ball/BallClip")]),
-        skin_slot("right hand", [display("dbanims/RightHandDB", type_="armature")]),
-        # 眼睛有两个候选项：眩晕眼睛和护盾动画
-        skin_slot("eyes", [display("dbanims/eyes_stunned", type_="armature"), display("shield_animation_01", type_="armature")]),
-        skin_slot("dighand", [display("dbanims/LeftHandDB2", type_="armature")]),
-        skin_slot("digleg", [display("dbanims/LegsDB2", type_="armature")]),
-        # 特效插槽包含多种特效候选项
-        skin_slot(
-            "effects stun",
-            [
-                display("dbanims/kuynya_01"),                            # 眩晕螺旋
-                display("dbanims/backwind_01", type_="armature"),        # 背风动画
-                display("dbanims/circles1"),                              # 圆圈1
-                display("dbanims/circle2"),                               # 圆圈2
-                display("dbanims/circle3"),                               # 圆圈3
-                display("dbanims/tears_01", type_="armature"),           # 眼泪
-                display("dbanims/CupDB", type_="armature"),              # 奖杯
-                display("man_fire_01", type_="armature"),                # 火焰
-            ],
-        ),
-        skin_slot("effects stun star", [display("dbanims/star_0123")]),  # 眩晕星星
+    data["skin"] = [
+        {
+            "slot": [
+                skin_slot("left leg", [display("dbanims/LegsDB", type_="armature", x=1.11, y=2.91)]),
+                skin_slot("left hand", [display("dbanims/LeftHandDB", type_="armature")]),
+                skin_slot("body", [display("BodyDB", type_="armature")]),
+                skin_slot("right leg", [display("dbanims/LegsDB", type_="armature")]),
+                skin_slot("ball", [display(".Game/ball/BallClip", x=-0.06, y=0.04)]),
+                skin_slot("head", [display("HeadsDB", type_="armature")]),
+                skin_slot("ball_front", [display(".Game/ball/BallClip", x=0.06, y=0.06)]),
+                skin_slot("right hand", [display("dbanims/RightHandDB", type_="armature", x=0.02, y=0.02)]),
+                skin_slot("eyes", [display("dbanims/eyes_stunned", type_="armature", y=0.04), display("shield_animation_01", type_="armature", x=0.04)]),
+                skin_slot("dighand", [display("dbanims/LeftHandDB2", type_="armature")]),
+                skin_slot("digleg", [display("dbanims/LegsDB2", type_="armature")]),
+                skin_slot(
+                    "effects stun",
+                    [
+                        display("dbanims/kuynya_01", x=-0.02, y=0.02),
+                        display("dbanims/backwind_01", type_="armature"),
+                        display("dbanims/circles1"),
+                        display("dbanims/circle2", y=0.02),
+                        display("dbanims/circle3", y=0.02),
+                        display("dbanims/tears_01", type_="armature", x=-0.02, y=0.02),
+                        display("dbanims/CupDB", type_="armature", x=-0.02, y=0.02),
+                        display("man_fire_01", type_="armature", x=-0.12, y=-0.18),
+                    ],
+                ),
+                skin_slot("effects stun star", [display("dbanims/star_0123", y=0.04)]),
+            ]
+        }
     ]
-
-    # 组装所有动画
-    animations = [
-        main_idle(),
-        main_run(),
-        main_idle_wb(),
-        main_run_wb(),
-        throw_land(),
-        jump_like("jump", with_ball=False, duration=8, lift=24),
-        jump_like("fly1", with_ball=False, duration=10, lift=30, rotate=-6),
-        jump_like("fly2", with_ball=False, duration=10, lift=36, rotate=4),
-        jump_like("fly3", with_ball=False, duration=10, lift=40, rotate=10),
-        jump_like("fly4", with_ball=False, duration=10, lift=34, rotate=-8),
-        jump_like("fly5", with_ball=False, duration=10, lift=28, rotate=0),
-        landing_like("landing", with_ball=False),
-        jump_like("jump_wb", with_ball=True, duration=8, lift=24),
-        jump_like("fly1_wb", with_ball=True, duration=10, lift=30, rotate=-6),
-        jump_like("fly2_wb", with_ball=True, duration=10, lift=36, rotate=4),
-        jump_like("fly3_wb", with_ball=True, duration=10, lift=40, rotate=10),
-        jump_like("fly4_wb", with_ball=True, duration=10, lift=34, rotate=-8),
-        jump_like("fly5_wb", with_ball=True, duration=10, lift=28, rotate=0),
-        landing_like("landing_wb", with_ball=True),
-        dunk("dunk1", 18, 16, 42),
-        dunk("dunk2", 20, 20, 50),
-        dunk("dunk3", 22, 12, 58),
-        steal(),
-        pump_block("pumpStart", pump=True, start=True),
-        pump_block("pumpEnd", pump=True, start=False),
-        dash("dash_wb", with_ball=True),
-        dash("dash", with_ball=False),
-        dig("dig1", phase=1),
-        dig("dig2", phase=2),
-        dig("dig3", phase=3),
-        stun(),
-        mood("sad", happy=False),
-        mood("sad0", happy=False),
-        mood("happiness", happy=True),
-        pump_block("blockStart", pump=False, start=True),
-        pump_block("blockEnd", pump=False, start=False),
-        mega("megadunk"),
-        mega("megadunk_fly", fly=True),
-        mega("megadunk_end", end=True),
-        md("md_start_wb", with_ball=True, start=True, end=False),
-        md("md_mid_wb", with_ball=True, start=False, end=False),
-        md("md_end_wb", with_ball=True, start=False, end=True),
-        md("md_start", with_ball=False, start=True, end=False),
-        md("md_mid", with_ball=False, start=False, end=False),
-        md("md_end", with_ball=False, start=False, end=True),
+    data["animation"] = [
+        custom_idle(),
+        custom_run(),
+        custom_idle_wb(),
+        custom_run_wb(),
+        custom_throw_land(),
+        custom_jump("jump", with_ball=False),
+        custom_air_pose("fly1", with_ball=False, lift=24, tilt=-5),
+        custom_air_pose("fly2", with_ball=False, lift=31, tilt=2),
+        custom_air_pose("fly3", with_ball=False, lift=36, tilt=7),
+        custom_air_pose("fly4", with_ball=False, lift=30, tilt=-8),
+        custom_air_pose("fly5", with_ball=False, lift=22, tilt=0),
+        custom_landing("landing", with_ball=False),
+        custom_jump("jump_wb", with_ball=True),
+        custom_air_pose("fly1_wb", with_ball=True, lift=24, tilt=-5, ball_high=True),
+        custom_air_pose("fly2_wb", with_ball=True, lift=31, tilt=2, ball_high=True),
+        custom_air_pose("fly3_wb", with_ball=True, lift=36, tilt=7, ball_high=True),
+        custom_air_pose("fly4_wb", with_ball=True, lift=30, tilt=-8, ball_high=True),
+        custom_air_pose("fly5_wb", with_ball=True, lift=22, tilt=0, ball_high=True),
+        custom_landing("landing_wb", with_ball=True),
+        custom_dunk("dunk1", 24, 18, style=0),
+        custom_dunk("dunk2", 15, 9, style=1),
+        custom_dunk("dunk3", 24, 14, style=2),
+        custom_steal(),
+        custom_pump_block("pumpStart", pump=True, start=True),
+        custom_pump_block("pumpEnd", pump=True, start=False),
+        custom_dash("dash_wb", with_ball=True),
+        custom_dash("dash", with_ball=False),
+        custom_dig("dig1", phase=1, duration=31),
+        custom_dig("dig2", phase=2, duration=20),
+        custom_dig("dig3", phase=3, duration=24),
+        custom_stun(),
+        custom_mood("sad", happy=False, duration=15, loop=False),
+        custom_mood("sad0", happy=False, duration=4, loop=False),
+        custom_mood("happiness", happy=True, duration=19, loop=True),
+        custom_pump_block("blockStart", pump=False, start=True),
+        custom_pump_block("blockEnd", pump=False, start=False),
+        custom_mega("megadunk"),
+        custom_mega("megadunk_fly", fly=True),
+        custom_mega("megadunk_end", end=True),
+        custom_md("md_start_wb", with_ball=True, start=True, end=False),
+        custom_md("md_mid_wb", with_ball=True, start=False, end=False),
+        custom_md("md_end_wb", with_ball=True, start=False, end=True),
+        custom_md("md_start", with_ball=False, start=True, end=False),
+        custom_md("md_mid", with_ball=False, start=False, end=False),
+        custom_md("md_end", with_ball=False, start=False, end=True),
     ]
-    return {"name": "playerSmall", "bone": bones, "slot": slots, "skin": [{"slot": skin}], "animation": animations}
+    return data
 
 
 def picker_armature(name: str, slot_name: str, display_names: list[str], animation_names: list[str]) -> dict:
@@ -1505,7 +1324,7 @@ def skeleton() -> dict:
         "compatibleVersion": "5.5",
         "userData": {
             "generator": "Tools/Art/rebuild_runtime_dragonbones_skeleton.py",
-            "note": "项目自研的DBLite兼容骨骼数据。运行时名称保持稳定以确保游戏逻辑兼容性。",
+            "note": "Project-authored DBLite-compatible skeleton. Runtime names stay stable for gameplay compatibility.",
         },
         "armature": [main_armature(), *character_part_armatures(), *fx_armatures()],
     }
@@ -1590,6 +1409,39 @@ def validate(data: dict, texture_json: dict) -> None:
     missing_events = required_events - events
     if missing_events:
         raise RuntimeError(f"Missing frame events: {sorted(missing_events)}")
+
+    expected_animation_events = {
+        "idle_wb": "floor0",
+        "run_wb": "floor",
+        "throw_land": "throw",
+        "dunk1": "dunk",
+        "dunk2": "dunk",
+        "dunk3": "dunk",
+        "steal": "action",
+        "megadunk_end": "mega",
+    }
+    animations_by_name = {item["name"]: item for item in main["animation"]}
+    for animation_name, event_name in expected_animation_events.items():
+        animation_data = animations_by_name.get(animation_name)
+        if animation_data is None:
+            raise RuntimeError(f"Missing playerSmall animation: {animation_name}")
+        animation_events = {
+            item["event"]
+            for item in animation_data.get("frame", [])
+            if "event" in item
+        }
+        if event_name not in animation_events:
+            raise RuntimeError(f"Animation {animation_name} is missing frame event {event_name}.")
+
+    misplaced_mega = {
+        anim["name"]
+        for anim in main["animation"]
+        if anim["name"] != "megadunk_end"
+        for item in anim.get("frame", [])
+        if item.get("event") == "mega"
+    }
+    if misplaced_mega:
+        raise RuntimeError(f"The mega event must stay on megadunk_end: {sorted(misplaced_mega)}")
 
     # 验证playerSmall骨骼存在
     if "playerSmall" not in armatures:

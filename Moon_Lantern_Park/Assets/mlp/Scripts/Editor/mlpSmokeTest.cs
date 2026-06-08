@@ -12,6 +12,95 @@ namespace mlp.EditorTools
 {
     public static class mlpSmokeTest
     {
+        private static void ValidateGuaranteedBlockTeleportsToShot(List<string> errors)
+        {
+            const float expectedBlockHorizontalOffset = 20f;
+            const float expectedBlockHandsOffsetY = 64f;
+            var inventory = mlpInventory.Instance;
+            var originalParticipantMode = inventory.ParticipantMode;
+            var originalSessionMode = inventory.SessionMode;
+            var originalGameMode = inventory.GameMode;
+            var originalMatchPrepared = inventory.MatchPrepared;
+            var originalPendingTutorialNextAction = inventory.PendingTutorialNextAction;
+            var runtimeRoot = new GameObject("GuaranteedBlockRuntimeRoot");
+            mlpGameCore core = null;
+
+            try
+            {
+                mlpAudio.Create(runtimeRoot.transform);
+                inventory.ParticipantMode = mlpParticipantMode.Tutorial;
+                inventory.SessionMode = mlpSessionMode.Tutorial;
+                inventory.GameMode = mlpGameModeIds.Tutorial;
+                inventory.PendingTutorialNextAction = mlpTutorialNextAction.None;
+                inventory.MatchData.StartTutorial(7, mlpBallSelection.ClassicOriginal);
+                inventory.MatchPrepared = true;
+                core = new mlpGameBuilder().Build(runtimeRoot.transform);
+                if (core.PlayersLeft == null || core.PlayersLeft.Count == 0 || core.PlayersRight == null || core.PlayersRight.Count == 0)
+                {
+                    errors.Add("Guaranteed-block teleport test could not create both players.");
+                    return;
+                }
+
+                var blocker = core.PlayersLeft[0];
+                var shooter = core.PlayersRight[0];
+                if (blocker.SkillType != mlpCharacterSkillType.SureBlock)
+                {
+                    errors.Add($"Guaranteed-block teleport test expected BLACK CAT on the left, got {blocker.SkillType}.");
+                    return;
+                }
+
+                blocker.TutorialSnapTo(new Vector2(730f, mlpObjectsData.PlayerIndentY), -1f);
+                shooter.TutorialSnapTo(new Vector2(560f, mlpObjectsData.PlayerIndentY), -1f);
+                blocker.TutorialChargeSuper();
+                core.MatchProcessor.Shoot(shooter.Side, false, 0, shooter.PlayerNo);
+                core.Ball.Shoot(shooter.Side, 500f, 260f, 0f, 1f);
+                core.NotifyPlayersBallShot(shooter.Side, shooter.PlayerNo);
+
+                var ballPosition = core.Ball.Position;
+                var originalBlockerPosition = blocker.Position;
+                var expectedPosition = new Vector2(
+                    Mathf.Clamp(ballPosition.x - core.Ball.Side * expectedBlockHorizontalOffset, 20f, mlpConstants.Width - 20f),
+                    Mathf.Clamp(ballPosition.y + expectedBlockHandsOffsetY, mlpObjectsData.BasketHeight - 18f, mlpObjectsData.PlayerIndentY));
+
+                if (!blocker.SuperShot())
+                {
+                    errors.Add("Guaranteed-block skill did not activate against a live opponent shot.");
+                    return;
+                }
+
+                if (core.Ball.State != "block")
+                {
+                    errors.Add($"Guaranteed-block skill did not immediately block the shot. Ball state: {core.Ball.State}.");
+                }
+
+                if (Vector2.Distance(blocker.Position, expectedPosition) > 0.1f)
+                {
+                    errors.Add($"Guaranteed-block skill did not teleport beside the ball. Expected {expectedPosition}, got {blocker.Position}.");
+                }
+
+                if (Mathf.Abs(blocker.Position.x - originalBlockerPosition.x) < 80f)
+                {
+                    errors.Add("Guaranteed-block skill did not move the blocker far enough to prove the teleport path ran.");
+                }
+
+                blocker.Update(0.26f);
+                if (blocker.IsSuperShot || core.IsSuperShot)
+                {
+                    errors.Add("Guaranteed-block skill did not release its short hold state after the block.");
+                }
+            }
+            finally
+            {
+                core?.Shutdown();
+                UnityEngine.Object.DestroyImmediate(runtimeRoot);
+                inventory.ParticipantMode = originalParticipantMode;
+                inventory.SessionMode = originalSessionMode;
+                inventory.GameMode = originalGameMode;
+                inventory.MatchPrepared = originalMatchPrepared;
+                inventory.PendingTutorialNextAction = originalPendingTutorialNextAction;
+            }
+        }
+
         /// <summary>
         /// 运行所有冒烟测试：验证资源、快速构建游戏并报告错误。
         /// </summary>
@@ -139,6 +228,7 @@ namespace mlp.EditorTools
                 ValidateHellTournamentSkillMapping(errors);
                 ValidateBallSelectionStateAndResolution(errors);
                 ValidateRuntimeGraphicsResourceReuse(errors);
+                ValidateGuaranteedBlockTeleportsToShot(errors);
 
                 root = new GameObject("SmokeRuntimeRoot");
                 mlpAudio.Create(root.transform);

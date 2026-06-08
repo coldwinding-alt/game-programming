@@ -68,7 +68,7 @@ namespace mlp
         /// </summary>
         public static void SetupPlayers()
         {
-            // Active Halloween characters now use an explicit 8-character DragonBones set.
+            // 当前万圣节角色使用显式的 8 角色 DragonBones 骨架集。
         }
 
         /// <summary>

@@ -63,9 +63,11 @@ namespace mlp
         public const float DunkX = 100f;
         public const float DunkY = 180f;
         public const float DunkChanceToComplete = 0.9f;
-        public const float Dunk1Duration = 520f / 1.3333f / 1000f;
-        public const float Dunk2Duration = 350f / 1.3333f / 1000f;
-        public const float Dunk3Duration = 480f / 1.3333f / 1000f;
+        // Keep these synced with the generated dunk1/dunk2/dunk3 frame counts in
+        // Tools/Art/rebuild_runtime_dragonbones_skeleton.py.
+        public const float Dunk1Duration = 24f / 30f;
+        public const float Dunk2Duration = 15f / 30f;
+        public const float Dunk3Duration = 24f / 30f;
         public const float AlleyOopX = 160f;
         public const float AlleyOopY = 150f;
         public const float SuperDashX1 = 150f;
@@ -88,7 +90,7 @@ namespace mlp
         public const float StunDuration = 22f / 30f;
         public const float ThreePointsDistance = mlpConstants.Width2;
         public const float DashDelay = 1f;
-        public const float DashDoubleTapWindow = 0.46f;
+        public const float DashDoubleTapWindow = 0.55f;
         public const float DashInputBuffer = 0.22f;
         public const float DigTime = 3f;
         public const float EnergyTime = 3f;

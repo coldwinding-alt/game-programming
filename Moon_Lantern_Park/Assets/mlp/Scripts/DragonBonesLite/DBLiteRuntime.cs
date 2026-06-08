@@ -367,10 +367,13 @@ namespace mlp
             }
 
             var animFrame = 0f;
+            var animationDuration = 1f;
+            var animationLoops = false;
             if (currentAnimation != null)
             {
-                var duration = Mathf.Max(1, currentAnimation.Duration);
-                animFrame = currentAnimation.Loops ? frame % duration : Mathf.Min(frame, duration - 0.001f);
+                animationDuration = Mathf.Max(1, currentAnimation.Duration);
+                animationLoops = currentAnimation.Loops;
+                animFrame = animationLoops ? frame % animationDuration : Mathf.Min(frame, animationDuration - 0.001f);
             }
 
             foreach (var boneData in data.Bones)
@@ -383,7 +386,7 @@ namespace mlp
                 var pose = boneData.Transform;
                 if (currentAnimation != null && currentAnimation.BoneTracks.TryGetValue(boneData.Name, out var track))
                 {
-                    pose = pose.Combine(track.Sample(animFrame));
+                    pose = pose.Combine(track.Sample(animFrame, animationDuration, animationLoops));
                 }
 
                 transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
@@ -795,12 +798,12 @@ namespace mlp
         /// <summary>
         /// 在指定帧采样骨骼轨道，在关键帧之间进行插值。
         /// </summary>
-        public DBLiteTransform Sample(float frame)
+        public DBLiteTransform Sample(float frame, float animationDuration, bool loop)
         {
             var result = DBLiteTransform.Identity;
-            var translation = SampleList(translate, frame, FrameKind.Translate);
-            var rotation = SampleList(rotate, frame, FrameKind.Rotate);
-            var scaling = SampleList(scale, frame, FrameKind.Scale);
+            var translation = SampleList(translate, frame, FrameKind.Translate, animationDuration, loop);
+            var rotation = SampleList(rotate, frame, FrameKind.Rotate, animationDuration, loop);
+            var scaling = SampleList(scale, frame, FrameKind.Scale, animationDuration, loop);
 
             result.X = translation.X;
             result.Y = translation.Y;
@@ -873,7 +876,7 @@ namespace mlp
         /// <summary>
         /// 查找包围指定帧的关键帧并进行变换插值。
         /// </summary>
-        private static DBLiteTransform SampleList(List<DBLiteTimedTransform> list, float frame, FrameKind kind)
+        private static DBLiteTransform SampleList(List<DBLiteTimedTransform> list, float frame, FrameKind kind, float animationDuration, bool loop)
         {
             if (list.Count == 0)
             {
@@ -891,12 +894,28 @@ namespace mlp
                 }
             }
 
+            if (!next.HasValue && loop && list.Count > 1)
+            {
+                next = new DBLiteTimedTransform
+                {
+                    Start = Mathf.Max(animationDuration, current.Start + current.Duration),
+                    Duration = list[0].Duration,
+                    Transform = list[0].Transform,
+                    Tween = list[0].Tween
+                };
+            }
+
             if (!current.Tween || !next.HasValue || current.Duration <= 0f)
             {
                 return current.Transform;
             }
 
-            var t = Mathf.Clamp01((frame - current.Start) / current.Duration);
+            var segmentDuration = current.Duration;
+            if (loop)
+            {
+                segmentDuration = Mathf.Max(0.0001f, Mathf.Min(segmentDuration, animationDuration - current.Start));
+            }
+            var t = Mathf.Clamp01((frame - current.Start) / segmentDuration);
             return DBLiteTransform.Lerp(current.Transform, next.Value.Transform, t, kind);
         }
     }
