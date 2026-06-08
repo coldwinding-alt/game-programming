@@ -10,7 +10,7 @@ namespace mlp.EditorTools
     public static class mlpBuildTools
     {
         /// <summary>
-        /// Build the game for Windows 64-bit using the scenes enabled in Build Settings.
+        /// 使用构建设置中启用的场景，为 Windows 64 位平台构建游戏。
         /// </summary>
         public static void BuildWindows()
         {

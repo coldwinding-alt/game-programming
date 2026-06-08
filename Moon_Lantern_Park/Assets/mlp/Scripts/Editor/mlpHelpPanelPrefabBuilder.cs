@@ -20,7 +20,7 @@ namespace mlp.EditorTools
 
         [MenuItem("mlp/Build Help Panel Prefab")]
         /// <summary>
-        /// Build the help panel prefab and place an instance in the main scene.
+        /// 构建帮助面板预制体并在主场景中放置实例。
         /// </summary>
         public static void Build()
         {
@@ -51,7 +51,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create the full help panel prefab hierarchy with all sprites, text, and buttons.
+        /// 创建包含所有精灵、文本和按钮的完整帮助面板预制体层级。
         /// </summary>
         private static GameObject BuildPrefab()
         {
@@ -173,7 +173,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Build the keyboard controls page with key mappings, profile strip, and witch demo area.
+        /// 构建键盘控制页面，包含按键映射、配置栏和女巫演示区域。
         /// </summary>
         private static void BuildKeyboardPage(
             Transform parent,
@@ -237,7 +237,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a single row showing an action label, its keycap, and a description.
+        /// 添加一行显示动作标签、按键帽和说明文字。
         /// </summary>
         private static void AddControlRow(
             Transform parent,
@@ -256,7 +256,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a visual keycap sprite with centered key label text.
+        /// 添加带有居中按键标签文字的可视化按键帽精灵。
         /// </summary>
         private static void AddKey(Transform parent, Sprite keycap, string keyText, float x, float y, float width)
         {
@@ -265,7 +265,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a plain text label for arrow-key names without a keycap background.
+        /// 添加不带按键帽背景的方向键名称纯文本标签。
         /// </summary>
         private static void AddDirectionLabel(Transform parent, string keyText, float x, float y, float width)
         {
@@ -287,7 +287,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add the two-player quick profile strip showing 1P and 2P key layouts.
+        /// 添加显示 1P 和 2P 按键布局的双人快速配置栏。
         /// </summary>
         private static void AddProfileStrip(Transform parent, Sprite card, Sprite keycap)
         {
@@ -306,7 +306,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Lay out four movement keycaps in a cross pattern for the quick profile display.
+        /// 以十字布局排列四个移动按键帽，用于快速配置显示。
         /// </summary>
         private static void AddProfileMoveCluster(Transform parent, Sprite keycap, float centerX, float centerY, string topKey, string leftKey, string bottomKey, string rightKey)
         {
@@ -317,7 +317,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a keycap and its action label side by side in the profile strip.
+        /// 在配置栏中并排添加按键帽和动作标签。
         /// </summary>
         private static void AddProfileActionRow(Transform parent, Sprite keycap, float x, float y, string keyText, string label)
         {
@@ -337,7 +337,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a larger profile-style keycap with a centered key label.
+        /// 添加带有居中按键标签的较大配置风格按键帽。
         /// </summary>
         private static void AddProfileKey(Transform parent, Sprite keycap, string keyText, float x, float y, float width, float height)
         {
@@ -364,7 +364,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a small chip button that triggers a witch drill demo animation.
+        /// 创建触发女巫练习演示动画的小型标签按钮。
         /// </summary>
         private static void CreateDemoButton(
             Transform parent,
@@ -396,7 +396,7 @@ namespace mlp.EditorTools
         private readonly struct TextButtonParts
         {
             /// <summary>
-            /// Hold the plate renderer, label text, and button component for a created text button.
+            /// 保存已创建文本按钮的底板渲染器、标签文本和按钮组件。
             /// </summary>
             public TextButtonParts(SpriteRenderer plate, TMP_Text label, mlpHelpButton button)
             {
@@ -411,7 +411,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a clickable button with a plate sprite, text label, and hover color config.
+        /// 创建带有底板精灵、文本标签和悬停颜色配置的可点击按钮。
         /// </summary>
         private static TextButtonParts CreateTextButton(
             string name,
@@ -451,7 +451,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a SpriteRenderer GameObject at the given pixel position and size.
+        /// 在指定像素位置和尺寸添加 SpriteRenderer GameObject。
         /// </summary>
         private static SpriteRenderer AddSprite(string name, Sprite sprite, float x, float y, float z, float width, float height, int sortingOrder, Transform parent)
         {
@@ -467,7 +467,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Add a TextMeshPro text element at the given pixel position.
+        /// 在指定像素位置添加 TextMeshPro 文本元素。
         /// </summary>
         private static TMP_Text AddText(string name, string text, float x, float y, int fontSize, Color color, TextAnchor anchor, int sortingOrder, Transform parent, mlpTextStyle style)
         {
@@ -475,7 +475,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Position and scale a transform using the game's pixel-to-world conversion.
+        /// 使用游戏的像素到世界坐标转换来定位和缩放 Transform。
         /// </summary>
         private static void ApplyPixelTransform(Transform transform, float x, float y, float z, float scaleX, float scaleY)
         {
@@ -487,7 +487,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Load a sprite from the help asset folder by name.
+        /// 根据名称从帮助资源文件夹加载精灵。
         /// </summary>
         private static Sprite LoadSprite(string name)
         {
@@ -495,7 +495,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Generate and save all the UI texture assets (boards, cards, keycaps, etc.).
+        /// 生成并保存所有 UI 纹理资源（面板、卡片、按键帽等）。
         /// </summary>
         private static void CreateTextureAssets()
         {
@@ -511,7 +511,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Generate TextMeshPro SDF font assets for all bundled fonts.
+        /// 为所有内置字体生成 TextMeshPro SDF 字体资源。
         /// </summary>
         private static void CreateTmpFontAssets()
         {
@@ -525,7 +525,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a single TMP SDF font asset from a source TTF file.
+        /// 从源 TTF 文件创建单个 TMP SDF 字体资源。
         /// </summary>
         private static void CreateTmpFontAsset(string sourcePath, string assetName)
         {
@@ -589,7 +589,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a solid-color texture of the given size.
+        /// 创建指定尺寸的纯色纹理。
         /// </summary>
         private static Texture2D CreateSolidTexture(int width, int height, Color color)
         {
@@ -606,7 +606,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a rounded-corner texture with gradient fill, border, and optional glint pattern.
+        /// 创建带渐变填充、边框和可选闪光图案的圆角纹理。
         /// </summary>
         private static Texture2D CreateRoundedTexture(int width, int height, int radius, int borderWidth, Color top, Color bottom, Color border, Color glint, bool pattern)
         {
@@ -650,7 +650,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Create a radial spotlight texture with a soft green glow.
+        /// 创建带有柔和绿色光晕的径向聚光灯纹理。
         /// </summary>
         private static Texture2D CreateSpotlightTexture(int width, int height)
         {
@@ -675,7 +675,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check whether a pixel coordinate falls inside a rounded rectangle.
+        /// 检查像素坐标是否在圆角矩形内。
         /// </summary>
         private static bool InsideRoundedRect(int x, int y, int width, int height, int radius)
         {
@@ -693,7 +693,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Save a generated texture as a PNG and configure its sprite import settings.
+        /// 将生成的纹理保存为 PNG 并配置其精灵导入设置。
         /// </summary>
         private static void WriteTexture(string name, Texture2D texture)
         {
@@ -717,7 +717,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Place the help panel prefab instance into the main scene, replacing any existing one.
+        /// 将帮助面板预制体实例放入主场景，替换已有的实例。
         /// </summary>
         private static void AddPrefabInstanceToMainScene(GameObject prefab)
         {

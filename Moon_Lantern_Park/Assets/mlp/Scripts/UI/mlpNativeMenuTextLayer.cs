@@ -22,8 +22,7 @@ namespace mlp
         public static mlpNativeMenuTextLayer Active { get; private set; }
 
         /// <summary>
-        /// Create a full-screen canvas for drawing menu text using TextMeshPro.
-        /// The canvas uses a fixed 800x480 reference resolution so text positions stay consistent.
+        /// 创建一个全屏画布，使用 TextMeshPro 绘制菜单文字。画布采用固定的 800x480 参考分辨率，确保文字位置在不同屏幕上保持一致。
         /// </summary>
         public mlpNativeMenuTextLayer(Transform menuRoot)
         {
@@ -54,8 +53,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the given transform belongs to this text layer's menu root.
-        /// Used to figure out if a text element was created by this layer.
+        /// 检查给定的 Transform 是否属于此文字层的菜单根节点。用于判断某个文字元素是否由该层创建。
         /// </summary>
         public bool Owns(Transform parent)
         {
@@ -63,8 +61,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Recalculate the canvas scale when the screen size changes.
-        /// This keeps the 800x480 reference layout centered and properly sized.
+        /// 屏幕尺寸变化时重新计算画布缩放，使 800x480 参考布局保持居中和正确大小。
         /// </summary>
         public void RefreshLayout(int screenWidth, int screenHeight)
         {
@@ -82,7 +79,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show or hide the entire text layer. When hidden, no menu text is drawn.
+        /// 显示或隐藏整个文字层。隐藏时不绘制任何菜单文字。
         /// </summary>
         public void SetVisible(bool visible)
         {
@@ -93,9 +90,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create a new TextMeshPro text element at the given pixel position.
-        /// Returns the TMP_Text component so you can update the text later.
-        /// x/y are in the 800x480 reference coordinate space.
+        /// 在指定像素位置创建一个新的 TextMeshPro 文字元素。返回 TMP_Text 组件以便后续更新文字内容。x/y 坐标基于 800x480 参考坐标系。
         /// </summary>
         public TMP_Text CreateText(
             string name,
@@ -142,7 +137,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Destroy the canvas and all text elements. Call this when leaving the menu.
+        /// 销毁画布及所有文字元素。在离开菜单时调用。
         /// </summary>
         public void Dispose()
         {
@@ -165,8 +160,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply a font style (font family, outline, etc) to a text component.
-        /// Different styles use different fonts — for example, titles use Impact, body text uses Rajdhani.
+        /// 为文字组件应用字体样式（字体族、描边等）。不同样式使用不同字体，例如标题用 Impact，正文用 Rajdhani。
         /// </summary>
         private static void ApplyStyle(TMP_Text textComponent, mlpTextStyle style, int fontSize)
         {
@@ -184,7 +178,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert pixel coordinates (0,0 = top-left) to the canvas anchored position (center-based).
+        /// 将像素坐标（0,0 = 左上角）转换为画布锚点坐标（基于中心点）。
         /// </summary>
         private static Vector2 PixelToViewportPosition(float x, float y)
         {
@@ -194,7 +188,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Guess how tall a text element needs to be based on the number of lines and font size.
+        /// 根据行数和字号估算文字元素所需的高度。
         /// </summary>
         private static float EstimateHeight(string text, int fontSize)
         {
@@ -214,7 +208,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a TextAnchor (like UpperLeft, MiddleCenter) to a pivot vector for the RectTransform.
+        /// 将 TextAnchor（如 UpperLeft、MiddleCenter）转换为 RectTransform 的 pivot 向量。
         /// </summary>
         private static Vector2 AnchorToPivot(TextAnchor anchor)
         {
@@ -242,7 +236,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a TextAnchor to the matching TextMeshPro alignment option.
+        /// 将 TextAnchor 转换为对应的 TextMeshPro 对齐选项。
         /// </summary>
         private static TextAlignmentOptions AnchorToAlignment(TextAnchor anchor)
         {
@@ -275,8 +269,7 @@ namespace mlp
         private static readonly Dictionary<mlpFontKind, TMP_FontAsset> FontAssets = new Dictionary<mlpFontKind, TMP_FontAsset>();
 
         /// <summary>
-        /// Get a cached TextMeshPro font asset for the given font kind.
-        /// If not cached yet, tries to load a bundled SDF font, or creates one from the source font.
+        /// 获取指定字体类型的缓存 TextMeshPro 字体资源。若尚未缓存，则尝试加载预打包的 SDF 字体，或从源字体动态创建。
         /// </summary>
         public static TMP_FontAsset Get(mlpFontKind fontKind)
         {
@@ -318,7 +311,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the Resources path for the pre-built TMP font asset that matches the given font kind.
+        /// 返回与指定字体类型对应的预构建 TMP 字体资源的 Resources 路径。
         /// </summary>
         private static string GetBundledFontAssetPath(mlpFontKind fontKind)
         {

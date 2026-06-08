@@ -27,11 +27,11 @@ namespace mlp
         public event Action<mlpPlayerSignalType, int, int> OnSignal;
 
         /// <summary>
-        /// Broadcasts a player action event to all registered listeners (such as the tutorial system).
+        /// 向所有注册的监听器（如教程系统）广播玩家动作事件。
         /// </summary>
-        /// <param name="signal">The type of action that occurred (e.g. Shoot, Dunk, Steal).</param>
-        /// <param name="side">Which team the player belongs to (-1 = left, 1 = right).</param>
-        /// <param name="playerNo">Index of the player within their team.</param>
+        /// <param name="signal">发生的动作类型（如投篮、扣篮、抢断等）。</param>
+        /// <param name="side">玩家所属队伍（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="playerNo">球员在队伍中的索引。</param>
         public void Dispatch(mlpPlayerSignalType signal, int side, int playerNo)
         {
             OnSignal?.Invoke(signal, side, playerNo);

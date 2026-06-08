@@ -80,10 +80,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// Build the full resource loading path for an image key. Returns null if the key is empty.
+            /// 根据图片资源键名构建完整的加载路径。如果键名为空则返回 null。
             /// </summary>
-            /// <param name="imageKey">The short image key (e.g. "logo" or "UI/panel_fill_soft").</param>
-            /// <returns>The full Resources path, or null if the key is empty.</returns>
+            /// <param name="imageKey">简短的图片键名（例如 "logo" 或 "UI/panel_fill_soft"）。</param>
+            /// <returns>完整的 Resources 路径，如果键名为空则返回 null。</returns>
             public static string ResourcePath(string imageKey)
             {
                 return string.IsNullOrEmpty(imageKey) ? null : $"{Root}{imageKey}";
@@ -109,10 +109,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// Return the image path for a ball skin theme. Returns null for the default classic ball.
+            /// 根据篮球皮肤主题返回对应的图片路径。经典款篮球返回 null。
             /// </summary>
-            /// <param name="theme">The ball skin theme to look up.</param>
-            /// <returns>The GameplayImages key for that ball, or null for ClassicOriginal.</returns>
+            /// <param name="theme">要查找的篮球皮肤主题。</param>
+            /// <returns>对应篮球的 GameplayImages 键名，ClassicOriginal 返回 null。</returns>
             public static string BallTheme(mlpBallTheme theme)
             {
                 return theme switch
@@ -138,10 +138,10 @@ namespace mlp
             public const string Popup = "popup_halloween";
 
             /// <summary>
-            /// Build the full resource loading path for a HUD element key. Returns null if the key is empty.
+            /// 根据 HUD 元素键名构建完整的加载路径。如果键名为空则返回 null。
             /// </summary>
-            /// <param name="hudKey">The short HUD key (e.g. "scoreboard_halloween").</param>
-            /// <returns>The full Resources path, or null if the key is empty.</returns>
+            /// <param name="hudKey">简短的 HUD 键名（例如 "scoreboard_halloween"）。</param>
+            /// <returns>完整的 Resources 路径，如果键名为空则返回 null。</returns>
             public static string ResourcePath(string hudKey)
             {
                 return string.IsNullOrEmpty(hudKey) ? null : $"{Root}{hudKey}";
@@ -155,10 +155,10 @@ namespace mlp
             public const string UiAtlas = "portraits_ui";
 
             /// <summary>
-            /// Build the full resource loading path for a portrait key. Returns null if the key is empty.
+            /// 根据头像资源键名构建完整的加载路径。如果键名为空则返回 null。
             /// </summary>
-            /// <param name="portraitKey">The short portrait key (e.g. "portraits_ui").</param>
-            /// <returns>The full Resources path, or null if the key is empty.</returns>
+            /// <param name="portraitKey">简短的头像键名（例如 "portraits_ui"）。</param>
+            /// <returns>完整的 Resources 路径，如果键名为空则返回 null。</returns>
             public static string ResourcePath(string portraitKey)
             {
                 return string.IsNullOrEmpty(portraitKey) ? null : $"{Root}{portraitKey}";

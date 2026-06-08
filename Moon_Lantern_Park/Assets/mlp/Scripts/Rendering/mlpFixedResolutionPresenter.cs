@@ -29,7 +29,7 @@ namespace mlp
         public static bool HasActivePresenter => activePresenter != null && activePresenter.configured;
 
         /// <summary>
-        /// Hook up a source camera so its output renders at the fixed resolution.
+        /// 接入源相机，使其输出以固定分辨率渲染。
         /// </summary>
         public void Attach(Camera camera)
         {
@@ -62,7 +62,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Disconnect the current source camera and hide the presenter.
+        /// 断开当前源相机并隐藏呈现器。
         /// </summary>
         public void Detach()
         {
@@ -75,7 +75,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a screen-space position to the game's fixed-resolution pixel coordinates.
+        /// 将屏幕空间坐标转换为游戏固定分辨率的像素坐标。
         /// </summary>
         public static bool TryMapScreenToGamePixel(Vector2 screenPosition, out Vector2 gamePixel)
         {
@@ -89,7 +89,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Refresh the layout each frame in case the screen size changed.
+        /// 每帧刷新布局，以防屏幕尺寸发生变化。
         /// </summary>
         private void LateUpdate()
         {
@@ -102,7 +102,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clean up the render texture, canvas, and output camera when this component is destroyed.
+        /// 组件销毁时清理渲染纹理、画布和输出相机。
         /// </summary>
         private void OnDestroy()
         {
@@ -137,7 +137,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the UI canvas, background, and output RawImage if they don't exist yet.
+        /// 如果尚未创建，则构建 UI 画布、背景和输出 RawImage。
         /// </summary>
         private void EnsureCanvas()
         {
@@ -189,7 +189,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the orthographic camera that renders the UI canvas on top of the game.
+        /// 创建正交相机，用于在游戏画面上方渲染 UI 画布。
         /// </summary>
         private void EnsureOutputCamera()
         {
@@ -217,7 +217,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the render texture at the game's fixed resolution with point filtering.
+        /// 以游戏固定分辨率和点过滤模式创建渲染纹理。
         /// </summary>
         private void EnsureRenderTexture()
         {
@@ -240,7 +240,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Recalculate the output size and screen rect to fit the window while keeping the aspect ratio.
+        /// 重新计算输出尺寸和屏幕矩形，使其适配窗口并保持宽高比。
         /// </summary>
         private void RefreshLayout(bool force)
         {
@@ -268,7 +268,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Recursively set all children of a transform to the UI layer.
+        /// 递归地将 Transform 的所有子物体设置到 UI 层。
         /// </summary>
         private static void ApplyPresenterLayer(Transform root)
         {
@@ -286,7 +286,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Restore the source camera to its original settings and clear the reference.
+        /// 将源相机恢复到原始设置并清除引用。
         /// </summary>
         private void DetachCurrentCamera()
         {
@@ -303,7 +303,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show or hide the presenter canvas and output camera.
+        /// 显示或隐藏呈现器画布和输出相机。
         /// </summary>
         private void SetPresenterVisible(bool visible)
         {
@@ -319,7 +319,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Map a screen position to game pixels, returning false if the position is outside the output area.
+        /// 将屏幕坐标映射到游戏像素，如果位置在输出区域外则返回 false。
         /// </summary>
         private bool TryMapScreenToGamePixelInternal(Vector2 screenPosition, out Vector2 gamePixel)
         {

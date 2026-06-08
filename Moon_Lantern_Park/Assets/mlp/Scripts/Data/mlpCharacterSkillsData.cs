@@ -14,7 +14,9 @@ namespace mlp
         WaxOverdrive,
         HarvestTime,
         HexGate,
-        BadLuck
+        BadLuck,
+        ReboundMagnet,
+        SureBlock
     }
 
     public readonly struct mlpCharacterSkillDefinition
@@ -37,24 +39,24 @@ namespace mlp
         public readonly int FlatScoreBonus;
 
         /// <summary>
-        /// Creates a new character skill definition with all visual, gameplay, and balance data.
+        /// 创建角色技能定义，包含所有视觉效果、玩法和平衡性数据。
         /// </summary>
-        /// <param name="skillType">The type of skill.</param>
-        /// <param name="iconSuperId">Icon index used by the super meter UI.</param>
-        /// <param name="skillName">Display name of the skill.</param>
-        /// <param name="iconImageKey">Image key for the skill icon.</param>
-        /// <param name="chargeMaskImageKey">Image key for the charge mask overlay.</param>
-        /// <param name="activateNotice">Text shown when the skill is activated.</param>
-        /// <param name="scoreNotice">Text shown when the skill affects scoring.</param>
-        /// <param name="primaryColor">Primary UI color for the skill.</param>
-        /// <param name="secondaryColor">Secondary UI color for the skill.</param>
-        /// <param name="accentColor">Accent UI color for the skill.</param>
-        /// <param name="effectDuration">Duration of the skill effect in seconds.</param>
-        /// <param name="bonusDuration">Additional bonus duration in seconds.</param>
-        /// <param name="moveSpeedMultiplier">Movement speed multiplier while the skill is active.</param>
-        /// <param name="accuracyModifier">Accuracy bonus applied while the skill is active.</param>
-        /// <param name="scoreRefundFraction">Fraction of score refunded on a successful action.</param>
-        /// <param name="flatScoreBonus">Flat score bonus added on a successful action.</param>
+        /// <param name="skillType">技能类型。</param>
+        /// <param name="iconSuperId">必杀技能量条 UI 使用的图标索引。</param>
+        /// <param name="skillName">技能的显示名称。</param>
+        /// <param name="iconImageKey">技能图标的图片键名。</param>
+        /// <param name="chargeMaskImageKey">充能遮罩层的图片键名。</param>
+        /// <param name="activateNotice">技能激活时显示的提示文本。</param>
+        /// <param name="scoreNotice">技能影响得分时显示的提示文本。</param>
+        /// <param name="primaryColor">技能的主要 UI 颜色。</param>
+        /// <param name="secondaryColor">技能的次要 UI 颜色。</param>
+        /// <param name="accentColor">技能的强调 UI 颜色。</param>
+        /// <param name="effectDuration">技能效果持续时间（秒）。</param>
+        /// <param name="bonusDuration">额外的奖励持续时间（秒）。</param>
+        /// <param name="moveSpeedMultiplier">技能激活时的移动速度倍率。</param>
+        /// <param name="accuracyModifier">技能激活时的命中率加成。</param>
+        /// <param name="scoreRefundFraction">成功操作后返还的得分比例。</param>
+        /// <param name="flatScoreBonus">成功操作后额外增加的固定分数。</param>
         public mlpCharacterSkillDefinition(
             mlpCharacterSkillType skillType,
             int iconSuperId,
@@ -92,24 +94,24 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns true if this skill uses a teleport dunk mechanic.
+        /// 判断该技能是否使用传送扣篮机制。
         /// </summary>
         public bool UsesTeleportDunk =>
             SkillType == mlpCharacterSkillType.BloodMoonBlink ||
             SkillType == mlpCharacterSkillType.HexGate;
 
         /// <summary>
-        /// Returns true if this skill uses a basket shield mechanic.
+        /// 判断该技能是否使用篮筐护盾机制。
         /// </summary>
         public bool UsesBasketShield => SkillType == mlpCharacterSkillType.GhostSail;
 
         /// <summary>
-        /// Returns true if this skill uses a dash mechanic.
+        /// 判断该技能是否使用冲刺机制。
         /// </summary>
         public bool UsesDashSkill => SkillType == mlpCharacterSkillType.SoulReap;
 
         /// <summary>
-        /// Returns true if this skill requires possession of the ball to activate.
+        /// 判断该技能是否需要持球才能激活。
         /// </summary>
         public bool UsesPossessionSkill =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
@@ -119,19 +121,29 @@ namespace mlp
             SkillType == mlpCharacterSkillType.HexGate;
 
         /// <summary>
-        /// Returns true if this skill uses a freeze mechanic.
+        /// 判断该技能是否使用冰冻机制。
         /// </summary>
         public bool UsesFreezeSkill => SkillType == mlpCharacterSkillType.BadLuck;
 
         /// <summary>
-        /// Returns true if this skill upgrades the score value of the next basket.
+        /// 判断该技能是否能将自由篮板球拉向施法者。
+        /// </summary>
+        public bool UsesReboundMagnetSkill => SkillType == mlpCharacterSkillType.ReboundMagnet;
+
+        /// <summary>
+        /// 判断该技能是否能立即封盖对手的投篮。
+        /// </summary>
+        public bool UsesGuaranteedBlockSkill => SkillType == mlpCharacterSkillType.SureBlock;
+
+        /// <summary>
+        /// 判断该技能是否能提升下一次投篮的得分值。
         /// </summary>
         public bool UsesScoreUpgrade =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
             SkillType == mlpCharacterSkillType.HarvestTime;
 
         /// <summary>
-        /// Returns true if the player must have the ball to activate this skill.
+        /// 判断玩家是否必须持球才能激活该技能。
         /// </summary>
         public bool RequiresBallToCast =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
@@ -140,7 +152,7 @@ namespace mlp
             SkillType == mlpCharacterSkillType.HexGate;
 
         /// <summary>
-        /// Returns true if this skill has dedicated icon and charge mask art assets.
+        /// 判断该技能是否拥有独立的图标和充能遮罩美术资源。
         /// </summary>
         public bool HasStandaloneIconArt =>
             !string.IsNullOrEmpty(IconImageKey) &&
@@ -163,16 +175,17 @@ namespace mlp
                 new Color32(0x4F, 0x86, 0x79, 0xFF),
                 new Color32(0xEC, 0xFF, 0xF7, 0xFF)),
             new mlpCharacterSkillDefinition(
-                mlpCharacterSkillType.BloodMoonBlink,
+                mlpCharacterSkillType.ReboundMagnet,
                 2,
-                "BLINK DUNK",
+                "REBOUND MAGNET",
                 mlpAssets.Images.SkillIcons.GhostClown,
                 mlpAssets.Images.SkillIcons.GhostClownMask,
-                "BLINK DUNK!",
-                "BLINK DUNK",
+                "REBOUND MAGNET!",
+                "REBOUND SECURED",
                 new Color32(0xFF, 0xD0, 0x67, 0xFF),
                 new Color32(0x65, 0xD3, 0xD4, 0xFF),
-                new Color32(0xFF, 0xF4, 0xCC, 0xFF)),
+                new Color32(0xFF, 0xF4, 0xCC, 0xFF),
+                effectDuration: 1.55f),
             new mlpCharacterSkillDefinition(
                 mlpCharacterSkillType.GhostSail,
                 1,
@@ -232,24 +245,23 @@ namespace mlp
                 new Color32(0xEA, 0xFB, 0xFF, 0xFF),
                 effectDuration: 2f),
             new mlpCharacterSkillDefinition(
-                mlpCharacterSkillType.SoulReap,
+                mlpCharacterSkillType.SureBlock,
                 3,
-                "DASH STEAL",
+                "SURE BLOCK",
                 mlpAssets.Images.SkillIcons.BlackCat,
                 mlpAssets.Images.SkillIcons.BlackCatMask,
-                "DASH STEAL!",
-                "BALL STOLEN",
+                "SURE BLOCK!",
+                "SHOT BLOCKED",
                 new Color32(0xB8, 0x98, 0xFF, 0xFF),
                 new Color32(0x22, 0x22, 0x44, 0xFF),
                 new Color32(0xFF, 0xD9, 0x74, 0xFF))
         };
 
         /// <summary>
-        /// Returns the skill definition for the given character ID. Falls back to the first
-        /// skill if the ID is out of range.
+        /// 获取指定角色 ID 的技能定义。如果 ID 超出范围，回退到第一个技能。
         /// </summary>
-        /// <param name="characterId">The character ID to look up.</param>
-        /// <returns>The skill definition for the character.</returns>
+        /// <param name="characterId">要查找的角色 ID。</param>
+        /// <returns>该角色的技能定义。</returns>
         public static mlpCharacterSkillDefinition Get(int characterId)
         {
             return characterId >= 0 && characterId < Skills.Length

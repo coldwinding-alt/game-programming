@@ -106,7 +106,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Open the help panel to the keyboard page. Creates one if none exists.
+        /// 打开帮助面板的键盘操作页面。如果没有面板则创建一个。
         /// </summary>
         public static void ShowKeyboardPage()
         {
@@ -118,7 +118,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Close whichever help panel is currently open.
+        /// 关闭当前打开的帮助面板。
         /// </summary>
         public static void HideActive()
         {
@@ -130,7 +130,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Remember this panel as the active one when the game starts.
+        /// 游戏启动时将此面板记录为活动面板。
         /// </summary>
         private void Awake()
         {
@@ -155,7 +155,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update the editor preview when the component is enabled.
+        /// 组件启用时更新编辑器预览。
         /// </summary>
         private void OnEnable()
         {
@@ -169,7 +169,7 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Refresh the editor preview when a value changes in the Inspector.
+        /// Inspector 中的值改变时刷新编辑器预览。
         /// </summary>
         private void OnValidate()
         {
@@ -184,7 +184,7 @@ namespace mlp
 #endif
 
         /// <summary>
-        /// Clear the active panel reference when this object is destroyed.
+        /// 对象销毁时清除活动面板引用。
         /// </summary>
         private void OnDestroy()
         {
@@ -195,7 +195,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Each frame: animate the panel, check buttons, update the demo, and handle Escape to close.
+        /// 每帧执行：面板动画、按钮检测、演示更新，以及 Escape 键关闭处理。
         /// </summary>
         private void Update()
         {
@@ -223,7 +223,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make sure the witch character always renders on top of other sprites.
+        /// 确保女巫角色始终渲染在其他精灵之上。
         /// </summary>
         private void LateUpdate()
         {
@@ -243,7 +243,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the single help panel page.
+        /// 显示帮助面板页面。
         /// </summary>
         public void Show(mlpHelpPage page)
         {
@@ -264,7 +264,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Hide the help panel. Plays a button sound by default.
+        /// 隐藏帮助面板。默认播放按钮音效。
         /// </summary>
         public void Hide(bool playSound = true)
         {
@@ -286,7 +286,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Hide the panel right away without playing any sound (used on startup).
+        /// 立即隐藏面板，不播放任何音效（用于启动时）。
         /// </summary>
         private void HideImmediate()
         {
@@ -298,7 +298,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set up the witch model and pages the first time the panel is shown.
+        /// 首次显示面板时设置女巫模型和页面。
         /// </summary>
         private void EnsureInitialized()
         {
@@ -316,7 +316,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the witch character model so it can play demo animations.
+        /// 创建女巫角色模型以便播放演示动画。
         /// </summary>
         private void BuildWitchPreview()
         {
@@ -351,7 +351,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Animate the panel opening with a quick scale bounce and a subtle spotlight pulse.
+        /// 面板打开动画，带有快速缩放弹跳和微妙的聚光灯脉冲效果。
         /// </summary>
         private void UpdatePanelEntrance()
         {
@@ -367,7 +367,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check mouse clicks on every button each frame and route the hit to HandleButton.
+        /// 每帧检测所有按钮的鼠标点击，并将命中路由到 HandleButton。
         /// </summary>
         private void UpdateButtons()
         {
@@ -391,7 +391,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Route a button click to the right action (close, switch tab, select demo, etc.).
+        /// 将按钮点击路由到正确的操作（关闭、切换标签页、选择演示等）。
         /// </summary>
         private void HandleButton(mlpHelpButtonAction action)
         {
@@ -454,7 +454,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Keep the help panel on the single controls page.
+        /// 将帮助面板保持在单一操作说明页面。
         /// </summary>
         private void SetPage(mlpHelpPage page)
         {
@@ -491,7 +491,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Highlight the selected tab by changing its plate and text colors.
+        /// 通过改变标签页的底板和文字颜色来高亮选中的标签页。
         /// </summary>
         private static void SetTabVisual(SpriteRenderer plate, TMP_Text label, bool selected)
         {
@@ -724,7 +724,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Choose which move to demonstrate (move, jump, shoot, pump, dash, steal, block).
+        /// 选择要演示的动作（移动、跳跃、投篮、虚晃、冲刺、抢断、盖帽）。
         /// </summary>
         private void SelectDemo(mlpHelpDemo demo, bool forceRestart = false)
         {
@@ -743,7 +743,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Restart the demo animation when the timer runs out.
+        /// 计时器到期时重新开始演示动画。
         /// </summary>
         private void UpdateDemo(float dt)
         {
@@ -761,7 +761,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Play the witch animation for the currently selected demo.
+        /// 播放当前选中演示对应的女巫动画。
         /// </summary>
         private void RestartDemoAnimation()
         {
@@ -803,7 +803,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return how long (in seconds) each demo animation lasts before repeating.
+        /// 返回每个演示动画重复前的持续时间（秒）。
         /// </summary>
         private static float DemoRepeatFor(mlpHelpDemo demo)
         {
@@ -827,7 +827,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update the title, description, and coach tip text for the selected demo.
+        /// 更新所选演示的标题、描述和教练提示文字。
         /// </summary>
         private void UpdateDemoCopy()
         {
@@ -837,7 +837,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the display title for each demo type (e.g. "MOVE", "JUMP").
+        /// 返回每种演示类型的显示标题（如 "MOVE"、"JUMP"）。
         /// </summary>
         private static string DemoTitle(mlpHelpDemo demo)
         {
@@ -861,7 +861,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the key instructions for each demo type.
+        /// 返回每种演示类型的按键操作说明。
         /// </summary>
         private static string DemoDescription(mlpHelpDemo demo)
         {
@@ -885,7 +885,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a short coaching tip for each demo type.
+        /// 返回每种演示类型的简短教练提示。
         /// </summary>
         private static string DemoCoachNote(mlpHelpDemo demo)
         {
@@ -909,7 +909,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Highlight the button and row for the currently selected demo.
+        /// 高亮当前选中演示的按钮和行。
         /// </summary>
         private void UpdateDemoSelections()
         {
@@ -949,7 +949,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if a button matches the currently selected demo.
+        /// 检查按钮是否与当前选中的演示匹配。
         /// </summary>
         private bool IsDemoButtonSelected(mlpHelpButtonAction action)
         {
@@ -963,7 +963,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Bump the witch's sorting order so she renders in front of the panel background.
+        /// 提升女巫的排序层使其渲染在面板背景之前。
         /// </summary>
         private void ApplyWitchSortingOrder()
         {
@@ -971,7 +971,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Bump every sprite on the given armature so it draws on top of other UI.
+        /// 提升给定骨骼动画上所有精灵的排序层，使其绘制在其他 UI 之上。
         /// </summary>
         private static void ApplyWitchSortingOrder(DBLiteArmature armature)
         {
@@ -992,7 +992,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Hide the ball sprite from the witch preview so only the character is visible.
+        /// 隐藏女巫预览中的球精灵，只显示角色本身。
         /// </summary>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
@@ -1006,7 +1006,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Safely set text on a TextMeshPro label (handles null gracefully).
+        /// 安全地设置 TextMeshPro 标签的文字（优雅处理 null）。
         /// </summary>
         private static void SetText(TMP_Text textMesh, string value)
         {
@@ -1020,7 +1020,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Find the active help panel, or spawn one from the prefab if createFallback is true.
+        /// 查找活动的帮助面板，如果 createFallback 为 true 则从预制体生成一个。
         /// </summary>
         private static mlpHelpPanel FindActivePanel(bool createFallback)
         {
@@ -1048,7 +1048,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Look for an existing help panel already placed in the current scene.
+        /// 查找当前场景中已存在的帮助面板。
         /// </summary>
         private static mlpHelpPanel FindScenePanel()
         {
@@ -1067,7 +1067,7 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Wire up all serialized references from the prefab builder (editor only).
+        /// 从预制体构建器连接所有序列化引用（仅编辑器）。
         /// </summary>
         public void EditorConfigure(
             GameObject panelRootObject,
@@ -1114,7 +1114,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show a live preview of the panel in the Unity editor (not at runtime).
+        /// 在 Unity 编辑器中显示面板的实时预览（非运行时）。
         /// </summary>
         private void ApplyEditorPreviewState()
         {
@@ -1157,7 +1157,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create or reuse a witch preview for the editor scene view.
+        /// 为编辑器场景视图创建或复用女巫预览。
         /// </summary>
         private void EnsureEditorWitchPreview()
         {
@@ -1208,7 +1208,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Remove the editor-only witch preview object.
+        /// 移除仅编辑器使用的女巫预览对象。
         /// </summary>
         private void DestroyEditorWitchPreview()
         {
@@ -1240,7 +1240,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mark editor preview objects so they are not saved into the scene or build.
+        /// 标记编辑器预览对象，使其不会被保存到场景或构建中。
         /// </summary>
         private static void SetEditorPreviewHideFlags(GameObject root)
         {

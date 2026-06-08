@@ -65,7 +65,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set up the button hitbox and show the default visual state when the game starts.
+        /// 游戏启动时初始化按钮碰撞区域并显示默认视觉状态。
         /// </summary>
         private void Awake()
         {
@@ -74,7 +74,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset hover and press state when the button is turned off, so it doesn't stay highlighted.
+        /// 按钮禁用时重置悬停和按下状态，避免按钮保持高亮显示。
         /// </summary>
         private void OnDisable()
         {
@@ -84,8 +84,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the mouse is hovering over this button. Returns true if the player
-        /// clicked and released on it (a full press). Call this every frame from the panel.
+        /// 检测鼠标是否悬停在按钮上。当玩家在按钮上完成一次完整的点击释放时返回 true。需要由面板每帧调用。
         /// </summary>
         public bool Tick(Camera camera)
         {
@@ -114,8 +113,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mark this button as selected (highlighted) or not. Used for tabs and demo buttons
-        /// so the player can see which one is currently active.
+        /// 设置按钮的选中（高亮）状态。用于标签页和演示按钮，让玩家能看到当前激活的是哪个。
         /// </summary>
         public void SetSelected(bool isSelected)
         {
@@ -125,8 +123,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Build the pixel hitbox from the center and size values set in the inspector.
-        /// Only runs once, the first time the button is used.
+        /// 根据 Inspector 中设置的中心点和尺寸构建像素碰撞区域。仅在按钮首次使用时执行一次。
         /// </summary>
         private void EnsureInitialized()
         {
@@ -146,8 +143,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Update the button's color and scale based on whether it's hovered, selected, or normal.
-        /// Hover makes it slightly bigger, selected uses a different tint color.
+        /// 根据按钮的悬停、选中或普通状态更新颜色和缩放。悬停时按钮略微放大，选中时使用不同的着色。
         /// </summary>
         private void RefreshVisuals()
         {
@@ -188,8 +184,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert the mouse screen position to game pixel coordinates.
-        /// Returns false if the mouse is outside the game window or camera view.
+        /// 将鼠标屏幕坐标转换为游戏像素坐标。当鼠标在游戏窗口或摄像机视野之外时返回 false。
         /// </summary>
         private static bool TryGetMousePixel(Camera camera, out Vector2 pixel)
         {
@@ -219,8 +214,7 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Set up the button from the prefab builder. Only used in the Unity Editor
-        /// when creating or updating the help panel prefab.
+        /// 通过预制体构建器配置按钮。仅在 Unity 编辑器中创建或更新帮助面板预制体时使用。
         /// </summary>
         public void EditorConfigure(
             mlpHelpButtonAction configuredAction,

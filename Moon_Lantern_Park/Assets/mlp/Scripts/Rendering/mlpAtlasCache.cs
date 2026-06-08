@@ -21,7 +21,7 @@ namespace mlp
         public mlpAtlas SkillFx => Get(mlpAssets.Atlases.SkillFx);
 
         /// <summary>
-        /// Get or create a cached atlas by its resource key.
+        /// 根据资源键获取或创建缓存的图集。
         /// </summary>
         public mlpAtlas Get(string atlasKey)
         {
@@ -42,7 +42,7 @@ namespace mlp
         private readonly Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
 
         /// <summary>
-        /// Load a texture atlas and parse its sprite frame metadata from JSON.
+        /// 加载纹理图集并从 JSON 解析其精灵帧元数据。
         /// </summary>
         public mlpAtlas(string atlasKey)
         {
@@ -79,7 +79,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check whether the atlas contains a sprite frame with the given name.
+        /// 检查图集是否包含指定名称的精灵帧。
         /// </summary>
         public bool HasFrame(string frameName)
         {
@@ -87,7 +87,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create or return a cached Sprite for the named atlas frame, using the given anchor point.
+        /// 为指定名称的图集帧创建或返回缓存的 Sprite，使用给定的锚点。
         /// </summary>
         public Sprite Sprite(string frameName, float anchorX = 0.5f, float anchorY = 0.5f)
         {
@@ -112,7 +112,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the raw atlas frame metadata for the given frame name.
+        /// 返回指定帧名称的原始图集帧元数据。
         /// </summary>
         public mlpAtlasFrame Frame(string frameName)
         {
@@ -135,7 +135,7 @@ namespace mlp
         public float SourceH;
 
         /// <summary>
-        /// Parse atlas frame metadata from a JSON dictionary.
+        /// 从 JSON 字典解析图集帧元数据。
         /// </summary>
         public static mlpAtlasFrame FromJson(string name, Dictionary<string, object> data)
         {
@@ -158,7 +158,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Calculate the sprite pivot point from the anchor values and source frame dimensions.
+        /// 根据锚点值和源帧尺寸计算精灵的轴心点。
         /// </summary>
         public Vector2 Pivot(float anchorX, float anchorY)
         {
@@ -204,7 +204,7 @@ public enum mlpTextStyle
         private static readonly HashSet<mlpFontKind> MissingResourceWarnings = new HashSet<mlpFontKind>();
 
         /// <summary>
-        /// Return a Font for the given style, loading from Resources or falling back to OS fonts.
+        /// 返回指定样式的字体，优先从 Resources 加载，否则回退到系统字体。
         /// </summary>
         public static Font Get(mlpFontKind fontKind, int fontSize)
         {
@@ -266,7 +266,7 @@ public enum mlpTextStyle
         }
 
         /// <summary>
-        /// Try to load the bundled font resource for a given font kind.
+        /// 尝试加载指定字体类型的内置资源。
         /// </summary>
         private static Font GetResourceFont(mlpFontKind fontKind)
         {
@@ -292,7 +292,7 @@ public enum mlpTextStyle
         }
 
         /// <summary>
-        /// Return the Resources folder path for a bundled font.
+        /// 返回内置字体的 Resources 文件夹路径。
         /// </summary>
         private static string GetResourcePath(mlpFontKind fontKind)
         {
@@ -316,7 +316,7 @@ public enum mlpTextStyle
         }
 
         /// <summary>
-        /// Set up font texture settings for crisp pixel-art rendering.
+        /// 设置字体纹理参数，确保像素风格渲染清晰。
         /// </summary>
         private static void PrepareFont(Font font)
         {
@@ -326,7 +326,7 @@ public enum mlpTextStyle
             }
 
             font.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
-            // Keep retro UI text crisp instead of letting font atlas sampling soften edges.
+            // 保持复古 UI 文字清晰，避免字体图集采样导致边缘模糊。
             font.material.mainTexture.filterMode = FilterMode.Point;
         }
     }
@@ -339,7 +339,7 @@ public static class mlpFontMaterialCache
         private static Shader outlinedShader;
 
         /// <summary>
-        /// Return a Material with outline and shadow settings applied, using the custom outlined shader.
+        /// 返回应用了描边和阴影设置的材质，使用自定义描边着色器。
         /// </summary>
         public static Material Get(
             Font font,
@@ -412,7 +412,7 @@ public static class mlpFontMaterialCache
         }
 
         /// <summary>
-        /// Build a hex color string for material cache keys.
+        /// 构建用于材质缓存键的十六进制颜色字符串。
         /// </summary>
         private static string ColorKey(Color color)
         {
@@ -430,7 +430,7 @@ public static class mlpSharedMaterialCache
     private static Material untexturedSpritesDefaultMaterial;
 
     /// <summary>
-    /// Return a shared Sprites/Default material for the given texture.
+    /// 返回指定纹理的共享 Sprites/Default 材质。
     /// </summary>
     public static Material GetSpritesDefault(Texture mainTexture = null)
     {
@@ -461,7 +461,7 @@ public static class mlpSharedMaterialCache
     }
 
     /// <summary>
-    /// Find and cache the Sprites/Default shader.
+    /// 查找并缓存 Sprites/Default 着色器。
     /// </summary>
     private static Shader GetSpritesDefaultShader()
     {
@@ -480,7 +480,7 @@ public static class mlpSharedMaterialCache
     }
 
     /// <summary>
-    /// Create a new hide-and-dont-save material from the given shader and texture.
+    /// 使用给定的着色器和纹理创建一个新的隐藏且不保存的材质。
     /// </summary>
     private static Material CreateSharedMaterial(Shader shader, string name, Texture mainTexture)
     {
@@ -515,7 +515,7 @@ internal struct mlpResolvedTextStyle
 internal static class mlpTextStyles
 {
     /// <summary>
-    /// Return the resolved font, outline, and shadow settings for a text style and font size.
+    /// 返回指定文本样式和字号的字体、描边和阴影设置。
     /// </summary>
     public static mlpResolvedTextStyle Resolve(mlpTextStyle style, int fontSize)
     {
@@ -583,7 +583,7 @@ internal static class mlpTextStyles
     }
 
     /// <summary>
-    /// Build a resolved text style struct from its component values.
+    /// 根据各组件值构建已解析的文本样式结构体。
     /// </summary>
     private static mlpResolvedTextStyle Create(
         mlpFontKind fontKind,
@@ -611,7 +611,7 @@ public static class mlpRender
         private static readonly Dictionary<string, Texture2D> PortraitBackplateTextures = new Dictionary<string, Texture2D>();
 
         /// <summary>
-        /// Create a GameObject with a SpriteRenderer displaying the given atlas frame.
+        /// 创建一个带有 SpriteRenderer 的 GameObject，显示指定的图集帧。
         /// </summary>
         public static GameObject Sprite(string name, mlpAtlas atlas, string frame, float x, float y, float anchorX, float anchorY, int sortingOrder, Transform parent = null)
         {
@@ -629,7 +629,7 @@ public static class mlpRender
         }
 
         /// <summary>
-        /// Create a GameObject with a SpriteRenderer displaying the given texture.
+        /// 创建一个带有 SpriteRenderer 的 GameObject，显示指定的纹理。
         /// </summary>
         public static GameObject Image(string name, Texture2D texture, float x, float y, float anchorX, float anchorY, int sortingOrder, Transform parent = null)
         {
@@ -776,7 +776,7 @@ public static class mlpRender
         }
 
     /// <summary>
-    /// Create a TextMesh with the given style, position, and color.
+    /// 使用指定的样式、位置和颜色创建 TextMesh。
     /// </summary>
     public static TextMesh Text(
         string name,
@@ -810,7 +810,7 @@ public static class mlpRender
     }
 
     /// <summary>
-    /// Create a TextMesh with explicit font and outline settings.
+    /// 使用明确的字体和描边设置创建 TextMesh。
     /// </summary>
     public static TextMesh Text(
         string name,
@@ -848,7 +848,7 @@ public static class mlpRender
     }
 
     /// <summary>
-    /// Build the TextMesh GameObject with font, material, and pixel transform.
+    /// 构建带有字体、材质和像素变换的 TextMesh GameObject。
     /// </summary>
     private static TextMesh TextInternal(
         string name,
@@ -902,7 +902,7 @@ public static class mlpRender
     }
 
     /// <summary>
-    /// Create a TextMeshPro component with the given style, position, and color.
+    /// 使用指定的样式、位置和颜色创建 TextMeshPro 组件。
     /// </summary>
     public static TMP_Text TmpText(
         string name,
@@ -964,7 +964,7 @@ public static class mlpRender
     }
 
         /// <summary>
-        /// Set a transform's world position from pixel coordinates, snapping to the screen pixel grid.
+        /// 根据像素坐标设置变换的世界位置，对齐到屏幕像素网格。
         /// </summary>
         public static void ApplyPixelTransform(Transform transform, float x, float y, float z = 0f, float scale = 1f, float rotationDegrees = 0f)
         {
@@ -975,7 +975,7 @@ public static class mlpRender
         }
 
     /// <summary>
-    /// Pick the font raster profile based on font size and whether outline/shadow is used.
+    /// 根据字号和是否使用描边/阴影选择字体光栅化配置。
     /// </summary>
     private static mlpTextRasterProfile ResolveRawRasterProfile(int fontSize, Color? outlineColor, float outlinePixels, Color? shadowColor)
     {
@@ -995,7 +995,7 @@ public static class mlpRender
     }
 
     /// <summary>
-    /// Calculate the actual font texture raster size from the logical font size and raster profile.
+    /// 根据逻辑字号和光栅化配置计算实际的字体纹理光栅尺寸。
     /// </summary>
     private static int GetFontRasterSize(int fontSize, mlpTextRasterProfile rasterProfile)
     {
@@ -1033,7 +1033,7 @@ public static class mlpRender
     }
 
         /// <summary>
-        /// Convert a TextAnchor enum to the legacy TextMesh alignment enum.
+        /// 将 TextAnchor 枚举转换为旧版 TextMesh 对齐枚举。
         /// </summary>
         private static TextAlignment AnchorToAlignment(TextAnchor anchor)
         {
@@ -1053,7 +1053,7 @@ public static class mlpRender
         }
 
         /// <summary>
-        /// Convert a TextAnchor enum to TextMeshPro alignment options.
+        /// 将 TextAnchor 枚举转换为 TextMeshPro 对齐选项。
         /// </summary>
         private static TextAlignmentOptions AnchorToTmpAlignment(TextAnchor anchor)
         {

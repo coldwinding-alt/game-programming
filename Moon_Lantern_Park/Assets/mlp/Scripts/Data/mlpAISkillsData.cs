@@ -78,7 +78,7 @@ namespace mlp
 
     public static class mlpAISkillsData
     {
-        // Skill tuning table used as the current AI difficulty baseline.
+        // 当前 AI 难度基准的技能调参表。
         private static readonly mlpAISkillProfile[] Profiles =
         {
             new mlpAISkillProfile(
@@ -350,10 +350,10 @@ namespace mlp
         public static int MaxSkillIndex => Profiles.Length - 1;
 
         /// <summary>
-        /// Return the AI skill profile for the given difficulty index. Clamps to the valid range.
+        /// 获取指定难度索引的 AI 技能配置。索引会被限制在有效范围内。
         /// </summary>
-        /// <param name="skillIndex">Zero-based difficulty index (0 = easiest, MaxSkillIndex = hardest).</param>
-        /// <returns>The AI skill profile for that difficulty level.</returns>
+        /// <param name="skillIndex">从零开始的难度索引（0 = 最简单，MaxSkillIndex = 最难）。</param>
+        /// <returns>该难度等级的 AI 技能配置。</returns>
         public static mlpAISkillProfile Get(int skillIndex)
         {
             var index = Mathf.Clamp(skillIndex, 0, Profiles.Length - 1);

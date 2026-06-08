@@ -86,11 +86,11 @@ namespace mlp
         };
 
         /// <summary>
-        /// Moves to the next or previous ball selection in the ordered list, wrapping around at the ends.
+        /// 在有序列表中向前或向后切换球皮选择，到末尾时自动循环回到开头。
         /// </summary>
-        /// <param name="current">The currently selected ball skin.</param>
-        /// <param name="direction">Positive to step forward, negative to step backward.</param>
-        /// <returns>The next ball selection in the given direction.</returns>
+        /// <param name="current">当前选中的球皮。</param>
+        /// <param name="direction">正数表示向后切换，负数表示向前切换。</param>
+        /// <returns>指定方向上的下一个球皮选项。</returns>
         public static mlpBallSelection StepSelection(mlpBallSelection current, int direction)
         {
             var index = Array.IndexOf(OrderedSelections, current);
@@ -113,10 +113,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Converts a ball selection to a concrete theme. If "Random" is selected, picks a random non-random theme.
+        /// 将球皮选项转换为具体的主题。如果选择了"随机"，则随机选取一个非随机主题。
         /// </summary>
-        /// <param name="selection">The ball selection to resolve.</param>
-        /// <returns>The concrete ball theme to use for rendering.</returns>
+        /// <param name="selection">要解析的球皮选项。</param>
+        /// <returns>用于渲染的具体球皮主题。</returns>
         public static mlpBallTheme ResolveTheme(mlpBallSelection selection)
         {
             return selection == mlpBallSelection.Random
@@ -125,10 +125,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the theme to show in the UI preview. For "Random", always shows the classic theme as a placeholder.
+        /// 返回在 UI 预览中显示的主题。选择"随机"时，始终显示经典主题作为占位。
         /// </summary>
-        /// <param name="selection">The ball selection to preview.</param>
-        /// <returns>The theme to display in the selection UI.</returns>
+        /// <param name="selection">要预览的球皮选项。</param>
+        /// <returns>在选择界面中显示的主题。</returns>
         public static mlpBallTheme PreviewTheme(mlpBallSelection selection)
         {
             return selection == mlpBallSelection.Random
@@ -137,10 +137,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Directly maps a non-random ball selection to its corresponding ball theme.
+        /// 将非随机的球皮选项直接映射为对应的球皮主题。
         /// </summary>
-        /// <param name="selection">The ball selection (must not be Random).</param>
-        /// <returns>The matching ball theme.</returns>
+        /// <param name="selection">球皮选项（不能是 Random）。</param>
+        /// <returns>匹配的球皮主题。</returns>
         public static mlpBallTheme ToTheme(mlpBallSelection selection)
         {
             return selection switch
@@ -157,10 +157,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the short display label for a ball selection (e.g. "GHOUL", "EMBER", "RANDOM").
+        /// 返回球皮选项的短标签文本（如 "GHOUL"、"EMBER"、"RANDOM"）。
         /// </summary>
-        /// <param name="selection">The ball selection to get a label for.</param>
-        /// <returns>A short uppercase string shown in the UI.</returns>
+        /// <param name="selection">要获取标签的球皮选项。</param>
+        /// <returns>在 UI 中显示的短大写字符串。</returns>
         public static string Label(mlpBallSelection selection)
         {
             return selection switch
@@ -190,9 +190,9 @@ namespace mlp
         public int[] MatchScore = { 0, 0 };
 
         /// <summary>
-        /// Creates match data with default character IDs and a random ball theme.
+        /// 创建比赛数据，默认初始化角色 ID 和随机球皮主题。
         /// </summary>
-        /// <param name="local">True for local play (uses character index 0 as default), false for networked.</param>
+        /// <param name="local">本地游戏传入 true（默认使用角色索引 0），联网传入 false。</param>
         public mlpMatchData(bool local)
         {
             FirstCharacterId = mlpPlayersData.SanitizeCharacterId(local ? 0 : 1);
@@ -202,7 +202,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets both team character IDs back to their default values.
+        /// 将双方队伍的角色 ID 重置为默认值。
         /// </summary>
         public void ResetData()
         {
@@ -210,7 +210,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets match mode, player brains, skills, and scores. Does not change character IDs or ball theme.
+        /// 重置比赛模式、玩家脑字符串、技能等级和比分。不会更改角色 ID 和球皮主题。
         /// </summary>
         public void ResetPartly()
         {
@@ -221,7 +221,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets everything back to defaults: character IDs, brains, skills, scores, and match mode.
+        /// 将所有数据重置为默认值：角色 ID、脑字符串、技能等级、比分和比赛模式。
         /// </summary>
         public void ResetAll()
         {
@@ -230,7 +230,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sets up default match configuration: both team characters, default brain strings, and default skill levels.
+        /// 设置默认的比赛配置：双方队伍角色、默认脑字符串和默认技能等级。
         /// </summary>
         public void BaseInit()
         {
@@ -245,7 +245,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sets both team scores back to zero.
+        /// 将双方队伍的比分重置为零。
         /// </summary>
         public void ResetScore()
         {
@@ -253,11 +253,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures a quick match: picks a random opponent, sets brain strings for human vs AI, and resolves the ball theme.
+        /// 配置一场快速比赛：随机选取对手，设置人机对战的脑字符串，并解析球皮主题。
         /// </summary>
-        /// <param name="playerCharacterId">The player's chosen character ID.</param>
-        /// <param name="difficulty">AI difficulty level.</param>
-        /// <param name="ballSelection">Which ball skin to use (Random picks one at random).</param>
+        /// <param name="playerCharacterId">玩家选择的角色 ID。</param>
+        /// <param name="difficulty">AI 难度等级。</param>
+        /// <param name="ballSelection">使用的球皮（Random 表示随机选取）。</param>
         public void StartQuickMatch(int playerCharacterId, mlpAiDifficulty difficulty, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -273,9 +273,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures a local 2-player versus match with two distinct characters and player-brain strings.
+        /// 配置一场本地双人对战比赛，使用两个不同的角色和玩家脑字符串。
         /// </summary>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartQuickLocalVersusMatch(mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -289,10 +289,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures a training session with one player character and no opponent.
+        /// 配置一场训练赛，只有玩家角色，没有对手。
         /// </summary>
-        /// <param name="characterId">The player's chosen character ID.</param>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="characterId">玩家选择的角色 ID。</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartTraining(int characterId, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -305,10 +305,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures a tutorial match with a specific opponent character and tutorial brain string.
+        /// 配置一场教程比赛，使用指定的对手角色和教程专用脑字符串。
         /// </summary>
-        /// <param name="characterId">The player's chosen character ID.</param>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="characterId">玩家选择的角色 ID。</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartTutorial(int characterId, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -322,20 +322,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a random match. Currently just delegates to StartQuickMatch.
+        /// 开始一场随机比赛。目前直接委托给 StartQuickMatch 方法处理。
         /// </summary>
-        /// <param name="playerCharacterId">The player's chosen character ID.</param>
-        /// <param name="difficulty">AI difficulty level.</param>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="playerCharacterId">玩家选择的角色 ID。</param>
+        /// <param name="difficulty">AI 难度等级。</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartRandomMatch(int playerCharacterId, mlpAiDifficulty difficulty, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             StartQuickMatch(playerCharacterId, difficulty, ballSelection);
         }
 
         /// <summary>
-        /// Configures a 2-player local match using the currently stored character IDs.
+        /// 使用当前存储的角色 ID 配置一场本地双人对战比赛。
         /// </summary>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartPlayers2Match(mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             MatchMode = 0;
@@ -349,10 +349,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures the next match in a tournament, using the tournament's current opponent and stage-based skill level.
+        /// 配置锦标赛中的下一场比赛，使用锦标赛当前对手和基于赛段的技能等级。
         /// </summary>
-        /// <param name="tournament">The active tournament data.</param>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="tournament">当前进行中的锦标赛数据。</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartTournamentMatch(mlpTournamentData tournament, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -401,11 +401,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Configures a 2-player match with specific character choices for each player.
+        /// 配置一场双人对战比赛，为每位玩家指定各自的角色。
         /// </summary>
-        /// <param name="leftCharacterId">Character ID for the left-side player.</param>
-        /// <param name="rightCharacterId">Character ID for the right-side player.</param>
-        /// <param name="ballSelection">Which ball skin to use.</param>
+        /// <param name="leftCharacterId">左侧玩家的角色 ID。</param>
+        /// <param name="rightCharacterId">右侧玩家的角色 ID。</param>
+        /// <param name="ballSelection">使用的球皮。</param>
         public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
             ResetAll();
@@ -421,19 +421,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// Compares both team scores to determine the winner.
+        /// 比较双方比分以确定获胜方。
         /// </summary>
-        /// <returns>-1 if left team wins, 1 if right team wins, 0 if tied.</returns>
+        /// <returns>左侧获胜返回 -1，右侧获胜返回 1，平局返回 0。</returns>
         public int WhoWins()
         {
             return MatchScore[0] > MatchScore[1] ? -1 : MatchScore[0] < MatchScore[1] ? 1 : 0;
         }
 
         /// <summary>
-        /// Maps a difficulty level to a numeric AI skill index for quick matches.
+        /// 将难度等级映射为快速比赛的 AI 技能数值索引。
         /// </summary>
-        /// <param name="difficulty">The chosen AI difficulty.</param>
-        /// <returns>A skill index (1 = easy, 2 = normal, 5 = hard, 10 = hell).</returns>
+        /// <param name="difficulty">选择的 AI 难度。</param>
+        /// <returns>技能索引（1 = 简单，2 = 普通，5 = 困难，10 = 地狱）。</returns>
         private static int GetQuickMatchOpponentSkill(mlpAiDifficulty difficulty)
         {
             switch (difficulty)
@@ -473,11 +473,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Calculates the AI skill level for a tournament match based on the tournament's difficulty and current stage.
-        /// Later rounds and higher difficulties give opponents higher skill levels.
+        /// 根据锦标赛的难度和当前赛段计算 AI 技能等级。后续轮次和更高难度会让对手拥有更高的技能等级。
         /// </summary>
-        /// <param name="tournament">The active tournament data.</param>
-        /// <returns>A clamped skill index appropriate for the current tournament stage.</returns>
+        /// <param name="tournament">当前进行中的锦标赛数据。</param>
+        /// <returns>适合当前锦标赛赛段的技能索引（经范围限制）。</returns>
         private static int GetTournamentOpponentSkill(mlpTournamentData tournament)
         {
             if (tournament == null)
@@ -532,7 +531,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Randomly picks a new ball theme for the current match.
+        /// 为当前比赛随机选取一个新的球皮主题。
         /// </summary>
         public void RollBallTheme()
         {
@@ -540,9 +539,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Converts a ball selection choice into a concrete ball theme and stores it.
+        /// 将球皮选项转换为具体的球皮主题并保存。
         /// </summary>
-        /// <param name="ballSelection">The chosen ball selection (may be Random).</param>
+        /// <param name="ballSelection">选择的球皮（可以是 Random）。</param>
         private void ResolveBallSelection(mlpBallSelection ballSelection)
         {
             BallTheme = mlpBallCatalog.ResolveTheme(ballSelection);
@@ -575,7 +574,7 @@ namespace mlp
         public mlpBallSelection SelectedVersusBallSelection;
 
         /// <summary>
-        /// Initializes the global inventory with default game mode, difficulty, character selections, and ball selections.
+        /// 初始化全局物品栏，设置默认的游戏模式、难度、角色选择和球皮选择。
         /// </summary>
         private mlpInventory()
         {
@@ -609,7 +608,7 @@ namespace mlp
         public bool IsAdventureActive => SessionMode == mlpSessionMode.Adventure && Adventure.Active;
 
         /// <summary>
-        /// Cycles through difficulty levels in order: Easy -> Normal -> Hard -> Hell -> Easy.
+        /// 按顺序循环切换难度等级：简单 -> 普通 -> 困难 -> 地狱 -> 简单。
         /// </summary>
         public void ToggleDifficulty()
         {
@@ -623,9 +622,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sets whether this is a 1-player, 2-player, training, or tutorial session. Also updates the session mode accordingly.
+        /// 设置当前是单人、双人、训练还是教程模式，同时更新对应的会话模式。
         /// </summary>
-        /// <param name="participantMode">The participant mode to set.</param>
+        /// <param name="participantMode">要设置的参与模式。</param>
         public void SetParticipantMode(mlpParticipantMode participantMode)
         {
             ParticipantMode = participantMode;
@@ -640,70 +639,70 @@ namespace mlp
         }
 
         /// <summary>
-        /// Stores the player's chosen character for quick match mode.
+        /// 保存玩家在快速比赛模式下选择的角色。
         /// </summary>
-        /// <param name="characterId">The character ID to use for quick matches.</param>
+        /// <param name="characterId">快速比赛使用的角色 ID。</param>
         public void SetQuickSelection(int characterId)
         {
             SelectedQuickCharacterId = mlpPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Stores the player's chosen character for tournament mode.
+        /// 保存玩家在锦标赛模式下选择的角色。
         /// </summary>
-        /// <param name="characterId">The character ID to use for tournaments.</param>
+        /// <param name="characterId">锦标赛使用的角色 ID。</param>
         public void SetTournamentSelection(int characterId)
         {
             SelectedTournamentCharacterId = mlpPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Stores the player's chosen character for training mode.
+        /// 保存玩家在训练模式下选择的角色。
         /// </summary>
-        /// <param name="characterId">The character ID to use for training.</param>
+        /// <param name="characterId">训练模式使用的角色 ID。</param>
         public void SetTrainingSelection(int characterId)
         {
             SelectedTrainingCharacterId = mlpPlayersData.SanitizeCharacterId(characterId);
         }
 
         /// <summary>
-        /// Stores the chosen ball skin for quick match mode.
+        /// 保存快速比赛模式下选择的球皮。
         /// </summary>
-        /// <param name="selection">The ball skin selection.</param>
+        /// <param name="selection">球皮选项。</param>
         public void SetQuickBallSelection(mlpBallSelection selection)
         {
             SelectedQuickBallSelection = selection;
         }
 
         /// <summary>
-        /// Stores the chosen ball skin for tournament mode.
+        /// 保存锦标赛模式下选择的球皮。
         /// </summary>
-        /// <param name="selection">The ball skin selection.</param>
+        /// <param name="selection">球皮选项。</param>
         public void SetTournamentBallSelection(mlpBallSelection selection)
         {
             SelectedTournamentBallSelection = selection;
         }
 
         /// <summary>
-        /// Stores the chosen ball skin for training mode.
+        /// 保存训练模式下选择的球皮。
         /// </summary>
-        /// <param name="selection">The ball skin selection.</param>
+        /// <param name="selection">球皮选项。</param>
         public void SetTrainingBallSelection(mlpBallSelection selection)
         {
             SelectedTrainingBallSelection = selection;
         }
 
         /// <summary>
-        /// Stores the chosen ball skin for 2-player versus mode.
+        /// 保存双人对战模式下选择的球皮。
         /// </summary>
-        /// <param name="selection">The ball skin selection.</param>
+        /// <param name="selection">球皮选项。</param>
         public void SetVersusBallSelection(mlpBallSelection selection)
         {
             SelectedVersusBallSelection = selection;
         }
 
         /// <summary>
-        /// Resets any active adventure/tournament, then prepares a quick match with the current settings.
+        /// 重置当前进行中的冒险/锦标赛，然后使用当前设置准备一场快速比赛。
         /// </summary>
         public void StartQuickGame()
         {
@@ -719,7 +718,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a single-player match from the main menu. Resets adventure/tournament and uses random opponent.
+        /// 从主菜单开始一场单人比赛。重置冒险/锦标赛状态，使用随机对手。
         /// </summary>
         public void StartOnePlayer()
         {
@@ -735,7 +734,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a 2-player local versus match from the main menu.
+        /// 从主菜单开始一场本地双人对战比赛。
         /// </summary>
         public void StartTwoPlayers()
         {
@@ -751,10 +750,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a 2-player match with each player's character explicitly chosen.
+        /// 开始一场双人对战比赛，为每位玩家明确指定角色。
         /// </summary>
-        /// <param name="leftCharacterId">Character ID for the left-side player.</param>
-        /// <param name="rightCharacterId">Character ID for the right-side player.</param>
+        /// <param name="leftCharacterId">左侧玩家的角色 ID。</param>
+        /// <param name="rightCharacterId">右侧玩家的角色 ID。</param>
         public void StartTwoPlayerVersus(int leftCharacterId, int rightCharacterId)
         {
             ParticipantMode = mlpParticipantMode.TwoPlayers;
@@ -768,7 +767,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a training session with the currently selected training character and ball skin.
+        /// 使用当前选择的训练角色和球皮开始一场训练赛。
         /// </summary>
         public void StartTraining()
         {
@@ -783,7 +782,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a tutorial session with the currently selected training character and ball skin.
+        /// 使用当前选择的训练角色和球皮开始一场教程。
         /// </summary>
         public void StartTutorial()
         {
@@ -798,9 +797,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Creates a new tournament with the selected character and difficulty, then prepares the first match.
+        /// 使用选定的角色和难度创建一场新锦标赛，并准备第一场比赛。
         /// </summary>
-        /// <returns>True if the tournament was created successfully.</returns>
+        /// <returns>锦标赛创建成功时返回 true。</returns>
         public bool BeginTournament()
         {
             ParticipantMode = mlpParticipantMode.OnePlayer;
@@ -825,9 +824,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Advances an active tournament to its finals stage and prepares the next match if one is pending.
+        /// 将进行中的锦标赛推进到决赛阶段，如有待进行的比赛则准备下一场。
         /// </summary>
-        /// <returns>True if there is a pending finals match to play.</returns>
+        /// <returns>有决赛比赛待进行时返回 true。</returns>
         public bool BeginTournamentFinals()
         {
             if (!IsTournamentActive)
@@ -847,9 +846,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Records the current match result and advances the tournament bracket. Prepares the next match if available.
+        /// 记录当前比赛结果并推进锦标赛对阵表。如有下一场比赛则进行准备。
         /// </summary>
-        /// <returns>True if the tournament is now complete.</returns>
+        /// <returns>锦标赛已结束时返回 true。</returns>
         public bool AdvanceTournament()
         {
             if (!IsTournamentActive)
@@ -869,7 +868,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Cancels the current tournament and clears all tournament state.
+        /// 取消当前锦标赛并清除所有锦标赛状态。
         /// </summary>
         public void AbandonTournament()
         {

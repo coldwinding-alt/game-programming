@@ -12,8 +12,7 @@ namespace mlp.EditorTools
         private const int RequiredMaxTextureSize = 4096;
 
         /// <summary>
-        /// Called automatically by Unity before a texture is imported.
-        /// If the texture is a skill icon, applies the correct import settings.
+        /// Unity 在导入纹理前自动调用。如果纹理是技能图标，则应用正确的导入设置。
         /// </summary>
         private void OnPreprocessTexture()
         {
@@ -24,7 +23,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Menu item: find all skill icon textures and apply the correct import settings to each one.
+        /// 菜单项：查找所有技能图标纹理并为每个应用正确的导入设置。
         /// </summary>
         [MenuItem("Tools/Mlp/Art/Apply Skill Icon Import Settings")]
         private static void ApplyToAllSkillIcons()
@@ -52,10 +51,10 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check if the given asset path points to a PNG inside the SkillIcons folder.
+        /// 检查给定的资源路径是否指向 SkillIcons 文件夹内的 PNG 文件。
         /// </summary>
-        /// <param name="path">The asset path to check.</param>
-        /// <returns>True if the path is a PNG inside the SkillIcons folder.</returns>
+        /// <param name="path">要检查的资源路径。</param>
+        /// <returns>如果路径是 SkillIcons 文件夹内的 PNG 文件则返回 true。</returns>
         private static bool IsSkillIconAsset(string path)
         {
             return !string.IsNullOrEmpty(path) &&
@@ -64,10 +63,10 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Apply the required import settings to a texture importer.
+        /// 将所需的导入设置应用到纹理导入器。
         /// </summary>
-        /// <param name="importer">The texture importer to configure.</param>
-        /// <returns>True if any setting was changed.</returns>
+        /// <param name="importer">要配置的纹理导入器。</param>
+        /// <returns>如果有任何设置被更改则返回 true。</returns>
         private static bool ApplySettings(TextureImporter importer)
         {
             var changed = false;
@@ -128,11 +127,11 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Apply platform-specific texture settings (uncompressed, no crunching).
+        /// 应用平台特定的纹理设置（不压缩，不使用 crunch 压缩）。
         /// </summary>
-        /// <param name="importer">The texture importer to configure.</param>
-        /// <param name="platformName">The platform name (e.g. "DefaultTexturePlatform" or "Standalone").</param>
-        /// <returns>True if any setting was changed.</returns>
+        /// <param name="importer">要配置的纹理导入器。</param>
+        /// <param name="platformName">平台名称（如 "DefaultTexturePlatform" 或 "Standalone"）。</param>
+        /// <returns>如果有任何设置被更改则返回 true。</returns>
         private static bool ApplyPlatformSettings(TextureImporter importer, string platformName)
         {
             var settings = importer.GetPlatformTextureSettings(platformName);

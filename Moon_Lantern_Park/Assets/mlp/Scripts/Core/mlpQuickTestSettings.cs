@@ -9,8 +9,7 @@ namespace mlp
         public const float QuickMatchTime = 15f;
 
         /// <summary>
-        /// Gets or sets whether quick-test mode is active.
-        /// The value is persisted in PlayerPrefs.
+        /// 获取或设置快速测试模式是否开启。该值通过 PlayerPrefs 持久化存储。
         /// </summary>
         public static bool Enabled
         {
@@ -28,12 +27,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the match duration in seconds. Uses the quick-match
-        /// time when quick-test mode is enabled and the match is regular time,
-        /// otherwise falls back to the standard or overtime duration.
+        /// 返回比赛时长（秒）。当快速测试模式开启且为常规时间时使用快速比赛时长，否则使用标准时长或加时时长。
         /// </summary>
-        /// <param name="regularTime">True for regular time, false for overtime.</param>
-        /// <returns>The match duration in seconds.</returns>
+        /// <param name="regularTime">true 表示常规时间，false 表示加时赛。</param>
+        /// <returns>比赛时长（秒）。</returns>
         public static float GetMatchTime(bool regularTime)
         {
             if (!regularTime)

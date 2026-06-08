@@ -3,7 +3,7 @@
 
 namespace mlp
 {
-    // Lightweight score-context helper for basket sensor processing.
+    // 轻量级得分上下文辅助类，用于篮筐传感器处理。
     public sealed class mlpMatchProcessor
     {
         private bool canScore = true;
@@ -22,7 +22,7 @@ namespace mlp
         public bool IsHuman => isHuman;
 
         /// <summary>
-        /// Clears all shot and block tracking state, preparing for a new play.
+        /// 清除所有投篮和盖帽的追踪状态，为新一轮进攻做准备。
         /// </summary>
         public void Reset()
         {
@@ -34,11 +34,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Records that a shot was taken. Resets previous state and stores who shot, from which side, and the throw type.
+        /// 记录一次投篮动作。重置之前的状态，并保存投篮者信息、所在半场和投篮类型。
         /// </summary>
-        /// <param name="side">Which side of the court the shooter is on (-1 = left, 1 = right).</param>
-        /// <param name="shotByHuman">True if the shot was taken by a human player, false for AI.</param>
-        /// <param name="shotThrowType">0 = long-range shot, positive = normal shot, negative = special.</param>
+        /// <param name="side">投篮者所在半场（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="shotByHuman">是否为玩家手动投篮，false 表示 AI 投篮。</param>
+        /// <param name="shotThrowType">0 = 远距离投篮，正数 = 普通投篮，负数 = 特殊投篮。</param>
         public void Shoot(int side, bool shotByHuman, int shotThrowType, int shooterPlayerNo = -1)
         {
             Reset();
@@ -49,24 +49,22 @@ namespace mlp
         }
 
         /// <summary>
-        /// Records that a block was attempted. This lets a scored ball still count as 2 points if it was deflected by the blocker.
+        /// 记录一次盖帽尝试。即使球最终进了，如果被盖帽者碰触过，仍按 2 分计算。
         /// </summary>
-        /// <param name="side">Which side the blocking player is on (-1 = left, 1 = right).</param>
-        /// <param name="blockedByHuman">True if the block was by a human player, false for AI.</param>
+        /// <param name="side">盖帽球员所在半场（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="blockedByHuman">是否为玩家手动盖帽，false 表示 AI 盖帽。</param>
         public void Block(int side, bool blockedByHuman)
         {
-            // Preserve the current shot/sensor chain so a blocked ball can still
-            // resolve if it continues through the original basket path.
+            // 保留当前的投篮/传感器链路，这样被盖帽的球如果继续沿着原篮筐路径飞行，仍然可以正确判定。
             blockSide = side;
             blockIsHuman = blockedByHuman;
         }
 
         /// <summary>
-        /// Processes a basket sensor trigger. The upper sensor must be hit before the lower sensor
-        /// for the basket to count as a valid score.
+        /// 处理篮筐传感器触发事件。球必须先经过上方传感器再经过下方传感器，才算有效进球。
         /// </summary>
-        /// <param name="sensorType">0 = upper sensor, nonzero = lower sensor.</param>
-        /// <returns>True if the ball scored (upper then lower sensor were both triggered).</returns>
+        /// <param name="sensorType">0 = 上方传感器，非零 = 下方传感器。</param>
+        /// <returns>球成功入篮（上下传感器依次触发）时返回 true。</returns>
         public bool ProcessSensor(int sensorType)
         {
             if (!canScore)
@@ -92,15 +90,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// Calculates how many points a successful basket is worth. Blocked shots that still go in
-        /// are always worth 2 points; long-range shots are worth 3; everything else uses the fallback value.
+        /// 计算一次成功进球的得分。被盖帽后仍进的球始终计 2 分；远距离投篮计 3 分；其他情况使用默认分值。
         /// </summary>
-        /// <param name="scoringSide">Which side scored (-1 = left, 1 = right).</param>
-        /// <param name="fallbackPoints">Default point value (usually 2 or 3 based on distance).</param>
-        /// <returns>The number of points awarded for this basket.</returns>
+        /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="fallbackPoints">默认分值（通常根据距离为 2 或 3）。</param>
+        /// <returns>本次进球获得的分数。</returns>
         public int ResolvePointsForScore(int scoringSide, int fallbackPoints)
         {
-            // Scores armed by a self-block chain are settled as 2 points.
+            // 被己方盖帽链触发的得分统一按 2 分结算。
             if (blockSide == -scoringSide)
             {
                 isHuman = blockIsHuman;

@@ -1,4 +1,5 @@
-// Centralized single-player naming and story copy for Moon Lantern Park.
+// 单人模式叙事文案管理
+// 集中管理月灯公园单人模式的所有命名和剧情文案，包括冒险模式和锦标赛模式的标题、副标题、剧情面板和结局文本。
 
 namespace mlp
 {
@@ -17,34 +18,34 @@ namespace mlp
         public readonly string LoreBody;
 
         /// <summary>
-        /// Creates a story panel with a caption and art direction, using no image or lore.
+        /// 创建一个仅有标题和美术指导的故事面板，不包含图片和背景故事。
         /// </summary>
-        /// <param name="caption">The panel caption text.</param>
-        /// <param name="artDirection">Art direction notes for the panel.</param>
+        /// <param name="caption">面板标题文本。</param>
+        /// <param name="artDirection">面板的美术指导说明。</param>
         public mlpStoryPanelDefinition(string caption, string artDirection)
             : this(caption, artDirection, null, null, null)
         {
         }
 
         /// <summary>
-        /// Creates a story panel with a caption, art direction, and image key, using no lore.
+        /// 创建一个带有标题、美术指导和图片资源的故事面板，不包含背景故事。
         /// </summary>
-        /// <param name="caption">The panel caption text.</param>
-        /// <param name="artDirection">Art direction notes for the panel.</param>
-        /// <param name="imageKey">Image asset key for the panel art.</param>
+        /// <param name="caption">面板标题文本。</param>
+        /// <param name="artDirection">面板的美术指导说明。</param>
+        /// <param name="imageKey">面板图片的资源键名。</param>
         public mlpStoryPanelDefinition(string caption, string artDirection, string imageKey)
             : this(caption, artDirection, imageKey, null, null)
         {
         }
 
         /// <summary>
-        /// Creates a story panel with a caption, art direction, image key, and optional lore text.
+        /// 创建一个包含标题、美术指导、图片资源和可选背景故事的完整故事面板。
         /// </summary>
-        /// <param name="caption">The panel caption text.</param>
-        /// <param name="artDirection">Art direction notes for the panel.</param>
-        /// <param name="imageKey">Image asset key for the panel art.</param>
-        /// <param name="loreTitle">Title of the lore entry, or null for no lore.</param>
-        /// <param name="loreBodyLines">Lines of lore body text joined by newlines.</param>
+        /// <param name="caption">面板标题文本。</param>
+        /// <param name="artDirection">面板的美术指导说明。</param>
+        /// <param name="imageKey">面板图片的资源键名。</param>
+        /// <param name="loreTitle">背景故事标题，传 null 表示不显示背景故事。</param>
+        /// <param name="loreBodyLines">背景故事正文，多行文本会用换行符拼接。</param>
         public mlpStoryPanelDefinition(
             string caption,
             string artDirection,
@@ -62,7 +63,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns true if this panel has a lore title or lore body to display.
+        /// 判断该面板是否包含可显示的背景故事（标题或正文）。
         /// </summary>
         public bool HasLore
         {
@@ -83,17 +84,17 @@ namespace mlp
         public readonly mlpStoryPanelDefinition[] OpeningComic;
 
         /// <summary>
-        /// Creates a single-player mode definition with all narrative and presentation data.
+        /// 创建单人模式定义，包含所有叙事和展示数据。
         /// </summary>
-        /// <param name="mode">The narrative mode type.</param>
-        /// <param name="modeName">Internal mode name.</param>
-        /// <param name="menuTitle">Title shown on the mode select menu.</param>
-        /// <param name="subtitle">Subtitle shown below the menu title.</param>
-        /// <param name="objective">Description of the mode's objective.</param>
-        /// <param name="tone">Tone guide for the mode's presentation.</param>
-        /// <param name="gameplayWrapper">Description of how gameplay is structured.</param>
-        /// <param name="worldRole">The mode's role in the game world narrative.</param>
-        /// <param name="openingComic">Story panels shown when the mode begins.</param>
+        /// <param name="mode">叙事模式类型。</param>
+        /// <param name="modeName">内部模式名称。</param>
+        /// <param name="menuTitle">模式选择菜单上显示的标题。</param>
+        /// <param name="subtitle">菜单标题下方显示的副标题。</param>
+        /// <param name="objective">模式目标的描述。</param>
+        /// <param name="tone">模式呈现风格的基调指南。</param>
+        /// <param name="gameplayWrapper">玩法结构的描述。</param>
+        /// <param name="worldRole">该模式在游戏世界叙事中的角色定位。</param>
+        /// <param name="openingComic">模式开始时展示的剧情面板。</param>
         public mlpSinglePlayerModeDefinition(
             mlpSinglePlayerNarrativeMode mode,
             string modeName,
@@ -232,20 +233,20 @@ namespace mlp
                 });
 
         /// <summary>
-        /// Returns the mode definition for the given narrative mode type.
+        /// 根据叙事模式类型返回对应的模式定义。
         /// </summary>
-        /// <param name="mode">The narrative mode to look up.</param>
-        /// <returns>The mode definition for Adventure or Tournament.</returns>
+        /// <param name="mode">要查找的叙事模式。</param>
+        /// <returns>冒险模式或锦标赛模式的定义。</returns>
         public static mlpSinglePlayerModeDefinition GetMode(mlpSinglePlayerNarrativeMode mode)
         {
             return mode == mlpSinglePlayerNarrativeMode.Adventure ? Adventure : Tournament;
         }
 
         /// <summary>
-        /// Returns the display title for the current tournament stage.
+        /// 获取当前锦标赛阶段的显示标题。
         /// </summary>
-        /// <param name="tournament">The tournament data to read the stage from.</param>
-        /// <returns>A display title such as "DIVISIONS", "FINAL FOUR", or "GRAND FINAL".</returns>
+        /// <param name="tournament">要读取阶段信息的锦标赛数据。</param>
+        /// <returns>显示标题，如 "DIVISIONS"、"FINAL FOUR" 或 "GRAND FINAL"。</returns>
         public static string GetTournamentStageTitle(mlpTournamentData tournament)
         {
             if (tournament == null)
@@ -274,10 +275,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns a narrative description for the current tournament stage.
+        /// 获取当前锦标赛阶段的叙事描述文本。
         /// </summary>
-        /// <param name="tournament">The tournament data to read the stage from.</param>
-        /// <returns>A flavor text description matching the current stage.</returns>
+        /// <param name="tournament">要读取阶段信息的锦标赛数据。</param>
+        /// <returns>与当前阶段匹配的风味文本描述。</returns>
         public static string GetTournamentStageDescription(mlpTournamentData tournament)
         {
             if (tournament == null)
@@ -308,10 +309,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the narrative ending text for the given tournament placement.
+        /// 根据锦标赛最终排名返回结局叙事文本。
         /// </summary>
-        /// <param name="placement">The player's final placement (1 = champion).</param>
-        /// <returns>An ending description matching the placement.</returns>
+        /// <param name="placement">玩家的最终排名（1 = 冠军）。</param>
+        /// <returns>与排名匹配的结局描述。</returns>
         public static string GetTournamentPlacementEnding(int placement)
         {
             switch (placement)

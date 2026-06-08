@@ -8,7 +8,7 @@ namespace mlp
     public static class mlpAutoBoot
     {
         /// <summary>
-        /// Run automatically when the game starts. Creates a bootstrap object if one does not already exist in the scene.
+        /// 游戏启动时自动执行。如果场景中还没有启动器对象，则创建一个 mlpGameBootstrap 来完成初始化。
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()

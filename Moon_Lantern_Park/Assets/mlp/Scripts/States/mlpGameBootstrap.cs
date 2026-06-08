@@ -301,7 +301,7 @@ namespace mlp
         private Texture2D adventureTreasureMapTexture;
 
         /// <summary>
-        /// Set up the camera, audio, and show the main menu when the game starts.
+        /// 游戏启动时设置摄像机、音频系统并显示主菜单。
         /// </summary>
         private void Awake()
         {
@@ -369,7 +369,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Run each frame: update the game if a match is active, or handle menu input if we are on a menu screen.
+        /// 每帧执行：如果有比赛正在进行则更新游戏，否则处理菜单输入。
         /// </summary>
         private void Update()
         {
@@ -474,7 +474,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Handle the Escape key on each menu screen. Goes back to the previous screen or cancels the current action.
+        /// 在各菜单界面处理 Escape 键。返回上一界面或取消当前操作。
         /// </summary>
         private void HandleMenuEscape()
         {
@@ -516,7 +516,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the main menu with buttons for 1 Player, 2 Player, Tutorial, and Training.
+        /// 显示主菜单，包含单人、双人、教程和训练模式的按钮。
         /// </summary>
         private void ShowPlayerCountMenu()
         {
@@ -694,7 +694,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the mode choice screen with Adventure (Story Run) and Tournament (Season Run) cards.
+        /// 显示模式选择界面，包含冒险（故事跑酷）和锦标赛（赛季模式）卡片。
         /// </summary>
         private void ShowMatchTypeMenu()
         {
@@ -1768,7 +1768,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the quick match setup screen where the player picks a character, ball skin, and difficulty.
+        /// 显示快速比赛设置界面，玩家在此选择角色、篮球皮肤和难度。
         /// </summary>
         private void ShowSinglePlayerSetup()
         {
@@ -1833,7 +1833,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the training mode setup screen where the player picks a character and ball skin.
+        /// 显示训练模式设置界面，玩家在此选择角色和篮球皮肤。
         /// </summary>
         private void ShowTrainingSetup()
         {
@@ -1888,7 +1888,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the two-player setup screen where both players pick their characters and a shared ball skin.
+        /// 显示双人设置界面，两名玩家分别选择角色并共选篮球皮肤。
         /// </summary>
         private void ShowTwoPlayerSetup()
         {
@@ -1977,7 +1977,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the tournament setup screen where the player picks a character before entering the bracket.
+        /// 显示锦标赛设置界面，玩家在进入对阵图前选择角色。
         /// </summary>
         private void ShowTournamentSetup()
         {
@@ -2064,7 +2064,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Save the quick match choices and launch the match.
+        /// 保存快速比赛的选择并启动比赛。
         /// </summary>
         private void StartQuickMatchFlow()
         {
@@ -2077,7 +2077,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Save the training choices and launch the training session.
+        /// 保存训练选择并启动训练会话。
         /// </summary>
         private void StartTrainingFlow()
         {
@@ -2090,7 +2090,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Save the training character selection and launch the tutorial.
+        /// 保存训练角色选择并启动教程。
         /// </summary>
         private void StartTutorialFlow()
         {
@@ -2117,7 +2117,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Save the tournament character selection and start the tournament bracket.
+        /// 保存锦标赛角色选择并开始锦标赛对阵。
         /// </summary>
         private void StartTournamentFlow()
         {
@@ -2135,7 +2135,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Open the keyboard controls help panel.
+        /// 打开键盘操作帮助面板。
         /// </summary>
         private void ShowMenuControlsPanel()
         {
@@ -2143,7 +2143,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player chose to replay the tutorial, start training, or start a quick match from the tutorial outro.
+        /// 检查玩家在教程结束后选择重玩教程、开始训练还是开始快速比赛。
         /// </summary>
         private bool HandlePendingTutorialAction()
         {
@@ -2169,7 +2169,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Begin the tournament finals stage and show the updated bracket.
+        /// 开始锦标赛决赛阶段并显示更新后的对阵图。
         /// </summary>
         private void StartTournamentFinalsFlow()
         {
@@ -2178,7 +2178,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Save the two-player character choices and launch the versus match.
+        /// 保存双人角色选择并启动对战比赛。
         /// </summary>
         private void StartTwoPlayerMatch()
         {
@@ -2188,7 +2188,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the tournament bracket screen with all current matches and standings.
+        /// 显示锦标赛对阵图界面，包含所有当前比赛和排名。
         /// </summary>
         private void ShowTournamentBracket()
         {
@@ -2264,7 +2264,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the end-of-season awards ceremony with placement ribbons and trophies.
+        /// 显示赛季末颁奖典礼，包含名次绶带和奖杯。
         /// </summary>
         private void ShowTournamentAwards()
         {
@@ -2289,7 +2289,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clear the menu scene and create a new match game object.
+        /// 清除菜单场景并创建新的比赛游戏对象。
         /// </summary>
         private void StartGameplay()
         {
@@ -2302,7 +2302,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set up a fresh menu screen with background, optional logo, and controls hint.
+        /// 设置全新的菜单界面，包含背景、可选的标志和操作提示。
         /// </summary>
         private void BeginMenuScreen(bool showLogo, bool showControls, string backgroundFrame)
         {
@@ -2384,7 +2384,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Switch the camera to pixel-perfect gameplay mode.
+        /// 将摄像机切换到像素完美的游戏模式。
         /// </summary>
         private void EnableGameplayPresentation()
         {
@@ -2401,7 +2401,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Switch the camera to native-resolution menu mode so text stays sharp.
+        /// 将摄像机切换到原生分辨率菜单模式，确保文字清晰。
         /// </summary>
         private void EnableNativeMenuPresentation()
         {
@@ -2411,7 +2411,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Recalculate the camera viewport when the window is resized in native menu mode.
+        /// 在原生菜单模式下，窗口大小变化时重新计算摄像机视口。
         /// </summary>
         private void RefreshNativeMenuViewport(bool force = false)
         {
@@ -2450,7 +2450,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Place a large title label at the top of a menu screen.
+        /// 在菜单界面顶部放置大标题标签。
         /// </summary>
         private void AddTitle(string title, float y, int fontSize, Color color)
         {
@@ -2467,7 +2467,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Place a smaller subtitle label below the title on a menu screen.
+        /// 在菜单界面标题下方放置较小的副标题标签。
         /// </summary>
         private void AddSubtitle(string subtitle, float y, int fontSize = 18)
         {
@@ -2484,7 +2484,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create a text label on a menu screen using the native text layer when available.
+        /// 在菜单界面上创建文字标签，优先使用原生文字层。
         /// </summary>
         private void CreateMenuText(
             string name,
@@ -2663,7 +2663,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return true if the native text layer is active and can render text.
+        /// 如果原生文字层处于活动状态且能渲染文字则返回 true。
         /// </summary>
         private bool ShouldUseNativeMenuText(Transform parent)
         {
@@ -2671,7 +2671,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a semi-transparent dark panel rectangle on a menu screen.
+        /// 在菜单界面上绘制半透明深色面板矩形。
         /// </summary>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint)
         {
@@ -2679,7 +2679,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a semi-transparent dark panel rectangle on a menu screen.
+        /// 在菜单界面上绘制半透明深色面板矩形。
         /// </summary>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
@@ -2756,7 +2756,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Build the ball skin and difficulty selector panel used on setup screens.
+        /// 构建设置界面使用的篮球皮肤和难度选择面板。
         /// </summary>
         private void CreateOptionsPanel(string prefix, float centerX)
         {
@@ -2773,7 +2773,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show left/right arrows and a ball preview so the player can pick a ball skin.
+        /// 显示左右箭头和篮球预览，让玩家选择篮球皮肤。
         /// </summary>
         private void CreateBallSelector(
             string key,
@@ -2820,7 +2820,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Display a warning message when the hardest difficulty is selected.
+        /// 选择最高难度时显示警告信息。
         /// </summary>
         private void CreateHellDifficultyWarning(float centerX, float y)
         {
@@ -2837,7 +2837,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show a character portrait with left/right arrows and name label for picking a fighter.
+        /// 显示角色头像、左右箭头和名称标签，用于选择格斗角色。
         /// </summary>
         private void CreateCharacterSelector(
             string key,
@@ -2923,7 +2923,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Render a small preview of the selected ball skin.
+        /// 渲染所选篮球皮肤的小型预览。
         /// </summary>
         private void CreateBallPreview(string name, mlpBallTheme theme, float x, float y, float targetPixels, int sortingOrder)
         {
@@ -2947,7 +2947,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show a live animated character model on a setup screen.
+        /// 在设置界面上显示实时动画角色模型。
         /// </summary>
         private void CreatePreviewPlayer(string key, int characterId, float x, float y, float scale)
         {
@@ -2973,7 +2973,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw the full tournament bracket with season banners and playoff rounds.
+        /// 绘制完整的锦标赛对阵图，包含赛季横幅和季后赛轮次。
         /// </summary>
         private void CreateTournamentBracketBoard(mlpTournamentData tournament)
         {
@@ -3018,7 +3018,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw the regular season standings table with win/loss records.
+        /// 绘制常规赛排名表，显示胜负记录。
         /// </summary>
         private void CreateTournamentRegularSeasonBoard(mlpTournamentData tournament)
         {
@@ -3036,7 +3036,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw one division column in the season standings with team entries.
+        /// 绘制赛季排名中的一个分区列，包含队伍条目。
         /// </summary>
         private void CreateTournamentDivisionBoard(string key, float x, float y, string title, mlpTournamentData tournament, int divisionIndex)
         {
@@ -3199,7 +3199,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Add a text label inside a standings row cell.
+        /// 在排名行单元格内添加文字标签。
         /// </summary>
         private TextMesh CreateStandingsBodyText(
             string name,
@@ -3233,7 +3233,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Add a highlighted text label inside a standings row cell.
+        /// 在排名行单元格内添加高亮文字标签。
         /// </summary>
         private TextMesh CreateStandingsAccentText(
             string name,
@@ -3267,7 +3267,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw the playoff bracket with semifinal and final match panels.
+        /// 绘制季后赛对阵图，包含半决赛和决赛比赛面板。
         /// </summary>
         private void CreateTournamentPlayoffBoard(mlpTournamentData tournament)
         {
@@ -3319,7 +3319,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a single playoff match card showing two player slots.
+        /// 绘制单个季后赛比赛卡片，显示两个玩家槽位。
         /// </summary>
         private void CreateTournamentPlayoffMatchPanel(string key, float x, float y, string title, mlpTournamentMatchResult match, bool current)
         {
@@ -3402,7 +3402,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw one player slot inside a playoff match card with portrait and name.
+        /// 在季后赛比赛卡片中绘制一个玩家槽位，包含头像和名称。
         /// </summary>
         private void CreateTournamentPlayoffEntry(
             string key,
@@ -3454,7 +3454,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw the results summary at the bottom of the bracket with player status.
+        /// 在对阵图底部绘制结果摘要，显示玩家状态。
         /// </summary>
         private void CreateTournamentSummaryPanel(mlpTournamentData tournament)
         {
@@ -3553,7 +3553,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a small labeled badge (e.g. WIN, LOSS, SEED) on the bracket.
+        /// 在对阵图上绘制小型标签徽章（如胜利、失败、种子排名）。
         /// </summary>
         private void CreateTournamentBadge(
             string key,
@@ -3599,7 +3599,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a win count and total games into a percentage string like "75.0%".
+        /// 将胜场数和总场数转换为百分比字符串，如 "75.0%"。
         /// </summary>
         private static string FormatWinningPercentage(float value)
         {
@@ -3607,7 +3607,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return true if the given match has the player character in either slot.
+        /// 如果给定比赛中任一槽位包含玩家角色则返回 true。
         /// </summary>
         private static bool MatchIncludesPlayer(mlpTournamentMatchResult match, int playerCharacterId)
         {
@@ -3615,7 +3615,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Find which playoff match contains the player.
+        /// 查找包含玩家的季后赛比赛。
         /// </summary>
         private static mlpTournamentMatchResult GetPlayerPlayoffMatch(mlpTournamentData tournament)
         {
@@ -3633,7 +3633,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a short label like "P1 vs P3" for a bracket match.
+        /// 返回对阵比赛的简短标签，如 "P1 vs P3"。
         /// </summary>
         private static string GetMatchupText(mlpTournamentMatchResult match, string fallback)
         {
@@ -3646,7 +3646,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Build the full awards ceremony screen with podiums, trophies, and banners.
+        /// 构建完整的颁奖典礼界面，包含领奖台、奖杯和横幅。
         /// </summary>
         private void CreateTournamentAwardsScene(mlpTournamentData tournament)
         {
@@ -3794,7 +3794,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a group of awards items at a given position with a label.
+        /// 在指定位置绘制一组颁奖项目，带有标签。
         /// </summary>
         private GameObject CreateTournamentAwardsGroup(string name)
         {
@@ -3804,7 +3804,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a small badge used in the awards ceremony.
+        /// 绘制颁奖典礼中使用的小型徽章。
         /// </summary>
         private void CreateTournamentAwardsBadge(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
@@ -3835,7 +3835,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a lane label in the awards ceremony.
+        /// 在颁奖典礼中绘制赛道标签。
         /// </summary>
         private void CreateTournamentAwardsLaneLabel(string key, TournamentAwardsPlacement placement, float x, float y, bool champion, Transform parent)
         {
@@ -3870,7 +3870,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a group of character portraits in the awards ceremony.
+        /// 在颁奖典礼中绘制一组角色肖像。
         /// </summary>
         private void CreateTournamentAwardsCharacterGroup(
             string key,
@@ -3936,7 +3936,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the ordered list of placement data for the awards ceremony.
+        /// 创建颁奖典礼的排名数据有序列表。
         /// </summary>
         private TournamentAwardsPlacement[] BuildTournamentAwardsPlacements(mlpTournamentData tournament)
         {
@@ -3949,7 +3949,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a single placement entry in the awards ceremony.
+        /// 在颁奖典礼中绘制单个排名条目。
         /// </summary>
         private static TournamentAwardsPlacement CreateTournamentAwardsPlacement(int placement, int characterId, int playerCharacterId)
         {
@@ -3976,7 +3976,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Add an item to the awards animation queue so it slides in with a delay.
+        /// 将项目添加到颁奖动画队列，使其延迟滑入。
         /// </summary>
         private void RegisterTournamentAwardsAnimation(Transform root, Vector2 startOffsetPixels, float delay, float duration, float startScale = 0.94f, bool fade = true)
         {
@@ -4020,7 +4020,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tick the awards entrance animations each frame.
+        /// 每帧更新颁奖入场动画。
         /// </summary>
         private void UpdateTournamentAwardsSequence(float deltaTime)
         {
@@ -4060,7 +4060,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Fade all awards sprites and text to a given opacity.
+        /// 将所有颁奖精灵和文字淡入到指定透明度。
         /// </summary>
         private static void ApplyTournamentAwardsAlpha(TournamentAwardsAnimatedItem item, float alpha)
         {
@@ -4095,7 +4095,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a pixel-space offset to a local-space offset relative to a parent transform.
+        /// 将像素空间的偏移量转换为相对于父 Transform 的本地空间偏移量。
         /// </summary>
         private static Vector3 PixelOffsetToLocal(Vector2 pixelOffset)
         {
@@ -4103,7 +4103,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply an overshoot ease curve. Returns values that briefly exceed 1 before settling.
+        /// 应用过冲缓动曲线。返回值会短暂超过 1 后再回落。
         /// </summary>
         private static float EaseOutBack01(float value)
         {
@@ -4114,7 +4114,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the character id of the loser in a given match.
+        /// 返回给定比赛中失败者的角色 ID。
         /// </summary>
         private static int GetMatchLoserCharacterId(mlpTournamentMatchResult match)
         {
@@ -4137,7 +4137,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the congratulatory or consolation message for the player placement.
+        /// 返回玩家排名对应的祝贺或安慰信息。
         /// </summary>
         private static string GetTournamentAwardsPlayerMessage(mlpTournamentData tournament)
         {
@@ -4190,7 +4190,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a short ordinal like "1st", "2nd", "3rd" for a placement number.
+        /// 返回排名的简短序数词，如 "1st"、"2nd"、"3rd"。
         /// </summary>
         private static string GetPlacementShortLabel(int placement)
         {
@@ -4208,7 +4208,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a character portrait sprite at the given position and scale.
+        /// 在给定位置和缩放下绘制角色头像精灵。
         /// </summary>
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder)
         {
@@ -4216,7 +4216,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Draw a character portrait sprite at the given position and scale.
+        /// 在给定位置和缩放下绘制角色头像精灵。
         /// </summary>
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {

@@ -37,23 +37,23 @@ namespace mlp
         public readonly string[] DefeatLines;
 
         /// <summary>
-        /// Creates a new adventure level definition with all gameplay, narrative, and map data.
+        /// 创建冒险关卡定义，包含所有玩法、叙事和地图数据。
         /// </summary>
-        /// <param name="index">Zero-based level index.</param>
-        /// <param name="areaName">Display name of the level area.</param>
-        /// <param name="wardenCharacterId">Character ID of the Warden guarding this level.</param>
-        /// <param name="mood">Short mood description for the level.</param>
-        /// <param name="mechanic">The unique gameplay mechanic used in this level.</param>
-        /// <param name="mechanicTitle">Display title for the mechanic.</param>
-        /// <param name="mechanicSummary">Short summary of how the mechanic works.</param>
-        /// <param name="sceneDirection">Art direction notes for the scene.</param>
-        /// <param name="ruleIcons">Icon keys shown on the rule overlay.</param>
-        /// <param name="mapX">X position on the adventure map.</param>
-        /// <param name="mapY">Y position on the adventure map.</param>
-        /// <param name="ballSelection">Ball skin used for this level.</param>
-        /// <param name="opponentSkill">AI difficulty tier of the opponent.</param>
-        /// <param name="victoryLines">Dialogue lines shown when the player wins.</param>
-        /// <param name="defeatLines">Dialogue lines shown when the player loses.</param>
+        /// <param name="index">从零开始的关卡索引。</param>
+        /// <param name="areaName">关卡区域的显示名称。</param>
+        /// <param name="wardenCharacterId">守护该关卡的守卫者角色 ID。</param>
+        /// <param name="mood">关卡的简短氛围描述。</param>
+        /// <param name="mechanic">该关卡使用的独特玩法机制。</param>
+        /// <param name="mechanicTitle">玩法机制的显示标题。</param>
+        /// <param name="mechanicSummary">玩法机制的简要说明。</param>
+        /// <param name="sceneDirection">场景的美术指导说明。</param>
+        /// <param name="ruleIcons">规则覆盖层上显示的图标键名。</param>
+        /// <param name="mapX">在冒险地图上的 X 坐标。</param>
+        /// <param name="mapY">在冒险地图上的 Y 坐标。</param>
+        /// <param name="ballSelection">该关卡使用的篮球皮肤。</param>
+        /// <param name="opponentSkill">对手的 AI 难度等级。</param>
+        /// <param name="victoryLines">玩家获胜时显示的对话台词。</param>
+        /// <param name="defeatLines">玩家失败时显示的对话台词。</param>
         public mlpAdventureLevelDefinition(
             int index,
             string areaName,
@@ -90,10 +90,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns a random dialogue line from the victory or defeat pool.
+        /// 从胜利或失败的台词池中随机选取一条对话。
         /// </summary>
-        /// <param name="playerWon">True to pick from victory lines, false for defeat lines.</param>
-        /// <returns>A random result line, or a default fallback if the pool is empty.</returns>
+        /// <param name="playerWon">传 true 选取胜利台词，传 false 选取失败台词。</param>
+        /// <returns>随机选取的结果台词，如果台词池为空则返回默认文本。</returns>
         public string GetRandomResultLine(bool playerWon)
         {
             var pool = playerWon ? VictoryLines : DefeatLines;
@@ -323,20 +323,20 @@ namespace mlp
         };
 
         /// <summary>
-        /// Returns the total number of adventure levels defined in the catalog.
+        /// 获取目录中定义的冒险关卡总数。
         /// </summary>
         public static int LevelCount => Levels.Length;
 
         /// <summary>
-        /// Returns all adventure level definitions as an array.
+        /// 获取所有冒险关卡定义的数组。
         /// </summary>
         public static mlpAdventureLevelDefinition[] AllLevels => Levels;
 
         /// <summary>
-        /// Returns the adventure level definition at the given index, clamped to valid bounds.
+        /// 获取指定索引处的冒险关卡定义，索引会被限制在有效范围内。
         /// </summary>
-        /// <param name="index">The level index to look up.</param>
-        /// <returns>The level definition for the requested index.</returns>
+        /// <param name="index">要查找的关卡索引。</param>
+        /// <returns>对应索引的关卡定义。</returns>
         public static mlpAdventureLevelDefinition GetLevel(int index)
         {
             return Levels[Mathf.Clamp(index, 0, Levels.Length - 1)];
@@ -347,22 +347,22 @@ namespace mlp
     {
         private readonly bool[] levelCompleted = new bool[mlpAdventureCatalog.LevelCount];
 
-        /// <summary>Whether an adventure run is currently in progress.</summary>
+        /// <summary>冒险模式是否正在进行中。</summary>
         public bool Active { get; private set; }
-        /// <summary>Whether the player has completed all adventure levels.</summary>
+        /// <summary>玩家是否已完成所有冒险关卡。</summary>
         public bool Completed { get; private set; }
-        /// <summary>The character ID chosen by the player for this adventure run.</summary>
+        /// <summary>玩家在本次冒险中选择的角色 ID。</summary>
         public int PlayerCharacterId { get; private set; }
-        /// <summary>The index of the level the player is currently on or selecting.</summary>
+        /// <summary>玩家当前所在或正在选择的关卡索引。</summary>
         public int CurrentLevelIndex { get; private set; }
-        /// <summary>The highest level index the player has unlocked so far.</summary>
+        /// <summary>玩家目前已解锁的最高关卡索引。</summary>
         public int HighestUnlockedLevelIndex { get; private set; }
-        /// <summary>The index of the last level whose match result was resolved, or -1 if none.</summary>
+        /// <summary>最近一次已结算比赛结果的关卡索引，如果没有则为 -1。</summary>
         public int LastResolvedLevelIndex { get; private set; } = -1;
-        /// <summary>Whether the player won the most recently resolved match.</summary>
+        /// <summary>玩家是否赢得了最近一次已结算的比赛。</summary>
         public bool LastPlayerWon { get; private set; }
         /// <summary>
-        /// Returns the number of Lantern Sigils the player has collected.
+        /// 获取玩家已收集的灯笼印记数量。
         /// </summary>
         public int SigilsCollected
         {
@@ -382,16 +382,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns true if there is an active, incomplete adventure with a valid current level ready for a match.
+        /// 判断是否存在正在进行、尚未完成且当前关卡有效的冒险，可以开始比赛。
         /// </summary>
         public bool HasPendingPlayerMatch => Active && !Completed && CurrentLevelIndex >= 0 && CurrentLevelIndex < mlpAdventureCatalog.LevelCount;
         /// <summary>
-        /// Returns the level definition for the current level index.
+        /// 获取当前关卡索引对应的关卡定义。
         /// </summary>
         public mlpAdventureLevelDefinition CurrentLevel => mlpAdventureCatalog.GetLevel(CurrentLevelIndex);
 
         /// <summary>
-        /// Resets all adventure progress, returning the run to an inactive state.
+        /// 重置所有冒险进度，将冒险状态恢复为未激活。
         /// </summary>
         public void Reset()
         {
@@ -409,9 +409,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a new adventure run with the given player character.
+        /// 使用指定的玩家角色开始一次新的冒险。
         /// </summary>
-        /// <param name="playerCharacterId">The character ID to use for this run.</param>
+        /// <param name="playerCharacterId">本次冒险使用的角色 ID。</param>
         public void Create(int playerCharacterId)
         {
             Reset();
@@ -420,11 +420,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Attempts to select the given level index as the current level.
-        /// Fails if the adventure is not active, is completed, or the level is not unlocked.
+        /// 尝试选择指定索引的关卡作为当前关卡。如果冒险未激活、已完成或该关卡未解锁，则选择失败。
         /// </summary>
-        /// <param name="levelIndex">The level index to select.</param>
-        /// <returns>True if the level was selected successfully, false otherwise.</returns>
+        /// <param name="levelIndex">要选择的关卡索引。</param>
+        /// <returns>关卡选择成功返回 true，否则返回 false。</returns>
         public bool SelectLevel(int levelIndex)
         {
             if (!Active || Completed || !IsLevelUnlocked(levelIndex))
@@ -437,31 +436,29 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns whether the given level index has been unlocked by the player.
+        /// 检查指定索引的关卡是否已被玩家解锁。
         /// </summary>
-        /// <param name="levelIndex">The level index to check.</param>
-        /// <returns>True if the level is within the unlocked range, false otherwise.</returns>
+        /// <param name="levelIndex">要检查的关卡索引。</param>
+        /// <returns>如果关卡在已解锁范围内返回 true，否则返回 false。</returns>
         public bool IsLevelUnlocked(int levelIndex)
         {
             return levelIndex >= 0 && levelIndex <= HighestUnlockedLevelIndex && levelIndex < mlpAdventureCatalog.LevelCount;
         }
 
         /// <summary>
-        /// Returns whether the given level index has been completed by the player.
+        /// 检查指定索引的关卡是否已被玩家完成。
         /// </summary>
-        /// <param name="levelIndex">The level index to check.</param>
-        /// <returns>True if the level has been completed, false otherwise.</returns>
+        /// <param name="levelIndex">要检查的关卡索引。</param>
+        /// <returns>如果关卡已完成返回 true，否则返回 false。</returns>
         public bool IsLevelCompleted(int levelIndex)
         {
             return levelIndex >= 0 && levelIndex < levelCompleted.Length && levelCompleted[levelIndex];
         }
 
         /// <summary>
-        /// Applies the result of the current level match. If the player won, marks the level
-        /// as completed and unlocks the next level. If the player lost, records the result
-        /// but does not advance progress.
+        /// 结算当前关卡的比赛结果。如果玩家获胜，将该关卡标记为已完成并解锁下一关；如果失败，仅记录结果，不推进进度。
         /// </summary>
-        /// <param name="playerWon">True if the player won the match.</param>
+        /// <param name="playerWon">玩家赢得比赛则传 true。</param>
         public void ApplyCurrentMatchResult(bool playerWon)
         {
             if (!Active || Completed || CurrentLevelIndex < 0 || CurrentLevelIndex >= levelCompleted.Length)

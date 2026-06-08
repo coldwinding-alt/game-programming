@@ -28,3 +28,7 @@ Thumbs.db
 
 # Local smoke logs
 /tmp_*.log
+
+# Python tool caches
+__pycache__/
+*.py[cod]

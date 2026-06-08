@@ -51,16 +51,16 @@ namespace mlp
         public mlpTutorialFlow TutorialFlow => tutorialFlow;
 
         /// <summary>
-        /// Creates the game core with a parent transform where all game objects (arena, players, ball) will be attached.
+        /// 创建游戏核心，指定所有游戏对象（球场、球员、球）挂载的父级 Transform。
         /// </summary>
-        /// <param name="root">The parent transform for all spawned game objects.</param>
+        /// <param name="root">所有生成的游戏对象的父级 Transform。</param>
         public mlpGameCore(Transform root)
         {
             this.root = root;
         }
 
         /// <summary>
-        /// Initializes the arena, baskets, ball, players, and HUD, then starts the first match. Creates the tutorial flow if in tutorial mode.
+        /// 初始化球场、篮筐、球、球员和 HUD，然后开始第一场比赛。教程模式下会创建教程流程。
         /// </summary>
         public void Start()
         {
@@ -81,7 +81,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Releases runtime resources for all players and the tutorial flow. Safe to call multiple times.
+        /// 释放所有球员和教程流程的运行时资源。可安全地多次调用。
         /// </summary>
         public void Shutdown()
         {
@@ -104,10 +104,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Main game loop tick. Handles pause input, countdowns, ball physics, player updates, collisions,
-        /// timer countdown, and end-of-match logic. Call this every frame with the delta time.
+        /// 主游戏循环每帧调用。处理暂停输入、倒计时、球物理、球员更新、碰撞检测、计时器倒数和比赛结束逻辑。
         /// </summary>
-        /// <param name="dt">Elapsed time in seconds since the last frame.</param>
+        /// <param name="dt">自上一帧以来经过的时间（秒）。</param>
         public void Update(float dt)
         {
             if (mlpHelpPanel.IsAnyOpen)
@@ -282,10 +281,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Called when the ball goes through a basket. Calculates points, updates the score,
-        /// shows a message on the HUD, and schedules a restart for the other team.
+        /// 当球穿过篮筐时调用。计算得分、更新比分、在 HUD 上显示消息，并安排对方球队的重新开球。
         /// </summary>
-        /// <param name="scoringSide">Which side scored (-1 = left, 1 = right).</param>
+        /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>
         public void OnBallScored(int scoringSide)
         {
             if (restartDelay > 0f)
@@ -353,10 +351,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Searches both teams for the player currently holding the ball.
+        /// 在双方队伍中搜索当前持球的球员。
         /// </summary>
-        /// <param name="side">0 = search both sides, -1 = left team only, 1 = right team only.</param>
-        /// <returns>The player holding the ball, or null if nobody has it.</returns>
+        /// <param name="side">0 = 搜索双方，-1 = 仅搜索左侧队伍，1 = 仅搜索右侧队伍。</param>
+        /// <returns>持球的球员，无人持球时返回 null。</returns>
         public mlpPlayerObject FindBallHolder(int side = 0)
         {
             foreach (var player in playersLeft)
@@ -393,10 +391,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Finds the opponent player that is closest to the given player by straight-line distance.
+        /// 查找与给定球员直线距离最近的对手球员。
         /// </summary>
-        /// <param name="source">The player to measure distance from.</param>
-        /// <returns>The nearest opponent, or null if no opponents exist.</returns>
+        /// <param name="source">用来测量距离的球员。</param>
+        /// <returns>最近的对手，不存在对手时返回 null。</returns>
         public mlpPlayerObject FindClosestOpponent(mlpPlayerObject source)
         {
             if (source == null)
@@ -421,10 +419,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tells all players which teammate currently has the ball, so they can adjust their AI behavior.
+        /// 通知所有球员当前哪位队友持球，以便他们调整 AI 行为。
         /// </summary>
-        /// <param name="holderSide">Which team the ball holder is on.</param>
-        /// <param name="holderPlayerNo">Index of the ball holder within their team.</param>
+        /// <param name="holderSide">持球球员所在队伍。</param>
+        /// <param name="holderPlayerNo">持球球员在队伍中的索引。</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
             foreach (var player in playersLeft)
@@ -439,10 +437,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tells all players that a shot was taken, so AI players can react (e.g. move to rebound position).
+        /// 通知所有球员有人投篮了，AI 球员可以做出反应（如移动到篮板位置）。
         /// </summary>
-        /// <param name="shotSide">Which team took the shot.</param>
-        /// <param name="shooterPlayerNo">Index of the shooting player within their team.</param>
+        /// <param name="shotSide">投篮球员所在队伍。</param>
+        /// <param name="shooterPlayerNo">投篮球员在队伍中的索引。</param>
         public void NotifyPlayersBallShot(int shotSide, int shooterPlayerNo)
         {
             foreach (var player in playersLeft)
@@ -457,7 +455,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Tells all players that the ball is loose and nobody is holding it.
+        /// 通知所有球员球处于无人控制状态。
         /// </summary>
         public void NotifyBallOthers()
         {
@@ -473,11 +471,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the other player on the same team. In 1v1 this is always null since each team has one player.
+        /// 返回同队的另一名球员。在 1v1 模式下始终返回 null，因为每队只有一名球员。
         /// </summary>
-        /// <param name="side">Which team (-1 = left, 1 = right).</param>
-        /// <param name="playerNo">Index of the player looking for a teammate.</param>
-        /// <returns>The teammate, or null if there is none.</returns>
+        /// <param name="side">所在队伍（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="playerNo">查找队友的球员索引。</param>
+        /// <returns>队友球员，不存在时返回 null。</returns>
         public mlpPlayerObject GetTeamMate(int side, int playerNo)
         {
             var team = side == -1 ? playersLeft : playersRight;
@@ -493,10 +491,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns the current score for the given side of the court.
+        /// 返回指定半场队伍的当前比分。
         /// </summary>
-        /// <param name="side">Which team (-1 = left, 1 = right).</param>
-        /// <returns>The team's current score, or 0 if data is missing.</returns>
+        /// <param name="side">所在队伍（-1 = 左侧，1 = 右侧）。</param>
+        /// <returns>该队伍的当前比分，数据缺失时返回 0。</returns>
         public int GetScoreForSide(int side)
         {
             var teamIndex = side == -1 ? 0 : 1;
@@ -506,47 +504,47 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns how many points ahead (positive) or behind (negative) the given team is.
+        /// 返回指定队伍领先（正数）或落后（负数）的分数。
         /// </summary>
-        /// <param name="side">Which team (-1 = left, 1 = right).</param>
-        /// <returns>The score difference (this team's score minus the opponent's).</returns>
+        /// <param name="side">所在队伍（-1 = 左侧，1 = 右侧）。</param>
+        /// <returns>分差（该队得分减去对手得分）。</returns>
         public int GetScoreLeadForSide(int side)
         {
             return GetScoreForSide(side) - GetScoreForSide(-side);
         }
 
         /// <summary>
-        /// Checks whether the ball's last shot position is beyond the three-point line.
+        /// 检查球的最后一次投篮位置是否在三分线以外。
         /// </summary>
-        /// <param name="shotSide">Which side took the shot (-1 = left, 1 = right).</param>
-        /// <returns>True if the shot was a three-pointer.</returns>
+        /// <param name="shotSide">投篮方所在半场（-1 = 左侧，1 = 右侧）。</param>
+        /// <returns>该投篮为三分球时返回 true。</returns>
         public bool IsCurrentShotThreePointer(int shotSide)
         {
             return Ball != null && IsThreePointer(shotSide);
         }
 
         /// <summary>
-        /// Displays a text message on the HUD for the given duration.
+        /// 在 HUD 上显示一条文本消息，持续指定时长。
         /// </summary>
-        /// <param name="message">The text to show.</param>
-        /// <param name="duration">How long the message stays visible in seconds.</param>
+        /// <param name="message">要显示的文本。</param>
+        /// <param name="duration">消息显示的持续时间（秒）。</param>
         public void ShowHudMessage(string message, float duration = 1.2f)
         {
             hud?.ShowMessage(message, duration);
         }
 
         /// <summary>
-        /// Displays a smaller bonus notice on the HUD (used for score modifiers and special events).
+        /// 在 HUD 上显示一条较小的加成提示（用于得分加成和特殊事件）。
         /// </summary>
-        /// <param name="message">The bonus text to show.</param>
-        /// <param name="duration">How long the notice stays visible in seconds.</param>
+        /// <param name="message">要显示的加成文本。</param>
+        /// <param name="duration">提示显示的持续时间（秒）。</param>
         public void ShowHudBonusNotice(string message, float duration = 0.9f)
         {
             hud?.ShowBonusNotice(message, duration);
         }
 
         /// <summary>
-        /// Unpauses the game and flags that the player wants to go back to the main menu.
+        /// 取消暂停并标记玩家希望返回主菜单。
         /// </summary>
         public void RequestReturnToMenu()
         {
@@ -555,15 +553,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets the scene for a tutorial practice scenario. Positions both players, optionally gives one the ball,
-        /// and places the ball loose in the middle if nobody gets it.
+        /// 为教程练习场景重置场景状态。放置双方球员，可选择将球交给其中一方，如果无人持球则将球放在中间。
         /// </summary>
-        /// <param name="playerPosition">Where to place the player character on the court.</param>
-        /// <param name="opponentPosition">Where to place the opponent character on the court.</param>
-        /// <param name="givePlayerBall">True to start the player with the ball.</param>
-        /// <param name="giveOpponentBall">True to start the opponent with the ball.</param>
-        /// <param name="playerFacing">Which direction the player faces (-1 = left, 1 = right).</param>
-        /// <param name="opponentFacing">Which direction the opponent faces.</param>
+        /// <param name="playerPosition">玩家角色在球场上的位置。</param>
+        /// <param name="opponentPosition">对手角色在球场上的位置。</param>
+        /// <param name="givePlayerBall">是否在开始时将球交给玩家。</param>
+        /// <param name="giveOpponentBall">是否在开始时将球交给对手。</param>
+        /// <param name="playerFacing">玩家朝向（-1 = 左，1 = 右）。</param>
+        /// <param name="opponentFacing">对手朝向。</param>
         public void TutorialResetScenario(
             Vector2 playerPosition,
             Vector2 opponentPosition,
@@ -616,12 +613,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Attempts to steal the ball from an opponent. Checks all opponents on the other team
-        /// within steal range and takes the ball from the closest one.
+        /// 尝试从对手手中抢断。检查对方队伍中所有在抢断范围内的对手，并从最近的对手处抢球。
         /// </summary>
-        /// <param name="thief">The player attempting the steal.</param>
-        /// <param name="facingDirection">Which direction the thief is facing (-1 = left, 1 = right).</param>
-        /// <returns>True if the steal attempt was made (whether or not the ball was actually taken).</returns>
+        /// <param name="thief">尝试抢断的球员。</param>
+        /// <param name="facingDirection">抢断者朝向（-1 = 左，1 = 右）。</param>
+        /// <returns>已发起抢断尝试时返回 true（无论是否实际抢到球）。</returns>
         public bool TryStealBall(mlpPlayerObject thief, float facingDirection)
         {
             if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying || IsSuperShot)
@@ -659,8 +655,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Checks if the two main players are physically overlapping and pushes them apart.
-        /// Also interrupts dashes that run into a blocking player.
+        /// 检查两名主力球员是否发生物理重叠，并将他们推开。同时中断冲撞到防守球员的冲刺。
         /// </summary>
         private void ResolvePlayerBlocking()
         {
@@ -720,10 +715,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Checks whether the ball was shot from beyond the three-point line relative to the scoring basket.
+        /// 检查球是否从三分线以外投出（相对于得分方的篮筐）。
         /// </summary>
-        /// <param name="scoringSide">Which side's basket was scored on.</param>
-        /// <returns>True if the shot was a three-pointer.</returns>
+        /// <param name="scoringSide">被得分方的篮筐所在半场。</param>
+        /// <returns>该投篮为三分球时返回 true。</returns>
         private bool IsThreePointer(int scoringSide)
         {
             if (scoringSide == -1)
@@ -735,8 +730,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Creates player objects for both teams based on the current match data (character IDs, brain strings, skill levels).
-        /// Training mode only creates the left team.
+        /// 根据当前比赛数据（角色 ID、脑字符串、技能等级）为双方队伍创建球员对象。训练模式只创建左侧队伍。
         /// </summary>
         private void BuildPlayers()
         {
@@ -772,10 +766,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets everything for a new match: scores, timers, ball position, player positions, and HUD state.
-        /// Shows a pre-match countdown in non-training modes.
+        /// 为新比赛重置所有状态：比分、计时器、球位置、球员位置和 HUD 状态。非训练模式下显示赛前倒计时。
         /// </summary>
-        /// <param name="regularTime">True for a normal-length match, false for overtime length.</param>
+        /// <param name="regularTime">true 表示正常时长比赛，false 表示加时时长。</param>
         private void StartMatch(bool regularTime)
         {
             var inventory = mlpInventory.Instance;
@@ -825,9 +818,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Processes a pause command: toggling pause, resuming with countdown, or returning to the menu.
+        /// 处理暂停命令：切换暂停、带倒计时恢复、或返回主菜单。
         /// </summary>
-        /// <param name="command">The pause action to perform (None, Toggle, Resume, or Menu).</param>
+        /// <param name="command">要执行的暂停操作（None、Toggle、Resume 或 Menu）。</param>
         private void HandlePauseCommand(mlpPauseCommand command)
         {
             if (command == mlpPauseCommand.None || pauseResumeCountdown || postMatchDelay > 0f || hud.IsPostMatchVisible)
@@ -858,7 +851,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Starts a 3-2-1 countdown before the game resumes from pause.
+        /// 在游戏从暂停恢复前开始 3-2-1 倒计时。
         /// </summary>
         private void BeginPauseResumeCountdown()
         {
@@ -872,9 +865,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sets or clears the pause state and shows/hides the pause overlay accordingly.
+        /// 设置或清除暂停状态，并相应地显示/隐藏暂停覆盖层。
         /// </summary>
-        /// <param name="paused">True to pause, false to unpause.</param>
+        /// <param name="paused">true 暂停，false 取消暂停。</param>
         private void SetPaused(bool paused)
         {
             if (isPaused == paused)
@@ -906,10 +899,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets ball and player positions for a new play. In training mode, gives the ball to the left player.
-        /// Otherwise gives it to the specified side if nonzero.
+        /// 为新一轮进攻重置球和球员位置。训练模式下将球交给左侧球员，否则交给指定的一方（如果非零）。
         /// </summary>
-        /// <param name="side">Which side gets the ball (-1 = left, 1 = right, 0 = nobody).</param>
+        /// <param name="side">哪一方获得球权（-1 = 左侧，1 = 右侧，0 = 无人）。</param>
         private void Restart(int side)
         {
             Ball.Restart();
@@ -940,7 +932,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Restarts play after a score. Gives the ball to the team that was scored on.
+        /// 得分后重新开始比赛。将球权交给被得分的一方。
         /// </summary>
         private void RestartAfterScore()
         {
@@ -959,7 +951,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Handles the buzzer when the match clock runs out. If the ball is still in flight, waits for it to land before deciding the winner.
+        /// 处理比赛时间结束时的蜂鸣器。如果球仍在飞行中，等待球落地后再决定获胜方。
         /// </summary>
         private void BeginEndOfTime()
         {
@@ -980,7 +972,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Determines the winner (or overtime if tied) and shows the appropriate end-of-match message.
+        /// 确定获胜方（平局则进入加时赛），并显示相应的比赛结束消息。
         /// </summary>
         private void FinalizeEndMatch()
         {
@@ -1003,7 +995,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Called after the post-match delay expires. Either starts overtime or shows the final results screen.
+        /// 赛后延迟结束后调用。进入加时赛或显示最终结果界面。
         /// </summary>
         private void ResolvePostMatchDelay()
         {
@@ -1022,7 +1014,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Resets the match for an overtime period with a shorter clock and a new pre-match countdown.
+        /// 为加时赛重置比赛，使用更短的计时器和新的赛前倒计时。
         /// </summary>
         private void StartOvertime()
         {
@@ -1237,9 +1229,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns true if the ball is currently in flight (shooting, scoring, dunking, or being blocked).
+        /// 判断球是否正在飞行中（投篮、入篮、扣篮或被盖帽状态）。
         /// </summary>
-        /// <returns>True if the ball is still actively in play.</returns>
+        /// <returns>球仍在比赛中时返回 true。</returns>
         private bool IsBallInGame()
         {
             return Ball != null &&
@@ -1250,16 +1242,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// Returns true if the ball has landed or scored after the buzzer, so the match can be finalized.
+        /// 判断球在蜂鸣器响后是否已落地或入篮，以便完成比赛。
         /// </summary>
-        /// <returns>True if the ball has settled (bounced, scored, or is gone).</returns>
+        /// <returns>球已稳定（弹跳、入篮或消失）时返回 true。</returns>
         private bool HasWaitingBallResolved()
         {
             return Ball == null || Ball.State == "bounce" || Ball.State == "score";
         }
 
         /// <summary>
-        /// Checks if any player is close enough to pick up a loose ball. The closest player gets it.
+        /// 检查是否有球员距离无人控制的球足够近。最近的球员将获得球权。
         /// </summary>
         private void TryPickupLooseBall()
         {
@@ -1300,9 +1292,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Checks if any player can block the ball while it is in a blockable state. Returns true if a block occurred.
+        /// 检查是否有球员能在球处于可盖帽状态时进行盖帽。盖帽成功时返回 true。
         /// </summary>
-        /// <returns>True if the ball was blocked by a player.</returns>
+        /// <returns>球被球员盖帽时返回 true。</returns>
         internal bool TryBlockBall()
         {
             if (Ball == null || !Ball.IsBlockable)
@@ -1330,9 +1322,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Checks if any player can shield (deflect) the ball. Similar to blocking but for different ball states.
+        /// 检查是否有球员能挡开（偏转）球。与盖帽类似但适用于不同的球状态。
         /// </summary>
-        /// <returns>True if the ball was shielded by a player.</returns>
+        /// <returns>球被球员挡开时返回 true。</returns>
         internal bool TryShieldBall()
         {
             if (Ball == null)
@@ -1363,11 +1355,10 @@ namespace mlp
     public sealed class mlpGameBuilder
     {
         /// <summary>
-        /// Creates and starts a new game core. Sets up the match data based on the current game mode
-        /// (quick match, tournament, adventure, training, tutorial, or 2-player) before launching.
+        /// 创建并启动一个新的游戏核心。在启动前根据当前游戏模式（快速比赛、锦标赛、冒险、训练、教程或双人对战）设置比赛数据。
         /// </summary>
-        /// <param name="root">The parent transform for all spawned game objects.</param>
-        /// <returns>A fully initialized game core ready to be updated each frame.</returns>
+        /// <param name="root">所有生成的游戏对象的父级 Transform。</param>
+        /// <returns>初始化完成的游戏核心实例，可用于每帧更新。</returns>
         public mlpGameCore Build(Transform root)
         {
             var inventory = mlpInventory.Instance;

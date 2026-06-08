@@ -13,7 +13,7 @@ namespace mlp.EditorTools
     public static class mlpSmokeTest
     {
         /// <summary>
-        /// Run all smoke tests: validate resources, build a quick game, and report any errors.
+        /// 运行所有冒烟测试：验证资源、快速构建游戏并报告错误。
         /// </summary>
         public static void Run()
         {
@@ -180,7 +180,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that a resource exists at the given path and log an error if it's missing.
+        /// 检查指定路径是否存在资源，若缺失则记录错误。
         /// </summary>
         private static void CheckResource<T>(string path, List<string> errors) where T : UnityEngine.Object
         {
@@ -191,7 +191,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that the native TMP menu text layer can create headings and button labels.
+        /// 验证原生 TMP 菜单文本层能否创建标题和按钮标签。
         /// </summary>
         private static void ValidateNativeMenuTextLayer(List<string> errors)
         {
@@ -240,7 +240,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that all single-player narrative text entries and mode definitions are present.
+        /// 检查所有单人模式叙述文本条目和模式定义是否存在。
         /// </summary>
         private static void ValidateSinglePlayerNarrativeDefinitions(List<string> errors)
         {
@@ -503,7 +503,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Make sure TMP essential resources (settings and shader) are imported in the project.
+        /// 确保项目中已导入 TMP 基础资源（设置和着色器）。
         /// </summary>
         private static void EnsureTextMeshProEssentialResources(List<string> errors)
         {
@@ -538,7 +538,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that all expected audio clips exist in the Resources folder.
+        /// 验证 Resources 文件夹中是否存在所有预期的音频片段。
         /// </summary>
         private static void CheckAudioResources(List<string> errors)
         {
@@ -572,7 +572,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that runtime materials and meshes are shared and properly released.
+        /// 检查运行时材质和网格是否被共享并正确释放。
         /// </summary>
         private static void ValidateRuntimeGraphicsResourceReuse(List<string> errors)
         {
@@ -581,7 +581,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that the help panel prefab has a Replay Tutorial button.
+        /// 检查帮助面板预制体是否有重玩教程按钮。
         /// </summary>
         private static void ValidateHelpPanelTutorialEntry(List<string> errors)
         {
@@ -621,7 +621,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that tutorial mode creates a flow, overlay, and cleans up focus markers properly.
+        /// 验证教程模式能否创建流程、覆盖层，并正确清理聚焦标记。
         /// </summary>
         private static void ValidateTutorialModeBoot(List<string> errors)
         {
@@ -716,7 +716,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that basket nets and radial icon meshes share materials instead of duplicating them.
+        /// 检查篮筐网和径向图标网格是否共享材质而非重复创建。
         /// </summary>
         private static void ValidateSharedRuntimeMaterials(List<string> errors)
         {
@@ -783,7 +783,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that game shutdown releases the radial icon dynamic mesh.
+        /// 验证游戏关闭时是否释放径向图标的动态网格。
         /// </summary>
         private static void ValidateGameRuntimeMeshRelease(List<string> errors)
         {
@@ -828,7 +828,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that a blocked shot can still score after being deflected.
+        /// 验证被盖帽的投篮在偏转后仍能得分。
         /// </summary>
         private static void ValidateBlockedShotScorePersistence(mlpGameCore core, List<string> errors)
         {
@@ -878,7 +878,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that a ball texture is 36x36 with transparent corners and no white halo.
+        /// 检查球体纹理是否为 36x36 且角落透明、无白色光晕。
         /// </summary>
         private static void ValidateBallSpriteAsset(string resourcePath, string assetPath, List<string> errors)
         {
@@ -923,7 +923,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that every character's skill icon and charge mask textures exist and meet quality requirements.
+        /// 检查每个角色的技能图标和充能遮罩纹理是否存在且符合质量要求。
         /// </summary>
         private static void ValidateSkillIconAssets(List<string> errors)
         {
@@ -943,7 +943,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Validate a single skill icon texture: exists, is large enough, and has correct import settings.
+        /// 验证单个技能图标纹理：是否存在、尺寸是否足够、导入设置是否正确。
         /// </summary>
         private static void ValidateSkillIconTexture(string imageKey, HashSet<string> validatedImageKeys, List<string> errors)
         {
@@ -972,7 +972,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that a UI texture has mipmaps disabled, alpha transparency, and no compression.
+        /// 检查 UI 纹理是否禁用了 mipmap、启用了 alpha 透明且未压缩。
         /// </summary>
         private static void ValidateStandaloneUiTextureImport(string resourcePath, string assetPath, List<string> errors)
         {
@@ -1014,7 +1014,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that platform-specific texture settings override defaults and stay uncompressed.
+        /// 检查平台特定的纹理设置是否覆盖了默认值并保持未压缩。
         /// </summary>
         private static void ValidatePlatformTextureSettings(string resourcePath, TextureImporterPlatformSettings settings, List<string> errors)
         {
@@ -1035,7 +1035,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that a corner pixel of the ball texture is transparent for clean rotation.
+        /// 检查球体纹理的角落像素是否透明，以确保旋转时干净无残影。
         /// </summary>
         private static void ValidateCornerAlpha(Texture2D texture, string resourcePath, int x, int y, List<string> errors)
         {
@@ -1046,7 +1046,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that the ball fills the entire 36x36 canvas with no empty border.
+        /// 检查球体是否填满整个 36x36 画布，没有空白边距。
         /// </summary>
         private static void ValidateBallBounds(Texture2D texture, string resourcePath, List<string> errors)
         {
@@ -1078,7 +1078,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that semi-transparent pixels are not near-white, which would cause a visible halo.
+        /// 检查半透明像素是否接近白色，这会导致可见的光晕。
         /// </summary>
         private static void ValidateNoWhiteHalo(Texture2D texture, string resourcePath, List<string> errors)
         {
@@ -1102,7 +1102,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Verify that ball selection persists correctly across quick, training, versus, and tournament modes.
+        /// 验证球体选择在快速、训练、对战和锦标赛模式间是否正确保持。
         /// </summary>
         private static void ValidateBallSelectionStateAndResolution(List<string> errors)
         {
@@ -1210,7 +1210,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that difficulty toggles cycle correctly and map to the expected AI skill levels.
+        /// 检查难度切换是否正确循环并映射到预期的 AI 技能等级。
         /// </summary>
         private static void ValidateDifficultyCycleAndSkillMapping(List<string> errors)
         {
@@ -1269,7 +1269,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Run a full tournament at the given difficulty, verifying brackets, standings, and placements.
+        /// 在指定难度下运行完整锦标赛，验证对阵表、排名和名次。
         /// </summary>
         private static void ValidateTournamentSeasonMode(List<string> errors, mlpAiDifficulty difficulty, string difficultyLabel)
         {
@@ -1338,7 +1338,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that hard difficulty tournament rounds map to the expected escalating AI skills.
+        /// 检查困难难度的锦标赛轮次是否映射到预期的递增 AI 技能。
         /// </summary>
         private static void ValidateHardTournamentSkillMapping(List<string> errors)
         {
@@ -1403,7 +1403,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Check that hell difficulty tournament rounds map to the expected maximum AI skills.
+        /// 检查地狱难度的锦标赛轮次是否映射到预期的最高 AI 技能。
         /// </summary>
         private static void ValidateHellTournamentSkillMapping(List<string> errors)
         {
@@ -1468,7 +1468,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// Assert that the opponent's AI skill level matches the expected value.
+        /// 断言对手的 AI 技能等级与预期值匹配。
         /// </summary>
         private static void AssertOpponentSkill(mlpMatchData matchData, int expectedSkill, List<string> errors, string context)
         {

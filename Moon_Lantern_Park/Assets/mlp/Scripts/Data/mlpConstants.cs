@@ -34,12 +34,12 @@ namespace mlp
         };
 
         /// <summary>
-        /// Convert a position from pixel coordinates to Unity world coordinates. Used to place game objects at exact pixel positions on screen.
+        /// 将像素坐标转换为 Unity 世界坐标。用于将游戏物体精确放置在屏幕的指定像素位置上。
         /// </summary>
-        /// <param name="x">Horizontal pixel position.</param>
-        /// <param name="y">Vertical pixel position (0 = top of the screen).</param>
-        /// <param name="z">Z depth for sorting order.</param>
-        /// <returns>The equivalent position in Unity world space.</returns>
+        /// <param name="x">水平像素位置。</param>
+        /// <param name="y">垂直像素位置（0 = 屏幕顶部）。</param>
+        /// <param name="z">Z 轴深度，用于控制渲染排序。</param>
+        /// <returns>对应的 Unity 世界空间坐标。</returns>
         public static Vector3 PixelToWorld(float x, float y, float z = 0f)
         {
             return new Vector3(
@@ -49,12 +49,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert pixel coordinates to world coordinates, snapping to the nearest pixel. This prevents blurry sprites by keeping everything aligned to the pixel grid.
+        /// 将像素坐标转换为世界坐标，并对齐到最近的像素边界。通过对齐像素网格，防止精灵出现模糊。
         /// </summary>
-        /// <param name="x">Horizontal pixel position.</param>
-        /// <param name="y">Vertical pixel position (0 = top of the screen).</param>
-        /// <param name="z">Z depth for sorting order.</param>
-        /// <returns>The snapped position in Unity world space.</returns>
+        /// <param name="x">水平像素位置。</param>
+        /// <param name="y">垂直像素位置（0 = 屏幕顶部）。</param>
+        /// <param name="z">Z 轴深度，用于控制渲染排序。</param>
+        /// <returns>对齐后的 Unity 世界空间坐标。</returns>
         public static Vector3 PixelToWorldSnapped(float x, float y, float z = 0f)
         {
             return new Vector3(
@@ -64,11 +64,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Snap a local position to the nearest screen pixel so child objects stay sharp.
+        /// 将本地坐标对齐到最近的屏幕像素，确保子物体保持清晰不模糊。
         /// </summary>
-        /// <param name="parent">The parent transform whose world scale is used to calculate pixel boundaries.</param>
-        /// <param name="localPosition">The local position to snap.</param>
-        /// <returns>The local position with X and Y snapped to the nearest pixel.</returns>
+        /// <param name="parent">父级 Transform，使用其世界缩放来计算像素边界。</param>
+        /// <param name="localPosition">要对齐的本地坐标。</param>
+        /// <returns>X 和 Y 已对齐到最近像素的本地坐标。</returns>
         public static Vector3 SnapLocalPositionToScreenPixels(Transform parent, Vector3 localPosition)
         {
             var parentScale = parent != null ? parent.lossyScale : Vector3.one;
@@ -79,10 +79,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Convert a Unity world position back to pixel coordinates. The reverse of PixelToWorld.
+        /// 将 Unity 世界坐标反向转换为像素坐标。是 PixelToWorld 的逆运算。
         /// </summary>
-        /// <param name="world">A position in Unity world space.</param>
-        /// <returns>The equivalent pixel coordinates.</returns>
+        /// <param name="world">Unity 世界空间中的位置。</param>
+        /// <returns>对应的像素坐标。</returns>
         public static Vector2 WorldToPixel(Vector3 world)
         {
             return new Vector2(
@@ -91,11 +91,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Snap a single axis value to the nearest pixel boundary based on the parent's world scale.
+        /// 根据父级的世界缩放，将单个轴的值对齐到最近的像素边界。
         /// </summary>
-        /// <param name="localValue">The local-space position value on one axis.</param>
-        /// <param name="parentWorldScale">The parent's world scale on that same axis.</param>
-        /// <returns>The value snapped to the nearest pixel.</returns>
+        /// <param name="localValue">某个轴上的本地空间位置值。</param>
+        /// <param name="parentWorldScale">父级在同一轴上的世界缩放值。</param>
+        /// <returns>对齐到最近像素的值。</returns>
         private static float SnapLocalAxisToScreenPixels(float localValue, float parentWorldScale)
         {
             var pixelsPerLocalUnit = Mathf.Abs(parentWorldScale) * PixelsPerUnit;

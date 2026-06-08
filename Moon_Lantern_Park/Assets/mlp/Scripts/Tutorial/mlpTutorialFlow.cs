@@ -133,7 +133,7 @@ namespace mlp
         private float freePlayScoredAt;
 
         /// <summary>
-        /// Set up the tutorial with a reference to the game core.
+        /// 初始化教程流程，传入游戏核心的引用。
         /// </summary>
         public mlpTutorialFlow(mlpGameCore core)
         {
@@ -143,17 +143,17 @@ namespace mlp
         }
 
         /// <summary>
-        /// True when the game should pause so the player can read the instructions.
+        /// 当游戏需要暂停让玩家阅读说明时返回 true。
         /// </summary>
         public bool FreezeGameplay => phase == TutorialPhase.IntroFreeze || phase == TutorialPhase.SuccessPause;
 
         /// <summary>
-        /// Always normal speed during tutorial.
+        /// 教程期间始终保持正常速度。
         /// </summary>
         public float GameplayTimeScale => 1f;
 
         /// <summary>
-        /// Begin the tutorial: find the player and opponent, then show the opening screen.
+        /// 开始教程：查找玩家和对手，然后显示开场画面。
         /// </summary>
         public void Start()
         {
@@ -171,7 +171,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clean up when leaving the tutorial.
+        /// 离开教程时清理资源。
         /// </summary>
         public void Shutdown()
         {
@@ -180,7 +180,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Main update: advance timers, check for drill completion, handle skip commands.
+        /// 主更新循环：推进计时器、检查练习完成状态、处理跳过指令。
         /// </summary>
         public void UpdateFrame(float dt)
         {
@@ -269,7 +269,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Refresh overlay visuals after gameplay resolves each frame.
+        /// 每帧游戏逻辑结算后刷新覆盖层视觉效果。
         /// </summary>
         public void UpdateAfterGameplay(float dt)
         {
@@ -282,7 +282,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Script the opponent's actions during drills (pump fake, steal, block).
+        /// 在练习中脚本化对手的行为（假动作、抢断、盖帽）。
         /// </summary>
         public void PopulateOpponentInputs(mlpPlayerObject opponentPlayer, mlpTutorialOpponentController controller, float dt)
         {
@@ -349,7 +349,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the "START HERE" prelude before the first drill.
+        /// 在第一个练习前显示"从这里开始"的开场引导。
         /// </summary>
         private void BeginOpening()
         {
@@ -369,8 +369,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 1: teach the player to move. The player must walk left past a marker,
-        /// then walk right past another marker. Shows "A" and "D" key prompts.
+        /// 练习 1：教玩家移动。玩家需要向左走过一个标记点，再向右走过另一个标记点。显示"A"和"D"按键提示。
         /// </summary>
         private void BeginMove(bool fullIntro)
         {
@@ -401,8 +400,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 2: teach the player to dash. The player must double-tap A or D quickly
-        /// to perform a burst of speed. Shows the double-tap key pattern.
+        /// 练习 2：教玩家冲刺。玩家需要快速双击 A 或 D 来触发速度爆发。显示双击按键提示。
         /// </summary>
         private void BeginDash(bool fullIntro)
         {
@@ -432,8 +430,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 3: teach the player to shoot. The player must jump (W) and then press B
-        /// at the peak of the jump for best accuracy. Also shows the 2PT/3PT scoring line.
+        /// 练习 3：教玩家投篮。玩家需要先跳跃（W），然后在跳跃最高点按 B 以获得最佳命中率。同时显示 2 分/3 分得分线。
         /// </summary>
         private void BeginShot(bool fullIntro)
         {
@@ -466,7 +463,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 4: pump fake then shoot.
+        /// 练习 4：假动作后投篮。
         /// </summary>
         private void BeginPump(bool fullIntro)
         {
@@ -500,7 +497,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 5: jump near the rim and dunk.
+        /// 练习 5：在篮筐附近起跳扣篮。
         /// </summary>
         private void BeginDunk(bool fullIntro)
         {
@@ -531,7 +528,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 6: get close and steal the ball.
+        /// 练习 6：靠近对手并抢断。
         /// </summary>
         private void BeginSteal(bool fullIntro)
         {
@@ -558,7 +555,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 7: time the jump to block a shot.
+        /// 练习 7：把握跳跃时机来盖帽。
         /// </summary>
         private void BeginBlock(bool fullIntro)
         {
@@ -594,7 +591,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 8: grab the rebound and put it back in.
+        /// 练习 8：抢到篮板球并补篮得分。
         /// </summary>
         private void BeginPutback(bool fullIntro)
         {
@@ -627,7 +624,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Drill 9: use the super skill shot.
+        /// 练习 9：使用大招技能投篮。
         /// </summary>
         private void BeginSuper(bool fullIntro)
         {
@@ -655,7 +652,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Final step: free play — score one basket to finish the tutorial.
+        /// 最后一步：自由对战——投进一球即可完成教程。
         /// </summary>
         private void BeginFreePlay(bool fullIntro)
         {
@@ -688,7 +685,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset all step state and start the intro freeze timer.
+        /// 重置所有步骤状态并启动介绍冻结计时器。
         /// </summary>
         private void ResetStep(bool fullIntro)
         {
@@ -703,7 +700,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Put the opponent in scripted mode and clear old overlay visuals.
+        /// 将对手设为脚本模式并清除旧的覆盖层视觉元素。
         /// </summary>
         private void PrepareScriptedStep()
         {
@@ -712,7 +709,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Remove all focus boxes, rings, guides, and trajectory dots from the overlay.
+        /// 移除覆盖层上的所有聚焦框、光环、引导线和轨迹点。
         /// </summary>
         private void ClearOverlayHighlights()
         {
@@ -725,7 +722,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player moved left and right. Show hints if stuck.
+        /// 检查玩家是否完成了左右移动。如果卡住则显示提示。
         /// </summary>
         private void UpdateMoveStep()
         {
@@ -771,7 +768,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player dashed. Auto-retry if stuck too long.
+        /// 检查玩家是否完成了冲刺。如果卡住太久则自动重试。
         /// </summary>
         private void UpdateDashStep()
         {
@@ -799,7 +796,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player scored a shot. Reset if the attempt fails.
+        /// 检查玩家是否投篮得分。如果尝试失败则重置。
         /// </summary>
         private void UpdateShotStep()
         {
@@ -829,7 +826,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player did a pump fake and then scored. Reset if stuck.
+        /// 检查玩家是否完成了假动作并投篮得分。如果卡住则重置。
         /// </summary>
         private void UpdatePumpStep()
         {
@@ -881,7 +878,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player dunked. Show the "press B" prompt when airborne.
+        /// 检查玩家是否扣篮。在空中时显示"按 B"提示。
         /// </summary>
         private void UpdateDunkStep()
         {
@@ -923,7 +920,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player stole the ball. Restart if the opponent drifts too far.
+        /// 检查玩家是否抢断成功。如果对手漂移太远则重新开始。
         /// </summary>
         private void UpdateStealStep()
         {
@@ -959,7 +956,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player blocked the shot. Show timing cues during the drill.
+        /// 检查玩家是否盖帽成功。在练习过程中显示时机提示。
         /// </summary>
         private void UpdateBlockStep()
         {
@@ -1025,7 +1022,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Queue up a block drill retry after a short delay.
+        /// 在短暂延迟后排队重试盖帽练习。
         /// </summary>
         private void ScheduleBlockRetry(string message)
         {
@@ -1040,7 +1037,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player grabbed the rebound and put it back in.
+        /// 检查玩家是否抢到篮板并补篮得分。
         /// </summary>
         private void UpdatePutbackStep()
         {
@@ -1105,7 +1102,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the player used the super skill shot.
+        /// 检查玩家是否使用了大招技能投篮。
         /// </summary>
         private void UpdateSuperStep()
         {
@@ -1135,7 +1132,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Free play: wait for the player to score one basket.
+        /// 自由对战：等待玩家投进一球。
         /// </summary>
         private void UpdateFreePlayStep()
         {
@@ -1159,7 +1156,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Mark the current step as done and show a success message.
+        /// 标记当前步骤完成并显示成功消息。
         /// </summary>
         private void CompleteStep(string message)
         {
@@ -1170,7 +1167,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show the outro screen with "where next?" options.
+        /// 显示带有"接下来去哪？"选项的结束画面。
         /// </summary>
         private void BeginOutro()
         {
@@ -1179,7 +1176,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Move to the next drill after the success pause ends.
+        /// 成功暂停结束后进入下一个练习。
         /// </summary>
         private void AdvanceAfterSuccess()
         {
@@ -1219,7 +1216,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check if the overlay sent a command (like skip).
+        /// 检查覆盖层是否发送了指令（如跳过）。
         /// </summary>
         private bool HandleStepCommand()
         {
@@ -1239,7 +1236,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Jump to the next step when the player presses skip.
+        /// 玩家按下跳过时跳转到下一步。
         /// </summary>
         private void SkipCurrentStep()
         {
@@ -1282,7 +1279,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Listen for player actions (dash, shoot, dunk, steal, block, score, etc).
+        /// 监听玩家动作（冲刺、投篮、扣篮、抢断、盖帽、得分等）。
         /// </summary>
         private void OnPlayerSignal(mlpPlayerSignalType signal, int side, int playerNo)
         {
@@ -1469,7 +1466,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Handle button presses on the outro screen (replay, training, menu).
+        /// 处理结束画面上的按钮点击（重玩、训练、菜单）。
         /// </summary>
         private void HandleOutroCommand()
         {
@@ -1492,7 +1489,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Refresh overlay visuals (scoring guide, etc).
+        /// 刷新覆盖层视觉效果（得分引导等）。
         /// </summary>
         private void UpdatePresentation()
         {
@@ -1509,7 +1506,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// True if the ball is in the air (shooting, dunking, blocking, etc).
+        /// 判断篮球是否在空中（投篮、扣篮、盖帽等状态）。
         /// </summary>
         private bool IsBallStillLive()
         {
@@ -1522,7 +1519,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return -1 (left), 1 (right), or 0 (close enough) to move toward a target X position.
+        /// 返回 -1（向左）、1（向右）或 0（已足够接近），用于向目标 X 位置移动。
         /// </summary>
         private static int MoveTo(float currentX, float targetX)
         {

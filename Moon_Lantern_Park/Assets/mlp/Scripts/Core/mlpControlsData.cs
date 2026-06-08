@@ -8,20 +8,20 @@ namespace mlp
     public readonly struct mlpControlProfile
     {
         /// <summary>
-        /// Stores one player's full set of keyboard bindings and display labels.
+        /// 存储一个玩家的完整键盘按键绑定和显示标签。
         /// </summary>
-        /// <param name="controllerSlot">Which player slot this profile belongs to (0 = solo, 1 = player 1, 2 = player 2).</param>
-        /// <param name="moveHint">Text label shown in the UI for the move keys (e.g. "A/D").</param>
-        /// <param name="jumpHint">Text label shown in the UI for the jump key (e.g. "W").</param>
-        /// <param name="blockHint">Text label shown in the UI for the block key (e.g. "S").</param>
-        /// <param name="actionHint">Text label shown in the UI for the shoot / action key (e.g. "B").</param>
-        /// <param name="superHint">Text label shown in the UI for the super move key (e.g. "N").</param>
-        /// <param name="moveLeftKey">KeyCode for moving left.</param>
-        /// <param name="moveRightKey">KeyCode for moving right.</param>
-        /// <param name="jumpKey">KeyCode for jumping.</param>
-        /// <param name="blockKey">KeyCode for blocking.</param>
-        /// <param name="actionKey">KeyCode for shooting or performing the main action.</param>
-        /// <param name="superKey">KeyCode for activating the super move.</param>
+        /// <param name="controllerSlot">此配置所属的玩家槽位（0 = 单人，1 = 玩家 1，2 = 玩家 2）。</param>
+        /// <param name="moveHint">UI 中显示的移动键提示文本（如 "A/D"）。</param>
+        /// <param name="jumpHint">UI 中显示的跳跃键提示文本（如 "W"）。</param>
+        /// <param name="blockHint">UI 中显示的防守键提示文本（如 "S"）。</param>
+        /// <param name="actionHint">UI 中显示的投篮/操作键提示文本（如 "B"）。</param>
+        /// <param name="superHint">UI 中显示的大招键提示文本（如 "N"）。</param>
+        /// <param name="moveLeftKey">向左移动的 KeyCode。</param>
+        /// <param name="moveRightKey">向右移动的 KeyCode。</param>
+        /// <param name="jumpKey">跳跃的 KeyCode。</param>
+        /// <param name="blockKey">防守的 KeyCode。</param>
+        /// <param name="actionKey">投篮或执行主要操作的 KeyCode。</param>
+        /// <param name="superKey">激活大招的 KeyCode。</param>
         public mlpControlProfile(
             int controllerSlot,
             string moveHint,
@@ -114,20 +114,20 @@ namespace mlp
             $"2P  P2 {playerTwoProfile.MoveHint} MOVE  {playerTwoProfile.JumpHint} JUMP  {playerTwoProfile.BlockHint} BLOCK  {playerTwoProfile.ActionHint} SHOOT  {playerTwoProfile.SuperHint} SUPER";
 
         /// <summary>
-        /// Returns the control profile that matches the given brain identifier string (e.g. "P0", "B1").
+        /// 返回与给定脑标识字符串（如 "P0"、"B1"）匹配的控制配置。
         /// </summary>
-        /// <param name="brain">The brain string whose second character encodes the controller slot number.</param>
-        /// <returns>The matching control profile for that brain.</returns>
+        /// <param name="brain">脑字符串，其第二个字符编码了控制器槽位号。</param>
+        /// <returns>匹配的控制配置。</returns>
         public static mlpControlProfile ProfileForBrain(string brain)
         {
             return ProfileForSlot(ParseControllerSlot(brain));
         }
 
         /// <summary>
-        /// Returns the control profile for the given player slot number.
+        /// 返回指定玩家槽位的控制配置。
         /// </summary>
-        /// <param name="controllerSlot">0 = solo play, 1 = player 1 in 2-player mode, 2 = player 2.</param>
-        /// <returns>The control profile with the matching slot number.</returns>
+        /// <param name="controllerSlot">0 = 单人模式，1 = 双人模式中的玩家 1，2 = 玩家 2。</param>
+        /// <returns>匹配槽位号的控制配置。</returns>
         public static mlpControlProfile ProfileForSlot(int controllerSlot)
         {
             switch (controllerSlot)
@@ -142,11 +142,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Extracts the controller slot number from a brain identifier string.
-        /// Reads the second character of the brain string as a digit and clamps it to 0-2.
+        /// 从脑标识字符串中提取控制器槽位号。读取脑字符串的第二个字符作为数字，并限制在 0-2 范围内。
         /// </summary>
-        /// <param name="brain">A brain string like "P0", "P1", or "B2".</param>
-        /// <returns>The parsed slot number (0, 1, or 2), or 0 if parsing fails.</returns>
+        /// <param name="brain">脑字符串，如 "P0"、"P1" 或 "B2"。</param>
+        /// <returns>解析出的槽位号（0、1 或 2），解析失败时返回 0。</returns>
         public static int ParseControllerSlot(string brain)
         {
             if (string.IsNullOrEmpty(brain) || brain.Length < 2)

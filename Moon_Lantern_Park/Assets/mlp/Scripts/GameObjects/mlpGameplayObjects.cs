@@ -2346,6 +2346,11 @@ namespace mlp
         private const float TutorialPutbackMinBallY = mlpObjectsData.BasketHeight + 22f;
         private const float TutorialPutbackMaxBallVelocityY = 560f;
         private const float TutorialPutbackCompletionChance = 1f;
+        private const float ReboundMagnetDefaultDuration = 1.55f;
+        private const float ReboundMagnetCatchDistanceX = 52f;
+        private const float ReboundMagnetCatchDistanceY = 72f;
+        private const float ReboundMagnetMinSpeed = 560f;
+        private const float ReboundMagnetMaxSpeed = 920f;
 
         private enum BlockPumpPhase
         {
@@ -2462,6 +2467,7 @@ namespace mlp
         private bool moveBuffScoreBonusAvailable;
         private float pendingScoreRefundFraction;
         private float pendingScoreRefundTimer;
+        private float reboundMagnetTimer;
 
         public mlpGameCore GameCore { get; }
         public Vector2 Position;
@@ -2491,6 +2497,8 @@ namespace mlp
         public bool UsesDashSkill => skillDefinition.UsesDashSkill;
         public bool UsesShieldSkill => skillDefinition.UsesBasketShield;
         public bool UsesFreezeSkill => skillDefinition.UsesFreezeSkill;
+        public bool UsesReboundMagnetSkill => skillDefinition.UsesReboundMagnetSkill;
+        public bool UsesGuaranteedBlockSkill => skillDefinition.UsesGuaranteedBlockSkill;
         public bool ReadyForSuper => !isSuperShot && (readyForSuper || mlpQuickTestSettings.Enabled);
         public bool CanUseHellBonusSuperDash => hellEnhanced && (mlpQuickTestSettings.Enabled || hellBonusSuperDashCooldownTimer <= 0f);
         public bool CanUseHellBonusShield => hellEnhanced && shield != null && (mlpQuickTestSettings.Enabled || hellBonusShieldCooldownTimer <= 0f) && shield.CanActivate;
@@ -2726,6 +2734,7 @@ namespace mlp
             moveBuffScoreBonusAvailable = false;
             pendingScoreRefundFraction = 0f;
             pendingScoreRefundTimer = 0f;
+            reboundMagnetTimer = 0f;
             GameCore.IsSuperShot = false;
             teleportFx?.Hide();
             shield?.Reset();
@@ -2773,6 +2782,7 @@ namespace mlp
             teleportFx?.Update(dt);
             shield?.Update(dt);
             UpdateSkillTimers(dt);
+            UpdateReboundMagnet(dt);
             skillFx?.Update(dt, Position, facingDirection, !removedFromPlay && graphicScaleMultiplier > 0.05f);
             hellBonusSuperDashCooldownTimer = Mathf.Max(0f, hellBonusSuperDashCooldownTimer - dt);
             hellBonusShieldCooldownTimer = Mathf.Max(0f, hellBonusShieldCooldownTimer - dt);
@@ -3634,6 +3644,16 @@ namespace mlp
                 return false;
             }
 
+            if (skillDefinition.UsesReboundMagnetSkill && !CanUseReboundMagnet())
+            {
+                return false;
+            }
+
+            if (skillDefinition.UsesGuaranteedBlockSkill && !CanUseGuaranteedBlock())
+            {
+                return false;
+            }
+
             StartSuper(true);
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Super, Side, playerNo);
             GameCore.ShowHudBonusNotice(skillDefinition.ActivateNotice, 0.95f);
@@ -3664,6 +3684,12 @@ namespace mlp
                     return true;
                 case mlpCharacterSkillType.BadLuck:
                     MakeFreeze();
+                    return true;
+                case mlpCharacterSkillType.ReboundMagnet:
+                    MakeReboundMagnet();
+                    return true;
+                case mlpCharacterSkillType.SureBlock:
+                    MakeGuaranteedBlock();
                     return true;
             }
 
@@ -3851,6 +3877,28 @@ namespace mlp
             }
 
             skillFx?.PlayBurst(0.45f);
+            EndSuper();
+        }
+
+        private void MakeReboundMagnet()
+        {
+            reboundMagnetTimer = skillDefinition.EffectDuration > 0f
+                ? skillDefinition.EffectDuration
+                : ReboundMagnetDefaultDuration;
+            canTakeInHands = true;
+            UpdateReboundMagnet(0f);
+            EndSuper();
+        }
+
+        private void MakeGuaranteedBlock()
+        {
+            var ball = GameCore.Ball;
+            if (CanUseGuaranteedBlockBall(ball))
+            {
+                facingDirection = ball.Position.x >= Position.x ? 1f : -1f;
+                ball.ApplyBlock(this);
+            }
+
             EndSuper();
         }
 
@@ -4444,6 +4492,79 @@ namespace mlp
                     pendingScoreRefundFraction = 0f;
                 }
             }
+        }
+
+        private bool CanUseReboundMagnet()
+        {
+            return !WithBall &&
+                   stunTimer <= 0f &&
+                   !removedFromPlay &&
+                   !isDunking &&
+                   CanUseReboundMagnetBall(GameCore.Ball);
+        }
+
+        private bool CanUseGuaranteedBlock()
+        {
+            return stunTimer <= 0f &&
+                   !removedFromPlay &&
+                   !isDunking &&
+                   CanUseGuaranteedBlockBall(GameCore.Ball);
+        }
+
+        private bool CanUseGuaranteedBlockBall(mlpBallObject ball)
+        {
+            return ball != null && ball.IsBlockable && ball.Side != Side;
+        }
+
+        private bool CanUseReboundMagnetBall(mlpBallObject ball)
+        {
+            if (ball == null || !ball.IsInGame)
+            {
+                return false;
+            }
+
+            return ball.State == "basket" ||
+                   ball.State == "block" ||
+                   ball.State == "bounce" ||
+                   ball.State == "steal";
+        }
+
+        private void UpdateReboundMagnet(float dt)
+        {
+            if (reboundMagnetTimer <= 0f)
+            {
+                return;
+            }
+
+            reboundMagnetTimer = Mathf.Max(0f, reboundMagnetTimer - dt);
+            var ball = GameCore.Ball;
+            if (WithBall || stunTimer > 0f || removedFromPlay || isDunking || !CanUseReboundMagnetBall(ball))
+            {
+                reboundMagnetTimer = 0f;
+                return;
+            }
+
+            var catchPoint = Position + new Vector2(0f, -58f);
+            var delta = catchPoint - ball.Position;
+            if (Mathf.Abs(delta.x) <= ReboundMagnetCatchDistanceX &&
+                Mathf.Abs(delta.y) <= ReboundMagnetCatchDistanceY)
+            {
+                reboundMagnetTimer = 0f;
+                TakeBallInHands();
+                canDoAction = false;
+                actionLatch = Mathf.Max(actionLatch, 0.18f);
+                GameCore.ShowHudBonusNotice(skillDefinition.ScoreNotice, 0.95f);
+                mlpAudio.Instance?.Play(mlpAssets.Sounds.BSteel, 0.85f);
+                return;
+            }
+
+            var distance = Mathf.Max(1f, delta.magnitude);
+            var speed = Mathf.Lerp(
+                ReboundMagnetMinSpeed,
+                ReboundMagnetMaxSpeed,
+                Mathf.Clamp01(distance / 420f));
+            ball.Side = Side;
+            ball.Velocity = delta / distance * speed;
         }
 
         private float GetMoveSpeed()

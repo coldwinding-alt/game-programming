@@ -26,27 +26,27 @@ namespace mlp
         public readonly bool HasBonusSupers;
 
         /// <summary>
-        /// Create a new AI difficulty profile with all tuning values for one difficulty level.
+        /// 创建一个新的 AI 难度配置，包含某个难度等级的所有调节数值。
         /// </summary>
-        /// <param name="defenceContestDistance">How close the AI needs to be to contest a shot on defence.</param>
-        /// <param name="stealBehindDistance">Max distance for a steal attempt when behind the ball carrier.</param>
-        /// <param name="stealBasketDistance">Max distance for a steal attempt near the basket.</param>
-        /// <param name="holderSuperDashMinDistance">Minimum distance the ball carrier must travel before a super dash is allowed.</param>
-        /// <param name="holderSuperDashMaxDistance">Maximum range the AI will use a super dash while holding the ball.</param>
-        /// <param name="looseBallSuperDashDistance">How far the AI will super dash to grab a loose ball.</param>
-        /// <param name="attackPressureDistance">How close the AI gets before it starts pressuring on offence.</param>
-        /// <param name="attackSuperDashDistance">Max distance for an offensive super dash toward the basket.</param>
-        /// <param name="dashBlockRangeMaxDistance">How close the AI must be to attempt a dash block.</param>
-        /// <param name="dashCooldownMultiplier">Multiplier on dash cooldown time (lower = faster dashes).</param>
-        /// <param name="stealRangeBonus">Extra range added to the AI's steal attempts.</param>
-        /// <param name="stunDurationMultiplier">Multiplier on how long the AI stays stunned (lower = recovers faster).</param>
-        /// <param name="openingSuperChargeFraction">How much super meter the AI starts with at the beginning of a match.</param>
-        /// <param name="nativeSuperRefundFraction">Fraction of super meter refunded after the AI uses a skill.</param>
-        /// <param name="bonusSuperDashCooldown">Extra cooldown (in seconds) added to the AI's super dash.</param>
-        /// <param name="bonusSuperDashBossCooldown">Extra super dash cooldown used in boss-level encounters.</param>
-        /// <param name="bonusShieldCooldown">Extra cooldown (in seconds) added to the AI's shield skill.</param>
-        /// <param name="bonusShieldBossCooldown">Extra shield cooldown used in boss-level encounters.</param>
-        /// <param name="hasBonusSupers">Whether this difficulty level grants the AI bonus super abilities.</param>
+        /// <param name="defenceContestDistance">防守时 AI 干扰投篮所需的距离。</param>
+        /// <param name="stealBehindDistance">在持球人身后尝试抢断的最大距离。</param>
+        /// <param name="stealBasketDistance">在篮筐附近尝试抢断的最大距离。</param>
+        /// <param name="holderSuperDashMinDistance">持球人必须跑过的最短距离才能使用超级冲刺。</param>
+        /// <param name="holderSuperDashMaxDistance">持球状态下 AI 使用超级冲刺的最大范围。</param>
+        /// <param name="looseBallSuperDashDistance">AI 冲刺抢夺自由球的最大距离。</param>
+        /// <param name="attackPressureDistance">进攻时 AI 开始施压的接近距离。</param>
+        /// <param name="attackSuperDashDistance">向篮筐发起进攻性超级冲刺的最大距离。</param>
+        /// <param name="dashBlockRangeMaxDistance">AI 尝试冲刺封盖的最远距离。</param>
+        /// <param name="dashCooldownMultiplier">冲刺冷却时间的倍率（越低 = 冲刺越快）。</param>
+        /// <param name="stealRangeBonus">AI 抢断的额外距离加成。</param>
+        /// <param name="stunDurationMultiplier">AI 被眩晕持续时间的倍率（越低 = 恢复越快）。</param>
+        /// <param name="openingSuperChargeFraction">比赛开始时 AI 拥有的必杀技能量比例。</param>
+        /// <param name="nativeSuperRefundFraction">AI 使用技能后返还的必杀技能量比例。</param>
+        /// <param name="bonusSuperDashCooldown">AI 超级冲刺的额外冷却时间（秒）。</param>
+        /// <param name="bonusSuperDashBossCooldown">Boss 级对手超级冲刺的额外冷却时间。</param>
+        /// <param name="bonusShieldCooldown">AI 护盾技能的额外冷却时间（秒）。</param>
+        /// <param name="bonusShieldBossCooldown">Boss 级对手护盾技能的额外冷却时间。</param>
+        /// <param name="hasBonusSupers">该难度等级是否赋予 AI 额外的必杀技能力。</param>
         public mlpAIDifficultyTuningProfile(
             float defenceContestDistance,
             float stealBehindDistance,
@@ -147,10 +147,10 @@ namespace mlp
             hasBonusSupers: true);
 
         /// <summary>
-        /// Return the tuning profile for the given difficulty level. Falls back to Normal if unknown.
+        /// 获取指定难度等级的调节配置。如果难度未知，回退到普通难度。
         /// </summary>
-        /// <param name="difficulty">The difficulty level to look up (Easy, Normal, Hard, or Hell).</param>
-        /// <returns>The matching AI difficulty tuning profile.</returns>
+        /// <param name="difficulty">要查找的难度等级（Easy、Normal、Hard 或 Hell）。</param>
+        /// <returns>匹配的 AI 难度调节配置。</returns>
         public static mlpAIDifficultyTuningProfile Get(mlpAiDifficulty difficulty)
         {
             switch (difficulty)

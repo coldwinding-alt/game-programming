@@ -29,7 +29,7 @@ namespace mlp
             public float PreviewScaleMultiplier = 1f;
             public float PreviewOffsetY;
             public float PortraitScaleMultiplier = 1f;
-            // Portrait offsets are expressed in source-sprite pixels so they can scale with each UI slot size.
+            // 头像偏移量以源精灵像素为单位，这样可以根据不同的 UI 槽位大小自动缩放。
             public float PortraitOffsetY;
         }
 
@@ -64,7 +64,7 @@ namespace mlp
         public static int CharacterCount => CharacterDefinitions.Length;
 
         /// <summary>
-        /// Initialize the player character system. Called once at startup to prepare character data.
+        /// 初始化玩家角色系统。游戏启动时调用一次，准备好所有角色数据。
         /// </summary>
         public static void SetupPlayers()
         {
@@ -72,10 +72,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load and build a DragonBones armature for use in gameplay.
+        /// 加载并构建一个用于实战的 DragonBones 骨架。返回的骨架可以直接播放动画。
         /// </summary>
-        /// <param name="name">The armature name to build (e.g. a character skeleton name).</param>
-        /// <returns>A new DBLiteArmature ready to animate.</returns>
+        /// <param name="name">要构建的骨架名称（例如角色骨骼名称）。</param>
+        /// <returns>构建完成的 DBLiteArmature 实例，可用于动画播放。</returns>
         public static DBLiteArmature BuildGameplayArmature(string name)
         {
             DBLiteFactory.Instance.EnsureLoaded();
@@ -83,9 +83,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return an array of character IDs for all currently enabled characters.
+        /// 获取所有已启用角色的 ID 数组。用于角色选择界面或随机分配角色。
         /// </summary>
-        /// <returns>An array of enabled character indices.</returns>
+        /// <returns>已启用角色的索引数组。</returns>
         public static int[] GetActiveCharacterIds()
         {
             var active = new List<int>(CharacterDefinitions.Length);
@@ -101,11 +101,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Make sure a character ID is valid and enabled. If not, return the fallback or the first enabled character.
+        /// 验证角色 ID 是否有效且已启用。如果请求的角色不可用，则返回备用角色或第一个可用角色。
         /// </summary>
-        /// <param name="requestedCharacterId">The character ID the caller wants.</param>
-        /// <param name="fallbackCharacterId">Backup ID to use if the requested one is disabled.</param>
-        /// <returns>A valid, enabled character ID.</returns>
+        /// <param name="requestedCharacterId">调用方想要的角色 ID。</param>
+        /// <param name="fallbackCharacterId">当请求的角色被禁用时，使用的备用角色 ID。</param>
+        /// <returns>一个有效且已启用的角色 ID。</returns>
         public static int SanitizeCharacterId(int requestedCharacterId, int fallbackCharacterId = 0)
         {
             if (IsCharacterEnabled(requestedCharacterId))
@@ -123,11 +123,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Move to the next or previous enabled character in the list, wrapping around at the ends.
+        /// 切换到列表中下一个或上一个已启用的角色，到达末尾时自动循环到开头。
         /// </summary>
-        /// <param name="currentCharacterId">The currently selected character ID.</param>
-        /// <param name="direction">+1 for next, -1 for previous.</param>
-        /// <returns>The ID of the next (or previous) enabled character.</returns>
+        /// <param name="currentCharacterId">当前选中的角色 ID。</param>
+        /// <param name="direction">+1 表示下一个，-1 表示上一个。</param>
+        /// <returns>下一个（或上一个）已启用角色的 ID。</returns>
         public static int StepCharacterId(int currentCharacterId, int direction)
         {
             var active = GetActiveCharacterIds();
@@ -156,40 +156,40 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the display name for a character (e.g. "REAPER", "WITCH").
+        /// 获取角色的显示名称，例如 "REAPER"、"WITCH" 等。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The character's display name.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>角色的显示名称。</returns>
         public static string GetCharacterName(int characterId)
         {
             return GetCharacterDefinition(characterId).DisplayName;
         }
 
         /// <summary>
-        /// Return the body form index for a character. Used to select the correct body animation.
+        /// 获取角色的体型索引，用于选择正确的身体动画。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The form index used for body animations.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>用于身体动画的体型索引。</returns>
         public static int GetCharacterFormIndex(int characterId)
         {
             return GetCharacterDefinition(characterId).FormIndex;
         }
 
         /// <summary>
-        /// Return the super skill ID for a character. Maps to a mlpCharacterSkillType entry.
+        /// 获取角色的必杀技 ID，对应 mlpCharacterSkillType 中的技能类型。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The super skill ID.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>必杀技 ID。</returns>
         public static int GetCharacterSuperId(int characterId)
         {
             return GetCharacterDefinition(characterId).SuperId;
         }
 
         /// <summary>
-        /// Return the scale multiplier for a character's preview model in menus and selection screens.
+        /// 获取角色预览模型的缩放倍数，用于菜单和角色选择界面中的模型显示。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The combined preview scale multiplier.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>综合预览缩放倍数。</returns>
         public static float GetCharacterPreviewScaleMultiplier(int characterId)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -197,10 +197,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the scale multiplier for a character's model during actual gameplay.
+        /// 获取角色在实战中的模型缩放倍数。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The combined gameplay scale multiplier.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>实战综合缩放倍数。</returns>
         public static float GetCharacterGameplayScaleMultiplier(int characterId)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -208,21 +208,21 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the vertical offset for a character's preview model in menus.
+        /// 获取角色预览模型在菜单中的垂直偏移量。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The Y offset in pixels.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>Y 轴偏移量（像素）。</returns>
         public static float GetCharacterPreviewOffsetY(int characterId)
         {
             return GetCharacterDefinition(characterId).PreviewOffsetY;
         }
 
         /// <summary>
-        /// Get the cropped portrait sprite for a character, creating and caching it if needed.
+        /// 获取角色裁剪后的头像精灵，首次调用时会自动创建并缓存。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <param name="desiredMaxPixels">Optional max pixel size hint (currently unused).</param>
-        /// <returns>A cropped portrait Sprite, or null if the atlas is missing.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <param name="desiredMaxPixels">可选的最大像素尺寸提示（当前未使用）。</param>
+        /// <returns>裁剪后的头像精灵，如果图集缺失则返回 null。</returns>
         public static Sprite GetCharacterPortraitSprite(int characterId, float desiredMaxPixels = 0f)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -236,21 +236,21 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the scale multiplier used when displaying a character's portrait in the UI.
+        /// 获取角色头像在 UI 中显示时的缩放倍数。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The portrait scale multiplier.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>头像缩放倍数。</returns>
         public static float GetCharacterPortraitScaleMultiplier(int characterId)
         {
             return GetCharacterDefinition(characterId).PortraitScaleMultiplier;
         }
 
         /// <summary>
-        /// Return the vertical offset for a character's portrait sprite in the UI. Adjusts based on sprite size if provided.
+        /// 获取角色头像精灵在 UI 中的垂直偏移量。如果提供了精灵，会根据精灵大小自动调整偏移。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <param name="portraitSprite">Optional sprite to scale the offset relative to the base portrait size.</param>
-        /// <returns>The Y offset in source-sprite pixels (scaled by atlas source scale).</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <param name="portraitSprite">可选的精灵，用于相对于基础头像大小缩放偏移量。</param>
+        /// <returns>Y 轴偏移量（源精灵像素单位，已乘以图集源缩放系数）。</returns>
         public static float GetCharacterPortraitOffsetY(int characterId, Sprite portraitSprite = null)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -277,10 +277,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply a character's skin, form, and position tuning to an armature. Used when spawning a player.
+        /// 将角色的皮肤、体型和位置调整应用到骨架上。在生成玩家时调用。
         /// </summary>
-        /// <param name="armature">The armature to configure.</param>
-        /// <param name="characterId">The character index whose appearance to apply.</param>
+        /// <param name="armature">要配置的骨架。</param>
+        /// <param name="characterId">要应用外观的角色索引。</param>
         public static void ApplyCharacter(DBLiteArmature armature, int characterId)
         {
             var definition = GetCharacterDefinition(characterId);
@@ -289,10 +289,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Pick a random enabled character, optionally excluding specific ones. Used for AI opponent selection.
+        /// 随机选取一个已启用的角色，可排除指定的角色。用于 AI 对手的选择。
         /// </summary>
-        /// <param name="excludedCharacterIds">Character IDs to skip (e.g. the player's choice).</param>
-        /// <returns>A random enabled character ID.</returns>
+        /// <param name="excludedCharacterIds">要排除的角色 ID 列表（例如玩家已选择的角色）。</param>
+        /// <returns>随机选取的已启用角色 ID。</returns>
         public static int GetRandomCharacterId(IList<int> excludedCharacterIds = null)
         {
             var candidates = new List<int>(CharacterDefinitions.Length);
@@ -320,11 +320,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Switch an armature's head, body, hands, and legs to match a skin and form. Plays the idle animation after.
+        /// 切换骨架的头部、身体、手部和腿部，使其匹配指定的皮肤和体型。切换完成后自动播放待机动画。
         /// </summary>
-        /// <param name="armature">The armature to update.</param>
-        /// <param name="skinId">The skin index (0-7) that controls head, hands, and legs.</param>
-        /// <param name="formId">The body form index that controls the body animation.</param>
+        /// <param name="armature">要更新的骨架。</param>
+        /// <param name="skinId">皮肤索引（0-7），控制头部、手部和腿部的外观。</param>
+        /// <param name="formId">体型索引，控制身体动画。</param>
         public static void SwitchPlayer(DBLiteArmature armature, int skinId, int formId)
         {
             if (armature == null)
@@ -350,20 +350,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// Look up the internal character definition by ID, sanitizing the ID first.
+        /// 根据 ID 查找内部角色定义，会先验证 ID 的有效性。
         /// </summary>
-        /// <param name="characterId">The character index.</param>
-        /// <returns>The matching mlpCharacterDefinition.</returns>
+        /// <param name="characterId">角色索引。</param>
+        /// <returns>匹配的 mlpCharacterDefinition 实例。</returns>
         private static mlpCharacterDefinition GetCharacterDefinition(int characterId)
         {
             return CharacterDefinitions[SanitizeCharacterId(characterId)];
         }
 
         /// <summary>
-        /// Get the raw (uncropped) portrait sprite from the atlas for a character definition.
+        /// 从图集中获取角色的原始（未裁剪）头像精灵。
         /// </summary>
-        /// <param name="definition">The character definition to look up.</param>
-        /// <returns>The base sprite from the portrait atlas, or null if not found.</returns>
+        /// <param name="definition">要查找的角色定义。</param>
+        /// <returns>头像图集中的基础精灵，如果未找到则返回 null。</returns>
         private static Sprite GetPortraitBaseSprite(mlpCharacterDefinition definition)
         {
             var atlas = GetPortraitAtlas();
@@ -371,9 +371,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load and cache the portrait texture atlas from Resources. Returns null if assets are missing.
+        /// 从 Resources 文件夹加载并缓存头像纹理图集。如果资源缺失则返回 null。
         /// </summary>
-        /// <returns>The cached DBLiteTextureAtlas, or null on load failure.</returns>
+        /// <returns>缓存的 DBLiteTextureAtlas 实例，加载失败时返回 null。</returns>
         private static DBLiteTextureAtlas GetPortraitAtlas()
         {
             if (portraitAtlas != null)
@@ -397,11 +397,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Get or create a cropped portrait sprite for UI display. Caches the result so it only crops once per character.
+        /// 获取或创建用于 UI 显示的裁剪头像精灵。结果会被缓存，每个角色只裁剪一次。
         /// </summary>
-        /// <param name="portraitSpriteName">The sprite name used as the cache key.</param>
-        /// <param name="baseSprite">The original uncropped atlas sprite to crop.</param>
-        /// <returns>The cropped and cached portrait sprite.</returns>
+        /// <param name="portraitSpriteName">用作缓存键的精灵名称。</param>
+        /// <param name="baseSprite">要裁剪的原始未裁剪图集精灵。</param>
+        /// <returns>裁剪并缓存后的头像精灵。</returns>
         private static Sprite GetOrCreatePortraitDisplaySprite(string portraitSpriteName, Sprite baseSprite)
         {
             if (PortraitDisplaySprites.TryGetValue(portraitSpriteName, out var cached))
@@ -440,11 +440,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// Scan the portrait texture pixels to find the bounding box of all visible (non-transparent) pixels. Adds padding.
+        /// 扫描头像纹理的像素，找到所有可见（非透明）像素的边界框，并添加内边距。
         /// </summary>
-        /// <param name="sourceTexture">The texture containing the portrait pixels.</param>
-        /// <param name="sourceRect">The original sprite rect within the texture.</param>
-        /// <returns>A tight Rect around the visible pixels, with padding added.</returns>
+        /// <param name="sourceTexture">包含头像像素的纹理。</param>
+        /// <param name="sourceRect">纹理中原始精灵的矩形区域。</param>
+        /// <returns>围绕可见像素的紧凑矩形，已添加内边距。</returns>
         private static Rect CalculatePortraitVisibleRect(Texture2D sourceTexture, Rect sourceRect)
         {
             var xStart = Mathf.Clamp(Mathf.FloorToInt(sourceRect.xMin), 0, sourceTexture.width - 1);
@@ -487,10 +487,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Adjust the head and body transforms on an armature to match a character's position and scale tuning.
+        /// 调整骨架上头部和身体的变换，使其匹配角色的位置和缩放设定。
         /// </summary>
-        /// <param name="armature">The armature to tune.</param>
-        /// <param name="definition">The character definition with offset and scale values.</param>
+        /// <param name="armature">要调整的骨架。</param>
+        /// <param name="definition">包含偏移和缩放值的角色定义。</param>
         private static void ApplyCharacterTuning(DBLiteArmature armature, mlpCharacterDefinition definition)
         {
             if (armature == null)
@@ -521,10 +521,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Check whether a character ID is in range and marked as enabled.
+        /// 检查角色 ID 是否在有效范围内且已被标记为启用。
         /// </summary>
-        /// <param name="characterId">The character index to check.</param>
-        /// <returns>True if the character exists and is enabled.</returns>
+        /// <param name="characterId">要检查的角色索引。</param>
+        /// <returns>如果角色存在且已启用则返回 true。</returns>
         private static bool IsCharacterEnabled(int characterId)
         {
             return characterId >= 0

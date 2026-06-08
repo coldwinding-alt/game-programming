@@ -17,7 +17,7 @@ namespace mlp
         public static DBLiteFactory Instance => instance ?? (instance = new DBLiteFactory());
 
         /// <summary>
-        /// Load the default DragonBones skeleton and texture if they haven't been loaded yet.
+        /// 如果尚未加载，则加载默认的 DragonBones 骨架和纹理。
         /// </summary>
         public void EnsureLoaded()
         {
@@ -25,7 +25,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load a DragonBones skeleton, texture atlas JSON, and texture image from Resources.
+        /// 从 Resources 加载 DragonBones 骨架、纹理图集 JSON 和纹理图片。
         /// </summary>
         public void Load(string skeletonKey, string textureJsonKey, string textureImageKey)
         {
@@ -55,7 +55,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create a new GameObject with a DBLiteArmature component for the named armature.
+        /// 为指定名称的骨架创建一个带有 DBLiteArmature 组件的新 GameObject。
         /// </summary>
         public DBLiteArmature BuildArmature(string armatureName, string objectName = null)
         {
@@ -73,7 +73,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Try to look up a loaded armature definition by name.
+        /// 尝试根据名称查找已加载的骨架定义。
         /// </summary>
         public bool TryGetArmature(string armatureName, out DBLiteArmatureData data)
         {
@@ -82,7 +82,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a sprite from the texture atlas by name, or null if not found.
+        /// 根据名称从纹理图集返回精灵，未找到则返回 null。
         /// </summary>
         public Sprite GetTextureSprite(string spriteName, string textureAtlasKey = "texture2")
         {
@@ -111,7 +111,7 @@ namespace mlp
         public event Action<string, string> FrameEvent;
 
         /// <summary>
-        /// Initialize the armature with its data, build bone hierarchy, and play the first animation.
+        /// 使用数据初始化骨架，构建骨骼层级，并播放第一个动画。
         /// </summary>
         public void Init(DBLiteFactory factory, DBLiteArmatureData data)
         {
@@ -130,7 +130,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the child armature displayed in the named slot, if any.
+        /// 返回指定插槽中显示的子骨架（如果有）。
         /// </summary>
         public DBLiteArmature GetChildArmature(string slotName)
         {
@@ -138,7 +138,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Show or hide a specific slot by name.
+        /// 根据名称显示或隐藏指定插槽。
         /// </summary>
         public void SetSlotHidden(string slotName, bool hidden)
         {
@@ -172,7 +172,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Start playing the named animation from the beginning.
+        /// 从头开始播放指定名称的动画。
         /// </summary>
         public void Play(string animationName, bool restart = true)
         {
@@ -198,7 +198,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Load an animation but freeze it at frame 0 without playing.
+        /// 加载动画但冻结在第 0 帧，不播放。
         /// </summary>
         public void StopAtStart(string animationName)
         {
@@ -210,7 +210,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Re-apply the current animation pose (call after changing slots or visibility).
+        /// 重新应用当前动画姿态（更改插槽或可见性后调用）。
         /// </summary>
         public void RefreshPose()
         {
@@ -218,7 +218,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Advance the animation timer and apply the current pose each frame.
+        /// 每帧推进动画计时器并应用当前姿态。
         /// </summary>
         private void Update()
         {
@@ -239,7 +239,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Fire any frame events that fall between the previous and current animation time.
+        /// 触发前一帧和当前帧之间的所有帧事件。
         /// </summary>
         private void DispatchFrameEvents(float previousFrame, float currentFrame)
         {
@@ -275,7 +275,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Fire the AnimationComplete event when a non-looping animation reaches its end.
+        /// 当非循环动画播放到末尾时触发 AnimationComplete 事件。
         /// </summary>
         private void TryDispatchAnimationComplete(float previousFrame, float currentFrame)
         {
@@ -293,7 +293,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Fire frame events whose timestamps fall within the given range.
+        /// 触发时间戳在指定范围内的帧事件。
         /// </summary>
         private void EmitFrameEventsInRange(float start, float end, float duration)
         {
@@ -314,7 +314,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the positive modulo of value by divisor.
+        /// 返回值对除数的正取模结果。
         /// </summary>
         private static float Mod(float value, float divisor)
         {
@@ -322,7 +322,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Create the bone transform hierarchy and slot display objects from the armature data.
+        /// 根据骨架数据创建骨骼变换层级和插槽显示对象。
         /// </summary>
         private void BuildBonesAndSlots()
         {
@@ -357,7 +357,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sample the current animation at the given frame and apply transforms to all bones and slots.
+        /// 在指定帧采样当前动画，并将变换应用到所有骨骼和插槽。
         /// </summary>
         private void ApplyPose(float frame)
         {
@@ -423,7 +423,7 @@ namespace mlp
         private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
 
         /// <summary>
-        /// Create a texture atlas from the given texture and pixels-per-unit scale.
+        /// 使用给定的纹理和每单位像素比例创建纹理图集。
         /// </summary>
         private DBLiteTextureAtlas(Texture2D texture, float pixelsPerUnit)
         {
@@ -432,7 +432,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Parse a DragonBones texture atlas from its JSON definition and texture.
+        /// 从 JSON 定义和纹理解析 DragonBones 纹理图集。
         /// </summary>
         public static DBLiteTextureAtlas Parse(string name, Texture2D texture, string json)
         {
@@ -467,7 +467,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return a cached sprite for the named sub-texture, or null if not found.
+        /// 返回指定子纹理的缓存精灵，未找到则返回 null。
         /// </summary>
         public Sprite Sprite(string name)
         {
@@ -499,7 +499,7 @@ namespace mlp
         public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>();
 
         /// <summary>
-        /// Parse a DragonBones skeleton file, extracting all armature definitions.
+        /// 解析 DragonBones 骨架文件，提取所有骨架定义。
         /// </summary>
         public static DBLiteSkeleton Parse(string json, DBLiteTextureAtlas textureAtlas)
         {
@@ -540,7 +540,7 @@ namespace mlp
         public string FirstAnimationName;
 
         /// <summary>
-        /// Return the list of display entries for the named slot, or null.
+        /// 返回指定插槽的显示条目列表，若不存在则返回 null。
         /// </summary>
         public List<DBLiteDisplayData> GetDisplays(string slotName)
         {
@@ -548,7 +548,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Parse an armature definition from JSON, including bones, slots, skins, and animations.
+        /// 从 JSON 解析骨架定义，包括骨骼、插槽、皮肤和动画。
         /// </summary>
         public static DBLiteArmatureData Parse(Dictionary<string, object> dict, DBLiteTextureAtlas atlas, int frameRate)
         {
@@ -607,7 +607,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Parse the skin definition to populate display data for each slot.
+        /// 解析皮肤定义以填充每个插槽的显示数据。
         /// </summary>
         private static void ParseSkin(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
@@ -659,7 +659,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Parse all animation definitions and store the first animation name.
+        /// 解析所有动画定义并保存第一个动画的名称。
         /// </summary>
         private static void ParseAnimations(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
@@ -697,7 +697,7 @@ namespace mlp
         public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>();
 
         /// <summary>
-        /// Parse an animation definition with bone tracks, slot tracks, and frame events.
+        /// 解析包含骨骼轨道、插槽轨道和帧事件的动画定义。
         /// </summary>
         public static DBLiteAnimationData Parse(Dictionary<string, object> dict)
         {
@@ -781,7 +781,7 @@ namespace mlp
         private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>();
 
         /// <summary>
-        /// Parse a bone track's translate, rotate, and scale keyframes from JSON.
+        /// 从 JSON 解析骨骼轨道的平移、旋转和缩放关键帧。
         /// </summary>
         public static DBLiteBoneTrack Parse(Dictionary<string, object> dict)
         {
@@ -793,7 +793,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Sample the bone track at the given frame, interpolating between keyframes.
+        /// 在指定帧采样骨骼轨道，在关键帧之间进行插值。
         /// </summary>
         public DBLiteTransform Sample(float frame)
         {
@@ -811,7 +811,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Parse a list of keyframes (translate, rotate, or scale) from the JSON array.
+        /// 从 JSON 数组解析关键帧列表（平移、旋转或缩放）。
         /// </summary>
         private static void ParseTransformFrames(List<object> list, List<DBLiteTimedTransform> output, FrameKind kind)
         {
@@ -862,8 +862,8 @@ namespace mlp
                     Start = start,
                     Duration = duration,
                     Transform = transform,
-                    // DragonBones treats missing tweenEasing and tweenEasing: 0 as linear tweening.
-                    // Only an explicit null disables interpolation between transform keyframes.
+                    // DragonBones 将缺失的 tweenEasing 和 tweenEasing: 0 视为线性补间。
+                    // 只有显式的 null 值才会禁用变换关键帧之间的插值。
                     Tween = !dict.ContainsKey("tweenEasing") || dict["tweenEasing"] != null
                 });
                 start += duration;
@@ -871,7 +871,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Find the surrounding keyframes and interpolate the transform at the given frame.
+        /// 查找包围指定帧的关键帧并进行变换插值。
         /// </summary>
         private static DBLiteTransform SampleList(List<DBLiteTimedTransform> list, float frame, FrameKind kind)
         {
@@ -907,7 +907,7 @@ namespace mlp
         private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>();
 
         /// <summary>
-        /// Parse a slot track's display and color keyframes from JSON.
+        /// 从 JSON 解析插槽轨道的显示和颜色关键帧。
         /// </summary>
         public static DBLiteSlotTrack Parse(Dictionary<string, object> dict)
         {
@@ -964,7 +964,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the display index active at the given frame.
+        /// 返回指定帧激活的显示索引。
         /// </summary>
         public int SampleDisplay(float frame)
         {
@@ -986,7 +986,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Return the alpha multiplier active at the given frame.
+        /// 返回指定帧激活的透明度乘数。
         /// </summary>
         public float SampleAlpha(float frame)
         {
@@ -1021,7 +1021,7 @@ namespace mlp
         public DBLiteArmature ChildArmature { get; private set; }
 
         /// <summary>
-        /// Create a slot instance that manages its current display object and child armatures.
+        /// 创建管理当前显示对象和子骨架的插槽实例。
         /// </summary>
         public DBLiteSlotInstance(DBLiteSlotData slotData, List<DBLiteDisplayData> displays, Transform slotTransform, DBLiteFactory factory)
         {
@@ -1033,7 +1033,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Switch the slot to show a different display by index (image or child armature).
+        /// 切换插槽以通过索引显示不同的内容（图片或子骨架）。
         /// </summary>
         public void SetDisplay(int index)
         {
@@ -1094,7 +1094,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Set the opacity of the current display object (0 = invisible, 1 = fully visible).
+        /// 设置当前显示对象的不透明度（0 = 不可见，1 = 完全可见）。
         /// </summary>
         public void SetAlpha(float alpha)
         {
@@ -1109,7 +1109,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Reset the slot to its initial display index and full opacity.
+        /// 将插槽重置为初始显示索引和完全不透明。
         /// </summary>
         public void ResetToSetupPose()
         {
@@ -1118,7 +1118,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Look up the sprite for a display, using themed ball sprites for the ball clip slot.
+        /// 查找显示内容的精灵，球体剪辑插槽使用主题球精灵。
         /// </summary>
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
         {
@@ -1141,7 +1141,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply position, rotation, and scale from a display transform to a GameObject.
+        /// 将显示变换的位置、旋转和缩放应用到 GameObject。
         /// </summary>
         private static void ApplyDisplayTransform(Transform transform, DBLiteTransform displayTransform)
         {
@@ -1153,7 +1153,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Apply alpha to all SpriteRenderers in the current display object, or toggle visibility for child armatures.
+        /// 将透明度应用到当前显示对象的所有 SpriteRenderer，或切换子骨架的可见性。
         /// </summary>
         private void ApplyAlphaToCurrentDisplay(float alpha)
         {
@@ -1225,7 +1225,7 @@ namespace mlp
         };
 
         /// <summary>
-        /// Parse a transform from a JSON dictionary (x, y, rotation, scale).
+        /// 从 JSON 字典解析变换数据（x、y、旋转、缩放）。
         /// </summary>
         public static DBLiteTransform FromJson(Dictionary<string, object> dict)
         {
@@ -1244,7 +1244,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Combine this transform with an animation transform by adding translation/rotation and multiplying scale.
+        /// 将此变换与动画变换合并：平移/旋转相加，缩放相乘。
         /// </summary>
         public DBLiteTransform Combine(DBLiteTransform animation)
         {
@@ -1259,7 +1259,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Interpolate between two transforms based on the frame kind (translate, rotate, or scale).
+        /// 根据帧类型（平移、旋转或缩放）在两个变换之间插值。
         /// </summary>
         public static DBLiteTransform Lerp(DBLiteTransform a, DBLiteTransform b, float t, FrameKind kind)
         {

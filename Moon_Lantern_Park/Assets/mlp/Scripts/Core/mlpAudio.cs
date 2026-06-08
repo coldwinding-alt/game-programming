@@ -18,10 +18,10 @@ namespace mlp
         public static mlpAudio Instance { get; private set; }
 
         /// <summary>
-        /// Create or return the single shared audio manager instance.
+        /// 创建或返回共享的音频管理器单例实例。
         /// </summary>
-        /// <param name="parent">The transform that this audio object will be attached to.</param>
-        /// <returns>The existing instance if one already exists, otherwise creates a new one.</returns>
+        /// <param name="parent">音频对象挂载的父级 Transform。</param>
+        /// <returns>如果实例已存在则返回现有实例，否则创建新实例。</returns>
         public static mlpAudio Create(Transform parent)
         {
             if (Instance != null)
@@ -45,7 +45,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Clear the shared instance reference when this object is destroyed by Unity.
+        /// 当 Unity 销毁此对象时，清除共享实例引用。
         /// </summary>
         private void OnDestroy()
         {
@@ -56,10 +56,9 @@ namespace mlp
         }
 
         /// <summary>
-        /// Start playing a background music track in a loop.
-        /// Does nothing if music is disabled or if the same track is already playing.
+        /// 开始循环播放背景音乐。如果音乐已关闭或同一首曲目正在播放，则不做任何操作。
         /// </summary>
-        /// <param name="key">The resource name of the music file.</param>
+        /// <param name="key">音乐文件的资源名称。</param>
         public void PlayMusic(string key)
         {
             if (!MusicEnabled)
@@ -83,7 +82,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Stop the currently playing background music.
+        /// 停止当前正在播放的背景音乐。
         /// </summary>
         public void StopMusic()
         {
@@ -91,10 +90,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Play a short sound effect once. Does nothing if sound effects are disabled.
+        /// 播放一次短音效。如果音效已关闭，则不做任何操作。
         /// </summary>
-        /// <param name="key">The resource name of the sound file.</param>
-        /// <param name="volume">Volume from 0 (silent) to 1 (full loud).</param>
+        /// <param name="key">音效文件的资源名称。</param>
+        /// <param name="volume">音量，范围从 0（静音）到 1（最大音量）。</param>
         public void Play(string key, float volume = 1f)
         {
             if (!SfxEnabled)
@@ -110,7 +109,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Turn background music on if it is off, or off if it is on.
+        /// 切换背景音乐的开关状态。
         /// </summary>
         public void ToggleMusic()
         {
@@ -119,7 +118,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// Turn sound effects on if they are off, or off if they are on.
+        /// 切换音效的开关状态。
         /// </summary>
         public void ToggleSfx()
         {
@@ -127,11 +126,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// Executes Load for the mlpAudio workflow.
-        /// This method coordinates related state updates so gameplay behavior stays consistent and predictable.
+        /// 加载音频资源。从 Resources 中按名称加载 AudioClip，加载后会缓存以避免重复加载。
         /// </summary>
-        /// <param name="key">Input value used by this step of the workflow.</param>
-        /// <returns>Result produced for downstream logic in the current frame.</returns>
+        /// <param name="key">音频文件的资源名称。</param>
+        /// <returns>加载到的 AudioClip，加载失败时可能为 null。</returns>
         private AudioClip Load(string key)
         {
             if (!clips.TryGetValue(key, out var clip))
