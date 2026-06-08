@@ -96,6 +96,8 @@ namespace mlp
     public sealed class DBLiteArmature : MonoBehaviour
     {
         private const float SlotDepthStep = 0.001f;
+        private const string BallSlotName = "ball";
+        private const string BallFrontSlotName = "ball_front";
         private DBLiteFactory factory;
         private DBLiteArmatureData data;
         private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>();
@@ -389,6 +391,11 @@ namespace mlp
                     pose = pose.Combine(track.Sample(animFrame, animationDuration, animationLoops));
                 }
 
+                if (IsBallBone(boneData.Name) && ShouldKeepBallRound(currentAnimation))
+                {
+                    pose = KeepUniformScale(pose);
+                }
+
                 transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
                     transform.parent,
                     new Vector3(pose.X, -pose.Y, 0f));
@@ -415,6 +422,35 @@ namespace mlp
                     pair.Value.SetAlpha(0f);
                 }
             }
+        }
+
+        private static bool IsBallBone(string boneName)
+        {
+            return boneName == BallSlotName || boneName == BallFrontSlotName;
+        }
+
+        private static bool ShouldKeepBallRound(DBLiteAnimationData animation)
+        {
+            if (animation == null || string.IsNullOrEmpty(animation.Name))
+            {
+                return false;
+            }
+
+            var name = animation.Name;
+            return name == "jump_wb" ||
+                   name == "landing_wb" ||
+                   (name.StartsWith("fly", StringComparison.Ordinal) && name.EndsWith("_wb", StringComparison.Ordinal)) ||
+                   name.StartsWith("dunk", StringComparison.Ordinal) ||
+                   name.StartsWith("megadunk", StringComparison.Ordinal) ||
+                   (name.StartsWith("md_", StringComparison.Ordinal) && name.EndsWith("_wb", StringComparison.Ordinal));
+        }
+
+        private static DBLiteTransform KeepUniformScale(DBLiteTransform pose)
+        {
+            var uniformScale = Mathf.Max(0.0001f, (Mathf.Abs(pose.ScaleX) + Mathf.Abs(pose.ScaleY)) * 0.5f);
+            pose.ScaleX = Mathf.Sign(pose.ScaleX == 0f ? 1f : pose.ScaleX) * uniformScale;
+            pose.ScaleY = Mathf.Sign(pose.ScaleY == 0f ? 1f : pose.ScaleY) * uniformScale;
+            return pose;
         }
     }
 
@@ -1143,14 +1179,10 @@ namespace mlp
         {
             if (display != null && display.Name == ".Game/ball/BallClip")
             {
-                var themedBall = mlpGameplaySpriteLoader.LoadBallThemeSprite(
+                return mlpGameplaySpriteLoader.LoadMatchBallSprite(
                     mlpInventory.Instance.MatchData.BallTheme,
                     0.5f,
                     0.5f);
-                if (themedBall != null)
-                {
-                    return themedBall;
-                }
             }
 
             var armature = slotTransform.GetComponentInParent<DBLiteArmature>();

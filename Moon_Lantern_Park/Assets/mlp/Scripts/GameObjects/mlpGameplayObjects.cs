@@ -25,6 +25,12 @@ namespace mlp
                 : LoadGameplaySprite(resourcePath, anchorX, anchorY);
         }
 
+        public static Sprite LoadMatchBallSprite(mlpBallTheme theme, float anchorX, float anchorY)
+        {
+            return LoadBallThemeSprite(theme, anchorX, anchorY) ??
+                   mlpAtlasCache.Instance.Gameplay.Sprite("BallMC0000", anchorX, anchorY);
+        }
+
         /// <summary>
         /// 从 Resources 加载游戏精灵，直接资源路径缺失时回退到图集查找。
         /// </summary>
@@ -1308,8 +1314,7 @@ namespace mlp
         /// <returns>解析到的篮球精灵。</returns>
         private Sprite ResolveBallSprite()
         {
-            var themedSprite = mlpGameplaySpriteLoader.LoadBallThemeSprite(gameCore.MatchData.BallTheme, 0.5f, 0.5f);
-            return themedSprite ?? mlpAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
+            return mlpGameplaySpriteLoader.LoadMatchBallSprite(gameCore.MatchData.BallTheme, 0.5f, 0.5f);
         }
 
         /// <summary>
