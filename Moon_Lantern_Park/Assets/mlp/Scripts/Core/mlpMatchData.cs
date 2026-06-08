@@ -891,9 +891,10 @@ namespace mlp
 
         public bool StartAdventureLevel(int levelIndex, int playerCharacterId)
         {
-            if (!IsAdventureActive || Adventure.Completed)
+            var resolvedPlayerCharacterId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
+            if (!IsAdventureActive || Adventure.Completed || Adventure.PlayerCharacterId != resolvedPlayerCharacterId)
             {
-                BeginAdventure(playerCharacterId);
+                BeginAdventure(resolvedPlayerCharacterId);
             }
 
             if (!Adventure.SelectLevel(levelIndex))

@@ -587,13 +587,70 @@ namespace mlp.EditorTools
                 errors.Add("Adventure flow did not complete after all levels were won.");
             }
 
+            ValidateInventoryAdventurePlayerSelectionRefresh(errors);
+
             ValidateNarrativeTerm(mlpSinglePlayerNarrative.GetTournamentStageTitle(new mlpTournamentData()), "tournament stage title", errors);
             ValidateNarrativeTerm(mlpSinglePlayerNarrative.GetTournamentStageDescription(new mlpTournamentData()), "tournament stage description", errors);
             ValidateNarrativeTerm(mlpSinglePlayerNarrative.GetTournamentPlacementEnding(1), "tournament champion ending", errors);
         }
 
         /// <summary>
-        /// 确保项目中已导入 TMP 基础资源（设置和着色器）。
+        /// Verifies adventure matches rebuild when the selected player character changes.
+        /// </summary>
+        private static void ValidateInventoryAdventurePlayerSelectionRefresh(List<string> errors)
+        {
+            var inventory = mlpInventory.Instance;
+            var originalMatchData = inventory.MatchData;
+            var originalAdventure = inventory.Adventure;
+            var originalTournament = inventory.Tournament;
+            var originalParticipantMode = inventory.ParticipantMode;
+            var originalSessionMode = inventory.SessionMode;
+            var originalGameMode = inventory.GameMode;
+            var originalMatchPrepared = inventory.MatchPrepared;
+            var originalDifficulty = inventory.Difficulty;
+            var originalPendingTutorialNextAction = inventory.PendingTutorialNextAction;
+
+            try
+            {
+                inventory.MatchData = new mlpMatchData(true);
+                inventory.Adventure = new mlpAdventureData();
+                inventory.Tournament = new mlpTournamentData();
+                inventory.Difficulty = mlpAiDifficulty.Normal;
+                inventory.BeginAdventure(0);
+
+                const int selectedCharacterId = 3;
+                if (!inventory.StartAdventureLevel(0, selectedCharacterId))
+                {
+                    errors.Add("Adventure player-selection refresh test could not start the first level.");
+                    return;
+                }
+
+                if (inventory.Adventure.PlayerCharacterId != selectedCharacterId)
+                {
+                    errors.Add($"Adventure did not refresh its player character when selection changed. Expected {selectedCharacterId}, got {inventory.Adventure.PlayerCharacterId}.");
+                }
+
+                if (inventory.MatchData.CharacterIds[0] != selectedCharacterId)
+                {
+                    errors.Add($"Adventure match did not use the selected player character. Expected {selectedCharacterId}, got {inventory.MatchData.CharacterIds[0]}.");
+                }
+            }
+            finally
+            {
+                inventory.MatchData = originalMatchData ?? new mlpMatchData(true);
+                inventory.Adventure = originalAdventure ?? new mlpAdventureData();
+                inventory.Tournament = originalTournament ?? new mlpTournamentData();
+                inventory.ParticipantMode = originalParticipantMode;
+                inventory.SessionMode = originalSessionMode;
+                inventory.GameMode = originalGameMode;
+                inventory.MatchPrepared = originalMatchPrepared;
+                inventory.Difficulty = originalDifficulty;
+                inventory.PendingTutorialNextAction = originalPendingTutorialNextAction;
+            }
+        }
+
+        /// <summary>
+        /// Ensures TextMesh Pro essential resources are present.
         /// </summary>
         private static void EnsureTextMeshProEssentialResources(List<string> errors)
         {

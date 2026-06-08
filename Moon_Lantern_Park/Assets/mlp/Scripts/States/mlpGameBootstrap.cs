@@ -1103,9 +1103,11 @@ namespace mlp
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             var inventory = mlpInventory.Instance;
             inventory.SetParticipantMode(pendingParticipantMode);
-            if (!inventory.IsAdventureActive)
+            var selectedAdventureCharacterId = mlpPlayersData.SanitizeCharacterId(quickCharacterId);
+            if (!inventory.IsAdventureActive || inventory.Adventure.PlayerCharacterId != selectedAdventureCharacterId)
             {
-                inventory.BeginAdventure(quickCharacterId);
+                inventory.BeginAdventure(selectedAdventureCharacterId);
+                adventureSelectedLevelIndex = inventory.Adventure.CurrentLevelIndex;
             }
 
             var adventure = inventory.Adventure;
