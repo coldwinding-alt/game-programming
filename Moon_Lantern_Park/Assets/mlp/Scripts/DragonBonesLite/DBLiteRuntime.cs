@@ -109,6 +109,7 @@ namespace mlp
         private bool playing = true;
 
         public string ArmatureName => data != null ? data.Name : string.Empty;
+        public float PlaybackSpeed { get; set; } = 1f;
         public event Action<string> AnimationComplete;
         public event Action<string, string> FrameEvent;
 
@@ -232,7 +233,7 @@ namespace mlp
             if (playing)
             {
                 var previousFrame = elapsedFrames;
-                elapsedFrames += Time.deltaTime * data.FrameRate;
+                elapsedFrames += Time.deltaTime * data.FrameRate * Mathf.Max(0f, PlaybackSpeed);
                 DispatchFrameEvents(previousFrame, elapsedFrames);
                 TryDispatchAnimationComplete(previousFrame, elapsedFrames);
             }

@@ -681,19 +681,21 @@ def custom_dunk(name: str, duration: int, event_at: int, *, style: int) -> dict:
     lift = max(1, event_at - wind - 2)
     push = 2
     finish = max(1, duration - wind - lift - push)
-    reach = 42 + style * 6
     side = -1 if style == 2 else 1
-    release_x = 20 + style * 2.5
-    release_y = -reach - 52
+    lean = 4 + style * 1.5
+    release_x = 15 + style * 2
+    release_y = -70 - style * 3
+    hang_y = -20 - style * 2
+    gather_ball_y = -34 - style * 2
     bones = [
-        track("body", translate=translate_frames((wind, -3 * side, -16), (lift, 4 * side, -reach), (push, 6 * side, -reach - 4), (finish, 2 * side, -reach + 10)), rotate=rotate_frames((wind, -9 * side), (lift, 12 * side), (push, 15 * side), (finish, 4 * side)), scale=scale_frames((wind, 1.04, 0.96), (lift, 0.97, 1.08), (push, 0.96, 1.1), (finish, 1, 1))),
-        track("head", translate=translate_frames((wind, -3 * side, -23), (lift, 5 * side, -reach - 15), (push, 6 * side, -reach - 18), (finish, 1.5 * side, -reach - 2)), rotate=rotate_frames((wind, -10 * side), (lift, 13 * side), (push, 15 * side), (finish, 4 * side))),
-        track("left hand", translate=translate_frames((wind, 3, -47), (lift, 8 - style, -reach - 56), (push, release_x - 5, release_y + 2), (finish, -2 * side, -reach - 22)), rotate=rotate_frames((wind, -82), (lift, -112 + style * 3), (push, -128 + style * 4), (finish, -38))),
-        track("right hand", translate=translate_frames((wind, -2, -43), (lift, release_x - 4, -reach - 50), (push, release_x, release_y), (finish, 10, -reach - 20)), rotate=rotate_frames((wind, -54), (lift, -104), (push, -126), (finish, -32))),
-        track("left leg", translate=translate_frames((wind, 7, -7), (lift, -8 * side, -12), (push, -10 * side, -13), (finish, 4, -4)), rotate=rotate_frames((wind, 34), (lift, 66), (push, 72), (finish, 24))),
-        track("right leg", translate=translate_frames((wind, -6, -8), (lift, 14 * side, -8), (push, 16 * side, -7), (finish, -4, -3)), rotate=rotate_frames((wind, 46), (lift, -22 * side), (push, -30 * side), (finish, 10))),
-        track("ball", translate=translate_frames((wind, 9 + style, -58 - style * 3), (lift, release_x - 6, -reach - 45), (push, release_x, release_y), (finish, release_x + 2, release_y - 5)), scale=scale_frames((wind, 1.08, 1.08), (lift, 1.16, 1.16), (push, 1.02, 1.02), (finish, 0.86, 0.86))),
-        track("ball_front", translate=translate_frames((wind, 9 + style, -58 - style * 3), (lift, release_x - 6, -reach - 45), (push, release_x, release_y), (finish, release_x + 2, release_y - 5)), scale=scale_frames((wind, 1.08, 1.08), (lift, 1.16, 1.16), (push, 1.02, 1.02), (finish, 0.86, 0.86))),
+        track("body", translate=translate_frames((wind, -2 * side, 4), (lift, 2 * side, hang_y), (push, lean * side, hang_y - 2), (finish, 1 * side, -6)), rotate=rotate_frames((wind, -5 * side), (lift, 7 * side), (push, 10 * side), (finish, 2 * side)), scale=scale_frames((wind, 1.04, 0.94), (lift, 0.99, 1.03), (push, 0.99, 1.03), (finish, 1, 1))),
+        track("head", translate=translate_frames((wind, -2 * side, -1), (lift, 2.5 * side, hang_y - 7), (push, lean * side, hang_y - 9), (finish, 0.5 * side, -4)), rotate=rotate_frames((wind, -5 * side), (lift, 6 * side), (push, 8 * side), (finish, 1 * side))),
+        track("left hand", translate=translate_frames((wind, 4, -34), (lift, 6, -60 - style), (push, release_x - 5, release_y + 3), (finish, 2, -26)), rotate=rotate_frames((wind, -70), (lift, -94), (push, -112), (finish, -30))),
+        track("right hand", translate=translate_frames((wind, 2, -32), (lift, release_x - 5, -58 - style), (push, release_x, release_y), (finish, 7, -24)), rotate=rotate_frames((wind, -48), (lift, -88), (push, -108), (finish, -24))),
+        track("left leg", translate=translate_frames((wind, 4, 2), (lift, 5, -6), (push, 4, -7), (finish, 1, 1)), rotate=rotate_frames((wind, 18), (lift, 34), (push, 38), (finish, 8))),
+        track("right leg", translate=translate_frames((wind, -4, 2), (lift, -5, -5), (push, -5, -6), (finish, -1, 1)), rotate=rotate_frames((wind, -16), (lift, 30), (push, 34), (finish, 7))),
+        track("ball", translate=translate_frames((wind, 8 + style, gather_ball_y), (lift, release_x - 6, -60 - style), (push, release_x, release_y), (finish, release_x, release_y)), scale=scale_frames((wind, 1.04, 1.04), (lift, 1.08, 1.08), (push, 1, 1), (finish, 1, 1))),
+        track("ball_front", translate=translate_frames((wind, 8 + style, gather_ball_y), (lift, release_x - 6, -60 - style), (push, release_x, release_y), (finish, release_x, release_y)), scale=scale_frames((wind, 1.04, 1.04), (lift, 1.08, 1.08), (push, 1, 1), (finish, 1, 1))),
     ]
     return animation(name, duration, bones=bones, slots=slots, frames=event_frames(duration, event_at, "dunk"), fade=0.01)
 
@@ -1432,6 +1434,42 @@ def validate(data: dict, texture_json: dict) -> None:
         }
         if event_name not in animation_events:
             raise RuntimeError(f"Animation {animation_name} is missing frame event {event_name}.")
+
+    expected_dunk_event_frames = {
+        "dunk1": 18,
+        "dunk2": 9,
+        "dunk3": 14,
+    }
+    for animation_name, event_frame in expected_dunk_event_frames.items():
+        animation_data = animations_by_name[animation_name]
+        cursor = 0
+        dunk_event_at = None
+        for item in animation_data.get("frame", []):
+            if item.get("event") == "dunk":
+                dunk_event_at = cursor
+                break
+            cursor += item.get("duration", 1)
+        if dunk_event_at != event_frame:
+            raise RuntimeError(f"Animation {animation_name} dunk event moved to {dunk_event_at}; expected {event_frame}.")
+
+        slots_by_name = {item["name"]: item for item in animation_data.get("slot", [])}
+        ball_frames = slots_by_name["ball"]["displayFrame"]
+        if any(item.get("value") != -1 for item in ball_frames):
+            raise RuntimeError(f"Animation {animation_name} must keep the back ball slot hidden.")
+
+        front_frames = slots_by_name["ball_front"]["displayFrame"]
+        if not front_frames or front_frames[0].get("value") != 0:
+            raise RuntimeError(f"Animation {animation_name} must show ball_front before release.")
+
+        cursor = 0
+        hidden_front_at = None
+        for item in front_frames:
+            if item.get("value") == -1:
+                hidden_front_at = cursor
+                break
+            cursor += item.get("duration", 1)
+        if hidden_front_at is None or hidden_front_at >= event_frame:
+            raise RuntimeError(f"Animation {animation_name} must hide ball_front before the dunk event.")
 
     misplaced_mega = {
         anim["name"]

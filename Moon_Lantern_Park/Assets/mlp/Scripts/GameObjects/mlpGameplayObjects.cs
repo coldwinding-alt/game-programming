@@ -2426,6 +2426,8 @@ namespace mlp
         private bool dunkReleased;
         private float dunkTimer;
         private float dunkDuration;
+        private float dunkReleaseTime;
+        private bool dunkBallSlotsHidden;
         private Vector2 dunkStartPosition;
         private Vector2 dunkTargetPosition;
         private BlockPumpPhase blockPumpPhase;
@@ -2702,6 +2704,8 @@ namespace mlp
             dunkReleased = false;
             dunkTimer = 0f;
             dunkDuration = 0f;
+            dunkReleaseTime = 0f;
+            SetDunkBallSlotsHidden(false);
             blockPumpPhase = BlockPumpPhase.None;
             blockPumpIsPump = false;
             blockPumpTimer = 0f;
@@ -4014,6 +4018,7 @@ namespace mlp
             if (armature != null)
             {
                 visualState = "pumpEnd";
+                SetAnimationPlaybackSpeed(visualState);
                 armature.StopAtStart("pumpEnd");
             }
 
@@ -4425,6 +4430,12 @@ namespace mlp
         /// <param name="state">动画状态名称</param>
         private void PlayState(string state)
         {
+            if (!IsDunkAnimationState(state))
+            {
+                SetDunkBallSlotsHidden(false);
+            }
+
+            SetAnimationPlaybackSpeed(state);
             if (visualState == state)
             {
                 return;
@@ -4441,7 +4452,63 @@ namespace mlp
         private void SetStateAtStart(string state)
         {
             visualState = state;
+            if (!IsDunkAnimationState(state))
+            {
+                SetDunkBallSlotsHidden(false);
+            }
+
+            SetAnimationPlaybackSpeed(state);
             armature?.StopAtStart(state);
+        }
+
+        private void SetDunkBallSlotsHidden(bool hidden)
+        {
+            if (dunkBallSlotsHidden == hidden)
+            {
+                return;
+            }
+
+            dunkBallSlotsHidden = hidden;
+            if (armature == null)
+            {
+                return;
+            }
+
+            armature.SetSlotHidden("ball", hidden);
+            armature.SetSlotHidden("ball_front", hidden);
+        }
+
+        private void SetAnimationPlaybackSpeed(string state)
+        {
+            if (armature != null)
+            {
+                armature.PlaybackSpeed = AnimationPlaybackSpeed(state);
+            }
+        }
+
+        private static float AnimationPlaybackSpeed(string state)
+        {
+            if (state == "dunk1")
+            {
+                return mlpObjectsData.Dunk1AnimationSpeed;
+            }
+
+            if (state == "dunk2")
+            {
+                return mlpObjectsData.Dunk2AnimationSpeed;
+            }
+
+            if (state == "dunk3")
+            {
+                return mlpObjectsData.Dunk3AnimationSpeed;
+            }
+
+            return 1f;
+        }
+
+        private static bool IsDunkAnimationState(string state)
+        {
+            return state == "dunk1" || state == "dunk2" || state == "dunk3";
         }
 
         /// <summary>
@@ -4937,20 +5004,7 @@ namespace mlp
                 return false;
             }
 
-            isDunking = true;
-            canDoAction = false;
-            canThrow = false;
-            dunkReleased = false;
-            dunkTimer = 0f;
-            dunkDuration = DunkDuration(dunkType);
-            dunkStartPosition = Position;
-            dunkTargetPosition = new Vector2(DunkTargetX(), mlpObjectsData.DunkY);
-            Velocity = Vector2.zero;
-            dashTimer = 0f;
-            dashDirection = 0;
-            actionLatch = Mathf.Max(actionLatch, dunkDuration + 0.15f);
-            canTakeInHands = false;
-            PlayState("dunk" + dunkType);
+            BeginDunkState(dunkType);
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Dunk, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PSwoosh, 0.8f);
             return true;
@@ -4986,20 +5040,7 @@ namespace mlp
             tutorialPutbackDunkPrimed = false;
             tutorialDunkCompletionChanceOverride = Mathf.Max(tutorialDunkCompletionChanceOverride, TutorialPutbackCompletionChance);
             ball.RemoveFromPhysics();
-            isDunking = true;
-            canDoAction = false;
-            canThrow = false;
-            dunkReleased = false;
-            dunkTimer = 0f;
-            dunkDuration = DunkDuration(dunkType);
-            dunkStartPosition = Position;
-            dunkTargetPosition = new Vector2(DunkTargetX(), mlpObjectsData.DunkY);
-            Velocity = Vector2.zero;
-            dashTimer = 0f;
-            dashDirection = 0;
-            actionLatch = Mathf.Max(actionLatch, dunkDuration + 0.15f);
-            canTakeInHands = false;
-            PlayState("dunk" + dunkType);
+            BeginDunkState(dunkType);
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.PutbackDunk, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PSwoosh, 0.8f);
             return true;
@@ -5029,6 +5070,26 @@ namespace mlp
             }
 
             return 0;
+        }
+
+        private void BeginDunkState(int dunkType)
+        {
+            isDunking = true;
+            canDoAction = false;
+            canThrow = false;
+            dunkReleased = false;
+            dunkTimer = 0f;
+            dunkDuration = DunkTravelDuration(dunkType);
+            dunkReleaseTime = DunkReleaseTime(dunkType);
+            dunkStartPosition = Position;
+            dunkTargetPosition = new Vector2(DunkTargetX(), mlpObjectsData.DunkY);
+            Velocity = Vector2.zero;
+            dashTimer = 0f;
+            dashDirection = 0;
+            actionLatch = Mathf.Max(actionLatch, DunkActionLockDuration(dunkType));
+            canTakeInHands = false;
+            SetDunkBallSlotsHidden(false);
+            PlayState("dunk" + dunkType);
         }
 
         /// <summary>
@@ -5076,6 +5137,47 @@ namespace mlp
                     : mlpObjectsData.Dunk1Duration;
         }
 
+        private static float DunkTravelDuration(int dunkType)
+        {
+            return dunkType == 2
+                ? mlpObjectsData.Dunk2TravelDuration
+                : dunkType == 3
+                    ? mlpObjectsData.Dunk3TravelDuration
+                    : mlpObjectsData.Dunk1TravelDuration;
+        }
+
+        private static float DunkReleaseTime(int dunkType)
+        {
+            var eventTime = dunkType == 2
+                ? mlpObjectsData.Dunk2ReleaseTime
+                : dunkType == 3
+                    ? mlpObjectsData.Dunk3ReleaseTime
+                    : mlpObjectsData.Dunk1ReleaseTime;
+            return eventTime / DunkAnimationSpeed(dunkType);
+        }
+
+        private static float DunkAnimationSpeed(int dunkType)
+        {
+            return dunkType == 2
+                ? mlpObjectsData.Dunk2AnimationSpeed
+                : dunkType == 3
+                    ? mlpObjectsData.Dunk3AnimationSpeed
+                    : mlpObjectsData.Dunk1AnimationSpeed;
+        }
+
+        private static float DunkActionLockDuration(int dunkType)
+        {
+            var animationDuration = DunkDuration(dunkType) / DunkAnimationSpeed(dunkType);
+            return Mathf.Max(DunkTravelDuration(dunkType), animationDuration) + 0.12f;
+        }
+
+        private static float DunkTravelEase(float t)
+        {
+            t = Mathf.Clamp01(t);
+            var inverse = 1f - t;
+            return 1f - inverse * inverse * inverse;
+        }
+
         /// <summary>
         /// 更新扣篮状态。
         /// </summary>
@@ -5084,8 +5186,13 @@ namespace mlp
         {
             dunkTimer += dt;
             var t = dunkDuration > 0f ? Mathf.Clamp01(dunkTimer / dunkDuration) : 1f;
-            Position = Vector2.Lerp(dunkStartPosition, dunkTargetPosition, Mathf.SmoothStep(0f, 1f, t));
+            Position = Vector2.Lerp(dunkStartPosition, dunkTargetPosition, DunkTravelEase(t));
             IsGrounded = false;
+            if (!dunkReleased && dunkTimer >= dunkReleaseTime)
+            {
+                ReleaseDunkBall();
+            }
+
             UpdateGraphic();
 
             if (t < 1f)
@@ -5113,6 +5220,7 @@ namespace mlp
             }
 
             dunkReleased = true;
+            SetDunkBallSlotsHidden(true);
             var completionChance = tutorialPerfectDunkPrimed
                 ? 1f
                 : tutorialDunkCompletionChanceOverride >= 0f

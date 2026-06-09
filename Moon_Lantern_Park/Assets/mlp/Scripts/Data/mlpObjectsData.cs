@@ -68,6 +68,16 @@ namespace mlp
         public const float Dunk1Duration = 24f / 30f;
         public const float Dunk2Duration = 15f / 30f;
         public const float Dunk3Duration = 24f / 30f;
+        // Runtime feel tuning layered over the generated animation frame counts above.
+        public const float Dunk1TravelDuration = 19f / 30f;
+        public const float Dunk2TravelDuration = 12f / 30f;
+        public const float Dunk3TravelDuration = 18f / 30f;
+        public const float Dunk1ReleaseTime = 18f / 30f;
+        public const float Dunk2ReleaseTime = 9f / 30f;
+        public const float Dunk3ReleaseTime = 14f / 30f;
+        public const float Dunk1AnimationSpeed = 1.16f;
+        public const float Dunk2AnimationSpeed = 1.12f;
+        public const float Dunk3AnimationSpeed = 1.16f;
         public const float AlleyOopX = 160f;
         public const float AlleyOopY = 150f;
         public const float SuperDashX1 = 150f;
