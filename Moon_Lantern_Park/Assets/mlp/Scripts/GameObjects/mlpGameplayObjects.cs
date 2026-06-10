@@ -2533,8 +2533,6 @@ namespace mlp
                     return accent ? mlpAssets.Images.SkillFxImages.ReaperDashAccent : mlpAssets.Images.SkillFxImages.ReaperDashCore;
                 case mlpCharacterSkillType.BadLuck:
                     return accent ? mlpAssets.Images.SkillFxImages.BadLuckAccent : mlpAssets.Images.SkillFxImages.BadLuckCore;
-                case mlpCharacterSkillType.HarvestTime:
-                    return accent ? mlpAssets.Images.SkillFxImages.HarvestTimeAccent : mlpAssets.Images.SkillFxImages.HarvestTimeCore;
                 default:
                     return null;
             }

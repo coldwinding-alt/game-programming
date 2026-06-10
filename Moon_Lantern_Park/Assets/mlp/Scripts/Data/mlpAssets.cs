@@ -63,8 +63,6 @@ namespace mlp
                 public const string ReaperDashAccent = "SkillFx/reaper_dash_accent";
                 public const string BadLuckCore = "SkillFx/bad_luck_core";
                 public const string BadLuckAccent = "SkillFx/bad_luck_accent";
-                public const string HarvestTimeCore = "SkillFx/harvest_time_core";
-                public const string HarvestTimeAccent = "SkillFx/harvest_time_accent";
             }
 
             /// <summary>技能图标和充能遮罩图片路径。</summary>
