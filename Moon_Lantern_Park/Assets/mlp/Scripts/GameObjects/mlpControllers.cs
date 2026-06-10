@@ -1876,14 +1876,17 @@ namespace mlp
         /// <returns>计算结果。</returns>
         protected int MoveInAttack()
         {
+            // 1. 先尝试向跳跃点移动
             var move = MoveTo(jumpPoint);
             if (move == 0)
             {
+                // 2. 已到达跳跃点 → 标记"可以起跳投篮"，再判断是否需要继续走向攻击点
                 attackJump = true;
                 move = Mathf.Approximately(jumpPoint, attackPoint) ? 0 : MoveTo(attackPoint);
             }
             else
             {
+                // 3. 还没到跳跃点 → 标记"不要跳"，向攻击点移动（先走大致方向）
                 attackJump = false;
                 move = MoveTo(attackPoint);
             }
