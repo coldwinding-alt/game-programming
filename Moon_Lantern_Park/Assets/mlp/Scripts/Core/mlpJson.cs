@@ -212,6 +212,7 @@ namespace mlp
             /// <returns>对象解析成功时返回 true。</returns>
             private bool TryReadObject(out object value)
             {
+                // 1. 创建空字典，读取左花括号
                 var map = new Dictionary<string, object>();
                 value = map;
 
@@ -220,33 +221,40 @@ namespace mlp
                     return false;
                 }
 
+                // 2. 空对象直接返回
                 SkipWhitespace();
                 if (TryConsume('}'))
                 {
                     return true;
                 }
 
+                // 3. 循环读取键值对：键 -> 冒号 -> 值
                 while (true)
                 {
+                    // 4. 读取键名（字符串）
                     SkipWhitespace();
                     if (!TryReadStringValue(out var propertyName))
                     {
                         return false;
                     }
 
+                    // 5. 读取冒号分隔符
                     SkipWhitespace();
                     if (!TryConsume(':'))
                     {
                         return false;
                     }
 
+                    // 6. 读取值（可以是任意 JSON 类型）
                     if (!TryReadValue(out var propertyValue))
                     {
                         return false;
                     }
 
+                    // 7. 存入字典
                     map[propertyName] = propertyValue;
 
+                    // 8. 遇到右花括号结束，遇到逗号继续读下一对
                     SkipWhitespace();
                     if (TryConsume('}'))
                     {
@@ -267,6 +275,7 @@ namespace mlp
             /// <returns>数组解析成功时返回 true。</returns>
             private bool TryReadArray(out object value)
             {
+                // 1. 创建空列表，读取左方括号
                 var items = new List<object>();
                 value = items;
 
@@ -275,21 +284,26 @@ namespace mlp
                     return false;
                 }
 
+                // 2. 空数组直接返回
                 SkipWhitespace();
                 if (TryConsume(']'))
                 {
                     return true;
                 }
 
+                // 3. 循环读取每个元素
                 while (true)
                 {
+                    // 4. 读取一个值
                     if (!TryReadValue(out var itemValue))
                     {
                         return false;
                     }
 
+                    // 5. 添加到列表
                     items.Add(itemValue);
 
+                    // 6. 遇到右方括号结束，遇到逗号继续读下一个
                     SkipWhitespace();
                     if (TryConsume(']'))
                     {
@@ -327,22 +341,26 @@ namespace mlp
             /// <returns>字符串解析成功时返回 true。</returns>
             private bool TryReadStringValue(out string value)
             {
+                // 1. 读取左引号
                 value = null;
                 if (!TryConsume('"'))
                 {
                     return false;
                 }
 
+                // 2. 逐字符读取直到遇到右引号
                 var builder = new StringBuilder();
                 while (!IsAtEnd)
                 {
                     var current = ReadChar();
+                    // 3. 右引号：字符串结束
                     if (current == '"')
                     {
                         value = builder.ToString();
                         return true;
                     }
 
+                    // 4. 反斜杠：处理转义序列
                     if (current == '\\')
                     {
                         if (!TryAppendEscapeSequence(builder))
@@ -353,11 +371,13 @@ namespace mlp
                         continue;
                     }
 
+                    // 5. 控制字符非法
                     if (current < ' ')
                     {
                         return false;
                     }
 
+                    // 6. 普通字符直接追加
                     builder.Append(current);
                 }
 
@@ -372,11 +392,13 @@ namespace mlp
             /// <returns>转义序列合法时返回 true。</returns>
             private bool TryAppendEscapeSequence(StringBuilder builder)
             {
+                // 1. 确保反斜杠后面还有字符
                 if (IsAtEnd)
                 {
                     return false;
                 }
 
+                // 2. 根据转义字符类型追加对应的实际字符
                 switch (ReadChar())
                 {
                     case '"':
@@ -403,6 +425,7 @@ namespace mlp
                     case 't':
                         builder.Append('\t');
                         return true;
+                    // 3. \u 表示 Unicode 转义，交给专门方法处理
                     case 'u':
                         return TryAppendUnicode(builder);
                     default:
@@ -418,11 +441,13 @@ namespace mlp
             /// <returns>十六进制数字合法时返回 true。</returns>
             private bool TryAppendUnicode(StringBuilder builder)
             {
+                // 1. 读取第一个四位十六进制数
                 if (!TryReadHexQuad(out var firstUnit))
                 {
                     return false;
                 }
 
+                // 2. 如果不是高代理项（BMP 字符），直接追加
                 var firstChar = (char)firstUnit;
                 if (!char.IsHighSurrogate(firstChar))
                 {
@@ -430,14 +455,17 @@ namespace mlp
                     return true;
                 }
 
+                // 3. 是高代理项，尝试读取第二个 \uXXXX（低代理项）
                 var rewind = index;
                 if (!TryConsume('\\') || !TryConsume('u') || !TryReadHexQuad(out var secondUnit))
                 {
+                    // 4. 找不到配对的低代理项，只追加高代理项
                     index = rewind;
                     builder.Append(firstChar);
                     return true;
                 }
 
+                // 5. 验证是低代理项，配对成功则两个都追加
                 var secondChar = (char)secondUnit;
                 if (!char.IsLowSurrogate(secondChar))
                 {
@@ -504,6 +532,7 @@ namespace mlp
             /// <returns>成功读取到合法数字时返回 true。</returns>
             private bool TryReadNumber(out object value)
             {
+                // 1. 记录数字起始位置，读取可选的负号
                 value = null;
                 var start = index;
                 var isWholeNumber = true;
@@ -513,11 +542,13 @@ namespace mlp
                     return false;
                 }
 
+                // 2. 读取整数部分
                 if (!TryReadIntegerDigits())
                 {
                     return false;
                 }
 
+                // 3. 有小数点则读取小数部分
                 if (TryConsume('.'))
                 {
                     isWholeNumber = false;
@@ -527,6 +558,7 @@ namespace mlp
                     }
                 }
 
+                // 4. 有 e/E 则读取指数部分
                 if (!IsAtEnd && (source[index] == 'e' || source[index] == 'E'))
                 {
                     isWholeNumber = false;
@@ -542,6 +574,7 @@ namespace mlp
                     }
                 }
 
+                // 5. 整数用 long，小数用 double
                 var slice = source.Substring(start, index - start);
                 if (isWholeNumber && long.TryParse(slice, NumberStyles.Integer, CultureInfo.InvariantCulture, out var wholeNumber))
                 {

@@ -162,11 +162,13 @@ namespace mlp
         /// </summary>
         public void SetSlotHidden(string slotName, bool hidden)
         {
+            // 1. 插槽名为空时跳过
             if (string.IsNullOrEmpty(slotName))
             {
                 return;
             }
 
+            // 2. 将插槽名添加到或从隐藏列表中移除
             if (hidden)
             {
                 hiddenSlots.Add(slotName);
@@ -176,11 +178,13 @@ namespace mlp
                 hiddenSlots.Remove(slotName);
             }
 
+            // 3. 如果该插槽尚未创建，只记录状态即可（创建时会检查）
             if (!slots.TryGetValue(slotName, out var slot))
             {
                 return;
             }
 
+            // 4. 隐藏时直接将透明度设为 0，取消隐藏时刷新整个骨架姿态
             if (hidden)
             {
                 slot.SetAlpha(0f);
@@ -480,11 +484,13 @@ namespace mlp
 
         private static bool ShouldKeepBallRound(DBLiteAnimationData animation)
         {
+            // 1. 没有动画数据时不需要保持球体圆形
             if (animation == null || string.IsNullOrEmpty(animation.Name))
             {
                 return false;
             }
 
+            // 2. 跳跃、落地、飞行、扣篮和超级扣篮动画中，球体需要保持等比缩放（不被压扁）
             var name = animation.Name;
             return name == "jump_wb" ||
                    name == "landing_wb" ||
@@ -1299,10 +1305,11 @@ namespace mlp
                     0.5f);
             }
 
-            // 2. 普通图片：通过反射获取骨架数据，再从纹理图集中查找对应精灵
+            // 2. 普通图片：通过反射获取父级骨架组件的私有数据字段
             var armature = slotTransform.GetComponentInParent<DBLiteArmature>();
             var dataField = typeof(DBLiteArmature).GetField("data", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var armatureData = dataField != null ? dataField.GetValue(armature) as DBLiteArmatureData : null;
+            // 3. 从骨架的纹理图集中查找并返回对应的精灵
             return armatureData != null ? armatureData.TextureAtlas.Sprite(display.Name) : null;
         }
 

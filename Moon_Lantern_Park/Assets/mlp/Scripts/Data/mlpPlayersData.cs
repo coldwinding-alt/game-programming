@@ -114,16 +114,19 @@ namespace mlp
         /// <returns>一个有效且已启用的角色 ID。</returns>
         public static int SanitizeCharacterId(int requestedCharacterId, int fallbackCharacterId = 0)
         {
+            // 1. 请求的角色有效且已启用，直接返回
             if (IsCharacterEnabled(requestedCharacterId))
             {
                 return requestedCharacterId;
             }
 
+            // 2. 请求的不可用，尝试备用角色
             if (IsCharacterEnabled(fallbackCharacterId))
             {
                 return fallbackCharacterId;
             }
 
+            // 3. 备用也不可用，返回第一个已启用的角色
             var active = GetActiveCharacterIds();
             return active.Length > 0 ? active[0] : 0;
         }
@@ -235,13 +238,16 @@ namespace mlp
         /// <returns>裁剪后的头像精灵，如果图集缺失则返回 null。</returns>
         public static Sprite GetCharacterPortraitSprite(int characterId, float desiredMaxPixels = 0f)
         {
+            // 1. 获取角色定义和原始头像精灵
             var definition = GetCharacterDefinition(characterId);
             var baseSprite = GetPortraitBaseSprite(definition);
+            // 2. 图集中找不到头像则返回 null
             if (baseSprite == null)
             {
                 return null;
             }
 
+            // 3. 获取或创建裁剪后的头像精灵（首次会自动裁剪并缓存）
             return GetOrCreatePortraitDisplaySprite(definition.PortraitSpriteName, baseSprite);
         }
 
@@ -298,8 +304,11 @@ namespace mlp
         /// <param name="characterId">要应用外观的角色索引。</param>
         public static void ApplyCharacter(DBLiteArmature armature, int characterId)
         {
+            // 1. 获取角色定义
             var definition = GetCharacterDefinition(characterId);
+            // 2. 切换皮肤和体型动画
             SwitchPlayer(armature, definition.SkinIndex, definition.FormIndex);
+            // 3. 调整头部和身体的位置与缩放
             ApplyCharacterTuning(armature, definition);
         }
 

@@ -28,14 +28,16 @@ namespace mlp
         public int CurrentDash { get; private set; }
 
         /// <summary>
-        /// 创建教程对手控制器。skillLevel 控制自由对战时 AI 的智能程度。
+        /// 创建教程对手控制器。skillLevel 是四档 AI 技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。
         /// </summary>
         public mlpTutorialOpponentController(mlpPlayerObject player, int skillLevel)
         {
             // 1. 保存对手玩家对象的引用
             this.player = player;
             // 2. 创建一个普通 AI 控制器作为后备——当教程进入自由对战阶段时，对手会切换成这个 AI 来自主行动
-            fallbackController = mlpAIController.CreateForBrain(player, "B0", skillLevel <= 0 ? 2 : skillLevel);
+            //    0 现在是合法的 Easy 索引，不能再当成无效值回退到更高难度。
+            var fallbackSkillIndex = UnityEngine.Mathf.Clamp(skillLevel, 0, mlpAISkillsData.MaxSkillIndex);
+            fallbackController = mlpAIController.CreateForBrain(player, "B0", fallbackSkillIndex);
         }
 
         /// <summary>

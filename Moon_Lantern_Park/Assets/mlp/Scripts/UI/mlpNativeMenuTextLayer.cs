@@ -292,11 +292,13 @@ namespace mlp
         /// </summary>
         public static TMP_FontAsset Get(mlpFontKind fontKind)
         {
+            // 1. 检查缓存中是否已有该字体类型的 TMP 字体资源
             if (FontAssets.TryGetValue(fontKind, out var cached) && cached != null)
             {
                 return cached;
             }
 
+            // 2. 优先加载预打包的 SDF 字体资源（性能最好）
             var bundledFontAsset = Resources.Load<TMP_FontAsset>(GetBundledFontAssetPath(fontKind));
             if (bundledFontAsset != null)
             {
@@ -304,12 +306,14 @@ namespace mlp
                 return bundledFontAsset;
             }
 
+            // 3. 预打包资源缺失，从系统字体动态创建 TMP 字体资源
             var sourceFont = mlpFontCache.Get(fontKind, 96);
             if (sourceFont == null)
             {
                 return null;
             }
 
+            // 4. 使用 TextMeshPro 的 API 从源字体生成 SDF 字体图集
             var fontAsset = TMP_FontAsset.CreateFontAsset(
                 sourceFont,
                 96,
@@ -325,6 +329,7 @@ namespace mlp
                 fontAsset.hideFlags = HideFlags.HideAndDontSave;
             }
 
+            // 5. 缓存并返回
             FontAssets[fontKind] = fontAsset;
             return fontAsset;
         }

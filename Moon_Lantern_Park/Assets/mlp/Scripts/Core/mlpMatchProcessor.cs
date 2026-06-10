@@ -69,17 +69,20 @@ namespace mlp
         /// <returns>球成功入篮（上下传感器依次触发）时返回 true。</returns>
         public bool ProcessSensor(int sensorType)
         {
+            // 1. 已经判定过得分，不再重复判定
             if (!canScore)
             {
                 return false;
             }
 
+            // 2. 上方传感器触发：标记球已通过上方
             if (sensorType == 0)
             {
                 upperSensorPassed = true;
                 return false;
             }
 
+            // 3. 下方传感器触发且上方已通过：有效进球
             if (upperSensorPassed)
             {
                 canScore = false;
@@ -87,6 +90,7 @@ namespace mlp
                 return true;
             }
 
+            // 4. 下方先触发（未经过上方）：无效，禁止后续得分
             canScore = false;
             return false;
         }
@@ -99,7 +103,7 @@ namespace mlp
         /// <returns>本次进球获得的分数。</returns>
         public int ResolvePointsForScore(int scoringSide, int fallbackPoints)
         {
-            // 被己方盖帽链触发的得分统一按 2 分结算。
+            // 1. 被对手盖帽后仍然进的球，统一按 2 分结算
             if (blockSide == -scoringSide)
             {
                 isHuman = blockIsHuman;
@@ -107,16 +111,19 @@ namespace mlp
                 return 2;
             }
 
+            // 2. 远距离投篮（throwType == 0）计 3 分
             if (throwType == 0)
             {
                 return 3;
             }
 
+            // 3. 普通投篮（throwType > 0）计 2 分
             if (throwType > 0)
             {
                 return 2;
             }
 
+            // 4. 其他情况使用传入的默认分值
             return fallbackPoints;
         }
     }

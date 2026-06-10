@@ -230,18 +230,21 @@ public enum mlpTextStyle
         /// </summary>
         public static Font Get(mlpFontKind fontKind, int fontSize)
         {
+            // 1. 优先尝试从 Resources 加载内置字体资源
             var resourceFont = GetResourceFont(fontKind);
             if (resourceFont != null)
             {
                 return resourceFont;
             }
 
+            // 2. 检查是否已有同类型同字号的回退字体缓存
             var cacheKey = $"{fontKind}:{fontSize}";
             if (FallbackFonts.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
             }
 
+            // 3. 内置资源缺失，根据字体类型从系统字体列表创建动态字体（带优先级回退）
             Font font;
             switch (fontKind)
             {
@@ -282,6 +285,7 @@ public enum mlpTextStyle
                     break;
             }
 
+            // 4. 设置字体纹理参数（点过滤、钳制模式），缓存后返回
             PrepareFont(font);
             FallbackFonts[cacheKey] = font;
             return font;
@@ -371,11 +375,13 @@ public static class mlpFontMaterialCache
             Vector2? shadowOffset,
             float rasterScale)
         {
+            // 1. 字体或材质为空时返回 null
             if (font == null || font.material == null)
             {
                 return null;
             }
 
+            // 2. 获取字体的基础材质和纹理
             var baseMaterial = font.material;
             var mainTexture = baseMaterial.mainTexture;
             if (mainTexture == null)
@@ -383,6 +389,7 @@ public static class mlpFontMaterialCache
                 return baseMaterial;
             }
 
+            // 3. 判断是否需要描边或阴影，都不需要则直接返回基础材质
             var hasOutline = outlineColor.HasValue && outlineColor.Value.a > 0f && outlinePixels > 0f;
             var hasShadow = shadowColor.HasValue && shadowColor.Value.a > 0f;
             if (!hasOutline && !hasShadow)
@@ -390,11 +397,13 @@ public static class mlpFontMaterialCache
                 return baseMaterial;
             }
 
+            // 4. 查找自定义描边着色器（首次使用时查找一次）
             if (outlinedShader == null)
             {
                 outlinedShader = Shader.Find(OutlinedShaderName);
             }
 
+            // 5. 着色器找不到时回退到基础材质并输出警告
             if (outlinedShader == null)
             {
                 if (!missingShaderLogged)
@@ -406,12 +415,14 @@ public static class mlpFontMaterialCache
                 return baseMaterial;
             }
 
+            // 6. 将描边和阴影参数转换为纹理像素单位
             var resolvedOutlineColor = hasOutline ? outlineColor.Value : Color.clear;
             var resolvedShadowColor = hasShadow ? shadowColor.Value : Color.clear;
             var resolvedShadowOffset = hasShadow ? shadowOffset ?? new Vector2(0f, 2f) : Vector2.zero;
             var outlineTexels = hasOutline ? outlinePixels * rasterScale : 0f;
             var shadowTexels = hasShadow ? resolvedShadowOffset * rasterScale : Vector2.zero;
 
+            // 7. 用所有参数生成缓存键，查找或创建材质实例
             var cacheKey =
                 $"{font.GetInstanceID()}:{mainTexture.GetInstanceID()}:{ColorKey(resolvedOutlineColor)}:{outlineTexels:0.###}:{ColorKey(resolvedShadowColor)}:{shadowTexels.x:0.###}:{shadowTexels.y:0.###}";
             if (!Materials.TryGetValue(cacheKey, out var material))
@@ -425,6 +436,7 @@ public static class mlpFontMaterialCache
                 Materials[cacheKey] = material;
             }
 
+            // 8. 设置材质的纹理、描边颜色/宽度、阴影颜色/偏移
             material.SetTexture("_MainTex", mainTexture);
             material.SetColor("_OutlineColor", resolvedOutlineColor);
             material.SetFloat("_OutlineWidth", outlineTexels);
@@ -682,6 +694,7 @@ public static class mlpRender
             Color fillColor,
             Color ringColor)
         {
+            // 1. 创建根节点并定位到指定像素坐标
             var root = new GameObject(name);
             if (parent != null)
             {
@@ -689,7 +702,9 @@ public static class mlpRender
             }
 
             ApplyPixelTransform(root.transform, x, y);
+            // 2. 确保直径至少为 1 像素，防止除零
             var safeDiameter = Mathf.Max(1f, diameterPixels);
+            // 3. 创建四层同心圆效果：外层光晕（最大、半透明）、填充层、外环、内环
             AddPortraitBackplateLayer(
                 $"{name}_Glow",
                 GetPortraitBackplateTexture("glow", 0f, 0.98f, 0.28f, true),
@@ -711,6 +726,7 @@ public static class mlpRender
                 sortingOrder + 2,
                 root.transform,
                 ringColor);
+            // 4. 内环比外环略小，透明度取外环的 62%（营造层次感）
             AddPortraitBackplateLayer(
                 $"{name}_InnerRing",
                 GetPortraitBackplateTexture("inner_ring", 0.68f, 0.72f, 0.018f, false),
@@ -754,11 +770,13 @@ public static class mlpRender
 
         private static Texture2D GetPortraitBackplateTexture(string key, float innerRadius, float outerRadius, float softness, bool glow)
         {
+            // 1. 检查缓存中是否已有同名纹理
             if (PortraitBackplateTextures.TryGetValue(key, out var cached))
             {
                 return cached;
             }
 
+            // 2. 创建正方形纹理（RGBA32 格式，双线性过滤，钳制模式）
             var texture = new Texture2D(PortraitBackplateTextureSize, PortraitBackplateTextureSize, TextureFormat.RGBA32, false)
             {
                 name = $"PortraitBackplate_{key}",
@@ -769,6 +787,7 @@ public static class mlpRender
             var center = (PortraitBackplateTextureSize - 1) * 0.5f;
             var radiusScale = Mathf.Max(1f, center);
 
+            // 3. 逐像素计算到圆心的距离，生成径向渐变的 alpha 值
             for (var y = 0; y < PortraitBackplateTextureSize; y++)
             {
                 for (var x = 0; x < PortraitBackplateTextureSize; x++)
@@ -776,11 +795,14 @@ public static class mlpRender
                     var dx = (x - center) / radiusScale;
                     var dy = (y - center) / radiusScale;
                     var distance = Mathf.Sqrt(dx * dx + dy * dy);
+                    // 4. 外边缘使用 SmoothStep 实现柔和过渡
                     var outerAlpha = 1f - Mathf.SmoothStep(outerRadius - softness, outerRadius, distance);
+                    // 5. 内边缘（如果有的话）创建中空效果
                     var innerAlpha = innerRadius <= 0f
                         ? 1f
                         : Mathf.SmoothStep(innerRadius, innerRadius + softness, distance);
                     var alpha = Mathf.Clamp01(outerAlpha * innerAlpha);
+                    // 6. 光晕模式额外做距离衰减和伽马压缩，营造柔和发光效果
                     if (glow)
                     {
                         alpha *= Mathf.Clamp01(1f - distance / Mathf.Max(0.0001f, outerRadius));
@@ -791,6 +813,7 @@ public static class mlpRender
                 }
             }
 
+            // 7. 上传像素数据到 GPU 并缓存纹理
             texture.SetPixels32(pixels);
             texture.Apply(false, true);
             PortraitBackplateTextures[key] = texture;
@@ -889,12 +912,14 @@ public static class mlpRender
         Vector2? shadowOffset,
         mlpTextRasterProfile rasterProfile)
     {
+        // 1. 创建 GameObject 并挂载到父节点
         var go = new GameObject(name);
         if (parent != null)
             {
                 go.transform.SetParent(parent, false);
             }
 
+        // 2. 添加 TextMesh 组件，设置文字内容、字号、对齐方式和颜色
         var mesh = go.AddComponent<TextMesh>();
         mesh.text = text;
         mesh.fontSize = GetFontRasterSize(fontSize, rasterProfile);
@@ -902,11 +927,13 @@ public static class mlpRender
         mesh.anchor = anchor;
         mesh.alignment = AnchorToAlignment(anchor);
             mesh.color = color;
+            // 3. 加载字体并请求字符渲染（确保字体纹理包含所需字符）
             mesh.font = mlpFontCache.Get(fontKind, mesh.fontSize);
             var renderer = go.GetComponent<MeshRenderer>();
             if (mesh.font != null)
             {
                 mesh.font.RequestCharactersInTexture(text, mesh.fontSize, FontStyle.Normal);
+                // 4. 获取带描边/阴影效果的材质，如果不需要则使用字体默认材质
                 renderer.sharedMaterial = mlpFontMaterialCache.Get(
                     mesh.font,
                     outlineColor,
@@ -917,6 +944,7 @@ public static class mlpRender
                     ?? mesh.font.material;
             }
 
+            // 5. 设置渲染排序层级，应用像素坐标变换
             renderer.sortingOrder = sortingOrder;
         ApplyPixelTransform(go.transform, x, y);
 
@@ -938,13 +966,16 @@ public static class mlpRender
         Transform parent,
         mlpTextStyle style)
     {
+        // 1. 解析文字样式，获取字体类型和描边设置
         var resolvedStyle = mlpTextStyles.Resolve(style, fontSize);
+        // 2. 创建 GameObject 并挂载到父节点
         var go = new GameObject(name);
         if (parent != null)
         {
             go.transform.SetParent(parent, false);
         }
 
+        // 3. 添加 TextMeshPro 组件，配置基础属性（禁用富文本、自动换行和溢出裁剪）
         var textComponent = go.AddComponent<TextMeshPro>();
         textComponent.text = text;
         textComponent.richText = false;
@@ -953,12 +984,14 @@ public static class mlpRender
         textComponent.extraPadding = true;
         textComponent.alignment = AnchorToTmpAlignment(anchor);
         textComponent.color = color;
+        // 4. 设置字号（乘以 10 转换为世界单位），固定最小最大字号一致
         var worldFontSize = fontSize * 10f;
         textComponent.fontSize = worldFontSize;
         textComponent.fontSizeMin = worldFontSize;
         textComponent.fontSizeMax = worldFontSize;
         textComponent.lineSpacing = -4f;
 
+        // 5. 加载 TextMeshPro 字体资源并应用
         var fontAsset = mlpTmpFontCache.Get(resolvedStyle.FontKind);
         if (fontAsset != null)
         {
@@ -969,10 +1002,12 @@ public static class mlpRender
             }
         }
 
+        // 6. 设置描边宽度和颜色（无描边时宽度为 0）
         textComponent.outlineWidth = resolvedStyle.OutlineColor.HasValue && resolvedStyle.OutlinePixels > 0f
             ? Mathf.Clamp01(resolvedStyle.OutlinePixels * 0.08f)
             : 0f;
         textComponent.outlineColor = resolvedStyle.OutlineColor ?? Color.clear;
+        // 7. 强制刷新网格，设置渲染排序层级，应用像素坐标变换
         textComponent.ForceMeshUpdate();
 
         var renderer = go.GetComponent<MeshRenderer>();

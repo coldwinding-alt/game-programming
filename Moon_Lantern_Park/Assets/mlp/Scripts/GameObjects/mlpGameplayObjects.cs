@@ -1,4 +1,4 @@
-// 文件作用：游戏场景物体管理（球场、篮筐、篮球、传送特效、护盾、技能特效）
+﻿// 文件作用：游戏场景物体管理（球场、篮筐、篮球、传送特效、护盾、技能特效）
 // 概括：创建和管理比赛中所有可见的游戏物体：球场背景和灯光、篮筐和篮网、篮球及其物理运动、传送门特效、护盾特效、技能激活特效。这个文件非常大，涵盖了比赛中大部分视觉元素的创建和更新逻辑。
 
 using System.Collections.Generic;
@@ -1760,9 +1760,13 @@ namespace mlp
 
         private void ApplyTheme()
         {
+            // 1. 将黑色圆环设为角色次要颜色偏黑的混合色
             blackRenderer.color = Color.Lerp(skillDefinition.SecondaryColor, Color.black, 0.22f);
+            // 2. 中心白点使用角色主色调
             centerRenderer.color = skillDefinition.PrimaryColor;
+            // 3. 白色闪光层使用白色和强调色的混合
             whiteRenderer.color = Color.Lerp(Color.white, skillDefinition.AccentColor, 0.42f);
+            // 4. 动画帧层使用主色调和强调色的混合色
             animRenderer.color = Color.Lerp(skillDefinition.PrimaryColor, skillDefinition.AccentColor, 0.38f);
         }
     }
@@ -1963,22 +1967,28 @@ namespace mlp
         /// <returns>成功阻挡篮球时返回 true；否则返回 false。</returns>
         public bool TryBlockBall(mlpBallObject ball)
         {
+            // 1. 检查护盾是否在激活状态、篮球是否存在、篮球是否正在得分
             if (!IsBlocking || ball == null || ball.State == "score")
             {
                 return false;
             }
 
+            // 2. 获取护盾的原点位置
             var origin = ShieldOrigin;
+            // 3. 根据所在侧选择碰撞矩形的左边距
             var rectLeft = side == -1 ? CollisionRectLeftLeftSide : CollisionRectLeftRightSide;
+            // 4. 计算碰撞矩形的四条边界（考虑篮球半径的扩展）
             var minX = origin.x + rectLeft - mlpObjectsData.BallRadius;
             var maxX = minX + CollisionRectWidth + mlpObjectsData.BallRadius * 2f;
             var minY = origin.y + CollisionRectTop - mlpObjectsData.BallRadius;
             var maxY = minY + CollisionRectHeight + mlpObjectsData.BallRadius * 2f;
+            // 5. 用扫掠检测判断篮球轨迹是否穿过护盾碰撞矩形
             if (!SweptPointIntersectsRect(ball.PreviousPosition, ball.Position, minX, maxX, minY, maxY))
             {
                 return false;
             }
 
+            // 6. 触发篮球被护盾弹开的效果
             ball.OnShieldCollision(side);
             return true;
         }
@@ -2085,6 +2095,7 @@ namespace mlp
 
         private void ApplyTheme()
         {
+            // 1. 应用当前透明度到所有护盾渲染器
             ApplyAlpha();
         }
 
@@ -2225,14 +2236,20 @@ namespace mlp
 
         public void ApplyTheme(mlpCharacterSkillDefinition definition)
         {
+            // 1. 保存技能定义引用
             skillDefinition = definition;
+            // 2. 检查是否使用自定义特效美术资源
             var useCustomArt = UsesCustomFxArt(definition.SkillType);
+            // 3. 加载核心图标和强调装饰的精灵图
             coreRenderer.sprite = LoadSkillSprite(definition.SkillType, false);
             accentRenderer.sprite = LoadSkillSprite(definition.SkillType, true);
+            // 4. 设置光晕背景颜色（自定义美术用更淡的透明度）
             glowRenderer.color = WithAlpha(definition.PrimaryColor, useCustomArt ? 0.14f : 0.18f);
+            // 5. 设置核心图标颜色
             coreRenderer.color = useCustomArt
                 ? WithAlpha(Color.white, 0.72f)
                 : WithAlpha(definition.PrimaryColor, 0.5f);
+            // 6. 设置强调装饰颜色
             accentRenderer.color = useCustomArt
                 ? WithAlpha(Color.white, 0.62f)
                 : WithAlpha(definition.AccentColor, 0.58f);
@@ -2274,12 +2291,14 @@ namespace mlp
 
         public void Update(float dt, Vector2 position, float facingDirection, bool visible)
         {
+            // 1. 如果特效处于隐藏状态，关闭显示并返回
             if (mode == FxMode.Hidden)
             {
                 root.SetActive(false);
                 return;
             }
 
+            // 2. 累加计时器，超过持续时间则停止特效
             timer += dt;
             if (timer >= duration)
             {
@@ -2287,6 +2306,7 @@ namespace mlp
                 return;
             }
 
+            // 3. 检查是否应该渲染（角色可见或正在冲刺）
             var shouldRender = visible || mode == FxMode.Dash;
             if (!shouldRender)
             {
@@ -2294,14 +2314,17 @@ namespace mlp
                 return;
             }
 
+            // 4. 将特效定位到角色上方，根据朝向翻转
             mlpRender.ApplyPixelTransform(root.transform, position.x, position.y + 30f, 0.08f, 1f);
             var rootScale = root.transform.localScale;
             rootScale.x = Mathf.Abs(rootScale.x) * Mathf.Sign(facingDirection);
             root.transform.localScale = rootScale;
 
+            // 5. 计算动画进度比例并重置渲染器布局
             var t = timer / duration;
             ResetRendererLayout();
 
+            // 6. 如果技能使用自定义特效美术，走单独的更新逻辑
             if (UsesCustomFxArt(skillDefinition.SkillType))
             {
                 UpdateCustomFx(t);
@@ -2309,10 +2332,12 @@ namespace mlp
                 return;
             }
 
+            // 7. 根据特效模式更新三层渲染器的大小、颜色和旋转
             switch (mode)
             {
                 case FxMode.Buff:
                 {
+                    // 8. 增益模式：三层都做呼吸脉冲动画
                     var pulse = 0.92f + Mathf.Sin(Time.time * 10f) * 0.06f;
                     glowRenderer.transform.localScale = Vector3.one * pulse * 0.24f;
                     coreRenderer.transform.localScale = new Vector3(0.18f, 0.12f, 1f) * (0.98f + Mathf.Sin(Time.time * 11f) * 0.04f);
@@ -2325,6 +2350,7 @@ namespace mlp
                 }
                 case FxMode.Burst:
                 {
+                    // 9. 爆发模式：三层从小变大并逐渐淡出
                     glowRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.1f, 0.32f, t);
                     coreRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.08f, 0.22f, t);
                     accentRenderer.transform.localScale = new Vector3(Mathf.Lerp(0.12f, 0.36f, t), Mathf.Lerp(0.04f, 0.12f, t), 1f);
@@ -2336,6 +2362,7 @@ namespace mlp
                 }
                 case FxMode.Dash:
                 {
+                    // 9. 冲刺模式：水平拉伸效果，中间最宽，两头窄
                     var stretch = Mathf.Lerp(0.88f, 1.18f, Mathf.Sin(t * Mathf.PI));
                     glowRenderer.transform.localScale = new Vector3(0.34f * stretch, 0.12f, 1f);
                     coreRenderer.transform.localScale = new Vector3(0.46f * stretch, 0.1f, 1f);
@@ -2348,6 +2375,7 @@ namespace mlp
                 }
             }
 
+            // 10. 显示特效根节点
             root.SetActive(true);
         }
 
@@ -2760,23 +2788,30 @@ namespace mlp
 
         public void ApplyBonusSuperCharge(float amount)
         {
+            // 1. 获取超级技能的冷却时间
             var cooldown = EffectiveSuperCoolDown;
+            // 2. 如果冷却时间为0（快速测试模式），直接刷新
             if (cooldown <= 0f)
             {
                 RefreshQuickTestSuperReady();
                 return;
             }
 
+            // 3. 如果充能无效或已准备好或正在使用超级技能，直接返回
             if (amount <= 0f || readyForSuper || isSuperShot)
             {
                 return;
             }
 
+            // 4. 增加充能时间（不超过冷却时间上限）
             superChargeTime = Mathf.Min(cooldown, superChargeTime + amount);
+            // 5. 更新能量条UI显示
             energyBar?.SetCharge(superChargeTime / cooldown);
+            // 6. 如果充能已满，标记超级技能就绪
             if (superChargeTime >= cooldown)
             {
                 readyForSuper = true;
+                // 7. 人类玩家播放充能完成音效
                 if (IsHuman)
                 {
                     mlpAudio.Instance?.Play(mlpAssets.Sounds.PEnergy);
@@ -2786,13 +2821,17 @@ namespace mlp
 
         private void RefreshQuickTestSuperReady()
         {
+            // 1. 如果未启用快速测试模式或正在使用超级技能，直接返回
             if (!mlpQuickTestSettings.Enabled || isSuperShot)
             {
                 return;
             }
 
+            // 2. 标记超级技能就绪
             readyForSuper = true;
+            // 3. 将充能时间设为满值
             superChargeTime = superCoolDown;
+            // 4. 将能量条UI设为满格
             energyBar?.SetCharge(1f);
         }
 
@@ -2804,7 +2843,7 @@ namespace mlp
         /// <param name="characterId">用于查找技能定义的角色标识符</param>
         /// <param name="playerNo">队伍内的玩家编号（0 或 1）</param>
         /// <param name="playerBrain">决定控制器类型的脑字符串</param>
-        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）；人类玩家保留基础手感配置。</param>
         /// <param name="parent">用于挂载视觉子对象的父级 Transform</param>
         public mlpPlayerObject(mlpGameCore gameCore, int teamIndex, int characterId, int playerNo, string playerBrain, int skillLevel, Transform parent)
         {
@@ -2827,19 +2866,25 @@ namespace mlp
             aiDifficultyTuning = mlpAIDifficultyTuning.Get(mlpInventory.Instance.Difficulty);
             hellEnhanced = !IsHuman && mlpInventory.Instance.Difficulty == mlpAiDifficulty.Hell;
 
-            // 4. 根据技能等级读取 AI 数值：投篮命中率、扣篮完成率、超能力冷却
-            var profile = mlpAISkillsData.Get(skillLevel);
+            // 4. 读取投篮、扣篮和超能力冷却参数
+            //    - 人类玩家使用固定的基础手感，避免 AI 难度切换影响玩家自己的操作体验
+            //    - AI 使用四档技能索引，索引只允许 Easy/Normal/Hard/Hell 四种含义
+            var profile = IsHuman
+                ? mlpAISkillsData.GetHumanPlayerProfile()
+                : mlpAISkillsData.Get(skillLevel);
             accuracy = profile.Accuracy;
             chanceToCompleteDunk = profile.ChanceToCompleteDunk;
             superCoolDown = profile.CoolDown;
             dashDelay = new UseDelay(mlpObjectsData.DashDelay * (hellEnhanced ? aiDifficultyTuning.DashCooldownMultiplier : 1f));
 
-            // 5. 地狱难度额外加成：超能力冲刺和护盾的冷却时间
+            // 5. Hell 难度额外加成：超能力冲刺和护盾的冷却时间
+            //    当前难度只保留 Easy/Normal/Hard/Hell 四档，Hell 已经是最高档，
+            //    所以不再按技能数值拆出额外的隐藏对手档位。
             hellBonusSuperDashCooldownDuration = hellEnhanced
-                ? skillLevel >= 11 ? aiDifficultyTuning.BonusSuperDashBossCooldown : aiDifficultyTuning.BonusSuperDashCooldown
+                ? aiDifficultyTuning.BonusSuperDashCooldown
                 : 0f;
             hellBonusShieldCooldownDuration = hellEnhanced
-                ? skillLevel >= 11 ? aiDifficultyTuning.BonusShieldBossCooldown : aiDifficultyTuning.BonusShieldCooldown
+                ? aiDifficultyTuning.BonusShieldCooldown
                 : 0f;
 
             // 6. 根据所在侧设置超能力扣篮位置和冲刺目标坐标
@@ -3348,19 +3393,23 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         public void TickPreMatch(float dt)
         {
+            // 1. 更新传送特效和护盾特效的动画
             teleportFx?.Update(dt);
             shield?.Update(dt);
 
+            // 2. 减少动作锁定计时器
             if (actionLatch > 0f)
             {
                 actionLatch -= dt;
             }
 
+            // 3. 如果控制器已就绪且未在偷球动画中，解锁动作
             if (!canDoAction && !stealAnimationActive && controller.ReadyForAction())
             {
                 canDoAction = true;
             }
 
+            // 4. 如果冲刺延迟结束，标记冲刺就绪
             if (!readyForDash && dashDelay.Update(dt) == 1)
             {
                 readyForDash = true;
@@ -3372,23 +3421,29 @@ namespace mlp
         /// </summary>
         public void TakeBallInHands()
         {
+            // 1. 标记球员持球，重置盖帽和接球状态
             WithBall = true;
             jumpBlockActive = false;
             canTakeInHands = false;
+            // 2. 只有在地面或篮筐下方才能投篮
             canThrow = IsGrounded || IsUnderGlass();
             attackJump = false;
+            // 3. 如果在篮筐下方，记录出手位置
             if (IsUnderGlass())
             {
                 pointOfThrow = Position.x;
             }
 
+            // 4. 取消偷球动画并清除眩晕计时器
             CancelStealAnimation(false);
             stunTimer = 0f;
+            // 5. 通知篮球对象进入持球状态
             if (!removedFromPlay)
             {
                 GameCore.Ball.TakeInHands(Side);
             }
 
+            // 6. 通知游戏核心并播放持球动画
             GameCore.NotifyBallInHands(Side, playerNo);
             PlayState(IsGrounded ? "idle_wb" : "fly1_wb");
         }
@@ -3400,15 +3455,19 @@ namespace mlp
         /// <param name="facing">朝向方向（-1 或 1）</param>
         public void TutorialSnapTo(Vector2 position, float facing)
         {
+            // 1. 将球员瞬间移动到指定位置，速度归零
             Position = position;
             Velocity = Vector2.zero;
+            // 2. 更新出手位置记录
             pointOfThrow = Position.x;
+            // 3. 如果指定了朝向，更新球员面向方向
             if (!Mathf.Approximately(facing, 0f))
             {
                 facingDirection = Mathf.Sign(facing);
                 stealFacingDirection = facingDirection;
             }
 
+            // 4. 更新球员图形位置
             UpdateGraphic();
         }
 
@@ -3417,7 +3476,9 @@ namespace mlp
         /// </summary>
         public void TutorialChargeSuper()
         {
+            // 1. 获取超级技能的冷却时间
             var cooldown = EffectiveSuperCoolDown;
+            // 2. 如果冷却时间为0，直接用默认值充满
             if (cooldown <= 0f)
             {
                 readyForSuper = true;
@@ -3426,8 +3487,10 @@ namespace mlp
                 return;
             }
 
+            // 3. 将充能时间设为满值，标记超级技能就绪
             readyForSuper = true;
             superChargeTime = cooldown;
+            // 4. 更新能量条UI为满格
             energyBar?.SetCharge(1f);
         }
 
@@ -3476,16 +3539,20 @@ namespace mlp
         /// </summary>
         public void FreeBall()
         {
+            // 1. 如果球员没有持球，直接返回
             if (!WithBall)
             {
                 return;
             }
 
+            // 2. 重置持球和相关战斗状态
             WithBall = false;
             jumpBlockActive = false;
             canThrow = false;
             attackJump = false;
+            // 3. 取消偷球动画
             CancelStealAnimation(false);
+            // 4. 根据是否在地面播放对应的待机动画
             if (IsGrounded)
             {
                 PlayState("idle");
@@ -3499,12 +3566,15 @@ namespace mlp
 
         private void DropHeldBallForFreeze()
         {
+            // 1. 如果球员没有持球或篮球不存在，直接返回
             if (!WithBall || GameCore.Ball == null)
             {
                 return;
             }
 
+            // 2. 释放篮球控制权
             FreeBall();
+            // 3. 将篮球从球员位置下方放下（冻结时掉落效果）
             GameCore.Ball.DropFromFreeze(Position + new Vector2(0f, -45f));
         }
 
@@ -3513,14 +3583,20 @@ namespace mlp
         /// </summary>
         public void NotifyBallLoose()
         {
+            // 1. 标记球员不再持球
             WithBall = false;
+            // 2. 取消偷球动画并清除眩晕
             CancelStealAnimation(false);
             stunTimer = 0f;
+            // 3. 重置投掷和攻击跳起状态
             canThrow = false;
             attackJump = false;
+            // 4. 允许重新捡球
             canTakeInHands = true;
+            // 5. 重置盖帽状态
             jumpBlockActive = false;
             needBlock = false;
+            // 6. 通知控制器篮球已不在手中
             controller.BallOthers();
         }
 
@@ -3531,18 +3607,22 @@ namespace mlp
         /// <param name="holderPlayerNo">当前持球者的球员编号</param>
         public void NotifyBallInHands(int holderSide, int holderPlayerNo)
         {
+            // 1. 如果有待处理的得分升级，清除它
             if (scoreUpgradePendingShot)
             {
                 ClearScoreUpgrade();
             }
 
+            // 2. 根据持球者是否是己方，通知控制器不同策略
             if (holderSide == Side)
             {
+                // 3. 己方持球：切换到进攻策略
                 controller.BallInOwnHands(holderPlayerNo);
                 needBlock = false;
             }
             else
             {
+                // 4. 对方持球：切换到防守策略，准备盖帽
                 controller.BallInOpponentsHands(holderPlayerNo);
                 needBlock = true;
             }
@@ -3555,19 +3635,23 @@ namespace mlp
         /// <param name="shooterPlayerNo">投篮球员的编号</param>
         public void NotifyBallShot(int shotSide, int shooterPlayerNo)
         {
+            // 1. 如果自己有得分升级且是自己投篮，标记等待确认
             if (scoreUpgradeActive && shotSide == Side && shooterPlayerNo == playerNo)
             {
                 scoreUpgradeActive = false;
                 scoreUpgradePendingShot = true;
             }
 
+            // 2. 根据投篮方是否是己方，通知控制器不同策略
             if (shotSide == Side)
             {
+                // 3. 己方投篮：切换到己方出手策略
                 controller.BallOwnShoot(shooterPlayerNo);
                 needBlock = false;
             }
             else
             {
+                // 4. 对方投篮：切换到对方出手策略，准备盖帽
                 controller.BallOpponentShoot(shooterPlayerNo);
                 needBlock = true;
             }
@@ -3622,28 +3706,38 @@ namespace mlp
 
         public void ApplyFreeze(float duration, mlpCharacterSkillDefinition freezeDefinition)
         {
+            // 1. 如果持续时间无效或球员不在比赛中或正在超级技能/扣篮，直接返回
             if (duration <= 0f || removedFromPlay || isSuperShot || isDunking)
             {
                 return;
             }
 
+            // 2. 如果持球则掉落篮球
             DropHeldBallForFreeze();
+            // 3. 设置眩晕计时器（取较大值避免缩短已有眩晕）
             stunTimer = Mathf.Max(stunTimer, duration);
+            // 4. 重置冲刺相关状态
             dashTimer = 0f;
             dashDirection = 0;
             bufferedDashDirection = 0;
             dashBufferTimer = 0f;
+            // 5. 重置待处理的动作和偷球状态
             pendingGroundThrow = false;
             pendingStealAction = false;
             CancelStealAnimation(false);
+            // 6. 重置盖帽蓄力状态
             blockPumpPhase = BlockPumpPhase.None;
             blockPumpTimer = 0f;
             jumpBlockActive = false;
+            // 7. 禁止所有动作和捡球
             canDoAction = false;
             canTakeInHands = false;
+            // 8. 停止移动
             Velocity = Vector2.zero;
             actionLatch = Mathf.Max(actionLatch, stunTimer);
+            // 9. 播放眩晕动画
             PlayState("stun");
+            // 10. 播放冰冻特效、音效并显示提示
             skillFx?.PlayBurst(Mathf.Min(duration, 0.8f), freezeDefinition);
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Stun, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PStunned, 0.9f);
@@ -3652,9 +3746,11 @@ namespace mlp
 
         public int ResolveScorePoints(int basePoints, out string scoreNotice)
         {
+            // 1. 初始化输出参数和基础得分
             scoreNotice = null;
             var resolvedPoints = basePoints;
 
+            // 2. 如果有待确认的得分升级，额外加2分（最多5分）
             if (scoreUpgradePendingShot && resolvedPoints >= 2)
             {
                 resolvedPoints = Mathf.Min(5, resolvedPoints + 2);
@@ -3663,6 +3759,7 @@ namespace mlp
                 skillFx?.PlayBurst(0.5f);
             }
 
+            // 3. 如果移动增益激活且有额外得分加成，叠加加成
             if (moveBuffTimer > 0f && moveBuffScoreBonusAvailable && skillDefinition.FlatScoreBonus > 0)
             {
                 resolvedPoints += skillDefinition.FlatScoreBonus;
@@ -3672,6 +3769,7 @@ namespace mlp
                 skillFx?.PlayBurst(0.45f);
             }
 
+            // 4. 如果有临时得分加成效果，叠加加成
             if (flatScoreBonusTimer > 0f && flatScoreBonusPoints > 0)
             {
                 resolvedPoints += flatScoreBonusPoints;
@@ -3681,16 +3779,21 @@ namespace mlp
                 skillFx?.PlayBurst(0.45f);
             }
 
+            // 5. 返回最终计算的得分
             return resolvedPoints;
         }
 
         public void OnScoreConfirmed()
         {
+            // 1. 如果有待确认的得分超级能量返还，立即发放
             if (pendingScoreRefundTimer > 0f && pendingScoreRefundFraction > 0f)
             {
+                // 2. 按比例返还超级能量
                 GrantSuperChargeFraction(pendingScoreRefundFraction);
+                // 3. 清除返还标记
                 pendingScoreRefundFraction = 0f;
                 pendingScoreRefundTimer = 0f;
+                // 4. 显示返还提示
                 GameCore.ShowHudBonusNotice("SUPER REFUND!", 0.95f);
             }
         }
@@ -3814,11 +3917,13 @@ namespace mlp
         /// <returns>The computed result.</returns>
         public float CheckToBeStolen(float thiefX, float thiefFacingScaleX, float stealDistance)
         {
+            // 1. 如果不在地面、正在眩晕、已退出比赛或正在超级技能，返回-1表示不可偷
             if (!IsGrounded || stunTimer > 0f || removedFromPlay || isSuperShot)
             {
                 return -1f;
             }
 
+            // 2. 偷球者面朝右方时，检查持球者是否在其前方偷球范围内
             if (thiefFacingScaleX >= 0f)
             {
                 return Position.x >= thiefX && Position.x <= thiefX + stealDistance
@@ -3826,6 +3931,7 @@ namespace mlp
                     : -1f;
             }
 
+            // 3. 偷球者面朝左方时，检查持球者是否在其前方偷球范围内
             return Position.x >= thiefX - stealDistance && Position.x <= thiefX
                 ? Mathf.Abs(Position.x - thiefX)
                 : -1f;
@@ -3839,30 +3945,38 @@ namespace mlp
         /// <returns>之前持球时返回 true；否则返回 false。</returns>
         public bool GetBeStolen(float thiefX, bool applyBallSteal = true)
         {
+            // 1. 如果已退出比赛，直接返回
             if (removedFromPlay)
             {
                 return false;
             }
 
+            // 2. 记录之前是否持球，然后释放篮球
             var hadBall = WithBall;
             WithBall = false;
+            // 3. 重置冲刺和偷球相关状态
             dashTimer = 0f;
             dashDirection = 0;
             CancelStealAnimation(false);
+            // 4. 重置投掷和攻击状态
             pendingGroundThrow = false;
             canThrow = false;
             attackJump = false;
+            // 5. 计算眩晕时间（地狱难度会延长）
             var stunDuration = mlpObjectsData.StunDuration * (hellEnhanced ? aiDifficultyTuning.StunDurationMultiplier : 1f);
             stunTimer = Mathf.Max(stunTimer, stunDuration);
+            // 6. 禁止所有动作
             canDoAction = false;
             jumpBlockActive = false;
             canTakeInHands = false;
             Velocity.x = 0f;
             actionLatch = Mathf.Max(actionLatch, stunTimer);
+            // 7. 播放眩晕动画和音效
             PlayState("stun");
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Stun, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PStunned, 0.9f);
 
+            // 8. 如果之前持球且需要应用偷球效果，将篮球弹开
             if (hadBall && applyBallSteal && GameCore.Ball != null)
             {
                 var delta = Position.x - thiefX;
@@ -3871,6 +3985,7 @@ namespace mlp
                 GameCore.Ball.ApplySteal(Position + new Vector2(0f, -45f), distanceFactor, direction);
             }
 
+            // 9. 返回之前是否持球
             return hadBall;
         }
 
@@ -3881,19 +3996,23 @@ namespace mlp
         /// <returns>可拾取时返回距离平方；否则返回 -1。</returns>
         public float CheckLooseBallPickup(mlpBallObject ball)
         {
+            // 1. 检查篮球是否可被捡起且球员是否可以捡球
             if (ball == null || !ball.CanBeTakenInHands || !CanTakeInHands)
             {
                 return -1f;
             }
 
+            // 2. 计算球员和篮球之间的偏移量
             var delta = ball.Position - Position;
             var absX = Mathf.Abs(delta.x);
             var absY = Mathf.Abs(delta.y);
+            // 3. 如果水平或垂直距离超出捡球范围，返回-1
             if (absX > mlpObjectsData.BallPickupDistanceX || absY > mlpObjectsData.BallPickupDistanceY)
             {
                 return -1f;
             }
 
+            // 4. 返回距离的平方（越小越近，用于选择最近的球员）
             return delta.sqrMagnitude;
         }
 
@@ -3904,32 +4023,39 @@ namespace mlp
         /// <returns>成功阻挡时返回 true；否则返回 false。</returns>
         public bool TryBlockBall(mlpBallObject ball)
         {
+            // 1. 检查是否在盖帽状态、篮球是否可被盖、是否是对方的球
             if (!jumpBlockActive || ball == null || !ball.IsBlockable || ball.Side == Side || removedFromPlay || isSuperShot)
             {
                 return false;
             }
 
+            // 2. 获取篮球的运动轨迹（上一帧到当前帧）
             var start = ball.PreviousPosition;
             var end = ball.Position;
+            // 3. 如果篮球轨迹完全在球员身后，无法盖帽
             if ((start.x - Position.x) * ball.Side <= 0f &&
                 (end.x - Position.x) * ball.Side <= 0f)
             {
                 return false;
             }
 
+            // 4. 计算盖帽碰撞区域（教程模式下增大范围辅助玩家）
             var blockWidth = mlpObjectsData.JumpBlockWidth + (tutorialJumpBlockAssist ? 58f : 0f);
             var blockHeight = mlpObjectsData.JumpBlockHeight + (tutorialJumpBlockAssist ? 42f : 0f);
             var topBonus = tutorialJumpBlockAssist ? 18f : 0f;
             var bottomBonus = tutorialJumpBlockAssist ? 16f : 0f;
+            // 5. 计算碰撞矩形的四条边界（考虑篮球半径）
             var minX = Position.x - blockWidth * 0.5f - mlpObjectsData.BallRadius;
             var maxX = Position.x + blockWidth * 0.5f + mlpObjectsData.BallRadius;
             var minY = Position.y - blockHeight - mlpObjectsData.BallRadius - topBonus;
             var maxY = Position.y + mlpObjectsData.BallRadius + bottomBonus;
+            // 6. 用扫掠检测判断篮球轨迹是否穿过盖帽碰撞矩形
             if (!SweptPointIntersectsRect(start, end, minX, maxX, minY, maxY))
             {
                 return false;
             }
 
+            // 7. 触发盖帽效果，将篮球弹开
             ball.ApplyBlock(this);
             return true;
         }
@@ -4299,31 +4425,41 @@ namespace mlp
 
         private Vector2 GetGuaranteedBlockPosition(mlpBallObject ball)
         {
+            // 1. 计算水平位置：在篮球前方偏移，限制在场地范围内
             var targetX = Mathf.Clamp(
                 ball.Position.x - ball.Side * GuaranteedBlockHorizontalOffset,
                 20f,
                 mlpConstants.Width - 20f);
+
+            // 2. 计算垂直位置：在篮球上方偏移，限制在篮筐和地面之间
             var targetY = Mathf.Clamp(
                 ball.Position.y + GuaranteedBlockHandsOffsetY,
                 mlpObjectsData.BasketHeight - 18f,
                 mlpObjectsData.PlayerIndentY);
+
             return new Vector2(targetX, targetY);
         }
 
         private void FinishGuaranteedBlock()
         {
+            // 1. 停止移动，恢复操作能力
             Velocity = Vector2.zero;
             canDoAction = true;
             canThrow = true;
+
+            // 2. 如果接近地面则落到地面
             if (Position.y >= mlpObjectsData.PlayerIndentY - 0.5f)
             {
                 Position.y = mlpObjectsData.PlayerIndentY;
                 IsGrounded = true;
             }
 
+            // 3. 根据是否在地面决定拾球能力和落地动画
             guaranteedBlockPickupLocked = !IsGrounded;
             canTakeInHands = !WithBall && !guaranteedBlockPickupLocked;
             PlayState(IsGrounded ? "blockEnd" : "fly1");
+
+            // 4. 结束超能状态
             EndSuper();
         }
 
@@ -4360,12 +4496,19 @@ namespace mlp
         /// </summary>
         private void StartAlleyOop()
         {
+            // 1. 清除待执行标记，让篮球进入空接飞行状态
             alleyOopPendingThrow = false;
             GameCore.Ball.AlleyOop(Side, Position.x - 20f * Side, Position.y - 30f, this);
+
+            // 2. 释放球权，锁定拾球和投篮
             WithBall = false;
             canTakeInHands = false;
             canThrow = false;
+
+            // 3. 通知其他球员球已出手
             GameCore.NotifyBallOthers();
+
+            // 4. 在空中时播放飞行动画
             if (!IsGrounded)
             {
                 PlayState("fly1");
@@ -4377,9 +4520,12 @@ namespace mlp
         /// </summary>
         private void FinishAlleyTeleportOut()
         {
+            // 1. 将球员移动到扣篮起始位置，面朝篮筐，隐藏角色图形
             Position = new Vector2(superDunkX, mlpObjectsData.AlleyOopY);
             facingDirection = -Side;
             graphicScaleMultiplier = 0f;
+
+            // 2. 重置骨骼动画姿态
             if (armature != null)
             {
                 visualState = "pumpEnd";
@@ -4387,9 +4533,12 @@ namespace mlp
                 armature.StopAtStart("pumpEnd");
             }
 
+            // 3. 播放传送特效和音效，将篮球从物理模拟中移除
             teleportFx?.StartPlay(Position.x, Position.y);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PTeleport);
             GameCore.Ball.RemoveFromPhysics();
+
+            // 4. 切换到传送入场阶段
             superPhase = SuperPhase.AlleyTeleportIn;
             superTimer = 0f;
             superDuration = skillDefinition.SkillType == mlpCharacterSkillType.HexGate ? 0.34f : 0.4f;
@@ -4469,12 +4618,17 @@ namespace mlp
         /// </summary>
         private void ContinueSuperDash()
         {
+            // 1. 将球员放置到冲刺终点，停止移动并落地
             Position = superTargetPosition;
             Velocity = Vector2.zero;
             IsGrounded = true;
+
+            // 2. 恢复操作能力（如果没有持球则允许拾球）
             canDoAction = true;
             canTakeInHands = !WithBall;
             canThrow = true;
+
+            // 3. 播放落地动画，结束超能状态
             PlayState("md_end");
             EndSuper();
         }
@@ -4485,9 +4639,11 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         private void UpdateSuper(float dt)
         {
+            // 1. 根据当前超能阶段执行不同的更新逻辑
             switch (superPhase)
             {
                 case SuperPhase.MegaTravel:
+                    // 1a. 超级扣篮飞行阶段：插值移动球员到目标点
                     superTimer += dt;
                     Position = Vector2.Lerp(superStartPosition, superTargetPosition, Mathf.Clamp01(superTimer / superDuration));
                     if (superTimer >= superDuration)
@@ -4496,10 +4652,12 @@ namespace mlp
                     }
                     break;
                 case SuperPhase.MegaRecover:
+                    // 1b. 超级扣篮恢复阶段：插值移动球员到落地点
                     superTimer += dt;
                     Position = Vector2.Lerp(superStartPosition, superTargetPosition, Mathf.Clamp01(superTimer / superDuration));
                     break;
                 case SuperPhase.SuperDashTravel:
+                    // 1c. 超能冲刺飞行阶段：插值移动并检测碰撞
                     superTimer += dt;
                     Position = Vector2.Lerp(superStartPosition, superTargetPosition, Mathf.Clamp01(superTimer / superDuration));
                     UpdateSuperDashTravel();
@@ -4509,6 +4667,7 @@ namespace mlp
                     }
                     break;
                 case SuperPhase.AlleyTeleportOut:
+                    // 1d. 空接传送出场阶段：逐渐缩小角色图形
                     superTimer += dt;
                     graphicScaleMultiplier = Mathf.Clamp01(1f - superTimer / superDuration);
                     if (superTimer >= superDuration)
@@ -4517,6 +4676,7 @@ namespace mlp
                     }
                     break;
                 case SuperPhase.AlleyTeleportIn:
+                    // 1e. 空接传送入场阶段：逐渐放大角色图形
                     superTimer += dt;
                     graphicScaleMultiplier = Mathf.Clamp01(superTimer / superDuration);
                     if (superTimer >= superDuration)
@@ -4525,6 +4685,7 @@ namespace mlp
                     }
                     break;
                 case SuperPhase.GuaranteedBlockHold:
+                    // 1f. 必定盖帽悬停阶段：保持球员静止
                     superTimer += dt;
                     Velocity = Vector2.zero;
                     if (superTimer >= superDuration)
@@ -4534,6 +4695,7 @@ namespace mlp
                     break;
             }
 
+            // 2. 更新角色图形显示
             UpdateGraphic();
         }
 
@@ -4542,6 +4704,7 @@ namespace mlp
         /// </summary>
         private void UpdateSuperDashTravel()
         {
+            // 1. 遍历对手，检测冲刺碰撞（距离小于40像素时触发抢断）
             var opponents = Side == -1 ? GameCore.PlayersRight : GameCore.PlayersLeft;
             var currentX = Position.x;
             for (var i = 0; i < opponents.Count; i++)
@@ -4554,6 +4717,7 @@ namespace mlp
 
                 if (Mathf.Abs(currentX - opponentPlayer.Position.x) < 40f)
                 {
+                    // 1a. 记录已碰撞的对手（防止重复触发），尝试抢断
                     superDashHits.Add(opponentPlayer.PlayerNo);
                     if (opponentPlayer.GetBeStolen(currentX, false))
                     {
@@ -4562,11 +4726,13 @@ namespace mlp
                 }
             }
 
+            // 2. 检测是否经过空中的篮球或队友的球
             var ball = GameCore.Ball;
             if (ball != null && ball.Position.y > mlpObjectsData.BasketHeight && !WithBall)
             {
                 if (ball.IsInGame)
                 {
+                    // 2a. 经过篮球时直接拾取
                     if ((dashToRight && currentX > ball.Position.x) || (!dashToRight && currentX < ball.Position.x))
                     {
                         AcquireBallDuringSuperDash();
@@ -4574,6 +4740,7 @@ namespace mlp
                 }
                 else if (dashTeammatePending && teamMate != null && ((dashToRight && currentX > teamMate.Position.x) || (!dashToRight && currentX < teamMate.Position.x)))
                 {
+                    // 2b. 经过持球队友时，强制释放队友的球并拾取
                     dashTeammatePending = false;
                     if (teamMate.WithBall)
                     {
@@ -4589,16 +4756,20 @@ namespace mlp
         /// </summary>
         private void AcquireBallDuringSuperDash()
         {
+            // 1. 如果已经持球或篮球不存在则跳过
             if (WithBall || GameCore.Ball == null)
             {
                 return;
             }
 
+            // 2. 将篮球收入手中，通知其他球员
             WithBall = true;
             canTakeInHands = false;
             attackJump = false;
             GameCore.Ball.TakeInHands(Side);
             GameCore.NotifyBallInHands(Side, playerNo);
+
+            // 3. 如果是灵魂收割技能，激活额外得分加成
             if (skillDefinition.SkillType == mlpCharacterSkillType.SoulReap && skillDefinition.FlatScoreBonus > 0)
             {
                 flatScoreBonusPoints = Mathf.Max(flatScoreBonusPoints, skillDefinition.FlatScoreBonus);
@@ -4606,6 +4777,7 @@ namespace mlp
                 skillFx?.PlayBuff(Mathf.Min(skillDefinition.BonusDuration, 1.1f));
             }
 
+            // 4. 灵魂收割技能显示提示文字
             if (skillDefinition.SkillType == mlpCharacterSkillType.SoulReap)
             {
                 GameCore.ShowHudBonusNotice(skillDefinition.ScoreNotice, 0.95f);
@@ -4657,11 +4829,16 @@ namespace mlp
         /// </summary>
         private void BeginFloorThrow()
         {
+            // 1. 标记待执行地面投篮
             pendingGroundThrow = true;
+
+            // 2. 锁定所有操作，防止重复投篮
             canDoAction = false;
             canTakeInHands = false;
             canThrow = false;
             actionLatch = Mathf.Max(actionLatch, 0.3f);
+
+            // 3. 停止水平移动，播放投篮预备动画
             Velocity.x = 0f;
             PlayState("throw_land");
         }
@@ -4702,17 +4879,22 @@ namespace mlp
         /// </summary>
         private void ResolveStealAttempt()
         {
+            // 1. 如果没有待执行的抢断动作，只清除计时器
             if (!pendingStealAction)
             {
                 stealAttemptTimer = -1f;
                 return;
             }
 
+            // 2. 清除抢断判定标记和计时器
             stealAttemptTimer = -1f;
             pendingStealAction = false;
+
+            // 3. 发送抢断信号，尝试从对手手中抢球
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Steal, Side, playerNo);
             if (GameCore.TryStealBall(this, stealFacingDirection))
             {
+                // 4. 抢断成功时增加短暂操作锁定
                 actionLatch = Mathf.Max(actionLatch, 0.18f);
             }
         }
@@ -4723,9 +4905,11 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         private void UpdateStealAnimation(float dt)
         {
+            // 1. 锁定朝向和水平移动
             facingDirection = stealFacingDirection;
             Velocity.x = 0f;
 
+            // 2. 等待抢断判定时间点到达后执行判定
             if (stealAttemptTimer >= 0f)
             {
                 stealAttemptTimer -= dt;
@@ -4735,6 +4919,7 @@ namespace mlp
                 }
             }
 
+            // 3. 动画计时结束后完成抢断动画
             stealAnimationTimer -= dt;
             if ((armature == null && stealAnimationTimer <= 0f) || stealAnimationTimer <= -0.2f)
             {
@@ -4742,6 +4927,7 @@ namespace mlp
                 return;
             }
 
+            // 4. 更新角色图形
             UpdateGraphic();
         }
 
@@ -4750,22 +4936,29 @@ namespace mlp
         /// </summary>
         private void FinishStealAnimation()
         {
+            // 1. 如果抢断动画未激活则跳过
             if (!stealAnimationActive)
             {
                 return;
             }
 
+            // 2. 如果还有未结算的抢断判定，先执行判定
             if (pendingStealAction)
             {
                 ResolveStealAttempt();
             }
 
+            // 3. 清除抢断动画状态和计时器
             stealAnimationActive = false;
             stealAnimationTimer = -1f;
             stealAttemptTimer = -1f;
+
+            // 4. 恢复拾球和操作能力
             canTakeInHands = !WithBall && stunTimer <= 0f && !removedFromPlay;
             canDoAction = controller.ReadyForAction();
             actionLatch = Mathf.Max(actionLatch, 0f);
+
+            // 5. 恢复待机动画
             PlayState(WithBall ? "idle_wb" : "idle");
         }
 
@@ -4775,10 +4968,13 @@ namespace mlp
         /// <param name="restorePickup">是否恢复拾取能力</param>
         private void CancelStealAnimation(bool restorePickup)
         {
+            // 1. 清除抢断动画状态和所有计时器
             stealAnimationActive = false;
             pendingStealAction = false;
             stealAttemptTimer = -1f;
             stealAnimationTimer = -1f;
+
+            // 2. 如果允许恢复拾球且当前可以拾球，则重新启用拾球能力
             if (restorePickup && !WithBall && stunTimer <= 0f && !removedFromPlay)
             {
                 canTakeInHands = true;
@@ -4790,6 +4986,7 @@ namespace mlp
         /// </summary>
         private void UpdateFacing()
         {
+            // 1. 确定面朝目标：默认朝进攻方向，防守时朝持球者或篮球
             var ballHolder = GameCore.FindBallHolder();
             var faceTarget = AttackTargetX;
             if (!WithBall && ballHolder != null && ballHolder.Side != Side)
@@ -4801,6 +4998,7 @@ namespace mlp
                 faceTarget = GameCore.Ball.Position.x;
             }
 
+            // 2. 当目标与当前位置有足够距离时，更新面朝方向
             var delta = faceTarget - Position.x;
             if (Mathf.Abs(delta) > 0.5f)
             {
@@ -4814,17 +5012,22 @@ namespace mlp
         /// <param name="state">动画状态名称</param>
         private void PlayState(string state)
         {
+            // 1. 非扣篮动画时恢复球槽显示
             if (!IsDunkAnimationState(state))
             {
                 SetDunkBallSlotsHidden(false);
             }
 
+            // 2. 设置动画播放速度
             SetAnimationPlaybackSpeed(state);
+
+            // 3. 如果已是当前状态则跳过（避免重复播放）
             if (visualState == state)
             {
                 return;
             }
 
+            // 4. 更新状态并播放骨骼动画
             visualState = state;
             armature?.Play(state);
         }
@@ -4847,23 +5050,27 @@ namespace mlp
 
         private void SetDunkBallSlotsHidden(bool hidden)
         {
+            // 1. 如果状态没有变化则跳过
             if (dunkBallSlotsHidden == hidden)
             {
                 return;
             }
 
+            // 2. 更新球槽隐藏状态
             dunkBallSlotsHidden = hidden;
             if (armature == null)
             {
                 return;
             }
 
+            // 3. 控制前景和背景两个球槽的显示/隐藏
             armature.SetSlotHidden("ball", hidden);
             armature.SetSlotHidden("ball_front", hidden);
         }
 
         private void SetAnimationPlaybackSpeed(string state)
         {
+            // 1. 如果骨骼动画存在，根据动画状态设置对应的播放速度
             if (armature != null)
             {
                 armature.PlaybackSpeed = AnimationPlaybackSpeed(state);
@@ -5011,6 +5218,7 @@ namespace mlp
 
         private void UpdateSkillTimers(float dt)
         {
+            // 1. 更新额外得分加成计时器（到时清零加成点数）
             if (flatScoreBonusTimer > 0f)
             {
                 flatScoreBonusTimer = Mathf.Max(0f, flatScoreBonusTimer - dt);
@@ -5020,6 +5228,7 @@ namespace mlp
                 }
             }
 
+            // 2. 更新移动加速计时器（到时清除得分加成标志）
             if (moveBuffTimer > 0f)
             {
                 moveBuffTimer = Mathf.Max(0f, moveBuffTimer - dt);
@@ -5029,6 +5238,7 @@ namespace mlp
                 }
             }
 
+            // 3. 更新得分退费计时器（到时清除退费比例）
             if (pendingScoreRefundTimer > 0f)
             {
                 pendingScoreRefundTimer = Mathf.Max(0f, pendingScoreRefundTimer - dt);
@@ -5076,12 +5286,16 @@ namespace mlp
 
         private void UpdateReboundMagnet(float dt)
         {
+            // 1. 如果磁铁未激活则跳过
             if (reboundMagnetTimer <= 0f)
             {
                 return;
             }
 
+            // 2. 递减磁铁持续时间
             reboundMagnetTimer = Mathf.Max(0f, reboundMagnetTimer - dt);
+
+            // 3. 如果球员不可用则立即关闭磁铁
             var ball = GameCore.Ball;
             if (WithBall || stunTimer > 0f || removedFromPlay || isDunking || !CanUseReboundMagnetBall(ball))
             {
@@ -5089,11 +5303,13 @@ namespace mlp
                 return;
             }
 
+            // 4. 计算接球点与篮球的距离
             var catchPoint = Position + new Vector2(0f, -58f);
             var delta = catchPoint - ball.Position;
             if (Mathf.Abs(delta.x) <= ReboundMagnetCatchDistanceX &&
                 Mathf.Abs(delta.y) <= ReboundMagnetCatchDistanceY)
             {
+                // 4a. 篮球进入接球范围，拾取篮球并显示提示
                 reboundMagnetTimer = 0f;
                 TakeBallInHands();
                 canDoAction = false;
@@ -5103,6 +5319,7 @@ namespace mlp
                 return;
             }
 
+            // 5. 将篮球速度朝球员方向吸引（距离越远速度越快）
             var distance = Mathf.Max(1f, delta.magnitude);
             var speed = Mathf.Lerp(
                 ReboundMagnetMinSpeed,
@@ -5114,24 +5331,28 @@ namespace mlp
 
         private float GetMoveSpeed()
         {
+            // 1. 根据是否持球选择基础速度，有移动加速时乘以加速倍率
             var baseSpeed = WithBall ? mlpObjectsData.PlayerMoveWithBall : mlpObjectsData.PlayerMove;
             return baseSpeed * (moveBuffTimer > 0f ? skillDefinition.MoveSpeedMultiplier : 1f);
         }
 
         private float GetDashSpeed()
         {
+            // 1. 计算冲刺速度：基础移动速度的1.7倍，有移动加速时额外加成
             var multiplier = moveBuffTimer > 0f ? Mathf.Lerp(1f, skillDefinition.MoveSpeedMultiplier, 0.65f) : 1f;
             return mlpObjectsData.PlayerMove * 1.7f * multiplier;
         }
 
         private float GetShotAccuracy()
         {
+            // 1. 教程完美投篮模式下直接返回高精度值
             if (tutorialPerfectShotPrimed)
             {
                 tutorialPerfectShotPrimed = false;
                 return -0.5f;
             }
 
+            // 2. 基础精度加上移动加速的精度修正值
             var resolvedAccuracy = accuracy;
             if (moveBuffTimer > 0f)
             {
@@ -5143,6 +5364,7 @@ namespace mlp
 
         private void GrantSuperChargeFraction(float fraction)
         {
+            // 1. 获取超能冷却时间，无冷却时直接刷新就绪状态
             var cooldown = EffectiveSuperCoolDown;
             if (cooldown <= 0f)
             {
@@ -5150,11 +5372,13 @@ namespace mlp
                 return;
             }
 
+            // 2. 无效比例则跳过
             if (fraction <= 0f)
             {
                 return;
             }
 
+            // 3. 增加充能进度，更新能量条显示
             superChargeTime = Mathf.Min(cooldown, superChargeTime + cooldown * fraction);
             readyForSuper = superChargeTime >= cooldown;
             energyBar?.SetCharge(superChargeTime / cooldown);
@@ -5193,11 +5417,13 @@ namespace mlp
 
         private void UpdateShadowAppearance()
         {
+            // 1. 如果没有渲染器则跳过
             if (shadowRenderer == null)
             {
                 return;
             }
 
+            // 2. 根据技能激活状态选择高亮或默认阴影贴图
             var targetSprite = UsesHighlightedSkillShadow ? activeSkillShadowSprite : defaultShadowSprite;
             if (targetSprite != null && shadowRenderer.sprite != targetSprite)
             {
@@ -5217,7 +5443,9 @@ namespace mlp
         /// </summary>
         private void CreateFallbackAvatar()
         {
+            // 1. 创建一个新游戏对象作为备用角色身体
             var body = new GameObject("FallbackBody");
+            // 2. 挂载到角色图形下，添加精灵渲染器
             body.transform.SetParent(graphic.transform, false);
             var renderer = body.AddComponent<SpriteRenderer>();
             renderer.sprite = mlpGameplaySpriteLoader.LoadGameplaySprite(
@@ -5226,6 +5454,7 @@ namespace mlp
                 0.5f,
                 mlpAtlasCache.Instance.Gameplay,
                 "BallClipMsg0000");
+            // 3. 根据队伍设置颜色，调整排序和位置缩放
             renderer.color = teamIndex == 0 ? new Color(0.95f, 0.25f, 0.2f) : new Color(0.2f, 0.45f, 1f);
             renderer.sortingOrder = 20;
             body.transform.localPosition = new Vector3(0f, -80f, 0f);
@@ -5238,12 +5467,16 @@ namespace mlp
         /// <param name="direction">移动或投掷方向（-1 或 1）</param>
         private void StartDash(int direction)
         {
+            // 1. 设置冲刺方向和持续时间
             dashDirection = direction;
             dashTimer = 0.14f;
+            // 2. 设置冲刺速度，清除输入缓冲
             Velocity.x = GetDashSpeed() * direction;
             actionLatch = Mathf.Max(actionLatch, 0.15f);
             bufferedDashDirection = 0;
             dashBufferTimer = 0f;
+
+            // 3. 播放冲刺动画和音效，发送冲刺信号
             PlayState("dash");
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Dash, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PDash);
@@ -5255,6 +5488,7 @@ namespace mlp
         /// <param name="dt">时间增量（秒）</param>
         private void UpdateDashBuffer(float dt)
         {
+            // 1. 如果有新输入，记录方向和缓冲时间
             if (controller.CurrentDash != 0)
             {
                 bufferedDashDirection = controller.CurrentDash;
@@ -5262,6 +5496,7 @@ namespace mlp
                 return;
             }
 
+            // 2. 缓冲期结束后清除记录的方向
             if (dashBufferTimer <= 0f)
             {
                 return;
@@ -5280,13 +5515,17 @@ namespace mlp
         /// </summary>
         private void BeginBlockOrPump()
         {
+            // 1. 判断是假动作（持球时）还是盖帽（无球时）
             blockPumpIsPump = WithBall;
             blockPumpPhase = BlockPumpPhase.Starting;
             blockPumpTimer = blockPumpIsPump ? mlpObjectsData.PumpStartDuration : mlpObjectsData.BlockStartDuration;
             blockPumpStartReady = false;
             blockPumpEndReady = false;
+
+            // 2. 停止水平移动，锁定操作时间
             Velocity.x = 0f;
             actionLatch = Mathf.Max(actionLatch, blockPumpTimer);
+            // 3. 盖帽时禁止拾球，假动作时发送假动作信号
             if (!blockPumpIsPump)
             {
                 canTakeInHands = false;
@@ -5296,6 +5535,7 @@ namespace mlp
                 GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Pump, Side, playerNo);
             }
 
+            // 4. 播放对应的起跳动画
             PlayState(blockPumpIsPump ? "pumpStart" : "blockStart");
         }
 
@@ -5304,6 +5544,7 @@ namespace mlp
         /// </summary>
         private void ActivateJumpBlock()
         {
+            // 1. 激活跳跃封盖碰撞检测，禁止拾球
             jumpBlockActive = true;
             canTakeInHands = false;
         }
@@ -5314,11 +5555,13 @@ namespace mlp
         /// <returns>条件满足时返回 true；否则返回 false。</returns>
         private bool ShouldPrimeJumpBlock()
         {
+            // 1. 如果不需要盖帽则直接返回
             if (!needBlock)
             {
                 return false;
             }
 
+            // 2. 检查持球者是否是对手，或篮球是否正在飞向篮筐
             var holder = GameCore.FindBallHolder();
             if (holder != null)
             {
@@ -5334,6 +5577,7 @@ namespace mlp
         /// </summary>
         private void UpdateJumpBlockThreat()
         {
+            // 1. 如果正在盖帽但条件不再满足，则关闭盖帽碰撞
             if (jumpBlockActive && !ShouldPrimeJumpBlock())
             {
                 jumpBlockActive = false;
@@ -5346,12 +5590,14 @@ namespace mlp
         /// <param name="dt">时间增量（秒）</param>
         private void UpdateBlockOrPump(float dt)
         {
+            // 1. 停止水平移动，持球时保持球在手中
             Velocity.x = 0f;
             if (WithBall)
             {
                 GameCore.Ball.TakeInHands(Side);
             }
 
+            // 2. 起跳阶段：等待动画完成或计时器结束，切换到保持阶段
             if (blockPumpPhase == BlockPumpPhase.Starting)
             {
                 blockPumpTimer -= dt;
@@ -5371,6 +5617,7 @@ namespace mlp
                 return;
             }
 
+            // 3. 保持阶段：等待玩家松开按键，切换到落地阶段
             if (blockPumpPhase == BlockPumpPhase.Holding)
             {
                 if (controller.ReleaseBlockOrPump(dt))
@@ -5391,6 +5638,7 @@ namespace mlp
                 return;
             }
 
+            // 4. 落地阶段：等待动画完成或计时器结束，恢复待机状态
             blockPumpTimer -= dt;
             if (blockPumpEndReady || blockPumpTimer <= 0f)
             {
@@ -5411,12 +5659,14 @@ namespace mlp
         /// <returns>操作成功时返回 true；否则返回 false。</returns>
         private bool TryStartDunk()
         {
+            // 1. 获取扣篮类型（不在扣篮区域则返回0）
             var dunkType = GetDunkType();
             if (dunkType == 0)
             {
                 return false;
             }
 
+            // 2. 进入扣篮状态，发送扣篮信号，播放音效
             BeginDunkState(dunkType);
             GameCore.PlayerSignals.Dispatch(mlpPlayerSignalType.Dunk, Side, playerNo);
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PSwoosh, 0.8f);
@@ -5425,17 +5675,20 @@ namespace mlp
 
         private bool TryTutorialPutbackDunk()
         {
+            // 1. 检查是否满足教程补扣条件（已预备、不在地面、篮球存在等）
             var ball = GameCore.Ball;
             if (!tutorialPutbackDunkPrimed || WithBall || IsGrounded || ball == null || !ball.IsInGame || removedFromPlay || isSuperShot || isDunking)
             {
                 return false;
             }
 
+            // 2. 检查篮球状态是否允许补扣
             if (ball.State == "inHands" || ball.State == "score" || ball.State == "alleyOop" || !IsTutorialPutbackBallInWindow(ball))
             {
                 return false;
             }
 
+            // 3. 检查球员与篮球的距离是否在补扣范围内
             var delta = ball.Position - Position;
             if (Mathf.Abs(delta.x) > TutorialPutbackCatchWindowX ||
                 Mathf.Abs(delta.y) > TutorialPutbackCatchWindowY ||
@@ -5444,12 +5697,14 @@ namespace mlp
                 return false;
             }
 
+            // 4. 获取教程补扣类型，设置高完成率
             var dunkType = GetTutorialPutbackDunkType();
             if (dunkType == 0)
             {
                 return false;
             }
 
+            // 5. 清除预备标记，从物理中移除篮球，进入扣篮状态
             tutorialPutbackDunkPrimed = false;
             tutorialDunkCompletionChanceOverride = Mathf.Max(tutorialDunkCompletionChanceOverride, TutorialPutbackCompletionChance);
             ball.RemoveFromPhysics();
@@ -5487,6 +5742,7 @@ namespace mlp
 
         private void BeginDunkState(int dunkType)
         {
+            // 1. 标记进入扣篮状态，锁定操作
             isDunking = true;
             canDoAction = false;
             canThrow = false;
@@ -5494,12 +5750,14 @@ namespace mlp
             dunkTimer = 0f;
             dunkDuration = DunkTravelDuration(dunkType);
             dunkReleaseTime = DunkReleaseTime(dunkType);
+            // 2. 记录起跳位置和篮下目标点，停止移动
             dunkStartPosition = Position;
             dunkTargetPosition = new Vector2(DunkTargetX(), mlpObjectsData.DunkY);
             Velocity = Vector2.zero;
             dashTimer = 0f;
             dashDirection = 0;
             actionLatch = Mathf.Max(actionLatch, DunkActionLockDuration(dunkType));
+            // 3. 禁止拾球，显示球槽，播放对应类型的扣篮动画
             canTakeInHands = false;
             SetDunkBallSlotsHidden(false);
             PlayState("dunk" + dunkType);
@@ -5511,14 +5769,17 @@ namespace mlp
         /// <returns>计算得出的扣篮类型。</returns>
         private int GetDunkType()
         {
+            // 1. 计算油漆区（篮下区域）的左右边界
             var paintStart = Side == 1 ? mlpObjectsData.PaintStartX : mlpConstants.Width - mlpObjectsData.PaintMiddleX;
             var paintMiddle = Side == 1 ? mlpObjectsData.PaintMiddleX : mlpConstants.Width - mlpObjectsData.PaintStartX;
             var tutorialDunkYBonus = tutorialPerfectDunkPrimed ? 36f : 0f;
+            // 2. 在油漆区深处且高度足够时，随机返回扣篮类型2或3
             if (Position.x >= paintStart && Position.x <= paintMiddle && Position.y <= mlpObjectsData.DunkZone1Y + tutorialDunkYBonus)
             {
                 return 1 + Mathf.RoundToInt(2f * Random.value);
             }
 
+            // 3. 在油漆区边缘且高度足够时，返回基础扣篮类型1
             if ((Position.x - paintStart) * Side < 0f && Position.y <= mlpObjectsData.DunkZone2Y + tutorialDunkYBonus)
             {
                 return 1;
@@ -5670,11 +5931,13 @@ namespace mlp
         /// </summary>
         private void RestoreBallPickupIfReady()
         {
+            // 1. 如果已可拾球或处于不可拾球状态则跳过
             if (canTakeInHands || stunTimer > 0f || stealAnimationActive || stealAttemptTimer >= 0f || actionLatch > 0f)
             {
                 return;
             }
 
+            // 2. 如果必定盖帽后拾球被锁定，落地后解除锁定
             if (guaranteedBlockPickupLocked)
             {
                 if (!IsGrounded)
@@ -5711,11 +5974,13 @@ namespace mlp
         /// <returns>相交时返回 true；否则返回 false。</returns>
         private static bool SweptPointIntersectsRect(Vector2 start, Vector2 end, float minX, float maxX, float minY, float maxY)
         {
+            // 1. 如果起点或终点在矩形内则直接相交
             if (PointInsideRect(start, minX, maxX, minY, maxY) || PointInsideRect(end, minX, maxX, minY, maxY))
             {
                 return true;
             }
 
+            // 2. 用 Cohen-Sutherland 裁剪算法检测线段与矩形是否相交
             var direction = end - start;
             var tMin = 0f;
             var tMax = 1f;
@@ -5741,6 +6006,7 @@ namespace mlp
 
         /// <summary>
         /// 裁剪线段（Cohen-Sutherland 算法）。
+        /// 用于判断扫掠轨迹线段是否穿过矩形区域。
         /// </summary>
         /// <param name="p">裁剪平面的方向分量</param>
         /// <param name="q">裁剪平面的距离分量</param>
@@ -5749,14 +6015,17 @@ namespace mlp
         /// <returns>线段未被完全裁剪时返回 true；否则返回 false。</returns>
         private static bool ClipSegment(float p, float q, ref float tMin, ref float tMax)
         {
+            // 1. 方向分量为零时，线段平行于裁剪边界，检查是否在内侧
             if (Mathf.Approximately(p, 0f))
             {
                 return q >= 0f;
             }
 
+            // 2. 计算交点参数（距离/方向）
             var ratio = q / p;
             if (p < 0f)
             {
+                // 3. 从负方向进入：更新 tMin（进入点），超出范围则不相交
                 if (ratio > tMax)
                 {
                     return false;
@@ -5769,6 +6038,7 @@ namespace mlp
             }
             else
             {
+                // 4. 从正方向进入：更新 tMax（离开点），超出范围则不相交
                 if (ratio < tMin)
                 {
                     return false;

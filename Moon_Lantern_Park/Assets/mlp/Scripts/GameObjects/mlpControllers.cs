@@ -261,7 +261,7 @@ namespace mlp
         /// 创建一个具有默认防守行为的 AI 控制器。
         /// </summary>
         /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
         public mlpAIController(mlpPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
@@ -272,7 +272,7 @@ namespace mlp
         /// </summary>
         /// <param name="player">所属的玩家对象</param>
         /// <param name="brain">控制器标识字符串</param>
-        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
         /// <returns>创建的控制器实例。</returns>
         public static IBLPlayerController CreateForBrain(mlpPlayerObject player, string brain, int skillLevel)
         {
@@ -315,7 +315,7 @@ namespace mlp
         /// 创建一个使用主动抢断防守风格的 AI 控制器变体。
         /// </summary>
         /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
         public mlpAIController2(mlpPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
@@ -419,7 +419,7 @@ namespace mlp
         /// 初始化共享的 AI 状态：难度配置、决策计时器和进攻/防守区域。
         /// </summary>
         /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
+        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
         protected mlpBaseAIController(mlpPlayerObject player, int skillLevel)
         {
             // 1. 保存玩家对象引用和编号
@@ -427,7 +427,7 @@ namespace mlp
             // 2. 读取当前难度设置（简单/普通/困难/地狱）和对应的调校参数
             difficulty = mlpInventory.Instance.Difficulty;
             tuning = mlpAIDifficultyTuning.Get(difficulty);
-            // 3. 根据技能等级加载 AI 技能配置（控制投篮时机、抢断概率等）
+            // 3. 根据四档技能索引加载 AI 技能配置（控制投篮时机、抢断概率等）
             profile = mlpAISkillsData.Get(skillLevel);
             // 4. 初始化各种决策延迟计时器（控制 AI 不要每帧都做决策，模拟人类反应时间）
             jumpBall = new NegativeDelay(mlpObjectsData.IdealJumpBallJump, profile.JumpBall);

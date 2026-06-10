@@ -1,4 +1,4 @@
-// 游戏启动器和菜单界面控制器
+﻿// 游戏启动器和菜单界面控制器
 // 管理从主菜单到比赛开始的所有界面：选择 1 人或 2 人模式、选择角色和篮球皮肤、选择难度、进入冒险模式或锦标赛、显示故事漫画、锦标赛对阵图和颁奖画面。也负责创建摄像机和音频系统。
 
 using System.Text;
@@ -782,13 +782,16 @@ namespace mlp
             System.Action continueAction,
             System.Action cancelAction = null)
         {
+            // 1. 保存故事模式类型和完成后的回调
             storyIntroMode = mode;
             storyIntroPanelIndex = 0;
             storyIntroContinueAction = continueAction;
             storyIntroCancelAction = cancelAction ?? ShowMatchTypeMenu;
+            // 2. 重置暂停和传说面板状态
             storyIntroPaused = false;
             storyIntroLoreOpen = false;
             storyIntroPauseBeforeLore = false;
+            // 3. 显示第一帧漫画面板
             ShowSinglePlayerStoryIntroPanel();
         }
 
@@ -819,6 +822,7 @@ namespace mlp
             menuMusicButton?.SetVisible(false);
             menuHelpButton?.SetVisible(false);
             storyIntroElapsed = 0f;
+            // 3. 重置故事介绍相关的暂停和传说面板状态
             storyIntroPauseButton = null;
             storyIntroLoreButton = null;
             storyIntroLoreOpen = false;
@@ -871,6 +875,7 @@ namespace mlp
                 mlpTextStyle.LinkLabel);
             storyIntroPauseButton.SetBackgroundVisible(false);
             menuButtons.Add(storyIntroPauseButton);
+            // 7. 更新暂停按钮文字
             RefreshStoryIntroPauseButtonLabel();
             CreatePanel("StoryIntroPauseUnderline", StoryIntroPauseX, StoryIntroPauseY + 13f, 56f, 2f, 24, accentColor);
 
@@ -891,19 +896,23 @@ namespace mlp
 
         private bool CreateStoryIntroComicImage(mlpStoryPanelDefinition panel)
         {
+            // 1. 验证面板数据和图片键是否有效
             if (panel == null || string.IsNullOrEmpty(panel.ImageKey))
             {
                 return false;
             }
 
+            // 2. 从 Resources 加载漫画贴图，加载失败返回 false
             var texture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(panel.ImageKey));
             if (texture == null)
             {
                 return false;
             }
 
+            // 3. 设置贴图模式，防止边缘出现接缝
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Bilinear;
+            // 4. 在屏幕中心创建漫画图片对象
             storyIntroImageObject = mlpRender.Image(
                 "StoryIntroComicPage",
                 texture,
@@ -914,17 +923,20 @@ namespace mlp
                 12,
                 runtimeRoot);
 
+            // 5. 计算缩放比例使图片覆盖整个电影区域
             var coverScale = Mathf.Max(
                 StoryCinematicWidth / Mathf.Max(1f, texture.width),
                 StoryCinematicHeight / Mathf.Max(1f, texture.height));
             storyIntroImageBaseScale = Vector3.one * mlpConstants.UnitsPerPixel * coverScale;
             storyIntroImageBaseScale.z = 1f;
+            // 6. 获取渲染器并将初始透明度设为 0（后续会渐入显示）
             storyIntroImageRenderer = storyIntroImageObject.GetComponent<SpriteRenderer>();
             if (storyIntroImageRenderer != null)
             {
                 storyIntroImageRenderer.color = new Color(1f, 1f, 1f, 0f);
             }
 
+            // 7. 设置初始位置和缩放
             SetStoryIntroImageTransform(0f, 1f);
             return true;
         }
@@ -948,15 +960,18 @@ namespace mlp
 
         private bool UpdateStoryIntroCinematic(float deltaTime)
         {
+            // 1. 暂停状态下不更新计时器
             if (storyIntroPaused)
             {
                 return false;
             }
 
+            // 2. 累加经过时间，计算归一化进度和缓动值
             storyIntroElapsed += Mathf.Max(0f, deltaTime);
             var normalized = Mathf.Clamp01(storyIntroElapsed / StoryCinematicPageSeconds);
             var eased = Mathf.SmoothStep(0f, 1f, normalized);
             var fade = Mathf.Clamp01(storyIntroElapsed / StoryCinematicFadeSeconds);
+            // 3. 更新漫画图片的位置（平移）和缩放（缓慢放大），并渐入显示
             if (storyIntroImageObject != null)
             {
                 SetStoryIntroImageTransform(eased, 1f + StoryCinematicZoomAmount * eased);
@@ -967,6 +982,7 @@ namespace mlp
                 }
             }
 
+            // 4. 播放时间到，自动切换到下一帧漫画
             if (storyIntroElapsed >= StoryCinematicPageSeconds)
             {
                 AdvanceSinglePlayerStoryIntro();
@@ -990,18 +1006,23 @@ namespace mlp
 
         private void SetStoryIntroImageTransform(float normalized, float zoom)
         {
+            // 1. 没有图片对象则跳过
             if (storyIntroImageObject == null)
             {
                 return;
             }
 
+            // 2. 偶数帧向右平移，奇数帧向左平移（营造交替运动感）
             var direction = storyIntroPanelIndex % 2 == 0 ? 1f : -1f;
             var panX = Mathf.Lerp(-StoryCinematicPanPixels, StoryCinematicPanPixels, normalized) * direction;
+            // 3. 垂直方向用正弦波做轻微上下浮动
             var panY = Mathf.Sin(normalized * Mathf.PI) * 4f;
+            // 4. 设置图片的世界坐标位置（吸附到像素网格）
             storyIntroImageObject.transform.position = mlpConstants.PixelToWorldSnapped(
                 mlpConstants.Width2 + panX,
                 StoryCinematicHeight * 0.5f + panY,
                 0f);
+            // 5. 应用缩放（基础缩放 x 放大倍率），保持 Z 轴为 1
             storyIntroImageObject.transform.localScale = storyIntroImageBaseScale * zoom;
             storyIntroImageObject.transform.localScale = new Vector3(
                 storyIntroImageObject.transform.localScale.x,
@@ -1080,13 +1101,16 @@ namespace mlp
 
         private void ShowAdventurePreview()
         {
+            // 1. 设置当前界面为冒险预览，设为单人模式
             currentScreen = mlpBootstrapScreen.AdventurePreview;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
+            // 2. 初始化菜单界面，显示冒险模式标题和副标题
             BeginMenuScreen(false, false, "bg10000");
             AddTitle(mlpSinglePlayerNarrative.Adventure.MenuTitle, 54f, 30, new Color32(0xFF, 0xB6, 0x45, 0xFF));
             AddSubtitle(mlpSinglePlayerNarrative.Adventure.Subtitle, 90f, 14);
 
+            // 3. 创建信息面板，显示冒险模式的状态、目标和说明文字
             CreatePanel("AdventurePreviewPanel", mlpConstants.Width2, 274f, 590f, 276f, 8, new Color(0.04f, 0.07f, 0.1f, 0.84f));
             CreatePanel("AdventurePreviewAccent", mlpConstants.Width2, 149f, 520f, 8f, 9, new Color(1f, 0.55f, 0.18f, 0.92f));
             CreateMenuText(
@@ -1130,6 +1154,7 @@ namespace mlp
                 20,
                 mlpTextStyle.TournamentBody);
 
+            // 4. 创建底部按钮：返回和快速决斗
             menuButtons.Add(new mlpMenuButton("BACK", 220f, 452f, 180f, 42f, ShowMatchTypeMenu, runtimeRoot));
             menuButtons.Add(new mlpMenuButton("QUICK DUEL", 580f, 452f, 200f, 42f, ShowSinglePlayerSetup, runtimeRoot));
         }
@@ -1181,6 +1206,7 @@ namespace mlp
 
         private void CreateAdventureTreasureMapFrame()
         {
+            // 1. 绘制地图面板的阴影层（营造立体感）
             CreatePanel(
                 "AdventureMapDropShadow",
                 AdventureMapPanelX + 7f,
@@ -1189,6 +1215,7 @@ namespace mlp
                 AdventureMapPanelHeight + 28f,
                 7,
                 new Color(0f, 0f, 0f, 0.3f));
+            // 2. 绘制铜色边框
             CreatePanel(
                 "AdventureMapCopperFrame",
                 AdventureMapPanelX,
@@ -1198,6 +1225,7 @@ namespace mlp
                 8,
                 new Color(0.5f, 0.22f, 0.08f, 0.76f));
 
+            // 3. 加载藏宝图贴图并显示，贴图不可用时用纯色面板替代
             var texture = GetAdventureTreasureMapTexture();
             if (texture != null)
             {
@@ -1227,9 +1255,11 @@ namespace mlp
                     new Color(0.64f, 0.42f, 0.2f, 0.94f));
             }
 
+            // 4. 添加可读性遮罩和内部阴影纹理
             CreatePanel("AdventureMapReadabilityWash", AdventureMapPanelX - 28f, AdventureMapPanelY + 10f, AdventureMapPanelWidth - 168f, AdventureMapPanelHeight - 150f, 10, new Color(1f, 0.88f, 0.56f, 0.055f));
             CreatePanel("AdventureMapInnerShade", AdventureMapPanelX, AdventureMapPanelY + AdventureMapPanelHeight * 0.5f - 18f, AdventureMapPanelWidth - 68f, 7f, 10, new Color(0.13f, 0.06f, 0.02f, 0.24f));
 
+            // 5. 在地图左下角显示 "ESCAPE ROUTE" 印章文字
             CreateMenuText(
                 "AdventureMapStamp",
                 "ESCAPE ROUTE",
@@ -1349,6 +1379,7 @@ namespace mlp
 
         private void CreateAdventureRouteMap(mlpAdventureData adventure)
         {
+            // 1. 绘制相邻节点之间的连接线（路线）
             var levels = mlpAdventureCatalog.AllLevels;
             for (var i = 1; i < levels.Length; i++)
             {
@@ -1358,6 +1389,7 @@ namespace mlp
                 CreateAdventureConnector(i, previousAnchor.x, previousAnchor.y, currentAnchor.x, currentAnchor.y, unlocked);
             }
 
+            // 2. 绘制每个节点（包含头像、状态颜色等），并为已解锁节点添加点击按钮
             for (var i = 0; i < levels.Length; i++)
             {
                 var level = levels[i];
@@ -1366,6 +1398,7 @@ namespace mlp
                 var selected = i == adventureSelectedLevelIndex;
                 CreateAdventureRouteNode(level, i, unlocked, completed, selected);
 
+                // 3. 已解锁且冒险未完成的节点：创建不可见的点击按钮
                 if (unlocked && !adventure.Completed)
                 {
                     var capturedIndex = i;
@@ -1389,6 +1422,7 @@ namespace mlp
             bool completed,
             bool selected)
         {
+            // 1. 获取节点位置，根据状态（完成/解锁/锁定）选择对应的颜色
             var nodePosition = GetAdventureNodePosition(index);
             var portraitY = nodePosition.y - 2f;
             var glowColor = completed
@@ -1410,16 +1444,20 @@ namespace mlp
                 ? new Color(0.98f, 0.95f, 0.86f, 0.98f)
                 : new Color(0.66f, 0.62f, 0.56f, 0.96f);
 
+            // 2. 绘制节点阴影
             CreatePanel($"AdventureNodeShadow_{index}", nodePosition.x + 4f, nodePosition.y + 7f, AdventureNodeWidth + 10f, AdventureNodeHeight + 12f, 13, new Color(0.04f, 0.02f, 0.01f, 0.34f));
+            // 3. 选中的节点绘制高亮光晕
             if (selected)
             {
                 CreatePanel($"AdventureNodeSelectGlow_{index}", nodePosition.x, nodePosition.y, AdventureNodeWidth + 24f, AdventureNodeHeight + 24f, 14, new Color(1f, 0.8f, 0.28f, 0.28f));
             }
 
+            // 4. 从外到内绘制：外框、内部填充、头像背景、头像光晕
             CreatePanel($"AdventureNodePlate_{index}", nodePosition.x, nodePosition.y, AdventureNodeWidth, AdventureNodeHeight, 15, borderTint);
             CreatePanel($"AdventureNodeInset_{index}", nodePosition.x, nodePosition.y, AdventureNodeWidth - 8f, AdventureNodeHeight - 8f, 16, fillTint);
             CreatePanel($"AdventureNodePortraitBack_{index}", nodePosition.x, portraitY, AdventureNodeWidth - 22f, AdventureNodeWidth - 22f, 17, portraitBackTint);
             CreatePanel($"AdventureNodePortraitGlow_{index}", nodePosition.x, portraitY, AdventureNodeWidth - 12f, AdventureNodeWidth - 12f, 17, glowColor);
+            // 5. 绘制守卫者角色头像
             CreateTournamentPortrait(
                 $"AdventureNodePortrait_{index}",
                 level.WardenCharacterId,
@@ -1427,6 +1465,7 @@ namespace mlp
                 portraitY,
                 selected ? 50f : 46f,
                 18);
+            // 6. 未解锁的节点叠加暗色遮罩
             if (!unlocked)
             {
                 CreatePanel($"AdventureNodeLockShade_{index}", nodePosition.x, portraitY, AdventureNodeWidth - 22f, AdventureNodeWidth - 22f, 19, new Color(0.08f, 0.09f, 0.11f, 0.42f));
@@ -1495,10 +1534,12 @@ namespace mlp
 
         private void CreateAdventureLevelPoster(mlpAdventureData adventure, int selectedLevelIndex)
         {
+            // 1. 获取关卡数据，判断解锁、完成和当前关卡状态
             var level = mlpAdventureCatalog.GetLevel(selectedLevelIndex);
             var unlocked = adventure.IsLevelUnlocked(selectedLevelIndex);
             var completed = adventure.IsLevelCompleted(selectedLevelIndex);
             var activeGate = selectedLevelIndex == adventure.CurrentLevelIndex && !completed && unlocked;
+            // 2. 创建海报卡片边框（活跃关卡用特殊边框样式）
             CreateFramedPanel(
                 "AdventurePosterFrame",
                 activeGate ? "MatchBack0002" : "MatchBack0001",
@@ -1508,8 +1549,10 @@ namespace mlp
                 AdventurePosterHeight,
                 11,
                 unlocked ? new Color(1f, 0.84f, 0.58f, 0.96f) : new Color(0.7f, 0.78f, 0.86f, 0.7f));
+            // 3. 绘制海报内部阴影和装饰线条
             CreatePanel("AdventurePosterShade", AdventurePosterX, AdventurePosterY, AdventurePosterWidth - 28f, AdventurePosterHeight - 34f, 12, new Color(0.04f, 0.06f, 0.09f, 0.72f));
             CreatePanel("AdventurePosterAccent", AdventurePosterX, 137f, AdventurePosterWidth - 48f, 4f, 13, unlocked ? new Color(1f, 0.58f, 0.18f, 0.86f) : new Color(0.44f, 0.52f, 0.58f, 0.7f));
+            // 4. 显示关卡状态标签（已获得/下一关/开放/锁定）
             CreateMenuText(
                 "AdventurePosterStatus",
                 completed ? "CLAIMED" : activeGate ? "NEXT GATE" : unlocked ? "OPEN" : "LOCKED",
@@ -1520,6 +1563,7 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 13,
                 mlpTextStyle.TournamentAccent);
+            // 5. 显示区域名称
             CreateMenuText(
                 "AdventurePosterArea",
                 level.AreaName,
@@ -1530,9 +1574,11 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 13,
                 mlpTextStyle.TournamentBody);
+            // 6. 绘制守卫者头像区域（光晕、边框、内部填充）
             CreatePanel("AdventurePosterPortraitGlow", AdventurePosterX, 232f, 112f, 112f, 13, completed ? new Color(0.56f, 0.98f, 0.66f, 0.16f) : unlocked ? new Color(1f, 0.66f, 0.22f, 0.16f) : new Color(0.72f, 0.78f, 0.86f, 0.08f));
             CreatePanel("AdventurePosterPortraitFrame", AdventurePosterX, 232f, 90f, 96f, 14, unlocked ? new Color(0.98f, 0.84f, 0.56f, 0.94f) : new Color(0.68f, 0.72f, 0.78f, 0.84f));
             CreatePanel("AdventurePosterPortraitInset", AdventurePosterX, 232f, 80f, 86f, 15, unlocked ? new Color(0.98f, 0.94f, 0.86f, 0.96f) : new Color(0.7f, 0.72f, 0.74f, 0.9f));
+            // 7. 绘制守卫者头像和名称
             CreateTournamentPortrait(
                 "AdventurePosterWardenBadge",
                 level.WardenCharacterId,
@@ -1551,6 +1597,7 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 13,
                 mlpTextStyle.TournamentBody);
+            // 8. 绘制分隔线，然后显示篮球皮肤选择区域
             CreatePanel("AdventurePosterDivider", AdventurePosterX, 306f, AdventurePosterWidth - 68f, 2f, 13, new Color(1f, 0.63f, 0.22f, 0.28f));
             CreateMenuText(
                 "AdventurePosterBallHeader",
@@ -1570,6 +1617,7 @@ namespace mlp
                 44f,
                 13,
                 completed ? new Color(0.56f, 0.98f, 0.66f, 0.12f) : unlocked ? new Color(1f, 0.64f, 0.22f, 0.12f) : new Color(0.72f, 0.78f, 0.86f, 0.08f));
+            // 9. 显示篮球预览和难度选择按钮
             CreateBallPreview(
                 "AdventurePosterBallPreview",
                 mlpBallCatalog.PreviewTheme(level.BallSelection),
@@ -1778,6 +1826,7 @@ namespace mlp
             string buttonText,
             System.Action action)
         {
+            // 1. 绘制卡片背景面板和装饰线条
             CreatePanel(
                 $"{key}_ModeCard",
                 centerX,
@@ -1794,6 +1843,7 @@ namespace mlp
                 3f,
                 10,
                 new Color(accentColor.r, accentColor.g, accentColor.b, 0.7f));
+            // 2. 显示路由标签（如 "ADVENTURE"、"TOURNAMENT"）
             CreateMenuText(
                 $"{key}_ModeLabel",
                 routeLabel,
@@ -1804,6 +1854,7 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 20,
                 mlpTextStyle.TournamentAccent);
+            // 3. 显示模式大标题
             CreateMenuText(
                 $"{key}_ModeTitle",
                 mode.MenuTitle,
@@ -1814,6 +1865,7 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 20,
                 mlpTextStyle.TournamentAccent);
+            // 4. 显示副标题（吸引玩家的一句话）
             CreateMenuText(
                 $"{key}_ModeSubtitle",
                 hookLine,
@@ -1824,6 +1876,7 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 20,
                 mlpTextStyle.TournamentBody);
+            // 5. 显示两行目标说明文字
             CreateMenuText(
                 $"{key}_ModeObjectiveOne",
                 objectiveLineOne,
@@ -1845,6 +1898,7 @@ namespace mlp
                 20,
                 mlpTextStyle.TournamentBody);
 
+            // 6. 在卡片底部添加操作按钮
             menuButtons.Add(new mlpMenuButton(buttonText, centerX, 397f, 194f, 44f, action, runtimeRoot));
         }
 
@@ -2156,10 +2210,12 @@ namespace mlp
         /// </summary>
         private void StartQuickMatchFlow()
         {
+            // 1. 保存玩家的单人模式、角色和篮球皮肤选择
             var inventory = mlpInventory.Instance;
             inventory.SetParticipantMode(mlpParticipantMode.OnePlayer);
             inventory.SetQuickSelection(quickCharacterId);
             inventory.SetQuickBallSelection(quickBallSelection);
+            // 2. 初始化快速比赛并进入游戏
             inventory.StartQuickGame();
             StartGameplay();
         }
@@ -2412,6 +2468,7 @@ namespace mlp
             // 3. 创建新的运行时根节点、音频系统，清空按钮列表
             runtimeRoot = new GameObject("mlpRuntime").transform;
             mlpAudio.Create(transform).PlayMusic(mlpAssets.Sounds.MenuMusic);
+            // 2. 清空菜单按钮和各类辅助对象引用
             menuButtons.Clear();
 
             // 4. 用游戏构建器创建比赛场景（球员、篮球、篮筐、球场等）
@@ -2777,11 +2834,13 @@ namespace mlp
 
         private void SetStoryIntroLoreLabelPosition(float x, float y)
         {
+            // 1. 没有标签对象则跳过
             if (storyIntroLoreLabelObject == null)
             {
                 return;
             }
 
+            // 2. 如果是原生文字（TMP），用像素坐标设置 UI 位置
             var nativeText = storyIntroLoreLabelObject.GetComponent<TMPro.TMP_Text>();
             if (nativeText != null)
             {
@@ -2789,6 +2848,7 @@ namespace mlp
                 return;
             }
 
+            // 3. 否则将像素坐标转换为世界坐标并吸附到像素网格
             storyIntroLoreLabelObject.transform.position = mlpConstants.PixelToWorldSnapped(
                 x,
                 y,
@@ -2797,13 +2857,16 @@ namespace mlp
 
         private void SetStoryIntroLoreArtOffset(float pixelOffsetX, float pixelOffsetY)
         {
+            // 1. 没有美术根节点则跳过
             if (storyIntroLoreArtRoot == null)
             {
                 return;
             }
 
+            // 2. 将原点和目标偏移都转换为世界坐标，计算相对偏移量
             var origin = mlpConstants.PixelToWorldSnapped(0f, 0f);
             var offset = mlpConstants.PixelToWorldSnapped(pixelOffsetX, pixelOffsetY);
+            // 3. 设置美术元素的本地位置偏移
             storyIntroLoreArtRoot.transform.localPosition = new Vector3(
                 offset.x - origin.x,
                 offset.y - origin.y,
@@ -2831,13 +2894,16 @@ namespace mlp
         /// </summary>
         private GameObject CreatePanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            // 1. 先尝试用独立贴图创建面板（画质更好）
             var standalonePanel = TryCreateStandaloneTintPanel(name, x, y, width, height, sortingOrder, tint, parent);
             if (standalonePanel != null)
             {
                 return standalonePanel;
             }
 
+            // 2. 独立贴图不可用时，用图集中的色块精灵替代
             var panel = mlpRender.Sprite(name, mlpAtlasCache.Instance.Interface, "bg0000", x, y, 0.5f, 0.5f, sortingOrder, parent);
+            // 3. 根据目标宽高缩放精灵，并设置半透明颜色
             panel.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / LegacyTintPanelSourcePixels,
                 mlpConstants.UnitsPerPixel * height / LegacyTintPanelSourcePixels,
@@ -2848,18 +2914,21 @@ namespace mlp
 
         private bool TryCreateStandaloneMenuBackground(string backgroundFrame)
         {
+            // 1. 将背景帧名称解析为对应的贴图资源键
             var imageKey = ResolveStandaloneMenuBackgroundImage(backgroundFrame);
             if (string.IsNullOrEmpty(imageKey))
             {
                 return false;
             }
 
+            // 2. 从 Resources 加载贴图，加载失败则返回 false
             var texture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(imageKey));
             if (texture == null)
             {
                 return false;
             }
 
+            // 3. 在屏幕中心创建背景图片
             var background = mlpRender.Image(
                 "MenuBackground",
                 texture,
@@ -2869,6 +2938,7 @@ namespace mlp
                 0.5f,
                 0,
                 runtimeRoot);
+            // 4. 按目标尺寸缩放背景图片
             background.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * LegacyMenuBackgroundWidth / Mathf.Max(1f, texture.width),
                 mlpConstants.UnitsPerPixel * LegacyMenuBackgroundHeight / Mathf.Max(1f, texture.height),
@@ -2888,13 +2958,16 @@ namespace mlp
 
         private static GameObject TryCreateStandaloneTintPanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            // 1. 加载圆角面板贴图，加载失败则返回 null
             var texture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.PanelFillSoft));
             if (texture == null)
             {
                 return null;
             }
 
+            // 2. 在指定位置创建面板图片
             var panel = mlpRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
+            // 3. 按目标宽高缩放，并设置半透明颜色
             panel.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
                 mlpConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
@@ -2908,6 +2981,7 @@ namespace mlp
         /// </summary>
         private void CreateOptionsPanel(string prefix, float centerX)
         {
+            // 1. 在面板顶部显示 "SETTINGS" 标题文字
             CreateMenuText(
                 $"{prefix}_OptionTitle",
                 "SETTINGS",
@@ -2933,6 +3007,7 @@ namespace mlp
             float previewY,
             float labelY)
         {
+            // 1. 显示 "BALL" 标题
             CreateMenuText(
                 $"{key}_Header",
                 "BALL",
@@ -2944,9 +3019,11 @@ namespace mlp
                 20,
                 mlpTextStyle.TournamentAccent);
 
+            // 2. 创建左右箭头按钮，用于切换上一个/下一个篮球皮肤
             menuButtons.Add(new mlpMenuButton("<", centerX - BallSelectorArrowOffsetX, previewY, BallSelectorArrowSize, BallSelectorArrowSize, previousBallAction, runtimeRoot));
             menuButtons.Add(new mlpMenuButton(">", centerX + BallSelectorArrowOffsetX, previewY, BallSelectorArrowSize, BallSelectorArrowSize, nextBallAction, runtimeRoot));
 
+            // 3. 在箭头之间显示当前篮球的预览图
             CreateBallPreview(
                 $"{key}_Preview",
                 mlpBallCatalog.PreviewTheme(selection),
@@ -2955,6 +3032,7 @@ namespace mlp
                 BallPreviewPixels,
                 19);
 
+            // 4. 在预览下方显示篮球名称
             CreateMenuText(
                 $"{key}_Label",
                 mlpBallCatalog.Label(selection),
@@ -2972,6 +3050,7 @@ namespace mlp
         /// </summary>
         private void CreateHellDifficultyWarning(float centerX, float y)
         {
+            // 1. 显示地狱难度警告文字，告知玩家 CPU 会使用额外超级技能
             CreateMenuText(
                 "HellDifficultyWarning",
                 "UNFAIR CHALLENGE: CPU USES BONUS SUPERS",
@@ -2998,6 +3077,7 @@ namespace mlp
             float previewScale,
             float nameY)
         {
+            // 1. 显示标题文字（如 "CHARACTER" 或 "P1"）
             CreateMenuText(
                 $"{key}_Header",
                 header,
@@ -3009,10 +3089,13 @@ namespace mlp
                 20,
                 mlpTextStyle.TournamentAccent);
 
+            // 2. 创建左右箭头按钮，用于切换上一个/下一个角色
             menuButtons.Add(new mlpMenuButton("<", centerX - SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, previousCharacterAction, runtimeRoot));
             menuButtons.Add(new mlpMenuButton(">", centerX + SelectorArrowOffsetX, SelectorArrowY, SelectorArrowSize, SelectorArrowSize, nextCharacterAction, runtimeRoot));
 
+            // 3. 显示角色动画预览模型
             CreatePreviewPlayer(key, characterId, centerX, previewY, previewScale);
+            // 4. 显示角色技能图标和技能名称
             var skillDefinition = mlpCharacterSkillsData.Get(characterId);
             CreateCharacterSkillIcon($"{key}_SkillIcon", skillDefinition, centerX - 82f, nameY - 18f, 21);
             CreateMenuText(
@@ -3025,6 +3108,7 @@ namespace mlp
                 TextAnchor.MiddleLeft,
                 21,
                 mlpTextStyle.TournamentAccent);
+            // 5. 显示角色名称
             CreateMenuText(
                 $"{key}_CharacterName",
                 mlpPlayersData.GetCharacterName(characterId),
@@ -3041,9 +3125,11 @@ namespace mlp
         {
             const float orbPixels = 52f;
             const float iconPixels = 42f;
+            // 1. 尝试加载独立的圆形光球背景贴图
             var orbTexture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.EmblemOrb));
             if (orbTexture != null)
             {
+                // 2. 用独立贴图创建光球背景，缩放到目标尺寸
                 var orb = mlpRender.Image($"{name}_Orb", orbTexture, x, y, 0.5f, 0.5f, sortingOrder, runtimeRoot);
                 orb.transform.localScale = new Vector3(
                     mlpConstants.UnitsPerPixel * orbPixels / Mathf.Max(1f, orbTexture.width),
@@ -3057,15 +3143,18 @@ namespace mlp
             }
             else
             {
+                // 3. 独立贴图不可用时，用图集中的光球精灵替代
                 var fallbackOrb = mlpRender.Sprite($"{name}_OrbFallback", mlpAtlasCache.Instance.Interface, "EmblemsBg0000", x, y, 0.5f, 0.5f, sortingOrder, runtimeRoot);
                 fallbackOrb.transform.localScale *= orbPixels / 150f;
             }
 
+            // 4. 如果角色没有独立技能图标美术，到此结束
             if (!skillDefinition.HasStandaloneIconArt)
             {
                 return;
             }
 
+            // 5. 加载并创建技能图标，叠在光球上方
             var iconPath = mlpAssets.Images.ResourcePath(skillDefinition.IconImageKey);
             mlpIconButton.CreateImageIcon(name, iconPath, x, y, sortingOrder + 1, iconPixels, runtimeRoot);
         }
@@ -3075,6 +3164,7 @@ namespace mlp
         /// </summary>
         private void CreateBallPreview(string name, mlpBallTheme theme, float x, float y, float targetPixels, int sortingOrder)
         {
+            // 1. 加载篮球主题精灵，加载失败则使用默认篮球精灵
             var sprite = mlpGameplaySpriteLoader.LoadBallThemeSprite(theme, 0.5f, 0.5f) ??
                          mlpAtlasCache.Instance.Gameplay.Sprite("BallMC0000", 0.5f, 0.5f);
 
@@ -3083,12 +3173,14 @@ namespace mlp
                 return;
             }
 
+            // 2. 创建新的游戏对象，添加精灵渲染器并设置精灵和排序层级
             var preview = new GameObject(name);
             preview.transform.SetParent(runtimeRoot, false);
             var renderer = preview.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
 
+            // 3. 根据目标像素尺寸计算缩放比例，应用像素对齐变换
             var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
             var scale = targetPixels / Mathf.Max(1f, spritePixels);
             mlpRender.ApplyPixelTransform(preview.transform, x, y, 0f, scale);
@@ -3099,21 +3191,26 @@ namespace mlp
         /// </summary>
         private void CreatePreviewPlayer(string key, int characterId, float x, float y, float scale)
         {
+            // 1. 计算预览缩放比例（基础缩放 x 角色专属缩放倍率）
             var previewScale = scale * PreviewScaleFactor * mlpPlayersData.GetCharacterPreviewScaleMultiplier(characterId);
+            // 2. 在角色脚下绘制半透明阴影
             var shadow = mlpRender.Sprite($"{key}_PreviewShadow", mlpAtlasCache.Instance.Interface, "loginSelect0000", x, y + PreviewShadowYOffset, 0.5f, 0.5f, 18, runtimeRoot);
             shadow.transform.localScale *= PreviewShadowScale;
             shadow.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.55f);
 
+            // 3. 创建预览根节点，设置像素对齐的位置和缩放
             var previewRoot = new GameObject($"{key}_Preview");
             previewRoot.transform.SetParent(runtimeRoot, false);
             mlpRender.ApplyPixelTransform(previewRoot.transform, x, y, 0f, previewScale);
 
+            // 4. 构建角色骨骼动画模型，失败则跳过
             var armature = mlpPlayersData.BuildGameplayArmature($"{key}_PreviewArmature");
             if (armature == null)
             {
                 return;
             }
 
+            // 5. 将骨骼挂到预览根节点下，设置垂直偏移和缩放，应用角色外观
             armature.transform.SetParent(previewRoot.transform, false);
             armature.transform.localPosition = new Vector3(0f, PreviewArmatureYOffset + mlpPlayersData.GetCharacterPreviewOffsetY(characterId), 0f);
             armature.transform.localScale = new Vector3(PreviewArmatureScale, PreviewArmatureScale, 1f);
@@ -3838,11 +3935,14 @@ namespace mlp
         /// </summary>
         private void CreateTournamentAwardsScene(mlpTournamentData tournament)
         {
+            // 1. 重置所有颁奖动画状态
             ResetTournamentAwardsState();
 
+            // 2. 构建前三名排名数据，获取玩家对应名次的强调色
             var placements = BuildTournamentAwardsPlacements(tournament);
             var accentColor = GetTournamentAwardsAccentColor(tournament.PlayerPlacement);
 
+            // 3. 创建展示区组，加载展示背景图（失败时用带边框面板替代）
             var showcaseGroup = CreateTournamentAwardsGroup("AwardsShowcase");
             var showcase = CreateStandaloneImage(
                 "AwardsShowcasePanel",
@@ -3868,8 +3968,10 @@ namespace mlp
                     showcaseGroup.transform);
             }
 
+            // 4. 注册展示区的入场滑入动画
             RegisterTournamentAwardsAnimation(showcaseGroup.transform, new Vector2(0f, 10f), 0.04f, 0.42f, 0.96f);
 
+            // 5. 创建结果横幅组，加载铭牌图（失败时用面板替代）
             var bannerGroup = CreateTournamentAwardsGroup("AwardsResultBanner");
             var plaque = CreateStandaloneImage(
                 "AwardsResultPlaque",
@@ -3894,6 +3996,7 @@ namespace mlp
                     bannerGroup.transform);
             }
 
+            // 6. 显示玩家结果信息（如"CHAMPION"、"RUNNER-UP"）
             CreateMenuText(
                 "AwardsResultBannerLabel",
                 GetTournamentAwardsPlayerMessage(tournament),
@@ -3905,6 +4008,7 @@ namespace mlp
                 13,
                 mlpTextStyle.TournamentAccent,
                 bannerGroup.transform);
+            // 7. 显示结局叙事文字
             CreateMenuText(
                 "AwardsResultEndingLine",
                 mlpSinglePlayerNarrative.GetTournamentPlacementEnding(tournament.PlayerPlacement),
@@ -3916,8 +4020,10 @@ namespace mlp
                 13,
                 mlpTextStyle.TournamentBody,
                 bannerGroup.transform);
+            // 8. 注册横幅的入场滑入动画
             RegisterTournamentAwardsAnimation(bannerGroup.transform, new Vector2(0f, 14f), 0.1f, 0.42f, 0.95f);
 
+            // 9. 创建领奖台组，加载底座图（失败时用图集精灵替代）
             var podiumGroup = CreateTournamentAwardsGroup("AwardsPodium");
             var podiumBase = CreateStandaloneImage(
                 "AwardsPodiumBase",
@@ -3944,11 +4050,14 @@ namespace mlp
                 tribune.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 0.98f);
             }
 
+            // 10. 绘制第二名、冠军、第三名的领奖台名称标签
             CreateTournamentAwardsLaneLabel("AwardsLaneSecond", placements[1], TournamentAwardsLeftX, 384f, false, podiumGroup.transform);
             CreateTournamentAwardsLaneLabel("AwardsLaneChampion", placements[0], TournamentAwardsChampionX, 368f, true, podiumGroup.transform);
             CreateTournamentAwardsLaneLabel("AwardsLaneThird", placements[2], TournamentAwardsRightX, 390f, false, podiumGroup.transform);
+            // 11. 注册领奖台组的入场动画
             RegisterTournamentAwardsAnimation(podiumGroup.transform, new Vector2(0f, 18f), 0.14f, 0.52f, 0.97f);
 
+            // 12. 创建第二名角色组（左侧位置，较小缩放）
             CreateTournamentAwardsCharacterGroup(
                 "AwardsSecondPlace",
                 placements[1],
@@ -3959,6 +4068,7 @@ namespace mlp
                 0.38f,
                 0.24f,
                 0.28f);
+            // 13. 创建冠军角色组（中间位置，最大缩放）
             CreateTournamentAwardsCharacterGroup(
                 "AwardsChampionPlace",
                 placements[0],
@@ -3969,6 +4079,7 @@ namespace mlp
                 0.48f,
                 0.28f,
                 0.2f);
+            // 14. 创建第三名角色组（右侧位置，较小缩放）
             CreateTournamentAwardsCharacterGroup(
                 "AwardsThirdPlace",
                 placements[2],
@@ -4071,7 +4182,9 @@ namespace mlp
             float glowAlpha,
             float landingDelay)
         {
+            // 1. 创建角色组的父对象
             var group = CreateTournamentAwardsGroup(key);
+            // 2. 加载发光光圈图片，玩家角色透明度略高（失败时用图集精灵替代）
             var glow = CreateStandaloneImage(
                 $"{key}_Aura",
                 mlpAssets.Images.Ui.EmblemOrb,
@@ -4093,15 +4206,18 @@ namespace mlp
                 glow.GetComponent<SpriteRenderer>().color = new Color(placement.GlowColor.r, placement.GlowColor.g, placement.GlowColor.b, glowAlpha);
             }
 
+            // 3. 绘制角色脚下阴影，玩家角色阴影更明显
             var shadow = mlpRender.Sprite($"{key}_Shadow", mlpAtlasCache.Instance.Interface, "loginSelect0000", x, y + 24f, 0.5f, 0.5f, 13, group.transform);
             shadow.transform.localScale *= shadowScale;
             shadow.GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, placement.IsPlayer ? 0.7f : 0.52f);
 
+            // 4. 创建角色根对象，设置位置和缩放
             var playerRoot = new GameObject($"{key}_Root");
             playerRoot.transform.SetParent(group.transform, false);
             var characterScale = scale * mlpPlayersData.GetCharacterPreviewScaleMultiplier(placement.CharacterId);
             mlpRender.ApplyPixelTransform(playerRoot.transform, x, y, z, characterScale);
 
+            // 5. 构建角色骨骼动画，绑定到根对象
             var armature = mlpPlayersData.BuildGameplayArmature($"{key}_Armature");
             if (armature != null)
             {
@@ -4173,8 +4289,10 @@ namespace mlp
                 return;
             }
 
+            // 1. 收集该组下所有精灵和文字组件
             var spriteRenderers = root.GetComponentsInChildren<SpriteRenderer>(true);
             var textMeshes = root.GetComponentsInChildren<TextMesh>(true);
+            // 2. 创建动画数据项，记录目标位置和初始偏移
             var item = new TournamentAwardsAnimatedItem
             {
                 Root = root,
@@ -4191,6 +4309,7 @@ namespace mlp
                 TextBaseColors = new Color[textMeshes.Length]
             };
 
+            // 3. 记录所有精灵和文字的原始颜色
             for (var i = 0; i < spriteRenderers.Length; i++)
             {
                 item.SpriteBaseColors[i] = spriteRenderers[i].color;
@@ -4201,6 +4320,7 @@ namespace mlp
                 item.TextBaseColors[i] = textMeshes[i].color;
             }
 
+            // 4. 设置初始偏移位置、缩小比例和透明度为零
             root.localPosition = item.TargetLocalPosition + item.StartLocalOffset;
             root.localScale = item.TargetLocalScale * item.StartScale;
             ApplyTournamentAwardsAlpha(item, fade ? 0f : 1f);
@@ -4217,7 +4337,9 @@ namespace mlp
                 return;
             }
 
+            // 1. 累计已用时间
             awardsElapsed += deltaTime;
+            // 2. 遍历所有动画项，根据时间计算缓动进度
             for (var i = 0; i < awardsAnimatedItems.Count; i++)
             {
                 var item = awardsAnimatedItems[i];
@@ -4228,17 +4350,21 @@ namespace mlp
 
                 var normalized = Mathf.Clamp01((awardsElapsed - item.Delay) / item.Duration);
                 var eased = EaseOutBack01(normalized);
+                // 3. 插值更新位置、缩放和透明度
                 item.Root.localPosition = item.TargetLocalPosition + Vector3.Lerp(item.StartLocalOffset, Vector3.zero, eased);
                 item.Root.localScale = item.TargetLocalScale * Mathf.Lerp(item.StartScale, 1f, Mathf.SmoothStep(0f, 1f, normalized));
                 ApplyTournamentAwardsAlpha(item, item.Fade ? normalized : 1f);
             }
 
+            // 4. 延迟后触发冠军庆祝动画
             if (!awardsCelebrationTriggered && awardsCelebrationPlayer != null && awardsElapsed >= TournamentAwardsCelebrationDelay)
             {
                 awardsCelebrationTriggered = true;
+                // 5. 播放"开心"骨骼动画
                 awardsCelebrationPlayer.Play("happiness");
                 awardsCelebrationPlayer.RefreshPose();
 
+                // 6. 如果有奖杯子骨骼，播放对应的奖杯动画
                 var cupArmature = awardsCelebrationPlayer.GetChildArmature("effects stun");
                 if (cupArmature != null && !string.IsNullOrEmpty(awardsCelebrationCupAnimation))
                 {
@@ -4252,7 +4378,9 @@ namespace mlp
         /// </summary>
         private static void ApplyTournamentAwardsAlpha(TournamentAwardsAnimatedItem item, float alpha)
         {
+            // 1. 将透明度限制在 0-1 范围
             alpha = Mathf.Clamp01(alpha);
+            // 2. 遍历所有精灵，按比例调整透明度
             if (item.SpriteRenderers != null)
             {
                 for (var i = 0; i < item.SpriteRenderers.Length; i++)
@@ -4267,6 +4395,7 @@ namespace mlp
                 }
             }
 
+            // 3. 遍历所有文字，按比例调整透明度
             if (item.TextMeshes != null)
             {
                 for (var i = 0; i < item.TextMeshes.Length; i++)
@@ -4408,6 +4537,7 @@ namespace mlp
         /// </summary>
         private GameObject CreateTournamentPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
+            // 1. 根据角色计算目标尺寸，获取头像精灵
             var targetSize = targetPixels * mlpPlayersData.GetCharacterPortraitScaleMultiplier(characterId);
             var sprite = mlpPlayersData.GetCharacterPortraitSprite(characterId, targetSize);
             if (sprite == null)
@@ -4415,12 +4545,14 @@ namespace mlp
                 return null;
             }
 
+            // 2. 创建 GameObject 并添加 SpriteRenderer 组件
             var portrait = new GameObject(name);
             portrait.transform.SetParent(parent, false);
             var renderer = portrait.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.sortingOrder = sortingOrder;
 
+            // 3. 计算缩放比例，应用像素变换（含角色偏移）
             var spritePixels = Mathf.Max(sprite.rect.width, sprite.rect.height);
             var scale = targetSize / Mathf.Max(1f, spritePixels);
             mlpRender.ApplyPixelTransform(
@@ -4456,6 +4588,7 @@ namespace mlp
         /// </summary>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint)
         {
+            // 1. 委托到带父对象参数的重载版本，默认挂在运行时根节点
             return CreateFramedPanel(name, frame, x, y, width, height, sortingOrder, tint, runtimeRoot);
         }
 
@@ -4464,12 +4597,14 @@ namespace mlp
         /// </summary>
         private GameObject CreateFramedPanel(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            // 1. 优先尝试用独立纹理创建面板（画质更好）
             var standalonePanel = TryCreateStandaloneFrame(name, frame, x, y, width, height, sortingOrder, tint, parent);
             if (standalonePanel != null)
             {
                 return standalonePanel;
             }
 
+            // 2. 独立纹理不可用时，从图集加载精灵
             var panel = mlpRender.Sprite(name, mlpAtlasCache.Instance.Interface, frame, x, y, 0.5f, 0.5f, sortingOrder, parent);
             var atlasFrame = mlpAtlasCache.Instance.Interface.Frame(frame);
             if (atlasFrame != null)
@@ -4482,24 +4617,28 @@ namespace mlp
                     1f);
             }
 
+            // 3. 按目标尺寸缩放精灵，并设置颜色
             panel.GetComponent<SpriteRenderer>().color = tint;
             return panel;
         }
 
         private static GameObject TryCreateStandaloneFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
+            // 1. 将边框名称解析为对应的纹理资源键
             var imageKey = ResolveStandaloneFrameImage(frame);
             if (string.IsNullOrEmpty(imageKey))
             {
                 return null;
             }
 
+            // 2. 从 Resources 加载纹理，失败则返回 null
             var texture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(imageKey));
             if (texture == null)
             {
                 return null;
             }
 
+            // 3. 创建图片精灵，缩放到目标尺寸并应用颜色
             var panel = mlpRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, parent);
             panel.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
@@ -4520,23 +4659,27 @@ namespace mlp
             Transform parent = null,
             Color? tint = null)
         {
+            // 1. 检查图片资源键是否有效
             if (string.IsNullOrEmpty(imageKey))
             {
                 return null;
             }
 
+            // 2. 从 Resources 加载纹理，失败则返回 null
             var texture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(imageKey));
             if (texture == null)
             {
                 return null;
             }
 
+            // 3. 确定父对象，创建图片精灵
             var resolvedParent = parent ?? runtimeRoot;
             var image = mlpRender.Image(name, texture, x, y, 0.5f, 0.5f, sortingOrder, resolvedParent);
             image.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / Mathf.Max(1f, texture.width),
                 mlpConstants.UnitsPerPixel * height / Mathf.Max(1f, texture.height),
                 1f);
+            // 4. 缩放到目标尺寸，应用颜色（默认白色）
             image.GetComponent<SpriteRenderer>().color = tint ?? Color.white;
             return image;
         }
@@ -4555,15 +4698,18 @@ namespace mlp
 
         private void CreateStoryIntroLorePanel(mlpStoryPanelDefinition panel)
         {
+            // 1. 检查面板是否有效且包含传说内容，无效则跳过
             if (panel == null || !panel.HasLore)
             {
                 return;
             }
 
+            // 2. 计算图标和标签的屏幕位置
             var loreIconX = StoryIntroLoreButtonX + StoryIntroLoreIconOffsetX;
             var loreIconY = StoryIntroLoreButtonY + StoryIntroLoreIconOffsetY;
             var loreLabelX = StoryIntroLoreButtonX + StoryIntroLoreLabelOffsetX;
 
+            // 3. 创建可点击的传说按钮（透明背景，无默认标签）
             storyIntroLoreButton = new mlpMenuButton(
                 "lore",
                 StoryIntroLoreButtonX,
@@ -4577,13 +4723,16 @@ namespace mlp
             storyIntroLoreButton.SetBackgroundVisible(false);
             storyIntroLoreButton.SetLabelVisible(false);
             menuButtons.Add(storyIntroLoreButton);
+            // 4. 创建按钮旁边的自定义标签文字
             storyIntroLoreLabelObject = CreateStoryIntroLoreButtonLabel(
                 "lore",
                 loreLabelX,
                 StoryIntroLoreButtonY + StoryIntroLoreLabelOffsetY);
 
+            // 5. 创建美术元素根对象（图标和装饰线，面板打开时隐藏）
             storyIntroLoreArtRoot = new GameObject("StoryIntroLoreArt");
             storyIntroLoreArtRoot.transform.SetParent(runtimeRoot, false);
+            // 6. 绘制传说图标背景光圈
             storyIntroLoreIconRenderer = CreateStandaloneImage(
                     "StoryIntroLoreIcon",
                     mlpAssets.Images.Ui.EmblemOrb,
@@ -4632,9 +4781,11 @@ namespace mlp
                 new Color(0.42f, 0.25f, 0.10f, 0.9f),
                 storyIntroLoreArtRoot.transform);
 
+            // 7. 创建传说内容根对象（面板、木杆、文字等）
             storyIntroLoreRoot = new GameObject("StoryIntroLoreRoot");
             storyIntroLoreRoot.transform.SetParent(runtimeRoot, false);
             var loreRootTransform = storyIntroLoreRoot.transform;
+            // 8. 绘制面板阴影和纸张背景
             CreatePanel(
                 "StoryIntroLoreShadow",
                 StoryIntroLorePanelX + 6f,
@@ -4663,6 +4814,7 @@ namespace mlp
                 26,
                 new Color(0.63f, 0.41f, 0.18f, 0.08f),
                 loreRootTransform);
+            // 9. 绘制上下卷轴木杆和四角端盖
             CreatePanel(
                 "StoryIntroLoreRodTop",
                 StoryIntroLorePanelX,
@@ -4727,6 +4879,7 @@ namespace mlp
                 new Color(storyIntroAccentColor.r, storyIntroAccentColor.g, storyIntroAccentColor.b, 0.85f),
                 loreRootTransform);
 
+            // 10. 获取故事模式信息，显示页码、标题和正文
             var mode = mlpSinglePlayerNarrative.GetMode(storyIntroMode);
             var panelCount = mode.OpeningComic != null ? mode.OpeningComic.Length : 0;
             CreateToggleableStoryIntroText(
@@ -4760,6 +4913,7 @@ namespace mlp
                 30,
                 mlpTextStyle.StoryScrollBody);
 
+            // 11. 初始化为隐藏状态
             SetStoryIntroLoreVisibility(false);
         }
 
@@ -4770,6 +4924,7 @@ namespace mlp
 
         private void SetStoryIntroLoreVisibility(bool isVisible)
         {
+            // 1. 打开时保存并暂停动画，关闭时恢复之前的暂停状态
             if (isVisible)
             {
                 storyIntroPauseBeforeLore = storyIntroPaused;
@@ -4780,7 +4935,9 @@ namespace mlp
                 storyIntroPaused = storyIntroPauseBeforeLore;
             }
 
+            // 2. 更新传说面板打开状态标记
             storyIntroLoreOpen = isVisible;
+            // 3. 显示/隐藏内容面板和美术元素（两者互斥）
             if (storyIntroLoreRoot != null)
             {
                 storyIntroLoreRoot.SetActive(isVisible);
@@ -4791,6 +4948,7 @@ namespace mlp
                 storyIntroLoreArtRoot.SetActive(!isVisible);
             }
 
+            // 4. 遍历切换所有传说文字对象的可见性
             for (var i = 0; i < storyIntroLoreTextObjects.Count; i++)
             {
                 if (storyIntroLoreTextObjects[i] != null)
@@ -4799,9 +4957,11 @@ namespace mlp
                 }
             }
 
+            // 5. 刷新按钮位置、标签文字和颜色
             RefreshStoryIntroLoreButtonLayout(isVisible);
             SetStoryIntroLoreButtonLabelText(isVisible ? "hide" : "lore");
             SetStoryIntroLoreButtonLabelColor(isVisible ? StoryIntroLoreOpenLabelColor : StoryIntroLoreClosedLabelColor);
+            // 6. 切换图标颜色（打开时用暖色，关闭时用强调色）
             if (storyIntroLoreIconRenderer != null)
             {
                 storyIntroLoreIconRenderer.color = isVisible
@@ -4809,6 +4969,7 @@ namespace mlp
                     : new Color(storyIntroAccentColor.r, storyIntroAccentColor.g, storyIntroAccentColor.b, 0.84f);
             }
 
+            // 7. 更新暂停按钮文字（打开时显示关闭，否则显示暂停/继续）
             RefreshStoryIntroPauseButtonLabel();
         }
 
@@ -4827,8 +4988,10 @@ namespace mlp
         /// </summary>
         private void CreateHorizontalConnector(string name, float startX, float endX, float y, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
+            // 1. 计算左端位置和宽度
             var left = Mathf.Min(startX, endX);
             var width = Mathf.Abs(endX - startX);
+            // 2. 绘制水平矩形线段，高亮时用橙色，否则用淡青色
             CreatePanel(
                 name,
                 left + width * 0.5f,
@@ -4846,8 +5009,10 @@ namespace mlp
         /// </summary>
         private void CreateVerticalConnector(string name, float x, float startY, float endY, bool highlighted, int sortingOrder = 10, float thickness = TournamentConnectorThickness)
         {
+            // 1. 计算顶部位置和高度
             var top = Mathf.Min(startY, endY);
             var height = Mathf.Abs(endY - startY);
+            // 2. 绘制垂直矩形线段，高亮时用橙色，否则用淡青色
             CreatePanel(
                 name,
                 x,
@@ -4865,7 +5030,9 @@ namespace mlp
         /// </summary>
         private void CreateElbowConnector(string name, float startX, float startY, float endX, float endY, bool highlighted)
         {
+            // 1. 计算中点 X 坐标
             var midX = (startX + endX) * 0.5f;
+            // 2. 绘制水平段 + 垂直段 + 水平段，组成 L 形折线
             CreateHorizontalConnector($"{name}_H1", startX, midX, startY, highlighted);
             CreateVerticalConnector($"{name}_V", midX, startY, endY, highlighted);
             CreateHorizontalConnector($"{name}_H2", midX, endX, endY, highlighted);
@@ -4899,9 +5066,11 @@ namespace mlp
         /// </summary>
         private void ResetTournamentAwardsState()
         {
+            // 1. 清空动画列表，重置计时器和庆祝触发标记
             awardsAnimatedItems.Clear();
             awardsElapsed = 0f;
             awardsCelebrationTriggered = false;
+            // 2. 清空庆祝动画的骨骼和奖杯引用
             awardsCelebrationPlayer = null;
             awardsCelebrationCupAnimation = null;
         }
@@ -4911,8 +5080,11 @@ namespace mlp
         /// </summary>
         private void SeedTwoPlayerSelection()
         {
+            // 1. 读取对战存档数据
             var match = mlpInventory.Instance.MatchData;
+            // 2. 初始化左侧玩家角色（校验 ID 合法性）
             versusLeftCharacterId = mlpPlayersData.SanitizeCharacterId(match.CharacterIds[0]);
+            // 3. 初始化右侧玩家角色，确保与左侧不同
             versusRightCharacterId = mlpPlayersData.SanitizeCharacterId(match.CharacterIds[1], mlpPlayersData.StepCharacterId(versusLeftCharacterId, 1));
         }
 
@@ -4921,8 +5093,10 @@ namespace mlp
         /// </summary>
         private void ClearRuntime()
         {
+            // 1. 关闭游戏核心并清空引用
             gameCore?.Shutdown();
             gameCore = null;
+            // 2. 清空菜单按钮和各类辅助对象引用
             menuButtons.Clear();
             menuMusicButton = null;
             menuHelpButton = null;
@@ -4930,6 +5104,7 @@ namespace mlp
             quickTestMenuInfoButton = null;
             quickTestMenuInfoRoot = null;
             quickTestMenuInfoVisible = false;
+            // 3. 重置故事介绍相关的暂停和传说面板状态
             storyIntroPauseButton = null;
             storyIntroLoreButton = null;
             storyIntroPaused = false;
@@ -4940,9 +5115,12 @@ namespace mlp
             storyIntroLoreLabelObject = null;
             storyIntroLoreIconRenderer = null;
             storyIntroLoreTextObjects.Clear();
+            // 4. 释放原生文字图层资源
             nativeMenuTextLayer?.Dispose();
             nativeMenuTextLayer = null;
+            // 5. 重置颁奖动画状态
             ResetTournamentAwardsState();
+            // 6. 销毁运行时根节点下所有 GameObject
             if (runtimeRoot != null)
             {
                 Destroy(runtimeRoot.gameObject);

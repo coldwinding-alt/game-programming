@@ -23,9 +23,7 @@ namespace mlp
         public readonly float OpeningSuperChargeFraction;
         public readonly float NativeSuperRefundFraction;
         public readonly float BonusSuperDashCooldown;
-        public readonly float BonusSuperDashBossCooldown;
         public readonly float BonusShieldCooldown;
-        public readonly float BonusShieldBossCooldown;
         public readonly bool HasBonusSupers;
 
         /// <summary>
@@ -46,9 +44,7 @@ namespace mlp
         /// <param name="openingSuperChargeFraction">比赛开始时 AI 拥有的必杀技能量比例。</param>
         /// <param name="nativeSuperRefundFraction">AI 使用技能后返还的必杀技能量比例。</param>
         /// <param name="bonusSuperDashCooldown">AI 超级冲刺的额外冷却时间（秒）。</param>
-        /// <param name="bonusSuperDashBossCooldown">Boss 级对手超级冲刺的额外冷却时间。</param>
         /// <param name="bonusShieldCooldown">AI 护盾技能的额外冷却时间（秒）。</param>
-        /// <param name="bonusShieldBossCooldown">Boss 级对手护盾技能的额外冷却时间。</param>
         /// <param name="hasBonusSupers">该难度等级是否赋予 AI 额外的必杀技能力。</param>
         public mlpAIDifficultyTuningProfile(
             float defenceContestDistance,
@@ -66,9 +62,7 @@ namespace mlp
             float openingSuperChargeFraction = 0f,
             float nativeSuperRefundFraction = 0f,
             float bonusSuperDashCooldown = 0f,
-            float bonusSuperDashBossCooldown = 0f,
             float bonusShieldCooldown = 0f,
-            float bonusShieldBossCooldown = 0f,
             bool hasBonusSupers = false)
         {
             DefenceContestDistance = defenceContestDistance;
@@ -86,9 +80,7 @@ namespace mlp
             OpeningSuperChargeFraction = openingSuperChargeFraction;
             NativeSuperRefundFraction = nativeSuperRefundFraction;
             BonusSuperDashCooldown = bonusSuperDashCooldown;
-            BonusSuperDashBossCooldown = bonusSuperDashBossCooldown;
             BonusShieldCooldown = bonusShieldCooldown;
-            BonusShieldBossCooldown = bonusShieldBossCooldown;
             HasBonusSupers = hasBonusSupers;
         }
     }
@@ -147,9 +139,7 @@ namespace mlp
             openingSuperChargeFraction: 0.55f,
             nativeSuperRefundFraction: 0.35f,
             bonusSuperDashCooldown: 10f,
-            bonusSuperDashBossCooldown: 8f,
             bonusShieldCooldown: 24f,
-            bonusShieldBossCooldown: 18f,
             hasBonusSupers: true);
 
         /// <summary>

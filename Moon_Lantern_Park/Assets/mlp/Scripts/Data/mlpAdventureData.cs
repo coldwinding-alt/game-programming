@@ -80,21 +80,28 @@ namespace mlp
             string[] victoryLines,
             string[] defeatLines)
         {
+            // 1. 设置关卡基本信息（索引、区域名、守卫者、氛围）
             Index = index;
             AreaName = areaName;
             WardenCharacterId = wardenCharacterId;
             Mood = mood;
+            // 2. 设置玩法机制信息（类型、标题、说明、场景指导）
             Mechanic = mechanic;
             MechanicTitle = mechanicTitle;
             MechanicSummary = mechanicSummary;
             SceneDirection = sceneDirection;
+            // 3. 设置规则图标（null 时用空数组代替）
             RuleIcons = ruleIcons ?? new string[0];
+            // 4. 设置地图坐标和球皮
             MapX = mapX;
             MapY = mapY;
             BallSelection = ballSelection;
+            // 5. 设置对手技能等级
             OpponentSkill = opponentSkill;
+            // 6. 设置胜利和失败台词（null 时用空数组代替）
             VictoryLines = victoryLines ?? new string[0];
             DefeatLines = defeatLines ?? new string[0];
+            // 7. 提取第一条胜利台词作为默认展示文本
             VictoryBeat = VictoryLines.Length > 0 ? VictoryLines[0] : string.Empty;
         }
 

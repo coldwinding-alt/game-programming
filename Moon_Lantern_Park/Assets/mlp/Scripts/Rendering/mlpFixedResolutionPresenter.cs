@@ -116,7 +116,9 @@ namespace mlp
         /// </summary>
         private void OnDestroy()
         {
+            // 1. 恢复源相机的原始设置并断开连接
             DetachCurrentCamera();
+            // 2. 释放并销毁渲染纹理（释放 GPU 内存）
             if (renderTexture != null)
             {
                 if (renderTexture.IsCreated())
@@ -128,18 +130,21 @@ namespace mlp
                 renderTexture = null;
             }
 
+            // 3. 销毁 UI 画布
             if (canvas != null)
             {
                 Destroy(canvas.gameObject);
                 canvas = null;
             }
 
+            // 4. 销毁输出相机
             if (outputCamera != null)
             {
                 Destroy(outputCamera.gameObject);
                 outputCamera = null;
             }
 
+            // 5. 清除全局活跃呈现器引用
             if (activePresenter == this)
             {
                 activePresenter = null;
@@ -203,15 +208,18 @@ namespace mlp
         /// </summary>
         private void EnsureOutputCamera()
         {
+            // 1. 如果输出相机已创建，直接返回
             if (outputCamera != null)
             {
                 return;
             }
 
+            // 2. 创建相机 GameObject，设置为 UI 层
             var cameraObject = new GameObject(CameraName);
             cameraObject.transform.SetParent(transform, false);
             ApplyPresenterLayer(cameraObject.transform);
 
+            // 3. 配置为正交相机，只渲染 UI 层，深度最高确保在最上层
             outputCamera = cameraObject.AddComponent<Camera>();
             outputCamera.orthographic = true;
             outputCamera.orthographicSize = 1f;
@@ -221,6 +229,7 @@ namespace mlp
             outputCamera.backgroundColor = Color.black;
             outputCamera.cullingMask = 1 << LayerMask.NameToLayer("UI");
             outputCamera.depth = short.MaxValue - 1;
+            // 4. 关闭 HDR 和 MSAA（像素风格不需要这些特性）
             outputCamera.allowHDR = false;
             outputCamera.allowMSAA = false;
             outputCamera.transform.localPosition = new Vector3(0f, 0f, -5f);
@@ -231,11 +240,13 @@ namespace mlp
         /// </summary>
         private void EnsureRenderTexture()
         {
+            // 1. 如果渲染纹理已创建，直接返回
             if (renderTexture != null)
             {
                 return;
             }
 
+            // 2. 创建固定分辨率（800x480）的渲染纹理，使用点过滤保持像素清晰
             renderTexture = new RenderTexture(mlpConstants.DisplayW, mlpConstants.DisplayH, 24, RenderTextureFormat.ARGB32)
             {
                 name = "mlpFixedResolutionRT",
@@ -246,6 +257,7 @@ namespace mlp
                 antiAliasing = 1
             };
             renderTexture.Create();
+            // 3. 将渲染纹理赋给输出 UI 的 RawImage 显示
             outputImage.texture = renderTexture;
         }
 
@@ -306,14 +318,18 @@ namespace mlp
         /// </summary>
         private void DetachCurrentCamera()
         {
+            // 1. 如果没有连接的源相机，直接返回
             if (sourceCamera == null)
             {
                 return;
             }
 
+            // 2. 清除源相机的渲染目标（不再输出到渲染纹理）
             sourceCamera.targetTexture = null;
+            // 3. 恢复 HDR 和 MSAA 设置为连接前的原始值
             sourceCamera.allowHDR = originalAllowHdr;
             sourceCamera.allowMSAA = originalAllowMsaa;
+            // 4. 清除引用，标记为未配置
             sourceCamera = null;
             configured = false;
         }
@@ -339,20 +355,24 @@ namespace mlp
         /// </summary>
         private bool TryMapScreenToGamePixelInternal(Vector2 screenPosition, out Vector2 gamePixel)
         {
+            // 1. 检查呈现器是否已配置，输出区域是否有效
             if (!configured || outputRect == null || outputScreenRect.width <= 0f || outputScreenRect.height <= 0f)
             {
                 gamePixel = default;
                 return false;
             }
 
+            // 2. 如果鼠标在输出区域（游戏画面）之外，返回 false（在黑边上）
             if (!outputScreenRect.Contains(screenPosition))
             {
                 gamePixel = default;
                 return false;
             }
 
+            // 3. 将屏幕坐标归一化到 0-1 范围
             var normalizedX = Mathf.Clamp01((screenPosition.x - outputScreenRect.xMin) / outputScreenRect.width);
             var normalizedY = Mathf.Clamp01((screenPosition.y - outputScreenRect.yMin) / outputScreenRect.height);
+            // 4. 转换为游戏逻辑像素坐标（Y 轴需要翻转，因为屏幕 Y 向上而游戏 Y 向下）
             var logicalHeight = mlpConstants.GameH / mlpConstants.RenderScale;
             gamePixel = new Vector2(
                 normalizedX * mlpConstants.Width,

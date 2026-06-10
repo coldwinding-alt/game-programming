@@ -180,6 +180,7 @@ namespace mlp
 
             // 3. 根据状态选择背景颜色：选中 > 悬停 > 普通
             var tint = selected ? selectedTint : hovered ? hoverTint : normalTint;
+            // 4. 将背景颜色应用到所有需要着色的精灵渲染器
             if (tintTargets != null)
             {
                 for (var i = 0; i < tintTargets.Length; i++)
@@ -191,8 +192,9 @@ namespace mlp
                 }
             }
 
-            // 4. 根据状态选择文字颜色：选中 > 悬停 > 普通
+            // 5. 根据状态选择文字颜色：选中 > 悬停 > 普通
             var labelTint = selected ? selectedLabelTint : hovered ? hoverLabelTint : normalLabelTint;
+            // 6. 将文字颜色应用到所有文字组件
             if (labelTargets != null)
             {
                 for (var i = 0; i < labelTargets.Length; i++)

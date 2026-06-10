@@ -214,16 +214,22 @@ namespace mlp
                 return;
             }
 #endif
+            // 1. 面板未打开时跳过所有更新
             if (!visible)
             {
                 return;
             }
 
+            // 2. 累计面板打开时间，用于播放入场动画
             panelTime += Time.unscaledDeltaTime;
+            // 3. 更新面板的缩放入场动画和女巫聚光灯脉冲效果
             UpdatePanelEntrance();
+            // 4. 检测所有按钮的鼠标悬停和点击
             UpdateButtons();
+            // 5. 更新女巫演示动画（计时器到期时重新播放）
             UpdateDemo(Time.unscaledDeltaTime);
 
+            // 6. 按 Escape 键关闭帮助面板
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Hide();
@@ -255,19 +261,25 @@ namespace mlp
         /// </summary>
         public void Show(mlpHelpPage page)
         {
+            // 1. 如果面板根节点未指定，使用当前 GameObject
             if (panelRoot == null)
             {
                 panelRoot = gameObject;
             }
 
+            // 2. 标记面板为可见，激活面板根节点
             visible = true;
             panelRoot.SetActive(true);
+            // 3. 重置面板计时器（用于入场动画），设置略微缩小的初始缩放
             panelTime = 0f;
             transform.localScale = Vector3.one * 0.985f;
 
+            // 4. 首次打开时构建女巫模型和 UI（后续调用会跳过）
             EnsureInitialized();
+            // 5. 设置为键盘操作页面，隐藏信息面板
             SetPage(mlpHelpPage.Keyboard);
             SetQuickTestInfoVisible(false);
+            // 6. 默认选中盖帽演示并重新播放动画
             SelectDemo(mlpHelpDemo.Block, forceRestart: true);
         }
 
@@ -374,10 +386,13 @@ namespace mlp
         /// </summary>
         private void UpdatePanelEntrance()
         {
+            // 1. 计算入场动画进度（0→1），使用缓出曲线（三次方）
             var t = Mathf.Clamp01(panelTime / 0.12f);
             var eased = 1f - Mathf.Pow(1f - t, 3f);
+            // 2. 面板从 0.985 倍缩放弹入到 1.0 倍
             transform.localScale = Vector3.one * Mathf.Lerp(0.985f, 1f, eased);
 
+            // 3. 女巫聚光灯持续做微弱的呼吸脉冲动画
             if (witchSpotlight != null)
             {
                 var pulse = Mathf.Sin(Time.unscaledTime * 2.3f) * 0.025f;
@@ -390,20 +405,24 @@ namespace mlp
         /// </summary>
         private void UpdateButtons()
         {
+            // 1. 获取主相机（用于鼠标坐标转换）
             var camera = Camera.main;
             if (buttons == null)
             {
                 return;
             }
 
+            // 2. 遍历所有按钮，检测鼠标悬停和点击
             for (var i = 0; i < buttons.Length; i++)
             {
                 var button = buttons[i];
+                // 3. Tick 返回 true 表示玩家完成了一次有效点击
                 if (button == null || !button.Tick(camera))
                 {
                     continue;
                 }
 
+                // 4. 播放按钮音效，将点击事件路由到对应的操作
                 mlpAudio.Instance?.Play(mlpAssets.Sounds.Button, 0.75f);
                 HandleButton(button.Action);
             }
@@ -414,8 +433,10 @@ namespace mlp
         /// </summary>
         private void HandleButton(mlpHelpButtonAction action)
         {
+            // 1. 根据按钮动作类型执行对应操作
             switch (action)
             {
+                // 2. 关闭帮助面板（不播放额外音效，因为按钮音效已播放）
                 case mlpHelpButtonAction.Close:
                     Hide(playSound: false);
                     break;
@@ -477,7 +498,9 @@ namespace mlp
         /// </summary>
         private void SetPage(mlpHelpPage page)
         {
+            // 1. 固定使用键盘操作页面（规则页面已废弃）
             currentPage = mlpHelpPage.Keyboard;
+            // 2. 显示键盘操作页面，隐藏游戏规则页面
             if (keyboardPageRoot != null)
             {
                 keyboardPageRoot.SetActive(true);
@@ -488,9 +511,11 @@ namespace mlp
                 rulesPageRoot.SetActive(false);
             }
 
+            // 3. 隐藏旧版标签页按钮，刷新测试开关状态
             HideLegacyTabs();
             RefreshQuickTestToggle();
 
+            // 4. 更新所有按钮的选中高亮状态（演示按钮、测试开关等）
             if (buttons != null)
             {
                 for (var i = 0; i < buttons.Length; i++)
@@ -557,11 +582,13 @@ namespace mlp
 
         private void EnsureQuickTestToggle()
         {
+            // 1. 非运行时或面板不存在时跳过
             if (panelRoot == null || !Application.isPlaying)
             {
                 return;
             }
 
+            // 2. 加载标签页和卡片精灵资源（用于创建按钮背景）
             var tab = Resources.Load<Sprite>("mlp/Help/help_tab");
             var card = Resources.Load<Sprite>("mlp/Help/help_card");
             if (quickTestToggleButton == null)
@@ -747,17 +774,23 @@ namespace mlp
         /// </summary>
         private void SelectDemo(mlpHelpDemo demo, bool forceRestart = false)
         {
+            // 1. 如果点击的是已选中的演示，只重新播放动画即可
             if (!forceRestart && currentDemo == demo)
             {
                 RestartDemoAnimation();
                 return;
             }
 
+            // 2. 设置当前选中的演示类型
             currentDemo = demo;
+            // 3. 重置演示计时器和交替播放标记（用于盖帽和假动作的两段式动画）
             demoTimer = 999f;
             demoToggle = false;
+            // 4. 更新标题、描述和教练提示文字
             UpdateDemoCopy();
+            // 5. 高亮当前选中的演示按钮行
             UpdateDemoSelections();
+            // 6. 播放女巫的对应动作动画
             RestartDemoAnimation();
         }
 
@@ -766,12 +799,15 @@ namespace mlp
         /// </summary>
         private void UpdateDemo(float dt)
         {
+            // 1. 如果没有女巫模型或不在键盘页面，跳过
             if (witchArmature == null || currentPage != mlpHelpPage.Keyboard)
             {
                 return;
             }
 
+            // 2. 累加演示计时器
             demoTimer += dt;
+            // 3. 获取当前演示动画的重复间隔（秒），到期则重新播放
             var repeat = DemoRepeatFor(currentDemo);
             if (demoTimer >= repeat)
             {
@@ -784,12 +820,15 @@ namespace mlp
         /// </summary>
         private void RestartDemoAnimation()
         {
+            // 1. 如果没有女巫模型则跳过
             if (witchArmature == null)
             {
                 return;
             }
 
+            // 2. 重置演示计时器，开始计时
             demoTimer = 0f;
+            // 3. 根据选中的演示类型播放对应的骨骼动画
             switch (currentDemo)
             {
                 case mlpHelpDemo.Move:
@@ -801,6 +840,7 @@ namespace mlp
                 case mlpHelpDemo.Shoot:
                     witchArmature.Play("throw_land");
                     break;
+                // 4. 假动作和盖帽使用两段交替动画（前摇 + 收招）
                 case mlpHelpDemo.Pump:
                     witchArmature.Play(demoToggle ? "pumpEnd" : "pumpStart");
                     demoToggle = !demoToggle;
@@ -817,6 +857,7 @@ namespace mlp
                     break;
             }
 
+            // 5. 隐藏女巫手中的篮球，提升渲染层级确保显示在面板之上
             HidePreviewBall(witchArmature);
             ApplyWitchSortingOrder();
         }
@@ -932,6 +973,7 @@ namespace mlp
         /// </summary>
         private void UpdateDemoSelections()
         {
+            // 1. 高亮当前选中的演示行背景（绿色 = 选中，深色 = 未选中）
             if (demoRowPlates != null)
             {
                 for (var i = 0; i < demoRowPlates.Length; i++)
@@ -949,6 +991,7 @@ namespace mlp
                 }
             }
 
+            // 2. 更新所有按钮的选中状态（演示按钮和测试开关按钮）
             if (buttons == null)
             {
                 return;
@@ -1043,17 +1086,20 @@ namespace mlp
         /// </summary>
         private static mlpHelpPanel FindActivePanel(bool createFallback)
         {
+            // 1. 如果已有缓存的活动面板，直接返回
             if (activePanel != null)
             {
                 return activePanel;
             }
 
+            // 2. 尝试在当前场景中查找已存在的帮助面板
             activePanel = FindScenePanel();
             if (activePanel != null || !createFallback)
             {
                 return activePanel;
             }
 
+            // 3. 场景中没有面板，且允许创建回退实例：从预制体加载
             var prefab = Resources.Load<mlpHelpPanel>(PrefabResourcePath);
             if (prefab == null)
             {
@@ -1061,6 +1107,7 @@ namespace mlp
                 return null;
             }
 
+            // 4. 实例化预制体作为运行时回退面板
             activePanel = Object.Instantiate(prefab);
             activePanel.name = "MlpHelpPanel_RuntimeFallback";
             return activePanel;

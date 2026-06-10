@@ -27,6 +27,7 @@ namespace mlp
         /// <returns>如果实例已存在则返回现有实例，否则创建新实例。</returns>
         public static mlpAudio Create(Transform parent)
         {
+            // 1. 单例已存在：更新父级并返回现有实例
             if (Instance != null)
             {
                 if (parent != null && Instance.transform.parent != parent)
@@ -37,8 +38,10 @@ namespace mlp
                 return Instance;
             }
 
+            // 2. 创建新的 GameObject 并挂载到指定父级
             var go = new GameObject("mlpAudio");
             go.transform.SetParent(parent, false);
+            // 3. 添加 mlpAudio 组件和两个 AudioSource（音乐 + 音效）
             Instance = go.AddComponent<mlpAudio>();
             Instance.musicSource = go.AddComponent<AudioSource>();
             Instance.musicSource.loop = true;
@@ -64,22 +67,26 @@ namespace mlp
         /// <param name="key">音乐文件的资源名称。</param>
         public void PlayMusic(string key)
         {
+            // 1. 音乐开关关闭时跳过
             if (!MusicEnabled)
             {
                 return;
             }
 
+            // 2. 加载音频资源
             var clip = Load(key);
             if (clip == null)
             {
                 return;
             }
 
+            // 3. 同一首曲目正在播放时不重复播放
             if (musicSource.clip == clip && musicSource.isPlaying)
             {
                 return;
             }
 
+            // 4. 设置音频片段并开始播放
             musicSource.clip = clip;
             musicSource.Play();
         }

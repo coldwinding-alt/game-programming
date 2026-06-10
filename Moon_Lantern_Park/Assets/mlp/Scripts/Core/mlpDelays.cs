@@ -183,6 +183,7 @@ namespace mlp
         /// <returns>1 = 冷却完成，0 = 正在倒计时，-1 = 空闲，-2 = 强制冷却进行中。</returns>
         public override int Update(float dt)
         {
+            // 1. 正常倒计时中（delta >= 0）：累加时间，到期返回 1
             if (delta >= 0f)
             {
                 delta += dt;
@@ -195,11 +196,13 @@ namespace mlp
                 return 0;
             }
 
+            // 2. 空闲状态（delta 约等于 -1）：返回 -1
             if (Mathf.Approximately(delta, -1f))
             {
                 return -1;
             }
 
+            // 3. 强制冷却中（delta < -1）：累加时间，到 -1 时冷却结束
             delta += dt;
             if (delta >= -1f)
             {
@@ -207,6 +210,7 @@ namespace mlp
                 return -1;
             }
 
+            // 4. 强制冷却仍在进行中，返回 -2
             return -2;
         }
 

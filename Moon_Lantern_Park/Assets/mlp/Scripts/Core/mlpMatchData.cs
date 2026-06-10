@@ -10,7 +10,7 @@ namespace mlp
     /// <summary>
     /// AI 难度等级：全游戏只保留 Easy、Normal、Hard、Hell 四档。
     /// 这些枚举值只表示玩家选择的难度档位，不再表示锦标赛轮次、冒险关卡编号等递增进度。
-    /// 具体会转换成哪个 AI 技能数值，由 mlpMatchData.GetOpponentSkillForDifficulty 统一决定。
+    /// 具体会转换成哪个 AI 技能索引，由 mlpMatchData.GetOpponentSkillForDifficulty 统一决定。
     /// </summary>
     public enum mlpAiDifficulty
     {
@@ -352,7 +352,7 @@ namespace mlp
 
             CharacterIds = new[] { resolvedCharacterId, opponentCharacterId };
             Pb = new[] { new[] { "P0" }, new[] { "T0" } };
-            Skills = new[] { new[] { 0 }, new[] { 2 } };
+            Skills = new[] { new[] { 0 }, new[] { mlpAISkillsData.NormalSkillIndex } };
         }
 
         /// <summary>
@@ -482,35 +482,21 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将玩家选择的四档难度映射为 AI 技能数值索引。
+        /// 将玩家选择的四档难度映射为 AI 技能索引。
         /// </summary>
         /// <param name="difficulty">选择的 AI 难度。</param>
-        /// <returns>技能索引（1 = 简单，2 = 普通，5 = 困难，10 = 地狱）。</returns>
+        /// <returns>四档固定技能索引：0 = Easy，1 = Normal，2 = Hard，3 = Hell。</returns>
         private static int GetOpponentSkillForDifficulty(mlpAiDifficulty difficulty)
         {
-            int skill;
-            switch (difficulty)
-            {
-                case mlpAiDifficulty.Easy:
-                    // Easy 固定使用技能 1：让 AI 会基本行动，但反应和进攻都比较保守。
-                    skill = 1;
-                    break;
-                case mlpAiDifficulty.Hard:
-                    // Hard 固定使用技能 5：明显强于普通，但不会因为锦标赛后期或冒险后期继续上涨。
-                    skill = 5;
-                    break;
-                case mlpAiDifficulty.Hell:
-                    // Hell 固定使用技能 10：基础技能值最高；Hell 专属额外强化仍由控制器逻辑处理。
-                    skill = 10;
-                    break;
-                default:
-                    // Normal 是默认值。传入未知难度时也回到普通，避免出现 0 或异常难度。
-                    skill = 2;
-                    break;
-            }
-
-            // 技能表有最大索引限制。即使以后调整数值，也通过 Clamp 保证不会越界。
-            return Mathf.Clamp(skill, 0, mlpAISkillsData.MaxSkillIndex);
+            // 这里是所有单人模式获取 AI 技能索引的唯一入口。
+            // 返回值只会是 0、1、2、3 四个固定档位：
+            // 0 = Easy：基础行动完整，但反应、进攻和防守更宽松。
+            // 1 = Normal：默认体验，适合作为标准比赛强度。
+            // 2 = Hard：更积极、更稳定，但不会因关卡或赛段继续递增。
+            // 3 = Hell：四档中最高基础强度；Hell 专属额外强化仍由难度调校处理。
+            // 不要在快速赛、随机赛、冒险或锦标赛里再单独叠加轮次/关卡偏移，
+            // 否则就会重新变成隐藏多档难度，和当前固定四档设计相冲突。
+            return mlpAISkillsData.GetSkillIndex(difficulty);
         }
 
         /// <summary>

@@ -18,12 +18,12 @@ namespace mlp.EditorTools
         private readonly struct DifficultySkillExpectation
         {
             public readonly mlpAiDifficulty Difficulty;
-            public readonly int ExpectedSkill;
+            public readonly int ExpectedSkillIndex;
 
-            public DifficultySkillExpectation(mlpAiDifficulty difficulty, int expectedSkill)
+            public DifficultySkillExpectation(mlpAiDifficulty difficulty, int expectedSkillIndex)
             {
                 Difficulty = difficulty;
-                ExpectedSkill = expectedSkill;
+                ExpectedSkillIndex = expectedSkillIndex;
             }
         }
 
@@ -584,10 +584,8 @@ namespace mlp.EditorTools
                     errors.Add($"Adventure level {i + 1} needs at least two rule icons.");
                 }
 
-                if (level.OpponentSkill < 0 || level.OpponentSkill > mlpAISkillsData.MaxSkillIndex)
-                {
-                    errors.Add($"Adventure level {i + 1} has out-of-range opponent skill {level.OpponentSkill}.");
-                }
+                // OpponentSkill 是旧版冒险基础强度字段，当前固定四档模式下不直接参与 AI 技能计算。
+                // 因此这里不再要求它落在 0..3 的四档索引范围内，只保留关卡结构和流程校验。
             }
 
             var adventure = new mlpAdventureData();
@@ -610,15 +608,15 @@ namespace mlp.EditorTools
                 errors.Add("Adventure match did not use the first level Warden as opponent.");
             }
 
-            AssertOpponentSkill(matchData, 2, errors, "Adventure default normal mapping");
+            AssertOpponentSkill(matchData, mlpAISkillsData.NormalSkillIndex, errors, "Adventure default normal mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Easy);
-            AssertOpponentSkill(matchData, 1, errors, "Adventure easy mapping");
+            AssertOpponentSkill(matchData, mlpAISkillsData.EasySkillIndex, errors, "Adventure easy mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Normal);
-            AssertOpponentSkill(matchData, 2, errors, "Adventure normal mapping");
+            AssertOpponentSkill(matchData, mlpAISkillsData.NormalSkillIndex, errors, "Adventure normal mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Hard);
-            AssertOpponentSkill(matchData, 5, errors, "Adventure hard mapping");
+            AssertOpponentSkill(matchData, mlpAISkillsData.HardSkillIndex, errors, "Adventure hard mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Hell);
-            AssertOpponentSkill(matchData, 10, errors, "Adventure hell mapping");
+            AssertOpponentSkill(matchData, mlpAISkillsData.HellSkillIndex, errors, "Adventure hell mapping");
 
             adventure.ApplyCurrentMatchResult(true);
             if (!adventure.IsLevelCompleted(0) || !adventure.IsLevelUnlocked(1) || adventure.SigilsCollected != 1)
@@ -1441,7 +1439,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查难度切换是否正确循环并映射到预期的 AI 技能等级。
+        /// 检查难度切换是否正确循环并映射到预期的四档 AI 技能索引。
         /// </summary>
         private static void ValidateDifficultyCycleAndSkillMapping(List<string> errors)
         {
@@ -1482,25 +1480,30 @@ namespace mlp.EditorTools
                     errors.Add("Difficulty toggle did not cycle from Hell back to Easy.");
                 }
 
-                // 3. 验证快速赛和随机赛都使用固定四档难度：
-                //    Easy=1、Normal=2、Hard=5、Hell=10。
+                // 3. 验证快速赛和随机赛都使用固定四档难度索引：
+                //    Easy=0、Normal=1、Hard=2、Hell=3。
                 var matchData = new mlpMatchData(true);
                 var expectedSkills = new[]
                 {
-                    new DifficultySkillExpectation(mlpAiDifficulty.Easy, 1),
-                    new DifficultySkillExpectation(mlpAiDifficulty.Normal, 2),
-                    new DifficultySkillExpectation(mlpAiDifficulty.Hard, 5),
-                    new DifficultySkillExpectation(mlpAiDifficulty.Hell, 10)
+                    new DifficultySkillExpectation(mlpAiDifficulty.Easy, mlpAISkillsData.EasySkillIndex),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Normal, mlpAISkillsData.NormalSkillIndex),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Hard, mlpAISkillsData.HardSkillIndex),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Hell, mlpAISkillsData.HellSkillIndex)
                 };
+
+                if (mlpAISkillsData.MaxSkillIndex != mlpAISkillsData.HellSkillIndex)
+                {
+                    errors.Add($"AI skill table should expose exactly four fixed indexes, got max index {mlpAISkillsData.MaxSkillIndex}.");
+                }
 
                 for (var i = 0; i < expectedSkills.Length; i++)
                 {
                     var expectation = expectedSkills[i];
                     matchData.StartQuickMatch(0, expectation.Difficulty);
-                    AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"Quick Match {expectation.Difficulty} fixed mapping");
+                    AssertOpponentSkill(matchData, expectation.ExpectedSkillIndex, errors, $"Quick Match {expectation.Difficulty} fixed mapping");
 
                     matchData.StartRandomMatch(0, expectation.Difficulty);
-                    AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"Random Match {expectation.Difficulty} fixed mapping");
+                    AssertOpponentSkill(matchData, expectation.ExpectedSkillIndex, errors, $"Random Match {expectation.Difficulty} fixed mapping");
                 }
             }
             finally
@@ -1580,16 +1583,16 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查锦标赛在四档难度下是否始终使用固定 AI 技能值。
+        /// 检查锦标赛在四档难度下是否始终使用固定 AI 技能索引。
         /// </summary>
         private static void ValidateFixedTournamentSkillMapping(List<string> errors)
         {
             var expectations = new[]
             {
-                new DifficultySkillExpectation(mlpAiDifficulty.Easy, 1),
-                new DifficultySkillExpectation(mlpAiDifficulty.Normal, 2),
-                new DifficultySkillExpectation(mlpAiDifficulty.Hard, 5),
-                new DifficultySkillExpectation(mlpAiDifficulty.Hell, 10)
+                new DifficultySkillExpectation(mlpAiDifficulty.Easy, mlpAISkillsData.EasySkillIndex),
+                new DifficultySkillExpectation(mlpAiDifficulty.Normal, mlpAISkillsData.NormalSkillIndex),
+                new DifficultySkillExpectation(mlpAiDifficulty.Hard, mlpAISkillsData.HardSkillIndex),
+                new DifficultySkillExpectation(mlpAiDifficulty.Hell, mlpAISkillsData.HellSkillIndex)
             };
 
             for (var i = 0; i < expectations.Length; i++)
@@ -1599,7 +1602,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查一个具体难度在锦标赛常规赛、半决赛、决赛和三四名赛中是否保持同一个技能值。
+        /// 检查一个具体难度在锦标赛常规赛、半决赛、决赛和三四名赛中是否保持同一个技能索引。
         /// </summary>
         private static void ValidateFixedTournamentSkillMappingForDifficulty(
             List<string> errors,
@@ -1618,7 +1621,7 @@ namespace mlp.EditorTools
                 matchData.StartTournamentMatch(tournament);
                 AssertOpponentSkill(
                     matchData,
-                    expectation.ExpectedSkill,
+                    expectation.ExpectedSkillIndex,
                     errors,
                     $"{expectation.Difficulty} tournament fixed round {round + 1}");
                 tournament.ApplyCurrentMatchResult(30 + round, 10 + round);
@@ -1632,11 +1635,11 @@ namespace mlp.EditorTools
             }
 
             matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"{expectation.Difficulty} tournament fixed semifinal");
+            AssertOpponentSkill(matchData, expectation.ExpectedSkillIndex, errors, $"{expectation.Difficulty} tournament fixed semifinal");
 
             tournament.ApplyCurrentMatchResult(32, 18);
             matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"{expectation.Difficulty} tournament fixed final");
+            AssertOpponentSkill(matchData, expectation.ExpectedSkillIndex, errors, $"{expectation.Difficulty} tournament fixed final");
 
             var thirdPlaceTournament = new mlpTournamentData();
             if (!thirdPlaceTournament.Create(0, expectation.Difficulty))
@@ -1651,7 +1654,7 @@ namespace mlp.EditorTools
                 thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
                 AssertOpponentSkill(
                     thirdPlaceMatchData,
-                    expectation.ExpectedSkill,
+                    expectation.ExpectedSkillIndex,
                     errors,
                     $"{expectation.Difficulty} tournament fixed third-place path round {round + 1}");
                 thirdPlaceTournament.ApplyCurrentMatchResult(28 + round, 12 + round);
@@ -1661,7 +1664,7 @@ namespace mlp.EditorTools
             thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
             AssertOpponentSkill(
                 thirdPlaceMatchData,
-                expectation.ExpectedSkill,
+                expectation.ExpectedSkillIndex,
                 errors,
                 $"{expectation.Difficulty} tournament fixed third-place path semifinal");
 
@@ -1675,15 +1678,15 @@ namespace mlp.EditorTools
             thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
             AssertOpponentSkill(
                 thirdPlaceMatchData,
-                expectation.ExpectedSkill,
+                expectation.ExpectedSkillIndex,
                 errors,
                 $"{expectation.Difficulty} tournament fixed third-place match");
         }
 
         /// <summary>
-        /// 断言对手的 AI 技能等级与预期值匹配。
+        /// 断言对手的四档 AI 技能索引与预期值匹配。
         /// </summary>
-        private static void AssertOpponentSkill(mlpMatchData matchData, int expectedSkill, List<string> errors, string context)
+        private static void AssertOpponentSkill(mlpMatchData matchData, int expectedSkillIndex, List<string> errors, string context)
         {
             if (matchData.Skills == null || matchData.Skills.Length < 2 || matchData.Skills[1] == null || matchData.Skills[1].Length == 0)
             {
@@ -1692,9 +1695,9 @@ namespace mlp.EditorTools
             }
 
             var actualSkill = matchData.Skills[1][0];
-            if (actualSkill != expectedSkill)
+            if (actualSkill != expectedSkillIndex)
             {
-                errors.Add($"{context} expected opponent skill {expectedSkill}, got {actualSkill}.");
+                errors.Add($"{context} expected opponent skill index {expectedSkillIndex}, got {actualSkill}.");
             }
 
             if (actualSkill < 0 || actualSkill > mlpAISkillsData.MaxSkillIndex)

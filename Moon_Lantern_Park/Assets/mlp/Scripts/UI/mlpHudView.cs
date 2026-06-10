@@ -2120,6 +2120,7 @@ namespace mlp
         /// </summary>
         public mlpEnergyBarView(Transform parent, int controllerSlot, mlpCharacterSkillDefinition skillDefinition, float fullTime)
         {
+            // 1. 获取玩家控制器配置，根据玩家槽位确定能量条位置
             var profile = mlpControlsData.ProfileForSlot(controllerSlot);
             var x = SoloEnergyX;
             var y = EnergyY;
@@ -2133,6 +2134,7 @@ namespace mlp
                 y = PlayerTwoEnergyY;
             }
 
+            // 2. 创建能量条背景（优先使用独立纹理，否则回退到图集精灵）
             const float legacyEnergyBgWidth = 95f;
             const float legacyEnergyBgHeight = 89f;
             const float standaloneEnergyIconPixels = 76f;
@@ -2152,6 +2154,7 @@ namespace mlp
                 bg.transform.localScale *= 1.1f;
             }
 
+            // 3. 加载技能图标的基础图和径向遮罩图
             var baseResourcePath = skillDefinition.HasStandaloneIconArt
                 ? mlpAssets.Images.ResourcePath(skillDefinition.IconImageKey)
                 : null;
@@ -2161,6 +2164,7 @@ namespace mlp
             var baseTexture = !string.IsNullOrEmpty(baseResourcePath) ? Resources.Load<Texture2D>(baseResourcePath) : null;
             var maskTexture = !string.IsNullOrEmpty(maskResourcePath) ? Resources.Load<Texture2D>(maskResourcePath) : null;
 
+            // 4. 创建技能图标层和径向填充遮罩层（遮罩层用于显示充能进度）
             if (baseTexture != null && maskTexture != null)
             {
                 mlpIconButton.CreateImageIcon($"EnergyBase_{controllerSlot}", baseResourcePath, x, y, 84, standaloneEnergyIconPixels, parent);
@@ -2183,6 +2187,7 @@ namespace mlp
                 }
             }
 
+            // 5. 创建按键提示背景和提示文字（如 "E" 键释放大招）
             mlpRender.Sprite($"EnergyHintBg_{controllerSlot}", mlpAtlasCache.Instance.Gameplay, "key_hint0000", x - 30f, y + 30f, 0.5f, 0.5f, 86, parent);
             mlpRender.Text(
                 $"EnergyHint_{controllerSlot}",
@@ -2196,6 +2201,7 @@ namespace mlp
                 parent,
                 mlpTextStyle.TournamentBody);
 
+            // 6. 设置初始充能状态（充能时间为 0 则直接充满，否则从 0 开始）
             SetCharge(fullTime <= 0f ? 1f : 0f);
         }
 
@@ -2308,23 +2314,30 @@ namespace mlp
         /// </summary>
         private void BuildSector(float degrees)
         {
+            // 1. 根据角度计算需要多少个三角形分段（最多 36 段 = 360 度）
             var segmentCount = Mathf.Max(1, Mathf.CeilToInt(RadialSteps * Mathf.Clamp01(degrees / 360f)));
             var radius = Mathf.Min(width, height) * 0.5f;
+            // 2. 分配顶点、UV 和三角形索引数组（顶点数 = 中心点 + 扇形边缘点）
             var vertices = new Vector3[segmentCount + 2];
             var uvs = new Vector2[segmentCount + 2];
             var triangles = new int[segmentCount * 3];
+            // 3. 中心顶点位于原点，UV 设为纹理中心
             vertices[0] = Vector3.zero;
             uvs[0] = new Vector2((uvMin.x + uvMax.x) * 0.5f, (uvMin.y + uvMax.y) * 0.5f);
 
+            // 4. 从 12 点钟方向顺时针生成扇形边缘顶点
             for (var i = 0; i <= segmentCount; i++)
             {
                 var t = segmentCount == 0 ? 0f : i / (float)segmentCount;
                 var angle = (90f - degrees * t) * Mathf.Deg2Rad;
                 var point = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                // 5. 设置顶点位置
                 vertices[i + 1] = new Vector3(point.x, point.y, 0f);
+                // 6. 将顶点位置映射到纹理 UV 坐标（实现扇形裁剪纹理效果）
                 var uvX = Mathf.Lerp(uvMin.x, uvMax.x, point.x / width + 0.5f);
                 var uvY = Mathf.Lerp(uvMin.y, uvMax.y, point.y / height + 0.5f);
                 uvs[i + 1] = new Vector2(uvX, uvY);
+                // 7. 为每个分段创建一个三角形（中心点 → 当前边缘点 → 下一个边缘点）
                 if (i == segmentCount)
                 {
                     continue;
@@ -2336,6 +2349,7 @@ namespace mlp
                 triangles[tri + 2] = i + 2;
             }
 
+            // 8. 将计算好的数据上传到网格
             mesh.Clear();
             mesh.vertices = vertices;
             mesh.uv = uvs;
