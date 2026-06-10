@@ -1857,20 +1857,27 @@ namespace mlp
         /// </summary>
         public void Activate()
         {
+            // 1. 设置护盾为入场阶段，重置计时器
             phase = ShieldPhase.Intro;
             phaseTime = 0f;
             alpha = 1f;
+            // 2. 隐藏篮筐前沿耳图形，为护盾腾出空间
             basket?.HideEar();
+            // 3. 显示护盾根节点
             graphic.SetActive(true);
+            // 4. 入场时只显示模糊层，隐藏其他层
             startRenderer.enabled = false;
             blurRenderer.enabled = true;
             animRenderer.enabled = false;
+            // 5. 将模糊精灵放到起始位置（上方），并设置放大比例
             blurRenderer.transform.localPosition = new Vector3(StartSpriteLocalX, IntroDropOffsetY, 0f);
             blurRenderer.transform.localScale = new Vector3(IntroBlurScaleX, IntroBlurScaleY, 1f);
             startRenderer.transform.localScale = Vector3.one;
             animRenderer.transform.localScale = Vector3.one;
+            // 6. 应用透明度并更新位置
             ApplyAlpha();
             UpdateGraphic();
+            // 7. 播放护盾激活音效
             mlpAudio.Instance?.Play(mlpAssets.Sounds.PShield);
         }
 
@@ -1880,16 +1887,21 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         public void Update(float dt)
         {
+            // 1. 如果护盾处于隐藏状态，直接返回
             if (phase == ShieldPhase.Hidden)
             {
                 return;
             }
 
+            // 2. 累加当前阶段的运行时间
             phaseTime += dt;
+            // 3. 根据当前阶段执行对应的动画更新
             switch (phase)
             {
                 case ShieldPhase.Intro:
+                    // 4. 更新入场动画（模糊精灵从上方落下）
                     UpdateIntro();
+                    // 5. 入场时间结束后切换到激活阶段
                     if (phaseTime >= IntroTime)
                     {
                         phase = ShieldPhase.Active;
@@ -1900,7 +1912,9 @@ namespace mlp
                     }
                     break;
                 case ShieldPhase.Active:
+                    // 6. 更新激活阶段动画（护盾展开动画播放）
                     UpdateActive();
+                    // 7. 动画播放加展示时间结束后切换到消退阶段
                     if (phaseTime >= AnimationDuration + ShowTime)
                     {
                         phase = ShieldPhase.Fading;
@@ -1910,8 +1924,10 @@ namespace mlp
                     }
                     break;
                 case ShieldPhase.Fading:
+                    // 8. 计算消退透明度并应用
                     alpha = 1f - Mathf.Clamp01(phaseTime / FadeTime);
                     ApplyAlpha();
+                    // 9. 消退完成后重置护盾
                     if (phaseTime >= FadeTime)
                     {
                         Reset();
@@ -1920,6 +1936,7 @@ namespace mlp
                     break;
             }
 
+            // 10. 更新护盾图形位置
             UpdateGraphic();
         }
 

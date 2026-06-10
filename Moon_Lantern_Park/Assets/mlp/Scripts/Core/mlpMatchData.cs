@@ -290,13 +290,17 @@ namespace mlp
         /// <param name="ballSelection">使用的球皮（Random 表示随机选取）。</param>
         public void StartQuickMatch(int playerCharacterId, mlpAiDifficulty difficulty, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
+            // 1. 重置所有比赛数据，解析球皮主题
             ResetAll();
             ResolveBallSelection(ballSelection);
+            // 2. 验证玩家角色，随机选一个不同的对手
             var playerId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
             var excluded = new List<int> { playerId };
             var opponentId = mlpPlayersData.GetRandomCharacterId(excluded);
+            // 3. 根据难度获取对手的 AI 技能等级
             var opponentSkill = GetQuickMatchOpponentSkill(difficulty);
 
+            // 4. 配置双方角色、脑控制方式和技能等级
             CharacterIds = new[] { playerId, opponentId };
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
@@ -385,12 +389,15 @@ namespace mlp
         /// <param name="ballSelection">使用的球皮。</param>
         public void StartTournamentMatch(mlpTournamentData tournament, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
+            // 1. 重置所有比赛数据
             ResetAll();
+            // 2. 锦标赛无效、已完成或无待打比赛时直接返回
             if (tournament == null || !tournament.Active || tournament.Completed || !tournament.HasPendingPlayerMatch)
             {
                 return;
             }
 
+            // 3. 解析球皮，设置双方角色 ID
             MatchMode = 0;
             ResolveBallSelection(ballSelection);
             CharacterIds = new[]
@@ -399,8 +406,10 @@ namespace mlp
                 mlpPlayersData.SanitizeCharacterId(tournament.CurrentOpponentCharacterId)
             };
 
+            // 4. 根据锦标赛难度计算对手技能
             var opponentSkill = GetTournamentOpponentSkill(tournament);
 
+            // 5. 配置脑控制方式和技能等级
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
         }
@@ -417,20 +426,25 @@ namespace mlp
         /// <param name="difficulty">玩家选择的固定四档 AI 难度。</param>
         public void StartAdventureMatch(mlpAdventureData adventure, mlpAiDifficulty difficulty)
         {
+            // 1. 重置所有比赛数据
             ResetAll();
+            // 2. 冒险无效、已完成或无待打比赛时直接返回
             if (adventure == null || !adventure.Active || adventure.Completed || !adventure.HasPendingPlayerMatch)
             {
                 return;
             }
 
+            // 3. 获取当前关卡定义，解析关卡指定的球皮
             var level = adventure.CurrentLevel;
             MatchMode = 0;
             ResolveBallSelection(level.BallSelection);
+            // 4. 设置玩家和守卫者的角色 ID
             CharacterIds = new[]
             {
                 mlpPlayersData.SanitizeCharacterId(adventure.PlayerCharacterId),
                 mlpPlayersData.SanitizeCharacterId(level.WardenCharacterId)
             };
+            // 5. 配置脑控制方式和对手技能等级
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
             Skills = new[] { new[] { 0 }, new[] { GetAdventureOpponentSkill(level, difficulty) } };
         }
@@ -443,14 +457,17 @@ namespace mlp
         /// <param name="ballSelection">使用的球皮。</param>
         public void StartSelectedTwoPlayerMatch(int leftCharacterId, int rightCharacterId, mlpBallSelection ballSelection = mlpBallSelection.Random)
         {
+            // 1. 重置数据，解析球皮
             ResetAll();
             MatchMode = 0;
             ResolveBallSelection(ballSelection);
+            // 2. 验证双方角色 ID（确保不重复）
             CharacterIds = new[]
             {
                 mlpPlayersData.SanitizeCharacterId(leftCharacterId),
                 mlpPlayersData.SanitizeCharacterId(rightCharacterId, leftCharacterId)
             };
+            // 3. 双方都是人类玩家（P1 和 P2），无 AI 技能
             Pb = new[] { new[] { "P1" }, new[] { "P2" } };
             Skills = new[] { new[] { 0 }, new[] { 0 } };
         }
@@ -506,9 +523,8 @@ namespace mlp
 
         private static int GetAdventureOpponentSkill(mlpAdventureLevelDefinition level, mlpAiDifficulty difficulty)
         {
-            // 冒险关卡本身仍保留关卡编号、特殊规则、剧情和球皮。
-            // 但当前“固定四档难度”设计下，AI 技能值不再读取 level.OpponentSkill，
-            // 也不再因为玩家打到后面的关卡而自动增加。
+            // 1. 冒险关卡保留特殊规则和剧情，但 AI 技能统一由难度决定
+            // 2. 不再读取 level.OpponentSkill，不再随关卡进度递增
             return GetOpponentSkillForDifficulty(difficulty);
         }
 
@@ -519,14 +535,15 @@ namespace mlp
         /// <returns>该难度固定对应的技能索引（经范围限制）。</returns>
         private static int GetTournamentOpponentSkill(mlpTournamentData tournament)
         {
+            // 1. 锦标赛数据为空时返回默认技能 0
             if (tournament == null)
             {
                 return 0;
             }
 
-            // 锦标赛仍然保留常规赛、半决赛、三四名赛、决赛等赛制流程。
-            // 这些赛段只决定对阵和排名，不再决定 AI 技能值是否递增。
-            // 这样同一场锦标赛从第一轮到决赛都会保持玩家选择的同一个难度。
+            // 2. 锦标赛保留赛制流程（常规赛、半决赛、决赛等），但 AI 技能统一由难度决定
+            // 3. 赛段只决定对阵和排名，不影响 AI 技能值
+            // 4. 从第一轮到决赛都保持玩家选择的同一个难度
             return GetOpponentSkillForDifficulty(tournament.Difficulty);
         }
 
@@ -581,18 +598,23 @@ namespace mlp
         /// </summary>
         private mlpInventory()
         {
+            // 1. 设置默认游戏模式和参与模式
             GameMode = 1;
             ParticipantMode = mlpParticipantMode.OnePlayer;
             SessionMode = mlpSessionMode.None;
+            // 2. 创建比赛数据、冒险数据和锦标赛数据实例
             MatchData = new mlpMatchData(true);
             Adventure = new mlpAdventureData();
             Tournament = new mlpTournamentData();
+            // 3. 设置默认难度和教程状态
             MatchData.MatchMode = 0;
             Difficulty = mlpAiDifficulty.Normal;
             PendingTutorialNextAction = mlpTutorialNextAction.None;
+            // 4. 各模式默认选中第一个角色
             SelectedQuickCharacterId = MatchData.FirstCharacterId;
             SelectedTournamentCharacterId = MatchData.FirstCharacterId;
             SelectedTrainingCharacterId = MatchData.FirstCharacterId;
+            // 5. 各模式默认使用经典球皮
             SelectedQuickBallSelection = mlpBallSelection.ClassicOriginal;
             SelectedTournamentBallSelection = mlpBallSelection.ClassicOriginal;
             SelectedTrainingBallSelection = mlpBallSelection.ClassicOriginal;
@@ -709,13 +731,17 @@ namespace mlp
         /// </summary>
         public void StartQuickGame()
         {
+            // 1. 重置冒险和锦标赛状态
             Adventure.Reset();
             Tournament.Reset();
+            // 2. 设置会话为快速比赛模式
             SessionMode = mlpSessionMode.QuickMatch;
             MatchPrepared = true;
             ParticipantMode = mlpParticipantMode.OnePlayer;
             GameMode = mlpGameModeIds.QuickMatch;
+            // 3. 清除教程待办状态
             PendingTutorialNextAction = mlpTutorialNextAction.None;
+            // 4. 配置比赛数据
             MatchData.MatchMode = 0;
             MatchData.StartQuickMatch(SelectedQuickCharacterId, Difficulty, SelectedQuickBallSelection);
         }
@@ -805,17 +831,21 @@ namespace mlp
         /// <returns>锦标赛创建成功时返回 true。</returns>
         public bool BeginTournament()
         {
+            // 1. 设置单人模式，重置冒险，切换到锦标赛会话
             ParticipantMode = mlpParticipantMode.OnePlayer;
             Adventure.Reset();
             SessionMode = mlpSessionMode.Tournament;
             GameMode = mlpGameModeIds.RandomQuick;
+            // 2. 清除教程待办状态
             PendingTutorialNextAction = mlpTutorialNextAction.None;
+            // 3. 创建锦标赛，失败则返回
             if (!Tournament.Create(SelectedTournamentCharacterId, Difficulty))
             {
                 MatchPrepared = false;
                 return false;
             }
 
+            // 4. 有待打比赛时配置第一场比赛
             MatchPrepared = false;
             if (Tournament.HasPendingPlayerMatch)
             {
@@ -832,12 +862,15 @@ namespace mlp
         /// <returns>有决赛比赛待进行时返回 true。</returns>
         public bool BeginTournamentFinals()
         {
+            // 1. 锦标赛未激活时返回失败
             if (!IsTournamentActive)
             {
                 return false;
             }
 
+            // 2. 推进锦标赛到决赛阶段
             Tournament.BeginFinals();
+            // 3. 有待打比赛时配置比赛
             MatchPrepared = false;
             if (Tournament.HasPendingPlayerMatch)
             {
@@ -845,6 +878,7 @@ namespace mlp
                 MatchPrepared = true;
             }
 
+            // 4. 返回是否有决赛比赛需要打
             return Tournament.HasPendingPlayerMatch;
         }
 
@@ -854,12 +888,15 @@ namespace mlp
         /// <returns>锦标赛已结束时返回 true。</returns>
         public bool AdvanceTournament()
         {
+            // 1. 锦标赛未激活时返回失败
             if (!IsTournamentActive)
             {
                 return false;
             }
 
+            // 2. 将当前比赛结果提交给锦标赛
             Tournament.ApplyCurrentMatchResult(MatchData.MatchScore[0], MatchData.MatchScore[1]);
+            // 3. 未完成且有下一场比赛时，配置下一场
             MatchPrepared = false;
             if (!Tournament.Completed && Tournament.HasPendingPlayerMatch)
             {
@@ -867,6 +904,7 @@ namespace mlp
                 MatchPrepared = true;
             }
 
+            // 4. 返回锦标赛是否已完成
             return Tournament.Completed;
         }
 
@@ -894,19 +932,24 @@ namespace mlp
 
         public bool StartAdventureLevel(int levelIndex, int playerCharacterId)
         {
+            // 1. 验证角色 ID
             var resolvedPlayerCharacterId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
+            // 2. 如果冒险未激活、已完成或角色不匹配，重新开始冒险
             if (!IsAdventureActive || Adventure.Completed || Adventure.PlayerCharacterId != resolvedPlayerCharacterId)
             {
                 BeginAdventure(resolvedPlayerCharacterId);
             }
 
+            // 3. 选择关卡，失败则返回
             if (!Adventure.SelectLevel(levelIndex))
             {
                 return false;
             }
 
+            // 4. 配置冒险比赛数据并标记已准备好
             MatchData.StartAdventureMatch(Adventure, Difficulty);
             MatchPrepared = true;
+            // 5. 验证比赛数据完整性
             return MatchData.Pb != null && MatchData.Pb.Length >= 2 && MatchData.Pb[1].Length > 0;
         }
 

@@ -1215,13 +1215,17 @@ namespace mlp
         /// </summary>
         protected void HandleBallInOpponentsHands()
         {
+            // 1. 切换到防守策略（编号 0）
             strategy = 0;
+            // 2. 重置所有延迟计时器和当前输入
             ResetBaseDelays();
             ResetCurrents();
+            // 3. 清除篮板、进攻、假动作等残留状态
             queuedReboundJump = false;
             willAttackAtOnce = false;
             isPumped = false;
             superDashDelay.Reset();
+            // 4. 找到当前持球的对手作为防守目标
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
 
@@ -1230,8 +1234,11 @@ namespace mlp
         /// </summary>
         protected void HandleBallOthers()
         {
+            // 1. 切换到争球策略（编号 1）
             strategy = 1;
+            // 2. 重置当前输入
             ResetCurrents();
+            // 3. 清除排队篮板起跳和超级冲刺延迟
             queuedReboundJump = false;
             superDashDelay.Reset();
         }
