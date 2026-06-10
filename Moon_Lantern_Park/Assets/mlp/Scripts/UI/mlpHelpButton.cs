@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 帮助面板按钮：支持鼠标悬停变色和缩放效果，用于帮助面板的标签页切换和动作演示选择。
+    /// </summary>
     public sealed class mlpHelpButton : MonoBehaviour
     {
         [SerializeField] private mlpHelpButtonAction action;
@@ -46,9 +49,12 @@ namespace mlp
             Color configuredSelectedLabelTint,
             float configuredHoverScale)
         {
+            // 1. 保存按钮的动作类型（关闭、切换标签页、选择演示等）
             action = configuredAction;
+            // 2. 保存按钮在屏幕上的中心位置和尺寸（用于鼠标碰撞检测）
             pixelCenter = center;
             pixelSize = size;
+            // 3. 保存视觉元素引用和三种状态的颜色（普通、悬停、选中）
             visualRoot = configuredVisualRoot;
             tintTargets = configuredTintTargets;
             labelTargets = configuredLabelTargets;
@@ -59,6 +65,7 @@ namespace mlp
             hoverLabelTint = configuredHoverLabelTint;
             selectedLabelTint = configuredSelectedLabelTint;
             hoverScale = configuredHoverScale;
+            // 4. 强制重新初始化碰撞区域并刷新显示
             initialized = false;
             EnsureInitialized();
             RefreshVisuals();
@@ -88,21 +95,27 @@ namespace mlp
         /// </summary>
         public bool Tick(Camera camera)
         {
+            // 1. 如果按钮被禁用或不在激活层级中，直接返回未点击
             if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
             {
                 return false;
             }
 
+            // 2. 确保碰撞区域已初始化
             EnsureInitialized();
+            // 3. 获取鼠标在游戏像素坐标中的位置，判断是否在按钮区域内
             var inside = TryGetMousePixel(camera, out var pixel) && pixelRect.Contains(pixel);
             hovered = inside;
+            // 4. 根据悬停状态更新按钮的颜色和缩放
             RefreshVisuals();
 
+            // 5. 鼠标按下时记录"已按下"状态
             if (inside && Input.GetMouseButtonDown(0))
             {
                 pressed = true;
             }
 
+            // 6. 鼠标松开时：如果之前按下了且仍在按钮区域内，则算作一次有效点击
             if (!pressed || !Input.GetMouseButtonUp(0))
             {
                 return false;
@@ -127,14 +140,19 @@ namespace mlp
         /// </summary>
         private void EnsureInitialized()
         {
+            // 1. 如果已经初始化过，直接返回
             if (initialized)
             {
                 return;
             }
 
+            // 2. 标记为已初始化
             initialized = true;
+            // 3. 如果没有指定视觉根节点，使用按钮自身的 Transform
             visualRoot = visualRoot != null ? visualRoot : transform;
+            // 4. 记录原始缩放值（悬停时会在此基础上放大）
             baseScale = visualRoot != null ? visualRoot.localScale : Vector3.one;
+            // 5. 根据中心点和尺寸构建像素碰撞矩形（用于检测鼠标是否在按钮上）
             pixelRect = new Rect(
                 pixelCenter.x - pixelSize.x * 0.5f,
                 pixelCenter.y - pixelSize.y * 0.5f,
@@ -147,17 +165,20 @@ namespace mlp
         /// </summary>
         private void RefreshVisuals()
         {
+            // 1. 如果尚未初始化，跳过
             if (!initialized)
             {
                 return;
             }
 
+            // 2. 悬停且未选中时略微放大按钮，否则恢复原始大小
             var scaleTarget = hovered && !selected ? hoverScale : 1f;
             if (visualRoot != null)
             {
                 visualRoot.localScale = baseScale * scaleTarget;
             }
 
+            // 3. 根据状态选择背景颜色：选中 > 悬停 > 普通
             var tint = selected ? selectedTint : hovered ? hoverTint : normalTint;
             if (tintTargets != null)
             {
@@ -170,6 +191,7 @@ namespace mlp
                 }
             }
 
+            // 4. 根据状态选择文字颜色：选中 > 悬停 > 普通
             var labelTint = selected ? selectedLabelTint : hovered ? hoverLabelTint : normalLabelTint;
             if (labelTargets != null)
             {

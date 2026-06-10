@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 锦标赛阶段：无、常规赛、半决赛、三四名决赛、决赛、已完成。标识锦标赛进行到哪一步。
+    /// </summary>
     public enum mlpTournamentStage
     {
         None,
@@ -15,6 +18,9 @@ namespace mlp
         Complete
     }
 
+    /// <summary>
+    /// 锦标赛单场比赛结果：记录双方角色、比分和获胜方。平局时左侧自动胜出。
+    /// </summary>
     public sealed class mlpTournamentMatchResult
     {
         public int LeftCharacterId { get; private set; } = -1;
@@ -59,6 +65,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 锦标赛排名记录：记录某个角色在分区中的胜负场次、总得分和净胜分，用于排名。
+    /// </summary>
     public sealed class mlpTournamentStandingEntry
     {
         public int CharacterId { get; private set; } = -1;
@@ -104,6 +113,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 锦标赛完整数据：管理 8 人锦标赛的全部流程——随机分两个区、3 轮常规赛、半决赛、决赛、记录所有比赛结果、计算排名。支持保存和恢复进度。
+    /// </summary>
     public sealed class mlpTournamentData
     {
         private const int DivisionCount = 2;
@@ -234,18 +246,20 @@ namespace mlp
         /// </summary>
         public bool Create(int playerCharacterId, mlpAiDifficulty difficulty)
         {
+            // 1. 重置所有数据，检查是否有足够的角色（至少 8 个）
             Reset();
-
             var activeCharacters = mlpPlayersData.GetActiveCharacterIds();
             if (activeCharacters.Length < DivisionCount * TeamsPerDivision)
             {
                 return false;
             }
 
+            // 2. 设置锦标赛基本信息：激活状态、难度、玩家角色
             Active = true;
             Difficulty = difficulty;
             PlayerCharacterId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
 
+            // 3. 从剩余角色中随机选取 7 个对手，打乱顺序
             var availableOpponents = new List<int>(activeCharacters.Length - 1);
             for (var i = 0; i < activeCharacters.Length; i++)
             {
@@ -254,20 +268,20 @@ namespace mlp
                     availableOpponents.Add(activeCharacters[i]);
                 }
             }
-
             Shuffle(availableOpponents);
 
+            // 4. 分配到两个区：A 区放玩家 + 3 个对手，B 区放 4 个对手
             DivisionEntrantCharacterIds[0][0] = PlayerCharacterId;
             for (var slot = 1; slot < TeamsPerDivision; slot++)
             {
                 DivisionEntrantCharacterIds[0][slot] = availableOpponents[slot - 1];
             }
-
             for (var slot = 0; slot < TeamsPerDivision; slot++)
             {
                 DivisionEntrantCharacterIds[1][slot] = availableOpponents[slot + TeamsPerDivision - 1];
             }
 
+            // 5. 初始化每个区的排名记录
             for (var division = 0; division < DivisionCount; division++)
             {
                 for (var slot = 0; slot < TeamsPerDivision; slot++)
@@ -279,8 +293,8 @@ namespace mlp
                 }
             }
 
+            // 6. 生成常规赛赛程，进入第一轮
             BuildRegularSeasonSchedule();
-
             CurrentStage = mlpTournamentStage.RegularSeason;
             CurrentRegularSeasonRoundIndex = 0;
             CurrentOpponentCharacterId = GetPlayerOpponentForRound(CurrentRegularSeasonRoundIndex);

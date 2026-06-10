@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏自动启动入口：游戏开始时自动运行，检查是否已有启动器存在，如果没有就创建一个来初始化游戏。是游戏的启动起点。
+    /// </summary>
     public static class mlpAutoBoot
     {
         /// <summary>
@@ -13,11 +16,13 @@ namespace mlp
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
         {
+            // 1. 检查场景中是否已经存在游戏启动器（防止重复创建）
             if (Object.FindObjectOfType<mlpGameBootstrap>() != null)
             {
                 return;
             }
 
+            // 2. 如果没有启动器，创建一个新的 GameObject 并挂载 mlpGameBootstrap 组件来初始化游戏
             var go = new GameObject("mlpBootstrap");
             go.AddComponent<mlpGameBootstrap>();
         }

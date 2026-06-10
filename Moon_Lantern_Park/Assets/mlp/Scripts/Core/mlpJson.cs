@@ -8,6 +8,9 @@ using System.Text;
 
 namespace mlp
 {
+    /// <summary>
+    /// 简易 JSON 解析器：自己写的 JSON 工具，不依赖外部库。能把 JSON 字符串解析成字典和列表，也能把数据转回 JSON 字符串。用于保存和读取游戏数据。
+    /// </summary>
     public static class mlpJson
     {
         /// <summary>

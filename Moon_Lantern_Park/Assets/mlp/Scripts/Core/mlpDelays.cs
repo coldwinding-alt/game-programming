@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 延时计时器的统一接口。所有计时器都支持启动、每帧更新和重置三个操作。
+    /// </summary>
     public interface IDelay
     {
         void Activate();
@@ -12,6 +15,9 @@ namespace mlp
         void Reset();
     }
 
+    /// <summary>
+    /// 基础计时器：等待固定时间 + 随机时间。其他计时器都继承自这个类。
+    /// </summary>
     public class FullDelay : IDelay
     {
         protected readonly float range;
@@ -72,6 +78,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 精确计时器：总是等待固定的秒数，没有随机变化。用于技能冷却等需要精确时间的场景。
+    /// </summary>
     public sealed class UseDelay : FullDelay
     {
         /// <summary>
@@ -93,6 +102,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 双向随机计时器：随机部分可能比固定时间长，也可能比固定时间短。用于需要变化节奏的场景。
+    /// </summary>
     public sealed class NegativeDelay : FullDelay
     {
         /// <summary>
@@ -116,6 +128,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 简单随机计时器：等待 0 到指定范围之间的随机时长。用于 AI 反应延迟等场景。
+    /// </summary>
     public sealed class SimpleDelay : FullDelay
     {
         /// <summary>
@@ -137,6 +152,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 冷却计时器：AI 角色专用，支持强制重新开始冷却和提前结束冷却。用于控制 AI 的行动节奏。
+    /// </summary>
     public sealed class AIUseDelay : FullDelay
     {
         /// <summary>

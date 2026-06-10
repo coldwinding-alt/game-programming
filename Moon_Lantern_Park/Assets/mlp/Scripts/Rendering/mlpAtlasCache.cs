@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 图集缓存管理器（单例）：加载和缓存纹理图集、字体和材质，提供创建精灵、绘制文字等渲染工具。
+    /// </summary>
     public sealed class mlpAtlasCache
     {
         private static mlpAtlasCache instance;
@@ -35,6 +38,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 纹理图集：一张包含很多小图的大图，通过子纹理信息可以裁剪出各个小图。比单独加载很多小图更高效。
+    /// </summary>
     public sealed class mlpAtlas
     {
         private readonly Texture2D texture;
@@ -46,14 +52,18 @@ namespace mlp
         /// </summary>
         public mlpAtlas(string atlasKey)
         {
+            // 1. 从 Resources 文件夹加载图集的大纹理图片
             texture = Resources.Load<Texture2D>($"mlp/Atlases/{atlasKey}");
+            // 2. 加载同名的 JSON 文件（记录了每张小图在大图中的位置和尺寸）
             var jsonAsset = Resources.Load<TextAsset>($"mlp/Atlases/{atlasKey}");
+            // 3. 如果图片或 JSON 缺失，报错退出
             if (texture == null || jsonAsset == null)
             {
                 Debug.LogError($"Missing atlas {atlasKey}");
                 return;
             }
 
+            // 4. 解析 JSON，取出所有小图的帧信息
             var root = mlpJson.AsDict(mlpJson.Parse(jsonAsset.text));
             var rawFrames = mlpJson.Dict(root, "frames");
             if (rawFrames == null)
@@ -61,6 +71,7 @@ namespace mlp
                 return;
             }
 
+            // 5. 遍历每一帧，跳过 "meta" 字段，将每张小图的位置信息存入字典
             foreach (var pair in rawFrames)
             {
                 if (pair.Key == "meta")
@@ -91,20 +102,25 @@ namespace mlp
         /// </summary>
         public Sprite Sprite(string frameName, float anchorX = 0.5f, float anchorY = 0.5f)
         {
+            // 1. 检查纹理和帧名是否存在，不存在则警告并返回 null
             if (texture == null || !frames.TryGetValue(frameName, out var frame))
             {
                 Debug.LogWarning($"Missing atlas frame {frameName}");
                 return null;
             }
 
+            // 2. 用帧名和锚点组合成缓存键，如果已缓存则直接返回
             var cacheKey = $"{frameName}|{anchorX:0.###}|{anchorY:0.###}";
             if (spriteCache.TryGetValue(cacheKey, out var cached))
             {
                 return cached;
             }
 
+            // 3. 从大图中裁剪出小图的矩形区域（注意 Y 轴要翻转，因为纹理坐标和图集坐标方向相反）
             var rect = new Rect(frame.X, texture.height - frame.Y - frame.H, frame.W, frame.H);
+            // 4. 根据锚点计算精灵的轴心点（控制精灵的旋转和对齐中心）
             var pivot = frame.Pivot(anchorX, anchorY);
+            // 5. 创建 Unity Sprite 对象并存入缓存
             var sprite = UnityEngine.Sprite.Create(texture, rect, pivot, 1f, 0, SpriteMeshType.FullRect);
             sprite.name = frameName;
             spriteCache[cacheKey] = sprite;
@@ -121,6 +137,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 图集帧信息：记录大图中某张小图的位置、尺寸和锚点，用于裁剪和显示。
+    /// </summary>
     public sealed class mlpAtlasFrame
     {
         public string Name;
@@ -197,6 +216,9 @@ public enum mlpTextStyle
     StoryScrollBody
 }
 
+    /// <summary>
+    /// 字体缓存：加载和缓存 TextMeshPro 字体资源，避免重复加载。
+    /// </summary>
     public static class mlpFontCache
     {
         private static readonly Dictionary<mlpFontKind, Font> ResourceFonts = new Dictionary<mlpFontKind, Font>();

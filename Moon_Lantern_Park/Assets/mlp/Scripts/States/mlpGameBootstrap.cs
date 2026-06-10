@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏启动器和菜单控制器：管理从主菜单到比赛的所有界面——选择模式、角色、篮球皮肤、难度，以及冒险/锦标赛的流程控制。也负责创建摄像机和音频系统。
+    /// </summary>
     public sealed class mlpGameBootstrap : MonoBehaviour
     {
         private static mlpGameBootstrap activeInstance;
@@ -308,6 +311,7 @@ namespace mlp
         /// </summary>
         private void Awake()
         {
+            // 1. 保存单例引用，获取或创建主摄像机
             activeInstance = this;
             mainCamera = Camera.main;
             if (mainCamera == null)
@@ -317,10 +321,13 @@ namespace mlp
                 cameraObject.tag = "MainCamera";
             }
 
+            // 2. 设置摄像机为正交模式（2D 游戏），调整大小以适配像素分辨率
             mainCamera.orthographic = true;
             mainCamera.orthographicSize = mlpConstants.GameH / (2f * mlpConstants.PixelsPerUnit);
             mainCamera.transform.position = new Vector3(0f, 0f, -10f);
             mainCamera.backgroundColor = Color.black;
+
+            // 3. 获取或添加固定分辨率组件（确保画面比例一致）
             fixedResolutionPresenter = GetComponent<mlpFixedResolutionPresenter>();
             if (fixedResolutionPresenter == null)
             {
@@ -330,9 +337,11 @@ namespace mlp
             mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
             EnableNativeMenuPresentation();
 
+            // 4. 创建运行时根节点和音频系统
             runtimeRoot = new GameObject("mlpRuntime").transform;
             mlpAudio.Create(transform);
 
+            // 5. 从存档中读取上次选择的角色和篮球皮肤
             var inventory = mlpInventory.Instance;
             quickCharacterId = mlpPlayersData.SanitizeCharacterId(inventory.SelectedQuickCharacterId);
             trainingCharacterId = mlpPlayersData.SanitizeCharacterId(inventory.SelectedTrainingCharacterId, quickCharacterId);
@@ -342,6 +351,8 @@ namespace mlp
             tournamentBallSelection = inventory.SelectedTournamentBallSelection;
             versusBallSelection = inventory.SelectedVersusBallSelection;
             SeedTwoPlayerSelection();
+
+            // 6. 显示主菜单（选择 1 人 / 2 人 / 教练 / 训练）
             ShowPlayerCountMenu();
         }
 
@@ -376,9 +387,12 @@ namespace mlp
         /// </summary>
         private void Update()
         {
+            // 1. 如果比赛正在进行，更新游戏逻辑
             if (gameCore != null)
             {
                 gameCore.Update(Time.deltaTime);
+
+                // 2. 比赛结束，需要推进流程：冒险模式显示结果，锦标赛显示对阵图
                 if (gameCore.AdvanceFlowRequested)
                 {
                     var inventory = mlpInventory.Instance;
@@ -397,6 +411,7 @@ namespace mlp
                     return;
                 }
 
+                // 3. 玩家请求返回菜单：根据之前所在模式返回对应界面
                 if (gameCore.ReturnToMenuRequested)
                 {
                     var inventory = mlpInventory.Instance;
@@ -523,10 +538,14 @@ namespace mlp
         /// </summary>
         private void ShowPlayerCountMenu()
         {
+            // 1. 设置当前界面状态，初始化菜单（显示 logo，蓝色背景）
             currentScreen = mlpBootstrapScreen.PlayerCount;
             BeginMenuScreen(true, false, "bg2blue0000");
+
+            // 2. 创建半透明面板作为按钮容器
             CreatePanel("PlayersPanel", mlpConstants.Width2, 336f, 304f, 286f, 8, new Color(0.05f, 0.08f, 0.1f, 0.72f));
 
+            // 3. 添加四个菜单按钮：1 人模式、2 人模式、教程、训练
             var inventory = mlpInventory.Instance;
             menuButtons.Add(new mlpMenuButton("1 PLAYER", mlpConstants.Width2, 246f, 228f, 52f, () =>
             {
@@ -544,6 +563,8 @@ namespace mlp
 
             menuButtons.Add(new mlpMenuButton("TUTORIAL", mlpConstants.Width2, 366f, 228f, 52f, StartTutorialFlow, runtimeRoot));
             menuButtons.Add(new mlpMenuButton("TRAINING", mlpConstants.Width2, 426f, 228f, 52f, ShowTrainingSetup, runtimeRoot));
+
+            // 4. 创建快速测试模式的开关控件（开发者调试用）
             CreateQuickTestMenuControls();
         }
 
@@ -657,12 +678,14 @@ namespace mlp
 
         private void ShowSinglePlayerCharacterSetup()
         {
+            // 1. 设置当前界面为单人角色选择
             currentScreen = mlpBootstrapScreen.SinglePlayerCharacterSetup;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
             BeginMenuScreen(false, false, "bg10000");
             AddTitle("SELECT CHARACTER", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
+            // 2. 创建居中的角色选择面板（带左右箭头切换角色）
             CreatePanel("SinglePlayerCharacterPanel", mlpConstants.Width2, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreateCharacterSelector(
                 "SinglePlayer",
@@ -701,9 +724,12 @@ namespace mlp
         /// </summary>
         private void ShowMatchTypeMenu()
         {
+            // 1. 设置当前界面为模式选择
             currentScreen = mlpBootstrapScreen.MatchType;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             BeginMenuScreen(true, false, "bg10000");
+
+            // 2. 左侧卡片：冒险模式（故事跑酷，逐关挑战守卫）
             CreateSinglePlayerModeCard(
                 "Adventure",
                 mlpSinglePlayerNarrative.Adventure,
@@ -717,6 +743,7 @@ namespace mlp
                 "START ROUTE",
                 ShowAdventureStoryIntro);
 
+            // 3. 右侧卡片：锦标赛模式（赛季制，8 人淘汰赛）
             CreateSinglePlayerModeCard(
                 "Tournament",
                 mlpSinglePlayerNarrative.Tournament,
@@ -760,6 +787,7 @@ namespace mlp
 
         private void ShowSinglePlayerStoryIntroPanel()
         {
+            // 1. 获取当前模式的开场漫画面板列表，没有则直接跳过
             var mode = mlpSinglePlayerNarrative.GetMode(storyIntroMode);
             var panels = mode.OpeningComic;
             if (panels == null || panels.Length == 0)
@@ -768,6 +796,7 @@ namespace mlp
                 return;
             }
 
+            // 2. 获取当前面板数据，根据模式选择强调色（冒险用橙色，锦标赛用蓝色）
             storyIntroPanelIndex = Mathf.Clamp(storyIntroPanelIndex, 0, panels.Length - 1);
             var panel = panels[storyIntroPanelIndex];
             var isAdventure = storyIntroMode == mlpSinglePlayerNarrativeMode.Adventure;
@@ -777,6 +806,7 @@ namespace mlp
             storyIntroAccentColor = accentColor;
             var backgroundFrame = isAdventure ? "bg10000" : "bg2blue0000";
 
+            // 3. 初始化菜单界面，隐藏音乐和帮助按钮（漫画模式不需要）
             currentScreen = mlpBootstrapScreen.StoryIntro;
             BeginMenuScreen(false, false, backgroundFrame);
             menuMusicButton?.SetVisible(false);
@@ -1099,10 +1129,13 @@ namespace mlp
 
         private void ShowAdventureMap()
         {
+            // 1. 设置当前界面为冒险地图
             currentScreen = mlpBootstrapScreen.AdventureMap;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             var inventory = mlpInventory.Instance;
             inventory.SetParticipantMode(pendingParticipantMode);
+
+            // 2. 如果冒险未开始或角色更换了，重新开始冒险
             var selectedAdventureCharacterId = mlpPlayersData.SanitizeCharacterId(quickCharacterId);
             if (!inventory.IsAdventureActive || inventory.Adventure.PlayerCharacterId != selectedAdventureCharacterId)
             {
@@ -1110,6 +1143,7 @@ namespace mlp
                 adventureSelectedLevelIndex = inventory.Adventure.CurrentLevelIndex;
             }
 
+            // 3. 确保选中的关卡索引有效（已完成时显示最后结算关，否则显示当前可玩关）
             var adventure = inventory.Adventure;
             if (adventure.Completed)
             {
@@ -1120,8 +1154,8 @@ namespace mlp
                 adventureSelectedLevelIndex = adventure.CurrentLevelIndex;
             }
 
+            // 4. 初始化菜单，绘制藏宝图边框、路线图、机制说明、关卡海报
             BeginMenuScreen(false, false, "bg10000");
-
             CreateAdventureTreasureMapFrame();
             CreateAdventureRouteMap(adventure);
             CreateAdventureMechanicInfo(adventureSelectedLevelIndex);
@@ -1575,12 +1609,14 @@ namespace mlp
 
         private void ShowAdventureResult(bool playerWon)
         {
+            // 1. 获取刚才结算的关卡数据和结果台词
             var adventure = mlpInventory.Instance.Adventure;
             var resolvedIndex = Mathf.Max(0, adventure.LastResolvedLevelIndex);
             var level = mlpAdventureCatalog.GetLevel(resolvedIndex);
             var resultSpeech = FormatAdventureResultSpeech(level.GetRandomResultLine(playerWon));
             adventureSelectedLevelIndex = playerWon && !adventure.Completed ? adventure.CurrentLevelIndex : resolvedIndex;
 
+            // 2. 根据胜负设置不同背景和标题
             currentScreen = mlpBootstrapScreen.AdventureResult;
             BeginMenuScreen(false, false, playerWon ? "bg10000" : "bg2blue0000");
             var title = playerWon
@@ -1810,12 +1846,14 @@ namespace mlp
         /// </summary>
         private void ShowSinglePlayerSetup()
         {
+            // 1. 设置当前界面为单人快速比赛设置
             currentScreen = mlpBootstrapScreen.SinglePlayerSetup;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
             BeginMenuScreen(false, false, "bg10000");
             AddTitle("QUICK MATCH", 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
+            // 2. 创建左侧角色选择面板和右侧选项面板
             CreatePanel("CharacterPanel", 220f, 280f, 260f, 278f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreatePanel("OptionsPanel", 575f, 278f, 228f, 214f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreateCharacterSelector(
@@ -1875,6 +1913,7 @@ namespace mlp
         /// </summary>
         private void ShowTrainingSetup()
         {
+            // 1. 设置当前界面为训练模式设置
             currentScreen = mlpBootstrapScreen.TrainingSetup;
             pendingParticipantMode = mlpParticipantMode.Training;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
@@ -1930,12 +1969,14 @@ namespace mlp
         /// </summary>
         private void ShowTwoPlayerSetup()
         {
+            // 1. 设置当前界面为双人对战设置
             currentScreen = mlpBootstrapScreen.TwoPlayerSetup;
             pendingParticipantMode = mlpParticipantMode.TwoPlayers;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
             BeginMenuScreen(false, false, "bg10000");
             AddTitle("2 PLAYERS MATCH", 58f, 30, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
+            // 2. 创建左右两个角色选择面板（P1 和 P2），中间显示 VS
             CreatePanel("P1Panel", 214f, 286f, 250f, 308f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
             CreatePanel("P2Panel", 586f, 286f, 250f, 308f, 8, new Color(0.05f, 0.08f, 0.1f, 0.8f));
 
@@ -2019,11 +2060,13 @@ namespace mlp
         /// </summary>
         private void ShowTournamentSetup()
         {
+            // 1. 设置当前界面为锦标赛角色选择，保存选择到存档
             currentScreen = mlpBootstrapScreen.TournamentSetup;
             pendingParticipantMode = mlpParticipantMode.OnePlayer;
             mlpInventory.Instance.SetParticipantMode(pendingParticipantMode);
             mlpInventory.Instance.SetTournamentSelection(tournamentCharacterId);
 
+            // 2. 初始化菜单，显示锦标赛标题
             BeginMenuScreen(false, false, "bg2blue0000");
             AddTitle(mlpSinglePlayerNarrative.Tournament.MenuTitle, 54f, 36, new Color32(0xD7, 0xF2, 0x4A, 0xFF));
 
@@ -2159,16 +2202,20 @@ namespace mlp
         /// </summary>
         private void StartTournamentFlow()
         {
+            // 1. 保存角色和篮球皮肤选择，尝试开始锦标赛
             var inventory = mlpInventory.Instance;
             inventory.SetParticipantMode(mlpParticipantMode.OnePlayer);
             inventory.SetTournamentSelection(tournamentCharacterId);
             inventory.SetTournamentBallSelection(tournamentBallSelection);
+
+            // 2. 开始锦标赛失败（角色不足 8 个）则回到设置界面
             if (!inventory.BeginTournament())
             {
                 ShowTournamentSetup();
                 return;
             }
 
+            // 3. 成功则显示锦标赛对阵图
             ShowTournamentBracket();
         }
 
@@ -2220,8 +2267,11 @@ namespace mlp
         /// </summary>
         private void StartTwoPlayerMatch()
         {
+            // 1. 保存篮球皮肤选择，用两名玩家选择的角色开始对战
             mlpInventory.Instance.SetVersusBallSelection(versusBallSelection);
             mlpInventory.Instance.StartTwoPlayerVersus(versusLeftCharacterId, versusRightCharacterId);
+
+            // 2. 清除菜单场景，创建比赛场景
             StartGameplay();
         }
 
@@ -2230,6 +2280,7 @@ namespace mlp
         /// </summary>
         private void ShowTournamentBracket()
         {
+            // 1. 获取锦标赛数据，判断当前阶段（常规赛/季后赛/已完成）
             var inventory = mlpInventory.Instance;
             var tournament = inventory.Tournament;
             currentScreen = tournament.Completed ? mlpBootstrapScreen.TournamentComplete : mlpBootstrapScreen.TournamentBracket;
@@ -2240,6 +2291,7 @@ namespace mlp
             var subtitleFontSize = regularSeasonScreen ? 16 : 14;
             var statusText = GetTournamentStatusText(tournament);
 
+            // 2. 根据阶段选择背景色，初始化菜单并显示标题和状态副标题
             var backgroundFrame = tournament.Completed || !regularSeasonScreen
                 ? "bg10000"
                 : "bg2blue0000";
@@ -2259,6 +2311,8 @@ namespace mlp
                 TextAnchor.MiddleCenter,
                 19,
                 mlpTextStyle.Subtitle);
+
+            // 3. 绘制对阵图面板和赛季状态横幅
             CreateTournamentBracketBoard(tournament);
             CreateTournamentSeasonBanner(tournament);
 
@@ -2306,6 +2360,7 @@ namespace mlp
         /// </summary>
         private void ShowTournamentAwards()
         {
+            // 1. 锦标赛未完成时回到对阵图界面
             var tournament = mlpInventory.Instance.Tournament;
             if (!tournament.Completed)
             {
@@ -2313,9 +2368,12 @@ namespace mlp
                 return;
             }
 
+            // 2. 初始化颁奖典礼界面，根据玩家名次设置标题颜色
             currentScreen = mlpBootstrapScreen.TournamentAwards;
             BeginMenuScreen(false, false, "bg10000");
             AddTitle(mlpSinglePlayerNarrative.TournamentSeasonCompleteTitle, 52f, 28, GetTournamentAwardsAccentColor(tournament.PlayerPlacement));
+
+            // 3. 创建颁奖场景（领奖台、奖杯、角色骨骼动画）
             CreateTournamentAwardsScene(tournament);
 
             menuButtons.Add(new mlpMenuButton("BRACKET", 220f, 452f, 180f, 42f, ShowTournamentBracket, runtimeRoot));
@@ -2331,11 +2389,18 @@ namespace mlp
         /// </summary>
         private void StartGameplay()
         {
+            // 1. 清除菜单场景的所有 GameObject
             ClearRuntime();
+
+            // 2. 切换摄像机到像素完美的游戏渲染模式
             EnableGameplayPresentation();
+
+            // 3. 创建新的运行时根节点、音频系统，清空按钮列表
             runtimeRoot = new GameObject("mlpRuntime").transform;
             mlpAudio.Create(transform).PlayMusic(mlpAssets.Sounds.MenuMusic);
             menuButtons.Clear();
+
+            // 4. 用游戏构建器创建比赛场景（球员、篮球、篮筐、球场等）
             gameCore = new mlpGameBuilder().Build(runtimeRoot);
         }
 
@@ -2344,13 +2409,17 @@ namespace mlp
         /// </summary>
         private void BeginMenuScreen(bool showLogo, bool showControls, string backgroundFrame)
         {
+            // 1. 清除旧场景，切换摄像机到原生分辨率菜单模式（文字更清晰）
             ClearRuntime();
             EnableNativeMenuPresentation();
+
+            // 2. 创建运行时根节点、原生文字层、音频系统
             runtimeRoot = new GameObject("mlpRuntime").transform;
             nativeMenuTextLayer = new mlpNativeMenuTextLayer(runtimeRoot);
             nativeMenuTextLayer.RefreshLayout(Mathf.Max(1, Screen.width), Mathf.Max(1, Screen.height));
             mlpAudio.Create(transform).PlayMusic(mlpAssets.Sounds.MenuMusic);
 
+            // 3. 创建背景图（优先使用独立背景，否则用通用背景）
             if (!TryCreateStandaloneMenuBackground(backgroundFrame))
             {
                 mlpRender.Sprite(
@@ -2365,6 +2434,7 @@ namespace mlp
                     runtimeRoot);
             }
 
+            // 4. 如果需要，加载并显示游戏 logo（按最大宽高比缩放）
             if (showLogo)
             {
                 var logoTexture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameLogo));
@@ -2379,6 +2449,7 @@ namespace mlp
                 }
             }
 
+            // 5. 创建右上角的音乐开关和帮助按钮
             menuMusicButton = new mlpIconButton(
                 "MenuMusicButton",
                 MenuMusicButtonX,
@@ -2404,6 +2475,7 @@ namespace mlp
                 MenuTopIconPixels,
                 mlpAssets.Images.ResourcePath(mlpAssets.Images.HelpButton));
 
+            // 6. 如果需要，在底部显示操作提示文字
             if (showControls)
             {
                 CreateMenuText(
@@ -2418,6 +2490,7 @@ namespace mlp
                     mlpTextStyle.TournamentBody);
             }
 
+            // 7. 清空按钮列表（各页面会在之后添加自己的按钮）
             menuButtons.Clear();
         }
 

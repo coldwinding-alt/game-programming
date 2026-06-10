@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏核心逻辑（比赛主循环）：管理一场篮球比赛的全部流程——创建球场和球员、控制计时器、处理得分、判断胜负、暂停和恢复。每帧由 Update 驱动，是整个游戏运行的核心。
+    /// </summary>
     public sealed class mlpGameCore
     {
         private readonly Transform root;
@@ -68,17 +71,25 @@ namespace mlp
         /// </summary>
         public void Start()
         {
+            // 1. 加载球员角色数据
             mlpPlayersData.SetupPlayers();
+
+            // 2. 创建球场背景、左右篮筐、篮球
             arena = new mlpArenaObject(root);
             basketLeft = new mlpBasketObject(-1, root);
             basketRight = new mlpBasketObject(1, root);
             Ball = new mlpBallObject(this, root);
+
+            // 3. 创建比分和计时器的 HUD 界面
             hud = new mlpHudView(root, MatchData);
+
+            // 4. 教程模式下创建教程流程控制器
             if (mlpInventory.Instance.GameMode == mlpGameModeIds.Tutorial)
             {
                 tutorialFlow = new mlpTutorialFlow(this);
             }
 
+            // 5. 创建所有球员，开始第一场比赛，启动教程
             BuildPlayers();
             StartMatch(true);
             tutorialFlow?.Start();
@@ -113,6 +124,7 @@ namespace mlp
         /// <param name="dt">自上一帧以来经过的时间（秒）。</param>
         public void Update(float dt)
         {
+            // 1. 帮助面板打开时只更新 HUD 和教程，不处理游戏逻辑
             if (mlpHelpPanel.IsAnyOpen)
             {
                 hud.Update(dt);
@@ -120,6 +132,7 @@ namespace mlp
                 return;
             }
 
+            // 2. 检测暂停按键（P 或 Esc），在非赛后延迟且非结算界面时切换暂停
             if (!pauseResumeCountdown &&
                 (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape)) &&
                 postMatchDelay <= 0f &&
@@ -128,6 +141,7 @@ namespace mlp
                 HandlePauseCommand(mlpPauseCommand.Toggle);
             }
 
+            // 3. 更新 HUD 和教程，处理暂停命令
             hud.Update(dt);
             tutorialFlow?.UpdateFrame(dt);
             HandlePauseCommand(hud.ConsumePauseCommand());
@@ -141,6 +155,7 @@ namespace mlp
                 return;
             }
 
+            // 4. 暂停恢复倒计时：倒计时结束后取消暂停并吹哨
             if (pauseResumeCountdown)
             {
                 pauseResumeCountdown = hud.UpdateCountdown(dt);
@@ -157,6 +172,7 @@ namespace mlp
                 return;
             }
 
+            // 5. 暂停状态直接跳过所有游戏逻辑
             if (isPaused)
             {
                 return;
@@ -167,18 +183,22 @@ namespace mlp
                 return;
             }
 
+            // 6. 教程冻结时暂停游戏物理（教程对话期间球和球员不动）
             if (tutorialFlow != null && tutorialFlow.FreezeGameplay)
             {
                 return;
             }
 
+            // 7. 计算实际游戏时间（可能被教程或冒险模式减速/加速）
             var gameplayDt = tutorialFlow != null ? dt * tutorialFlow.GameplayTimeScale : dt;
             gameplayDt *= GetAdventureGameplayTimeScale();
             UpdateAdventureMechanics(gameplayDt);
 
+            // 8. 更新篮筐动画
             basketLeft.Update(gameplayDt);
             basketRight.Update(gameplayDt);
 
+            // 9. 赛后延迟：等待指定时间后进入加时赛或显示结果
             if (postMatchDelay > 0f)
             {
                 postMatchDelay -= gameplayDt;
@@ -189,6 +209,7 @@ namespace mlp
                 return;
             }
 
+            // 10. 结算界面显示中：点击后推进到下一阶段（锦标赛/冒险回到流程，普通模式回菜单）
             if (hud.IsPostMatchVisible)
             {
                 if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
@@ -206,13 +227,13 @@ namespace mlp
                 return;
             }
 
+            // 11. 赛前倒计时：更新球员冷却，倒计时结束后吹哨开球
             if (preMatchCountdown)
             {
                 foreach (var player in playersLeft)
                 {
                     player.TickPreMatch(gameplayDt);
                 }
-
                 foreach (var player in playersRight)
                 {
                     player.TickPreMatch(gameplayDt);
@@ -224,10 +245,10 @@ namespace mlp
                     isPlaying = true;
                     mlpAudio.Instance?.Play(mlpAssets.Sounds.MWhistle);
                 }
-
                 return;
             }
 
+            // 12. 得分后延迟：等待后重新开球
             if (restartDelay > 0f)
             {
                 restartDelay -= gameplayDt;
@@ -243,6 +264,7 @@ namespace mlp
                 return;
             }
 
+            // 13. 终场后等待篮球落地：球在空中时继续物理更新，落地后判定胜负
             if (waitingForBallAfterBuzzer)
             {
                 ApplyAdventureBallWind(gameplayDt);
@@ -252,17 +274,16 @@ namespace mlp
                 {
                     FinalizeEndMatch();
                 }
-
                 return;
             }
 
+            // 14. 正常比赛进行中：更新篮球物理、所有球员、盖帽检测、捡球检测
             ApplyAdventureBallWind(gameplayDt);
             Ball.Update(gameplayDt, basketLeft, basketRight);
             foreach (var player in playersLeft)
             {
                 player.Update(gameplayDt);
             }
-
             foreach (var player in playersRight)
             {
                 player.Update(gameplayDt);
@@ -273,6 +294,7 @@ namespace mlp
             TryPickupLooseBall();
             tutorialFlow?.UpdateAfterGameplay(dt);
 
+            // 15. 更新比赛计时器，时间到则触发终场
             if (!isTraining && !IsSuperShot)
             {
                 matchTime += gameplayDt;
@@ -290,15 +312,19 @@ namespace mlp
         /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>
         public void OnBallScored(int scoringSide)
         {
+            // 1. 防止重复触发得分（延迟期间不处理）
             if (restartDelay > 0f)
             {
                 return;
             }
 
+            // 2. 计算得分：根据投篮距离判断 2 分还是 3 分，冒险模式可能有加成
             var teamIndex = scoringSide == -1 ? 0 : 1;
             var fallbackPoints = IsThreePointer(scoringSide) ? 3 : 2;
             var points = MatchProcessor.ResolvePointsForScore(scoringSide, fallbackPoints);
             var adventureScoreNotice = ResolveAdventureScoreModifier(ref points);
+
+            // 3. 查找投篮球员，应用其得分加成技能（如狂欢大奖）
             var scoringPlayer = FindPlayerBySideAndPlayerNo(MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
             string scoreNotice = null;
             if (scoringPlayer != null)
@@ -306,6 +332,7 @@ namespace mlp
                 points = scoringPlayer.ResolveScorePoints(points, out scoreNotice);
             }
 
+            // 4. 更新比分和 HUD 显示
             MatchData.MatchScore[teamIndex] += points;
             hud.UpdateScore(MatchData.MatchScore[0], MatchData.MatchScore[1]);
             if (MatchProcessor.ShotPlayerNo >= 0)
@@ -738,16 +765,20 @@ namespace mlp
         /// </summary>
         private void BuildPlayers()
         {
+            // 1. 读取比赛数据，确定每队人数（训练模式只有 1 队）
             var match = MatchData;
             const int playersPerTeam = 1;
             var teamCount = mlpInventory.Instance.GameMode == mlpGameModeIds.Training ? 1 : 2;
 
+            // 2. 为每队创建球员：读取脑控制器标识（P=人类，B=AI，T=教程）和技能等级
             for (var teamIndex = 0; teamIndex < teamCount; teamIndex++)
             {
                 for (var playerNo = 0; playerNo < playersPerTeam; playerNo++)
                 {
                     var brain = match.Pb[teamIndex].Length > playerNo ? match.Pb[teamIndex][playerNo] : (teamIndex == 0 ? "P0" : "B0");
                     var skill = match.Skills[teamIndex].Length > playerNo ? match.Skills[teamIndex][playerNo] : 0;
+
+                    // 3. 创建球员对象并加入对应的队伍列表
                     var player = new mlpPlayerObject(
                         this,
                         teamIndex,
@@ -775,17 +806,22 @@ namespace mlp
         /// <param name="regularTime">true 表示正常时长比赛，false 表示加时时长。</param>
         private void StartMatch(bool regularTime)
         {
+            // 1. 读取游戏模式和冒险关卡信息
             var inventory = mlpInventory.Instance;
             var gameMode = inventory.GameMode;
             adventureLevel = inventory.IsAdventureActive ? inventory.Adventure.CurrentLevel : null;
             lastAdventureCue = mlpAdventureMechanic.BasicDuel;
             adventureCueWasActive = false;
+
+            // 2. 设置比赛状态：训练/教程模式直接开始，其他模式显示倒计时
             isTraining = gameMode == mlpGameModeIds.Training || gameMode == mlpGameModeIds.Tutorial;
             isPlaying = isTraining;
             isPaused = false;
             matchTime = 0f;
             regularMatchTimeActive = regularTime && !isTraining;
             endTime = isTraining ? 99999f : mlpQuickTestSettings.GetMatchTime(regularTime);
+
+            // 3. 重置比分和 HUD 显示
             MatchData.ResetScore();
             hud.UpdateScore(0, 0);
             hud.SetTimerVisible(!isTraining);
@@ -794,6 +830,8 @@ namespace mlp
             hud.HideMessage();
             hud.HidePostMatch();
             hud.HidePauseOverlay();
+
+            // 4. 清除所有比赛中间状态
             postMatchDelay = 0f;
             postMatchWinner = 0;
             overtimePending = false;
@@ -803,6 +841,8 @@ namespace mlp
             ReturnToMenuRequested = false;
             AdvanceFlowRequested = false;
             MatchProcessor.Reset();
+
+            // 5. 重置所有球员位置，开始赛前倒计时
             Restart(0);
             preMatchCountdown = !isTraining;
             pauseResumeCountdown = false;
@@ -959,6 +999,7 @@ namespace mlp
         /// </summary>
         private void BeginEndOfTime()
         {
+            // 1. 锁定比赛时间，播放终场蜂鸣音
             matchTime = endTime;
             restartDelay = 0f;
             preMatchCountdown = false;
@@ -966,12 +1007,15 @@ namespace mlp
             mlpAudio.Instance?.Play(mlpAssets.Sounds.MBuzzer);
             hud.HideCountdown();
             hud.UpdateTimer(0f);
+
+            // 2. 如果篮球还在空中飞行，等它落地后再判定胜负
             if (IsBallInGame())
             {
                 waitingForBallAfterBuzzer = true;
                 return;
             }
 
+            // 3. 球已静止，直接判定比赛结果
             FinalizeEndMatch();
         }
 
@@ -980,9 +1024,12 @@ namespace mlp
         /// </summary>
         private void FinalizeEndMatch()
         {
+            // 1. 停止比赛，判定胜负方
             isPlaying = false;
             waitingForBallAfterBuzzer = false;
             var winner = MatchData.WhoWins();
+
+            // 2. 平局则进入加时赛，否则显示 "TIME!!!" 并延迟后显示结果
             if (winner == 0)
             {
                 overtimePending = true;
@@ -1358,6 +1405,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 游戏构建器：根据当前选择的游戏模式（快速比赛、锦标赛、冒险等）配置比赛数据并创建游戏核心实例。
+    /// </summary>
     public sealed class mlpGameBuilder
     {
         /// <summary>

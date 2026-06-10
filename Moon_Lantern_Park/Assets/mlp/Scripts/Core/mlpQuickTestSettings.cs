@@ -1,7 +1,13 @@
+// 快速测试模式设置
+// 提供一个开关，开启后比赛时长缩短为 15 秒，方便开发者快速测试游戏流程而不用等完整比赛结束。
+
 using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 快速测试模式设置：开启后比赛时长大幅缩短，方便开发调试。设置会通过 PlayerPrefs 持久化保存。
+    /// </summary>
     public static class mlpQuickTestSettings
     {
         private const string PlayerPrefsKey = "mlp.quickTestMode";

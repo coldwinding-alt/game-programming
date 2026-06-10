@@ -3,12 +3,18 @@
 
 namespace mlp
 {
+    /// <summary>
+    /// 单人模式类型：冒险模式或锦标赛模式，用于区分不同模式的剧情文案。
+    /// </summary>
     public enum mlpSinglePlayerNarrativeMode
     {
         Adventure,
         Tournament
     }
 
+    /// <summary>
+    /// 故事面板定义：描述一个剧情漫画页面的内容——标题、美术风格、图片、背景故事标题和正文。
+    /// </summary>
     public sealed class mlpStoryPanelDefinition
     {
         public readonly string Caption;
@@ -53,10 +59,13 @@ namespace mlp
             string loreTitle,
             params string[] loreBodyLines)
         {
+            // 1. 保存面板的基本信息：标题、美术指导、图片路径
             Caption = caption;
             ArtDirection = artDirection;
             ImageKey = imageKey;
+            // 2. 如果没有传入背景故事标题，用空字符串代替（避免空引用错误）
             LoreTitle = loreTitle ?? string.Empty;
+            // 3. 如果有背景故事正文（多行文本），用换行符拼接成一个字符串；否则设为空字符串
             LoreBody = loreBodyLines == null || loreBodyLines.Length == 0
                 ? string.Empty
                 : string.Join("\n", loreBodyLines);
@@ -71,6 +80,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 单人模式剧情定义：描述一个完整模式的标题、副标题、所有故事面板和结局文本。
+    /// </summary>
     public sealed class mlpSinglePlayerModeDefinition
     {
         public readonly mlpSinglePlayerNarrativeMode Mode;
@@ -118,6 +130,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 单人模式剧情文案管理器：存储冒险模式和锦标赛模式的所有剧情文本，供 UI 显示使用。
+    /// </summary>
     public static class mlpSinglePlayerNarrative
     {
         public const string ParkName = "MOON LANTERN PARK";
@@ -249,19 +264,23 @@ namespace mlp
         /// <returns>显示标题，如 "DIVISIONS"、"FINAL FOUR" 或 "GRAND FINAL"。</returns>
         public static string GetTournamentStageTitle(mlpTournamentData tournament)
         {
+            // 1. 如果锦标赛数据为空，返回默认的赛季横幅标题
             if (tournament == null)
             {
                 return TournamentSeasonBanner;
             }
 
+            // 2. 如果锦标赛已结束，显示颁奖台标题
             if (tournament.Completed)
             {
                 return "AWARDS PODIUM";
             }
 
+            // 3. 根据锦标赛当前阶段返回对应的标题
             switch (tournament.CurrentStage)
             {
                 case mlpTournamentStage.RegularSeason:
+                    // 常规赛阶段：根据是否打完显示"分区赛"或"四强赛"
                     return tournament.RegularSeasonCompleted ? "FINAL FOUR" : "DIVISIONS";
                 case mlpTournamentStage.SemiFinal:
                     return "FINAL FOUR";
@@ -281,19 +300,23 @@ namespace mlp
         /// <returns>与当前阶段匹配的风味文本描述。</returns>
         public static string GetTournamentStageDescription(mlpTournamentData tournament)
         {
+            // 1. 如果锦标赛数据为空，返回默认的赛季简介
             if (tournament == null)
             {
                 return TournamentSeasonHook;
             }
 
+            // 2. 如果锦标赛已结束，返回结局描述
             if (tournament.Completed)
             {
                 return "The Cup renews the Heart Lantern, just as the first escape once did.";
             }
 
+            // 3. 根据当前阶段返回对应的风味文本描述
             switch (tournament.CurrentStage)
             {
                 case mlpTournamentStage.RegularSeason:
+                    // 常规赛阶段：根据进度返回不同描述
                     return tournament.RegularSeasonCompleted
                         ? "The top four step into the dome lights once reserved for Wardens."
                         : "Win division rounds and keep the Heart Lantern bright.";

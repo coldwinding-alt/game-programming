@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// AI 技能参数：定义某个技能等级下 AI 的投篮命中率、扣篮成功率、冷却时间、抢断概率等数值。
+    /// </summary>
     public readonly struct mlpAISkillProfile
     {
         public readonly float Accuracy;
@@ -76,6 +79,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 技能参数表：存储 12 个等级的 AI 技能参数，根据技能索引返回对应的命中率、反应速度等数值。
+    /// </summary>
     public static class mlpAISkillsData
     {
         // 当前 AI 难度基准的技能调参表。

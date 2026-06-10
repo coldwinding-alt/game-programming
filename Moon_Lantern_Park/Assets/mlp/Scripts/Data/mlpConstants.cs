@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏常量和坐标转换工具：定义球场尺寸、像素比例、物理参数等基础数值，还提供像素坐标和世界坐标之间的转换函数。
+    /// </summary>
     public static class mlpConstants
     {
         public const int Width = 800;
@@ -98,12 +101,15 @@ namespace mlp
         /// <returns>对齐到最近像素的值。</returns>
         private static float SnapLocalAxisToScreenPixels(float localValue, float parentWorldScale)
         {
+            // 1. 计算每个本地单位包含多少像素（考虑父物体的缩放）
             var pixelsPerLocalUnit = Mathf.Abs(parentWorldScale) * PixelsPerUnit;
+            // 2. 如果缩放太小（接近零），直接返回原值，避免除以零的错误
             if (pixelsPerLocalUnit <= 0.0001f)
             {
                 return localValue;
             }
 
+            // 3. 将本地坐标换算成像素数，四舍五入到最近的整数像素，再换算回来
             return Mathf.Round(localValue * pixelsPerLocalUnit) / pixelsPerLocalUnit;
         }
     }

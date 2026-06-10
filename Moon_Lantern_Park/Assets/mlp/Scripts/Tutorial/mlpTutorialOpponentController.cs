@@ -4,12 +4,16 @@
 
 namespace mlp
 {
+    /// <summary>教程对手模式：脚本模式（按预设动作配合玩家练习）或自由对战模式（切换成普通 AI）。</summary>
     public enum mlpTutorialOpponentMode
     {
         Scripted,
         FreePlay
     }
 
+    /// <summary>
+    /// 教程对手控制器：在教程练习中按脚本控制对手移动到指定位置、跳跃、投篮，配合玩家完成练习动作。
+    /// </summary>
     public sealed class mlpTutorialOpponentController : IBLPlayerController
     {
         private readonly mlpPlayerObject player;
@@ -28,7 +32,9 @@ namespace mlp
         /// </summary>
         public mlpTutorialOpponentController(mlpPlayerObject player, int skillLevel)
         {
+            // 1. 保存对手玩家对象的引用
             this.player = player;
+            // 2. 创建一个普通 AI 控制器作为后备——当教程进入自由对战阶段时，对手会切换成这个 AI 来自主行动
             fallbackController = mlpAIController.CreateForBrain(player, "B0", skillLevel <= 0 ? 2 : skillLevel);
         }
 
@@ -49,6 +55,7 @@ namespace mlp
         /// </summary>
         public void UpdateController(float dt)
         {
+            // 1. 如果是自由对战模式，让后备 AI 自主决策，然后同步它的按键状态
             if (mode == mlpTutorialOpponentMode.FreePlay)
             {
                 fallbackController.UpdateController(dt);
@@ -56,6 +63,7 @@ namespace mlp
                 return;
             }
 
+            // 2. 脚本模式：先清空所有按键，然后让教程流程系统填充本帧对手该做的动作（移动到指定位置、跳跃、投篮等）
             SetFrameInputs(0, false, false, false, false, 0);
             player.GameCore.TutorialFlow?.PopulateOpponentInputs(player, this, dt);
         }

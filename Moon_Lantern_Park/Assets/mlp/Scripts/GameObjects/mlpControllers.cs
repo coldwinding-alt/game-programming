@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 玩家控制器接口：定义控制角色的统一方式（移动、跳跃、投篮、防守、大招）。键盘和 AI 都实现这个接口。
+    /// </summary>
     public interface IBLPlayerController
     {
         int CurrentMove { get; }
@@ -29,6 +32,9 @@ namespace mlp
         void PlayerOnBlock();
     }
 
+    /// <summary>
+    /// 键盘控制器：读取键盘按键输入来控制角色。根据配置的按键映射，每帧检测按键状态并转换为角色动作。
+    /// </summary>
     public sealed class mlpKeyboardController : IBLPlayerController
     {
         private readonly mlpControlProfile controls;
@@ -52,6 +58,7 @@ namespace mlp
         /// <param name="brain">控制器标识字符串</param>
         public mlpKeyboardController(string brain)
         {
+            // 1. 根据控制器标识（如 "KB1" 或 "KB2"）加载对应的按键配置（WASD 或方向键）
             controls = mlpControlsData.ProfileForBrain(brain);
         }
 
@@ -61,8 +68,10 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         public void UpdateController(float dt)
         {
+            // 1. 重置移动和冲刺状态
             CurrentMove = 0;
             CurrentDash = 0;
+            // 2. 如果有正在缓冲的冲刺指令，递减计时器并在有效期内执行冲刺
             if (pendingDashTimer > 0f)
             {
                 pendingDashTimer = Mathf.Max(0f, pendingDashTimer - dt);
@@ -76,10 +85,12 @@ namespace mlp
                 }
             }
 
+            // 3. 读取配置中的左移和右移按键
             var leftDown = controls.MoveLeftKey;
             var rightDown = controls.MoveRightKey;
             var currentTime = Time.time;
 
+            // 4. 记录按键松开的时间（用于双击冲刺检测）
             if (Input.GetKeyUp(leftDown))
             {
                 lastLeftUp = currentTime;
@@ -90,9 +101,9 @@ namespace mlp
                 lastRightUp = currentTime;
             }
 
+            // 5. 检测左移键按下：如果在短时间内连按了两次（按下-按下 或 松开-按下），触发向左冲刺
             if (Input.GetKeyDown(leftDown))
             {
-                // 同时接受快速连按和经典双击，降低冲刺操作的帧精度要求。
                 if (currentTime - lastLeftDown <= mlpObjectsData.DashDoubleTapWindow
                     || currentTime - lastLeftUp <= mlpObjectsData.DashDoubleTapWindow)
                 {
@@ -102,6 +113,7 @@ namespace mlp
                 lastLeftDown = currentTime;
             }
 
+            // 6. 检测右移键按下：同理，双击触发向右冲刺
             if (Input.GetKeyDown(rightDown))
             {
                 if (currentTime - lastRightDown <= mlpObjectsData.DashDoubleTapWindow
@@ -113,6 +125,7 @@ namespace mlp
                 lastRightDown = currentTime;
             }
 
+            // 7. 按住左移键时移动方向 -1，按住右移键时 +1（可叠加，同时按时为 0）
             if (Input.GetKey(leftDown))
             {
                 CurrentMove--;
@@ -123,6 +136,7 @@ namespace mlp
                 CurrentMove++;
             }
 
+            // 8. 读取跳跃、动作（投篮/抢断）、防守/假动作、大招按键的当前状态
             CurrentJump = Input.GetKey(controls.JumpKey);
             CurrentAction = Input.GetKey(controls.ActionKey);
             CurrentBlockOrPump = Input.GetKey(controls.BlockKey);
@@ -238,6 +252,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 控制器（基础版）：让电脑自动控制角色，根据比赛情况决定移动、投篮、防守等行为。
+    /// </summary>
     public class mlpAIController : mlpBaseAIController
     {
         /// <summary>
@@ -289,6 +306,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 控制器（高级版）：比基础版更聪明的 AI，用于教程模式的对手，有更复杂的行为决策。
+    /// </summary>
     public sealed class mlpAIController2 : mlpBaseAIController
     {
         /// <summary>
@@ -334,6 +354,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 控制器基类：实现 AI 共有的行为逻辑（如计时器管理、状态判断），具体决策由子类实现。
+    /// </summary>
     public abstract class mlpBaseAIController : IBLPlayerController
     {
         protected readonly mlpPlayerObject player;
@@ -399,10 +422,14 @@ namespace mlp
         /// <param name="skillLevel">AI 技能等级数值（越高越难）</param>
         protected mlpBaseAIController(mlpPlayerObject player, int skillLevel)
         {
+            // 1. 保存玩家对象引用和编号
             this.player = player;
+            // 2. 读取当前难度设置（简单/普通/困难/地狱）和对应的调校参数
             difficulty = mlpInventory.Instance.Difficulty;
             tuning = mlpAIDifficultyTuning.Get(difficulty);
+            // 3. 根据技能等级加载 AI 技能配置（控制投篮时机、抢断概率等）
             profile = mlpAISkillsData.Get(skillLevel);
+            // 4. 初始化各种决策延迟计时器（控制 AI 不要每帧都做决策，模拟人类反应时间）
             jumpBall = new NegativeDelay(mlpObjectsData.IdealJumpBallJump, profile.JumpBall);
             attack = new FullDelay(mlpObjectsData.IdealAttackJump, profile.Attack);
             attackJumpDelay = new SimpleDelay(profile.AttackAtOnce);
@@ -414,8 +441,10 @@ namespace mlp
             dashDecisionDelay = new AIUseDelay(0.1f, profile.DelayDash);
             megaDunkDelay = new FullDelay(0.5f, 0.5f);
             superDashDelay = new FullDelay(0.5f, 0.5f);
+            // 5. 记录玩家编号，订阅游戏信号（对手跳跃、抢断、虚晃等事件）
             playerNo = player.PlayerNo;
             player.GameCore.PlayerSignals.OnSignal += ProcessPlayerSignal;
+            // 6. 计算进攻/防守/篮板位置区域，重置所有状态
             InitZones();
             ResetForRestart();
         }
@@ -426,11 +455,14 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         public virtual void UpdateController(float dt)
         {
+            // 1. 首次运行时获取球和对手的引用
             EnsureRuntimeLinks();
+            // 2. 重置冲刺，应用上一帧排队的大招输入
             CurrentDash = 0;
             CurrentSuper = queuedSuperInput;
             queuedSuperInput = false;
 
+            // 3. 如果球或对手引用丢失，清空所有输入
             if (ball == null || opponents == null || opponents.Count == 0)
             {
                 CurrentMove = 0;
@@ -440,17 +472,20 @@ namespace mlp
                 return;
             }
 
+            // 4. 处理"快速起跳"延迟计时器——用于落地后立即起跳投篮的场景
             var delayedJump = attackJumpDelay.Update(dt);
             if (delayedJump >= 0)
             {
                 if (delayedJump == 1)
                 {
+                    // 计时器到期：执行跳跃
                     CurrentMove = 0;
                     CurrentJump = true;
                     CurrentAction = false;
                 }
                 else
                 {
+                    // 计时器未到期：保持躲避抢断的移动和跳跃状态
                     CurrentMove = avoidStealMove;
                     CurrentJump = avoidStealJump;
                 }
@@ -458,9 +493,11 @@ namespace mlp
                 return;
             }
 
+            // 5. 根据球的状态选择 AI 策略
             var holder = player.GameCore.FindBallHolder();
             if (player.WithBall)
             {
+                // 5a. 自己持球 → 进攻策略：向投篮点移动，在合适时机起跳投篮
                 if (strategy != 2)
                 {
                     HandleBallInOwnHands();
@@ -470,6 +507,7 @@ namespace mlp
             }
             else if (holder != null && holder.Side != player.Side)
             {
+                // 5b. 对手持球 → 防守策略：跟随对手，尝试抢断或干扰投篮
                 opponent = holder;
                 if (UseDefence2(holder))
                 {
@@ -488,9 +526,11 @@ namespace mlp
             }
             else
             {
+                // 5c. 无人持球
                 var shotInFlight = ball.State == "shooting" || ball.State == "basket";
                 if (shotInFlight)
                 {
+                    // 球在空中（投篮/打板）→ 篮板策略：抢占篮板位置
                     if (strategy != 4)
                     {
                         if (ball.Side == player.Side)
@@ -507,6 +547,7 @@ namespace mlp
                 }
                 else
                 {
+                    // 球在地上弹跳 → 争球策略：追逐球并尝试捡起
                     if (strategy != 1)
                     {
                         HandleBallOthers();

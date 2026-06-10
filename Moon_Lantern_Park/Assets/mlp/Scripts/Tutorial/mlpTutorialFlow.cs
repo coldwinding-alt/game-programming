@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 教程流程控制器：管理新手教程的 10 个练习步骤（移动、冲刺、投篮、假动作、扣篮、抢断、盖帽、补扣、大招、自由对战），每步显示操作提示，完成后自动进入下一步。
+    /// </summary>
     public sealed class mlpTutorialFlow
     {
         private enum TutorialPhase
@@ -137,8 +140,11 @@ namespace mlp
         /// </summary>
         public mlpTutorialFlow(mlpGameCore core)
         {
+            // 1. 保存游戏核心的引用，后续用来操作比赛场景
             this.core = core;
+            // 2. 获取教程覆盖层（显示操作提示的 UI 面板）
             overlay = mlpTutorialOverlay.Active;
+            // 3. 获取背包/存档实例（用于保存教程完成后的下一步选择）
             inventory = mlpInventory.Instance;
         }
 
@@ -157,16 +163,22 @@ namespace mlp
         /// </summary>
         public void Start()
         {
+            // 1. 从游戏核心中找到左边的玩家（学员）和右边的对手（女巫）
             player = core.PlayersLeft.Count > 0 ? core.PlayersLeft[0] : null;
             opponent = core.PlayersRight.Count > 0 ? core.PlayersRight[0] : null;
+            // 2. 获取对手的教程控制器（用来脚本化对手动作配合练习）
             opponentController = opponent?.Controller as mlpTutorialOpponentController;
+            // 3. 如果缺少玩家、对手或覆盖层，直接退出（不启动教程）
             if (player == null || opponent == null || overlay == null)
             {
                 return;
             }
 
+            // 4. 将对手设为"脚本模式"——由教程系统控制对手移动和跳跃
             opponentController?.SetMode(mlpTutorialOpponentMode.Scripted);
+            // 5. 订阅玩家动作信号（跳跃、投篮、扣篮、抢断等），用于判断练习是否完成
             core.PlayerSignals.OnSignal += OnPlayerSignal;
+            // 6. 显示开场引导画面，教程正式开始
             BeginOpening();
         }
 
@@ -184,11 +196,13 @@ namespace mlp
         /// </summary>
         public void UpdateFrame(float dt)
         {
+            // 1. 如果覆盖层或玩家不存在，直接退出
             if (overlay == null || player == null)
             {
                 return;
             }
 
+            // 2. 如果教程已进入结束画面，处理结束画面的按钮点击（重玩、训练、菜单）
             if (phase == TutorialPhase.Outro)
             {
                 UpdatePresentation();
@@ -196,17 +210,21 @@ namespace mlp
                 return;
             }
 
+            // 3. 刷新覆盖层视觉效果（得分引导线等）
             UpdatePresentation();
+            // 4. 检查玩家是否按了"跳过"按钮，如果是则跳到下一步
             if (HandleStepCommand())
             {
                 return;
             }
 
+            // 5. 如果当前处于"介绍冻结"或"成功暂停"阶段，倒计时等待
             if (phase == TutorialPhase.IntroFreeze || phase == TutorialPhase.SuccessPause)
             {
                 phaseTimer -= dt;
                 if (phaseTimer <= 0f)
                 {
+                    // 5a. 介绍冻结结束：如果是开场画面，进入第一个练习；否则开始操作阶段
                     if (phase == TutorialPhase.IntroFreeze)
                     {
                         if (currentStep == TutorialStep.Opening)
@@ -220,6 +238,7 @@ namespace mlp
                     }
                     else
                     {
+                        // 5b. 成功暂停结束：自动进入下一个练习
                         AdvanceAfterSuccess();
                     }
                 }
@@ -227,11 +246,13 @@ namespace mlp
                 return;
             }
 
+            // 6. 只有在"操作阶段"才执行练习逻辑
             if (phase != TutorialPhase.Active)
             {
                 return;
             }
 
+            // 7. 累加操作计时器，根据当前练习步骤调用对应的检测方法
             activeTimer += dt;
             switch (currentStep)
             {
@@ -273,11 +294,13 @@ namespace mlp
         /// </summary>
         public void UpdateAfterGameplay(float dt)
         {
+            // 1. 如果玩家、覆盖层不存在或已进入结束画面，直接退出
             if (player == null || overlay == null || phase == TutorialPhase.Outro)
             {
                 return;
             }
 
+            // 2. 在游戏逻辑结算后，刷新覆盖层上的视觉效果（如 2 分/3 分引导线）
             UpdatePresentation();
         }
 

@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 键盘控制配置：存储一个玩家的完整按键绑定（移动、跳跃、防守、投篮、大招）和 UI 显示标签。
+    /// </summary>
     public readonly struct mlpControlProfile
     {
         /// <summary>
@@ -64,6 +67,9 @@ namespace mlp
         public KeyCode SuperKey { get; }
     }
 
+    /// <summary>
+    /// 控制配置管理器：预设了单人、玩家 1、玩家 2 三套按键配置，根据玩家编号返回对应的按键映射。
+    /// </summary>
     public static class mlpControlsData
     {
         private static readonly mlpControlProfile soloProfile = new mlpControlProfile(

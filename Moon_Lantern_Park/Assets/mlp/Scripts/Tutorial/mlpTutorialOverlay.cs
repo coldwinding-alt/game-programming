@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 namespace mlp
 {
+    /// <summary>教程覆盖层命令：无、下一步、显示技能演示、显示完成画面等控制指令。</summary>
     public enum mlpTutorialOverlayCommand
     {
         None,
@@ -19,6 +20,9 @@ namespace mlp
         StartQuickMatch
     }
 
+    /// <summary>
+    /// 教程界面覆盖层：在游戏画面上方显示操作提示、进度点、女巫讲解、技能演示和按键提示，教程完成后显示结算界面。
+    /// </summary>
     public sealed class mlpTutorialOverlay : MonoBehaviour
     {
         private const int WitchCharacterId = 6;
@@ -213,8 +217,11 @@ namespace mlp
         /// </summary>
         public void SetFocusRect(float left, float top, float width, float height)
         {
+            // 1. 确保 UI 已经构建完成
             EnsureInitialized();
+            // 2. 判断是否需要聚焦（宽高都大于 0 才有效）
             var hasFocus = width > 0f && height > 0f;
+            // 3. 根据是否需要聚焦来显示或隐藏四块遮罩和聚焦框
             SetMarkerActive(maskTop, hasFocus);
             SetMarkerActive(maskBottom, hasFocus);
             SetMarkerActive(maskLeft, hasFocus);
@@ -226,6 +233,7 @@ namespace mlp
                 return;
             }
 
+            // 4. 将聚焦区域限制在 800x480 画面范围内
             var clampedLeft = Mathf.Clamp(left, 0f, ReferenceWidth);
             var clampedTop = Mathf.Clamp(top, 0f, ReferenceHeight);
             var clampedWidth = Mathf.Clamp(width, 0f, ReferenceWidth - clampedLeft);
@@ -233,10 +241,12 @@ namespace mlp
             var right = clampedLeft + clampedWidth;
             var bottom = clampedTop + clampedHeight;
 
+            // 5. 计算并设置四块遮罩的位置，让它们围绕聚焦区域形成"暗角"效果
             SetTopLeftRect(maskTop, 0f, 0f, ReferenceWidth, clampedTop);
             SetTopLeftRect(maskBottom, 0f, bottom, ReferenceWidth, Mathf.Max(0f, ReferenceHeight - bottom));
             SetTopLeftRect(maskLeft, 0f, clampedTop, clampedLeft, clampedHeight);
             SetTopLeftRect(maskRight, right, clampedTop, Mathf.Max(0f, ReferenceWidth - right), clampedHeight);
+            // 6. 设置金色聚焦边框和外围发光效果的位置和大小
             SetTopLeftRect(focusFrame, clampedLeft, clampedTop, clampedWidth, clampedHeight);
             SetTopLeftRect(focusGlow, clampedLeft - 16f, clampedTop - 16f, clampedWidth + 32f, clampedHeight + 32f);
         }
@@ -365,22 +375,28 @@ namespace mlp
         /// </summary>
         public void ShowOutro(string characterName, string skillName)
         {
+            // 1. 激活覆盖层并重置计时器
             ShowInternal();
+            // 2. 显示第 9/10 步的进度点（全部完成）
             SetProgress(9, 10);
+            // 3. 设置结束画面的标题和讲解文字
             SetCopy("CLEAR", "READY TO PLAY", string.Empty, "Nice work. Choose your next run.", null);
             SetGoal(string.Empty);
             SetSkipVisible(false);
+            // 4. 清除所有运行时视觉元素（聚焦框、得分引导线、轨迹点等）
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
             SetScoringGuide(0, false);
             SetTrajectory(null);
+            // 5. 显示结束画面卡片
             if (outroRoot != null)
             {
                 outroRoot.SetActive(true);
             }
 
+            // 6. 设置结束画面标题和角色信息
             if (outroTitleText != null)
             {
                 outroTitleText.text = "WHERE NEXT?";
@@ -446,16 +462,22 @@ namespace mlp
         /// </summary>
         private void EnsureInitialized()
         {
+            // 1. 如果已经初始化过，只需确保画布绑定了正确的相机即可
             if (initialized)
             {
                 EnsureCanvasCamera();
                 return;
             }
 
+            // 2. 标记为已初始化，防止重复构建
             initialized = true;
+            // 3. 生成纯色、圆形和环形纹理精灵（UI 绘图的基本素材）
             EnsureSprites();
+            // 4. 确保场景中有事件系统（没有按钮点击就没法工作）
             EnsureEventSystem();
+            // 5. 用纯代码构建整个教程覆盖层 UI（不依赖预制体）
             BuildUi();
+            // 6. 确保画布绑定了正确的相机
             EnsureCanvasCamera();
         }
 
@@ -485,6 +507,7 @@ namespace mlp
         /// </summary>
         private void BuildUi()
         {
+            // 1. 创建画布（Canvas）——所有 UI 元素的容器，使用相机渲染模式
             canvas = gameObject.GetComponent<Canvas>();
             if (canvas == null)
             {
@@ -494,6 +517,7 @@ namespace mlp
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.sortingOrder = CanvasSortingOrder;
             gameObject.AddComponent<GraphicRaycaster>();
+            // 2. 设置画布缩放器——让 UI 在不同屏幕大小下自动缩放，参考分辨率 800x480
             var scaler = gameObject.GetComponent<CanvasScaler>();
             if (scaler == null)
             {
@@ -505,12 +529,14 @@ namespace mlp
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 
+            // 3. 创建覆盖层根节点（所有教程 UI 的最外层容器），默认隐藏
             overlayRoot = CreateRootRect("OverlayRoot", transform);
             overlayRoot.gameObject.SetActive(false);
 
             var blurVeil = CreateImage("BlurVeil", overlayRoot, solidSprite, new Color(0.03f, 0.06f, 0.09f, 0.14f));
             StretchToParent(blurVeil.rectTransform);
 
+            // 4. 创建四块半透明遮罩（上下左右），用来变暗聚焦区域外的内容
             maskTop = CreateMask("MaskTop");
             maskBottom = CreateMask("MaskBottom");
             maskLeft = CreateMask("MaskLeft");
@@ -528,14 +554,17 @@ namespace mlp
             targetFill = CreateImage("TargetZone", overlayRoot, solidSprite, new Color(1f, 0.82f, 0.44f, 0.16f));
             targetZone = targetFill.rectTransform;
 
+            // 5. 构建 2 分 / 3 分得分区域引导覆盖层
             BuildScoringGuide();
 
+            // 6. 创建 7 个圆点，用于显示篮球预测轨迹
             trajectoryRoot = CreateRootRect("TrajectoryRoot", overlayRoot);
             for (var i = 0; i < 7; i++)
             {
                 trajectoryDots.Add(CreateImage($"TrajectoryDot{i}", trajectoryRoot, circleSprite, new Color(0.62f, 1f, 0.9f, 0.85f)));
             }
 
+            // 7. 构建引导卡片（深色面板 + 发光标题 + 步骤编号 + 标题文字 + 副标题 + 目标文字 + 进度点）
             headerRoot = CreateCard("GuideRoot", overlayRoot, GuideLeft, GuideTop, GuideWidth, GuideHeight, 0.92f);
             headerGlow = CreateImage("HeaderGlow", headerRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.12f));
             SetCenteredRect(headerGlow.rectTransform, 198f, 48f, 248f, 78f);
@@ -553,6 +582,7 @@ namespace mlp
                 progressDots.Add(dot);
             }
 
+            // 8. 构建按键提示区域（最多 5 个"按 [A]"样式的小标签）
             var keysRoot = CreateRootRect("KeysRoot", overlayRoot);
             SetTopLeftRect(keysRoot, GuideLeft, GuideTop + GuideHeight + 8f, GuideWidth, KeyChipHeight);
             for (var i = 0; i < 5; i++)
@@ -563,9 +593,11 @@ namespace mlp
                 keyChipLabels.Add(keyLabel != null ? keyLabel.GetComponent<TextMeshProUGUI>() : null);
             }
 
+            // 9. 创建反馈文字（练习过程中显示提示，如"Good dash"）和跳过按钮
             feedbackText = CreateText("FeedbackText", overlayRoot, 154f, 176f, 492f, 26f, 18, new Color32(0x9A, 0xFF, 0xDD, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
             skipButton = CreateButton("SkipStepButton", overlayRoot, 684f, 426f, 92f, 34f, "SKIP", new Color32(0x13, 0x1E, 0x30, 0xDD), new Color32(0xFF, 0xD5, 0x7C, 0xFF), mlpTutorialOverlayCommand.SkipStep);
 
+            // 10. 构建讲解员面板（女巫角色头像 + "WITCH:" 标签 + 讲解文字）
             narratorRoot = CreateRootRect("NarratorRoot", headerRoot.transform).gameObject;
             narratorOrb = CreateImage("NarratorOrb", narratorRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.14f));
             SetTopLeftRect(narratorRoot.transform as RectTransform, 0f, 0f, 196f, GuideHeight);
@@ -579,6 +611,7 @@ namespace mlp
             var witchMount = CreateRootRect("WitchMount", narratorRoot.transform);
             SetTopLeftRect(witchMount, 8f, 12f, 70f, 76f);
 
+            // 11. 构建结束画面卡片（"WHERE NEXT?" 标题 + 重玩/训练/菜单三个按钮）
             outroRoot = CreateCard("OutroRoot", overlayRoot, 170f, 84f, 460f, 300f, 0.96f);
             outroRoot.SetActive(false);
             CreateImage("OutroAura", outroRoot.transform as RectTransform, circleSprite, new Color(1f, 0.72f, 0.35f, 0.12f));
@@ -596,7 +629,9 @@ namespace mlp
             trainingButton = CreateButton("TrainingButton", outroRoot.transform as RectTransform, 124f, 198f, 212f, 38f, "FREE TRAINING", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, mlpTutorialOverlayCommand.StartTraining);
             replayButton = CreateButton("ReplayButton", outroRoot.transform as RectTransform, 124f, 250f, 212f, 38f, "REPLAY TUTORIAL", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, mlpTutorialOverlayCommand.ReplayTutorial);
 
+            // 12. 在讲解员面板中生成女巫角色实时模型（用于播放动画演示）
             BuildWitchPreview(witchMount);
+            // 13. 初始状态隐藏跳过按钮和所有运行时标记物
             SetSkipVisible(false);
             HideRuntimeMarkers();
         }

@@ -9,6 +9,9 @@ using UnityEngine.UI;
 
 namespace mlp
 {
+    /// <summary>
+    /// 菜单文字渲染层：用 TextMeshPro 在屏幕上绘制菜单文字，自动根据屏幕大小缩放，保证文字清晰好看。
+    /// </summary>
     public sealed class mlpNativeMenuTextLayer
     {
         private const float ReferenceWidth = mlpConstants.Width;
@@ -26,8 +29,10 @@ namespace mlp
         /// </summary>
         public mlpNativeMenuTextLayer(Transform menuRoot)
         {
+            // 1. 保存菜单根节点的引用（后续判断某个文字是否属于该层）
             this.menuRoot = menuRoot;
 
+            // 2. 创建画布——使用屏幕覆盖模式，始终显示在最上层
             var canvasObject = new GameObject("mlpNativeMenuTextLayer");
             canvasObject.transform.SetParent(menuRoot, false);
 
@@ -35,11 +40,13 @@ namespace mlp
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = short.MaxValue;
 
+            // 3. 设置画布缩放器为固定像素大小模式（不自动缩放，由 RefreshLayout 手动控制）
             var scaler = canvasObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
             scaler.scaleFactor = 1f;
             scaler.referencePixelsPerUnit = 100f;
 
+            // 4. 创建视口根节点——所有文字元素都放在这个节点下，参考尺寸 800x480
             viewportRoot = new GameObject("ViewportRoot").AddComponent<RectTransform>();
             viewportRoot.SetParent(canvas.transform, false);
             viewportRoot.anchorMin = new Vector2(0.5f, 0.5f);
@@ -49,6 +56,7 @@ namespace mlp
             viewportRoot.localScale = Vector3.one;
             viewportRoot.anchoredPosition = Vector2.zero;
 
+            // 5. 将自己注册为当前活跃的文字层（全局只有一个）
             Active = this;
         }
 
@@ -65,14 +73,18 @@ namespace mlp
         /// </summary>
         public void RefreshLayout(int screenWidth, int screenHeight)
         {
+            // 1. 如果视口根节点不存在，直接返回
             if (viewportRoot == null)
             {
                 return;
             }
 
+            // 2. 确保屏幕尺寸至少为 1 像素
             var width = Mathf.Max(1, screenWidth);
             var height = Mathf.Max(1, screenHeight);
+            // 3. 计算缩放比例：取宽高中较小值，确保 800x480 的参考布局完整显示
             var scale = Mathf.Min(width / ReferenceWidth, height / ReferenceHeight);
+            // 4. 保持参考尺寸不变，只调整缩放比例，使文字在不同屏幕上大小一致
             viewportRoot.sizeDelta = ReferenceSize;
             viewportRoot.localScale = new Vector3(scale, scale, 1f);
             viewportRoot.anchoredPosition = Vector2.zero;
@@ -102,15 +114,20 @@ namespace mlp
             TextAnchor anchor,
             mlpTextStyle style)
         {
+            // 1. 创建新的 GameObject 并添加 RectTransform，挂载到视口根节点下
             var textObject = new GameObject(name);
             var rectTransform = textObject.AddComponent<RectTransform>();
             rectTransform.SetParent(viewportRoot, false);
+            // 2. 设置锚点为中心，根据对齐方式设置 pivot（如左上角、居中等）
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = AnchorToPivot(anchor);
+            // 3. 将像素坐标（左上角为原点）转换为画布坐标（中心为原点）
             rectTransform.anchoredPosition = PixelToViewportPosition(x, y);
+            // 4. 根据文字行数估算所需高度
             rectTransform.sizeDelta = new Vector2(ReferenceWidth, EstimateHeight(text, fontSize));
 
+            // 5. 添加 TextMeshPro 文字组件，配置基础属性
             var textComponent = textObject.AddComponent<TextMeshProUGUI>();
             textComponent.raycastTarget = false;
             textComponent.richText = false;
@@ -122,6 +139,7 @@ namespace mlp
             textComponent.fontSize = fontSize;
             textComponent.text = text;
 
+            // 6. 应用字体样式（字体族、描边等）
             ApplyStyle(textComponent, style, fontSize);
             return textComponent;
         }
@@ -264,6 +282,7 @@ namespace mlp
         }
     }
 
+    /// <summary>TextMeshPro 字体缓存：内部使用的字体资源缓存，避免重复加载同一字体。</summary>
     internal static class mlpTmpFontCache
     {
         private static readonly Dictionary<mlpFontKind, TMP_FontAsset> FontAssets = new Dictionary<mlpFontKind, TMP_FontAsset>();

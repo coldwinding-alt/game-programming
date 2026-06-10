@@ -10,6 +10,9 @@ using UnityEngine.TextCore.LowLevel;
 
 namespace mlp.EditorTools
 {
+    /// <summary>
+    /// 帮助面板预制体生成器：在编辑器中自动创建帮助面板的预制体，包括按键说明页面、规则页面和所有按钮。
+    /// </summary>
     public static class mlpHelpPanelPrefabBuilder
     {
         private const string HelpAssetRoot = "Assets/mlp/Resources/mlp/Help";
@@ -24,14 +27,21 @@ namespace mlp.EditorTools
         /// </summary>
         public static void Build()
         {
+            // 1. 确保资源目录存在（不存在则自动创建）
             Directory.CreateDirectory(HelpAssetRoot);
             Directory.CreateDirectory(HelpTmpFontRoot);
             Directory.CreateDirectory(PrefabRoot);
+            // 2. 生成面板所需的所有纹理图片（背景、卡片、按键帽等）
             CreateTextureAssets();
+            // 3. 为内置字体生成 TextMeshPro 专用字体资源
             CreateTmpFontAssets();
+            // 4. 刷新资源数据库，让 Unity 识别刚生成的文件
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            // 5. 构建帮助面板的完整预制体（包含所有 UI 元素）
             var prefab = BuildPrefab();
+            // 6. 把预制体实例放入主场景中
             AddPrefabInstanceToMainScene(prefab);
+            // 7. 保存所有资源改动到磁盘
             AssetDatabase.SaveAssets();
             Debug.Log("Mlp help panel prefab and scene instance built.");
         }
@@ -55,17 +65,20 @@ namespace mlp.EditorTools
         /// </summary>
         private static GameObject BuildPrefab()
         {
+            // 1. 如果已存在旧的预制体文件，先删除再重建
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
             {
                 AssetDatabase.DeleteAsset(PrefabPath);
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             }
 
+            // 2. 创建根对象和面板组件，以及面板内容的容器
             var root = new GameObject("MlpHelpPanel");
             var panel = root.AddComponent<mlpHelpPanel>();
             var panelRoot = new GameObject("PanelRoot");
             panelRoot.transform.SetParent(root.transform, false);
 
+            // 3. 加载所有需要的精灵图片（背景、面板、卡片、标签页等）
             var buttons = new List<mlpHelpButton>();
             var dim = LoadSprite("help_dim");
             var board = LoadSprite("help_board");
@@ -76,12 +89,15 @@ namespace mlp.EditorTools
             var keycap = LoadSprite("help_keycap");
             var spotlight = LoadSprite("help_spotlight");
 
+            // 4. 添加半透明遮罩背景、主面板底板和标题分割线
             AddSprite("DimBackdrop", dim, 400f, 240f, 0.88f, 800f, 480f, 870, panelRoot.transform);
             AddSprite("MainBoard", board, 400f, 246f, 0.87f, 742f, 430f, 880, panelRoot.transform);
             AddSprite("HeaderRule", LoadSprite("help_line"), 400f, 96f, 0.865f, 690f, 2f, 901, panelRoot.transform);
 
+            // 5. 添加 "HOW TO PLAY" 标题文字
             AddText("Title", "HOW TO PLAY", 65f, 56f, 34, new Color32(0xFF, 0xB7, 0x3C, 0xFF), TextAnchor.MiddleLeft, 930, panelRoot.transform, mlpTextStyle.DisplayTitle);
 
+            // 6. 创建快速测试开关、测试信息按钮和关闭按钮
             var quickTestToggle = CreateTextButton(
                 "QuickTestToggle",
                 "OFF",
@@ -122,10 +138,13 @@ namespace mlp.EditorTools
                 buttons,
                 18);
 
+            // 7. 构建键盘操作说明页面（按键映射 + 女巫演示区域）
             var keyboardPage = new GameObject("KeyboardPage");
             keyboardPage.transform.SetParent(panelRoot.transform, false);
 
             BuildKeyboardPage(keyboardPage.transform, card, stage, tab, chip, keycap, spotlight, buttons, out var demoRows, out var demoTitle, out var demoDescription, out var demoCoach, out var witchMount, out var witchSpotlight);
+
+            // 8. 创建快速测试信息面板（默认隐藏）
             var quickTestInfoRoot = new GameObject("QuickTestInfoPanel");
             quickTestInfoRoot.transform.SetParent(panelRoot.transform, false);
             AddSprite("QuickTestInfoPanelPlate", card, 596f, 113f, 0.842f, 292f, 72f, 912, quickTestInfoRoot.transform);
@@ -142,6 +161,7 @@ namespace mlp.EditorTools
                 mlpTextStyle.TournamentBody);
             quickTestInfoRoot.SetActive(false);
 
+            // 9. 把所有 UI 元素的引用配置到面板组件上
             panel.EditorConfigure(
                 panelRoot,
                 keyboardPage,
@@ -164,9 +184,11 @@ namespace mlp.EditorTools
                 quickTestInfoRoot,
                 quickTestInfoText);
 
+            // 10. 激活页面和面板容器
             keyboardPage.SetActive(true);
             panelRoot.SetActive(true);
 
+            // 11. 将整个对象层级保存为预制体文件，然后销毁临时对象
             var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
             return prefab;
@@ -191,18 +213,23 @@ namespace mlp.EditorTools
             out Transform witchMount,
             out SpriteRenderer witchSpotlight)
         {
+            // 1. 添加页面标题 "KEYBOARD MAP"
             AddText("KeyboardHeader", "KEYBOARD MAP", 64f, 119f, 17, new Color32(0xF2, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 930, parent, mlpTextStyle.TournamentAccent);
 
+            // 2. 添加五行动作的按键说明行：移动、跳跃、攻击、下蹲、必杀
             AddControlRow(parent, card, keycap, 65f, 166f, "MOVE", "A / D", "Move left / right.\nDouble-tap to dash.");
             AddControlRow(parent, card, keycap, 65f, 202f, "JUMP", "W", "Jump.\nAir shots and contests.");
             AddControlRow(parent, card, keycap, 65f, 238f, "ACTION", "B", "With ball: Shoot.\nNo ball: Steal.");
             AddControlRow(parent, card, keycap, 65f, 274f, "DOWN", "S", "With ball: Pump fake.\nDefense: Block.");
             AddControlRow(parent, card, keycap, 65f, 310f, "SUPER", "N / V", "Use at full energy.");
 
+            // 3. 添加 1P/2P 双人快捷按键配置栏
             AddProfileStrip(parent, card, keycap);
 
+            // 4. 在右半部分添加演示舞台背景和聚光灯效果
             AddSprite("PreviewStage", stage, 574f, 206f, 0.86f, 326f, 178f, 895, parent);
             witchSpotlight = AddSprite("WitchSpotlight", spotlight, 552f, 248f, 0.855f, 190f, 62f, 899, parent);
+            // 5. 添加 "DRILL PREVIEW" 标题和 "REPLAY TUTORIAL" 按钮
             AddText("PreviewHeader", "DRILL PREVIEW", 430f, 121f, 16, new Color32(0xFF, 0xD2, 0x75, 0xFF), TextAnchor.MiddleLeft, 930, parent, mlpTextStyle.TournamentAccent);
             CreateTextButton(
                 "KeyboardReplayTutorialButton",
@@ -218,10 +245,12 @@ namespace mlp.EditorTools
                 buttons,
                 9);
 
+            // 6. 创建女巫角色的挂载点（用于放置角色演示动画）
             witchMount = new GameObject("WitchMount").transform;
             witchMount.SetParent(parent, false);
             ApplyPixelTransform(witchMount, 552f, 240f, 0.84f, 1f, 1f);
 
+            // 7. 创建七个演示按钮（移动、跳跃、投篮、假动作、冲刺、抢断、盖帽）
             demoRows = new SpriteRenderer[7];
             CreateDemoButton(parent, chip, buttons, demoRows, mlpHelpDemo.Move, mlpHelpButtonAction.DemoMove, "MOVE", 702f, 154f);
             CreateDemoButton(parent, chip, buttons, demoRows, mlpHelpDemo.Jump, mlpHelpButtonAction.DemoJump, "JUMP", 702f, 181f);
@@ -231,6 +260,7 @@ namespace mlp.EditorTools
             CreateDemoButton(parent, chip, buttons, demoRows, mlpHelpDemo.Steal, mlpHelpButtonAction.DemoSteal, "STEAL", 702f, 289f);
             CreateDemoButton(parent, chip, buttons, demoRows, mlpHelpDemo.Block, mlpHelpButtonAction.DemoBlock, "BLOCK", 702f, 316f);
 
+            // 8. 添加演示说明文字（动作名称、描述和技巧提示）
             demoTitle = AddText("DemoTitle", "DOWN: BLOCK", 430f, 314f, 14, new Color32(0xD8, 0xFF, 0x89, 0xFF), TextAnchor.MiddleLeft, 933, parent, mlpTextStyle.TournamentAccent);
             demoDescription = AddText("DemoDescription", "Hold S to block.\nJump into the shot path.", 430f, 338f, 10, new Color32(0xF4, 0xF7, 0xFF, 0xFF), TextAnchor.MiddleLeft, 933, parent, mlpTextStyle.TournamentBody);
             demoCoach = AddText("DemoCoach", "Tip: time the jump.", 590f, 328f, 9, new Color32(0x9F, 0xFF, 0xD3, 0xFF), TextAnchor.MiddleLeft, 933, parent, mlpTextStyle.TournamentBody);
@@ -427,10 +457,14 @@ namespace mlp.EditorTools
             List<mlpHelpButton> buttons,
             int fontSize = 11)
         {
+            // 1. 创建按钮的根游戏对象，挂到父节点下
             var root = new GameObject(name);
             root.transform.SetParent(parent, false);
+            // 2. 添加按钮底板精灵（背景图片）
             var plate = AddSprite(name + "Plate", sprite, x, y, 0.84f, width, height, sortingOrder, root.transform);
+            // 3. 添加按钮上的文字标签
             var text = AddText(name + "Label", label, x, y + 1f, fontSize, new Color32(0xE9, 0xF3, 0xFF, 0xFF), TextAnchor.MiddleCenter, sortingOrder + 20, root.transform, mlpTextStyle.TournamentAccent);
+            // 4. 添加按钮交互组件，并配置点击行为、悬停颜色等参数
             var button = root.AddComponent<mlpHelpButton>();
             button.EditorConfigure(
                 action,
@@ -446,6 +480,7 @@ namespace mlp.EditorTools
                 new Color32(0xFF, 0xD6, 0x6A, 0xFF),
                 new Color32(0x14, 0x1B, 0x25, 0xFF),
                 1.035f);
+            // 5. 把按钮记录到列表中，最后统一交给面板组件管理
             buttons.Add(button);
             return new TextButtonParts(plate, text, button);
         }
@@ -529,6 +564,7 @@ namespace mlp.EditorTools
         /// </summary>
         private static void CreateTmpFontAsset(string sourcePath, string assetName)
         {
+            // 1. 如果已存在同名字体资源，先删除旧的
             var assetPath = $"{HelpTmpFontRoot}/{assetName}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
             if (existing != null)
@@ -536,6 +572,7 @@ namespace mlp.EditorTools
                 AssetDatabase.DeleteAsset(assetPath);
             }
 
+            // 2. 加载源 TTF 字体文件，找不到则跳过
             var sourceFont = AssetDatabase.LoadAssetAtPath<Font>(sourcePath);
             if (sourceFont == null)
             {
@@ -543,21 +580,23 @@ namespace mlp.EditorTools
                 return;
             }
 
+            // 3. 用 TextMeshPro 的接口从 TTF 创建 SDF 字体资源（带抗锯齿的有符号距离场格式）
             var fontAsset = TMP_FontAsset.CreateFontAsset(
                 sourceFont,
-                144,
-                12,
-                GlyphRenderMode.SDFAA,
-                2048,
-                2048,
-                AtlasPopulationMode.Dynamic,
-                true);
+                144,       // 采样大小（分辨率越高细节越多）
+                12,        // 字体内边距
+                GlyphRenderMode.SDFAA,  // SDF + 抗锯齿渲染模式
+                2048,      // 图集宽度
+                2048,      // 图集高度
+                AtlasPopulationMode.Dynamic,  // 动态模式（按需生成字符）
+                true);     // 启用多色字体支持
             if (fontAsset == null)
             {
                 Debug.LogWarning($"TMP font asset creation failed for {sourcePath}");
                 return;
             }
 
+            // 4. 设置字体资源、图集纹理和材质的名称
             fontAsset.name = assetName;
             var atlasTexture = fontAsset.atlasTexture;
             if (atlasTexture != null)
@@ -565,6 +604,7 @@ namespace mlp.EditorTools
                 atlasTexture.name = assetName + " Atlas";
             }
 
+            // 5. 配置材质参数：绑定纹理、设置锐度和透视过滤
             if (fontAsset.material != null)
             {
                 fontAsset.material.name = assetName + " Material";
@@ -573,6 +613,7 @@ namespace mlp.EditorTools
                 fontAsset.material.SetFloat("_PerspectiveFilter", 0f);
             }
 
+            // 6. 将字体资源、图集和材质保存到磁盘
             AssetDatabase.CreateAsset(fontAsset, assetPath);
             if (atlasTexture != null)
             {
@@ -584,6 +625,7 @@ namespace mlp.EditorTools
                 AssetDatabase.AddObjectToAsset(fontAsset.material, fontAsset);
             }
 
+            // 7. 标记资源为已修改并强制重新导入
             EditorUtility.SetDirty(fontAsset);
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceSynchronousImport);
         }
@@ -610,31 +652,38 @@ namespace mlp.EditorTools
         /// </summary>
         private static Texture2D CreateRoundedTexture(int width, int height, int radius, int borderWidth, Color top, Color bottom, Color border, Color glint, bool pattern)
         {
+            // 1. 创建空白纹理和像素数组
             var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
             var pixels = new Color[width * height];
+            // 2. 遍历每个像素，逐个计算颜色
             for (var y = 0; y < height; y++)
             {
                 for (var x = 0; x < width; x++)
                 {
                     var index = y * width + x;
+                    // 3. 如果像素在圆角矩形外，设为透明
                     if (!InsideRoundedRect(x, y, width, height, radius))
                     {
                         pixels[index] = Color.clear;
                         continue;
                     }
 
+                    // 4. 根据垂直位置在顶部和底部颜色之间做渐变
                     var vertical = height <= 1 ? 0f : y / (float)(height - 1);
                     var color = Color.Lerp(bottom, top, vertical);
+                    // 5. 如果开启了图案模式，按数学公式生成闪光点装饰
                     if (pattern && ((x + y * 3) % 97 < 2 || (x * 2 + y) % 131 < 2))
                     {
                         color = Color.Lerp(color, glint, 0.45f);
                     }
 
+                    // 6. 判断像素是否在边框区域，是则混合边框颜色
                     var edgeDistance = Mathf.Min(Mathf.Min(x, width - 1 - x), Mathf.Min(y, height - 1 - y));
                     if (edgeDistance < borderWidth + 0.5f || !InsideRoundedRect(x, y, width, height, radius - borderWidth))
                     {
                         color = Color.Lerp(color, border, 0.72f);
                     }
+                    // 7. 顶部圆角附近添加淡淡的高光效果
                     else if (y > height - radius - 12 && x > radius && x < width - radius)
                     {
                         color = Color.Lerp(color, glint, 0.24f);
@@ -644,6 +693,7 @@ namespace mlp.EditorTools
                 }
             }
 
+            // 8. 把像素数据写入纹理并应用
             texture.SetPixels(pixels);
             texture.Apply();
             return texture;
@@ -697,9 +747,12 @@ namespace mlp.EditorTools
         /// </summary>
         private static void WriteTexture(string name, Texture2D texture)
         {
+            // 1. 将纹理编码为 PNG 格式并写入文件
             var path = $"{HelpAssetRoot}/{name}.png";
             File.WriteAllBytes(path, texture.EncodeToPNG());
+            // 2. 释放临时纹理占用的内存
             Object.DestroyImmediate(texture);
+            // 3. 让 Unity 识别新生成的图片文件
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null)
@@ -707,12 +760,14 @@ namespace mlp.EditorTools
                 return;
             }
 
+            // 4. 配置图片导入格式：精灵模式、不压缩、不开 mipmap、双线性过滤
             importer.textureType = TextureImporterType.Sprite;
             importer.spritePixelsPerUnit = 1f;
             importer.alphaIsTransparency = true;
             importer.filterMode = FilterMode.Bilinear;
             importer.mipmapEnabled = false;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
+            // 5. 保存设置并重新导入，使配置生效
             importer.SaveAndReimport();
         }
 
@@ -721,13 +776,16 @@ namespace mlp.EditorTools
         /// </summary>
         private static void AddPrefabInstanceToMainScene(GameObject prefab)
         {
+            // 1. 如果预制体为空（构建失败），直接报错返回
             if (prefab == null)
             {
                 Debug.LogError("Cannot add help panel instance because prefab build failed.");
                 return;
             }
 
+            // 2. 打开主场景
             var scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+            // 3. 找到场景中已有的帮助面板实例并删除（避免重复）
             var panels = Resources.FindObjectsOfTypeAll<mlpHelpPanel>();
             for (var i = 0; i < panels.Length; i++)
             {
@@ -738,6 +796,7 @@ namespace mlp.EditorTools
                 }
             }
 
+            // 4. 在场景中创建预制体的新实例并放到原点位置
             var instance = PrefabUtility.InstantiatePrefab(prefab, scene) as GameObject;
             if (instance != null)
             {
@@ -745,6 +804,7 @@ namespace mlp.EditorTools
                 instance.transform.position = Vector3.zero;
             }
 
+            // 5. 标记场景已修改并保存到磁盘
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
         }

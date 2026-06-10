@@ -3,6 +3,9 @@
 
 namespace mlp
 {
+    /// <summary>
+    /// AI 难度调节参数：定义某个难度等级下 AI 的各种行为距离和概率，比如防守距离、抢断距离、冲刺距离等。
+    /// </summary>
     public readonly struct mlpAIDifficultyTuningProfile
     {
         public readonly float DefenceContestDistance;
@@ -90,6 +93,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// AI 难度调节器：根据选择的难度等级（简单/普通/困难/地狱）返回对应的调节参数。
+    /// </summary>
     public static class mlpAIDifficultyTuning
     {
         private static readonly mlpAIDifficultyTuningProfile Easy = new mlpAIDifficultyTuningProfile(

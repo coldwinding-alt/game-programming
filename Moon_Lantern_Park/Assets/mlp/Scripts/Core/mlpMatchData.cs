@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// AI 难度等级：简单、普通、困难、地狱。难度越高，电脑对手越厉害。
+    /// </summary>
     public enum mlpAiDifficulty
     {
         Easy,
@@ -15,6 +18,9 @@ namespace mlp
         Hell
     }
 
+    /// <summary>
+    /// 参与模式：单人、双人、训练、教程。用来区分当前是几个人在玩、什么目的。
+    /// </summary>
     public enum mlpParticipantMode
     {
         OnePlayer,
@@ -23,6 +29,9 @@ namespace mlp
         Tutorial
     }
 
+    /// <summary>
+    /// 会话模式：当前正在进行的游戏类型（无、快速比赛、冒险、锦标赛、训练、教程）。
+    /// </summary>
     public enum mlpSessionMode
     {
         None,
@@ -33,6 +42,9 @@ namespace mlp
         Tutorial
     }
 
+    /// <summary>
+    /// 篮球皮肤主题：经典、幽灵绿、南瓜余烬、月光紫等不同外观的篮球。
+    /// </summary>
     public enum mlpBallTheme
     {
         ClassicOriginal,
@@ -45,6 +57,9 @@ namespace mlp
         CandySwirl
     }
 
+    /// <summary>
+    /// 篮球皮肤选择：包含"随机"选项和所有具体皮肤，用于菜单中的选择界面。
+    /// </summary>
     public enum mlpBallSelection
     {
         Random,
@@ -58,6 +73,9 @@ namespace mlp
         CandySwirl
     }
 
+    /// <summary>
+    /// 篮球皮肤目录：管理所有篮球皮肤的切换、解析和标签显示。把选择界面上的选项转换成实际使用的皮肤。
+    /// </summary>
     public static class mlpBallCatalog
     {
         private static readonly mlpBallSelection[] OrderedSelections =
@@ -178,6 +196,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 比赛配置数据：存储一场比赛的所有设置——双方角色、难度、脑控制方式、技能等级、比分。不同模式（快速、训练、锦标赛等）通过不同的方法来配置。
+    /// </summary>
     public sealed class mlpMatchData
     {
         public bool Restarted;
@@ -548,6 +569,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 全局物品清单（单例）：保存玩家的所有选择和进度——当前游戏模式、选中的角色和篮球皮肤、难度、冒险/锦标赛的进行状态。是整个游戏状态的中央存储。
+    /// </summary>
     public sealed class mlpInventory
     {
         private static mlpInventory instance;

@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 角色技能类型：每个角色对应一种专属技能，如灵魂收割、幽灵帆、血月闪现等。
+    /// </summary>
     public enum mlpCharacterSkillType
     {
         SoulReap,
@@ -19,6 +22,9 @@ namespace mlp
         SureBlock
     }
 
+    /// <summary>
+    /// 角色技能定义：描述一个技能的全部信息——名称、图标、充能效果、激活提示、冷却时间等。
+    /// </summary>
     public readonly struct mlpCharacterSkillDefinition
     {
         public readonly mlpCharacterSkillType SkillType;
@@ -159,6 +165,9 @@ namespace mlp
             !string.IsNullOrEmpty(ChargeMaskImageKey);
     }
 
+    /// <summary>
+    /// 角色技能数据表：存储所有 8 个角色的技能定义，根据角色 ID 获取对应的技能信息。
+    /// </summary>
     public static class mlpCharacterSkillsData
     {
         private static readonly mlpCharacterSkillDefinition[] Skills =

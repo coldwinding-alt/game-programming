@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏音效和背景音乐管理器（单例）：负责播放音效、切换背景音乐、控制音量大小。所有声音播放都通过这个类来调用。
+    /// </summary>
     public sealed class mlpAudio : MonoBehaviour
     {
         private readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();

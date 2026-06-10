@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 冒险模式特殊规则类型：每关有不同的规则效果，比如糖果充能、双倍篮筐、迷雾风、血月等。
+    /// </summary>
     public enum mlpAdventureMechanic
     {
         BasicDuel,
@@ -17,6 +20,9 @@ namespace mlp
         MoonLanternMix
     }
 
+    /// <summary>
+    /// 冒险模式单关定义：描述一个关卡的所有信息——关卡名称、对手角色、场景气氛、特殊规则、球皮和难度。
+    /// </summary>
     public sealed class mlpAdventureLevelDefinition
     {
         public readonly int Index;
@@ -96,18 +102,24 @@ namespace mlp
         /// <returns>随机选取的结果台词，如果台词池为空则返回默认文本。</returns>
         public string GetRandomResultLine(bool playerWon)
         {
+            // 1. 根据胜负结果选择对应的台词池（胜利台词或失败台词）
             var pool = playerWon ? VictoryLines : DefeatLines;
+            // 2. 如果台词池不为空，随机选一条返回
             if (pool != null && pool.Length > 0)
             {
                 return pool[Random.Range(0, pool.Length)];
             }
 
+            // 3. 如果台词池为空，返回默认的备用台词
             return playerWon
                 ? "Take the Lantern Sigil and keep moving."
                 : "The Lantern Sigil stays out of reach.";
         }
     }
 
+    /// <summary>
+    /// 冒险模式关卡目录：存储所有 8 个关卡的定义数据，供游戏读取和使用。
+    /// </summary>
     public static class mlpAdventureCatalog
     {
         private static readonly mlpAdventureLevelDefinition[] Levels =
@@ -343,6 +355,9 @@ namespace mlp
         }
     }
 
+    /// <summary>
+    /// 冒险模式进度数据：管理玩家在冒险模式中的当前关卡、已通关状态和灯笼印记收集情况。
+    /// </summary>
     public sealed class mlpAdventureData
     {
         private readonly bool[] levelCompleted = new bool[mlpAdventureCatalog.LevelCount];
@@ -414,8 +429,11 @@ namespace mlp
         /// <param name="playerCharacterId">本次冒险使用的角色 ID。</param>
         public void Create(int playerCharacterId)
         {
+            // 1. 先清空所有之前的冒险进度
             Reset();
+            // 2. 标记冒险模式为"进行中"
             Active = true;
+            // 3. 验证并记录玩家选择的角色编号（如果无效则自动修正为可用角色）
             PlayerCharacterId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
         }
 
@@ -426,11 +444,13 @@ namespace mlp
         /// <returns>关卡选择成功返回 true，否则返回 false。</returns>
         public bool SelectLevel(int levelIndex)
         {
+            // 1. 检查冒险是否正在进行、未完成、且该关卡已解锁
             if (!Active || Completed || !IsLevelUnlocked(levelIndex))
             {
                 return false;
             }
 
+            // 2. 将关卡索引限制在有效范围内，并设置为当前关卡
             CurrentLevelIndex = Mathf.Clamp(levelIndex, 0, mlpAdventureCatalog.LevelCount - 1);
             return true;
         }
@@ -461,25 +481,31 @@ namespace mlp
         /// <param name="playerWon">玩家赢得比赛则传 true。</param>
         public void ApplyCurrentMatchResult(bool playerWon)
         {
+            // 1. 检查冒险是否有效（正在进行、未完成、当前关卡索引合法）
             if (!Active || Completed || CurrentLevelIndex < 0 || CurrentLevelIndex >= levelCompleted.Length)
             {
                 return;
             }
 
+            // 2. 记录最近一次比赛的结果（哪一关、赢了没有）
             LastResolvedLevelIndex = CurrentLevelIndex;
             LastPlayerWon = playerWon;
+            // 3. 如果玩家输了，只记录结果，不推进冒险进度
             if (!playerWon)
             {
                 return;
             }
 
+            // 4. 玩家赢了：把当前关卡标记为"已完成"
             levelCompleted[CurrentLevelIndex] = true;
+            // 5. 如果已经是最后一关，标记整个冒险为"已完成"
             if (CurrentLevelIndex >= mlpAdventureCatalog.LevelCount - 1)
             {
                 Completed = true;
                 return;
             }
 
+            // 6. 解锁下一关，并把当前关卡推进到下一关
             HighestUnlockedLevelIndex = Mathf.Max(HighestUnlockedLevelIndex, CurrentLevelIndex + 1);
             CurrentLevelIndex = Mathf.Max(CurrentLevelIndex + 1, HighestUnlockedLevelIndex);
         }

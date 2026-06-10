@@ -5,6 +5,9 @@ using System;
 
 namespace mlp
 {
+    /// <summary>
+    /// 玩家动作信号类型：投篮、扣篮、抢断、盖帽、得分等各种动作的标识符。
+    /// </summary>
     public enum mlpPlayerSignalType
     {
         StartSteal,
@@ -22,6 +25,9 @@ namespace mlp
         Stun
     }
 
+    /// <summary>
+    /// 玩家动作信号总线：当玩家做出特定动作时广播通知，教程系统等模块监听这些信号来做出反应。
+    /// </summary>
     public sealed class mlpPlayerSignalBus
     {
         public event Action<mlpPlayerSignalType, int, int> OnSignal;

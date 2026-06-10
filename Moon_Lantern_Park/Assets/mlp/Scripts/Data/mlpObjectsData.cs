@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏物体物理参数：定义篮球、球员、篮筐等物体的物理数值——重力、弹跳系数、移动速度、投篮力量、扣篮范围等。
+    /// </summary>
     public static class mlpObjectsData
     {
         public static readonly Vector2 Gravity = new Vector2(0f, 450f);

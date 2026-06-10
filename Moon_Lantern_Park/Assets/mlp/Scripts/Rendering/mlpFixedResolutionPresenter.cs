@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 namespace mlp
 {
+    /// <summary>
+    /// 固定分辨率画面适配器：让游戏始终保持 800x480 的像素风格画面，不管窗口多大。自动计算黑边和缩放，保证画面不变形。
+    /// </summary>
     public sealed class mlpFixedResolutionPresenter : MonoBehaviour
     {
         private const string CanvasName = "mlpFixedResolutionCanvas";
@@ -33,29 +36,36 @@ namespace mlp
         /// </summary>
         public void Attach(Camera camera)
         {
+            // 1. 如果传入的相机为空，直接退出
             if (camera == null)
             {
                 return;
             }
 
+            // 2. 如果已经接入了同一个相机，只需刷新布局即可
             if (sourceCamera == camera && configured)
             {
                 RefreshLayout(force: true);
                 return;
             }
 
+            // 3. 断开之前连接的相机（如果有的话）
             DetachCurrentCamera();
+            // 4. 保存源相机引用，关闭 HDR 和 MSAA（像素风格不需要这些特性）
             sourceCamera = camera;
             originalAllowHdr = sourceCamera.allowHDR;
             originalAllowMsaa = sourceCamera.allowMSAA;
             sourceCamera.allowHDR = false;
             sourceCamera.allowMSAA = false;
 
+            // 5. 创建输出相机（用来在画面上方渲染 UI 画布）、UI 画布和渲染纹理
             EnsureOutputCamera();
             EnsureCanvas();
             EnsureRenderTexture();
+            // 6. 显示呈现器，将源相机的渲染目标设为固定分辨率的渲染纹理
             SetPresenterVisible(true);
             sourceCamera.targetTexture = renderTexture;
+            // 7. 标记为已配置，注册为全局活跃呈现器，强制刷新一次布局
             configured = true;
             activePresenter = this;
             RefreshLayout(force: true);
@@ -244,6 +254,7 @@ namespace mlp
         /// </summary>
         private void RefreshLayout(bool force)
         {
+            // 1. 获取当前屏幕尺寸，如果和上次相同且非强制刷新则跳过
             var screenWidth = Mathf.Max(1, Screen.width);
             var screenHeight = Mathf.Max(1, Screen.height);
             if (!force && screenWidth == lastScreenWidth && screenHeight == lastScreenHeight)
@@ -251,15 +262,20 @@ namespace mlp
                 return;
             }
 
+            // 2. 记录当前屏幕尺寸，用于下次比较
             lastScreenWidth = screenWidth;
             lastScreenHeight = screenHeight;
 
+            // 3. 计算缩放比例：取宽高中较小的那个，确保游戏画面完整显示且不变形
             var scale = Mathf.Min(
                 screenWidth / (float)mlpConstants.DisplayW,
                 screenHeight / (float)mlpConstants.DisplayH);
+            // 4. 计算输出区域的实际像素大小（按缩放后的整数像素对齐）
             var width = Mathf.Round(mlpConstants.DisplayW * scale);
             var height = Mathf.Round(mlpConstants.DisplayH * scale);
+            // 5. 设置输出 UI 元素的大小
             outputRect.sizeDelta = new Vector2(width, height);
+            // 6. 计算输出区域在屏幕上的矩形位置（居中显示，多余部分为黑边）
             outputScreenRect = new Rect(
                 (screenWidth - width) * 0.5f,
                 (screenHeight - height) * 0.5f,

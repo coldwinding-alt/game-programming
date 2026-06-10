@@ -7,12 +7,14 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>帮助面板页面类型：键盘操作页面或游戏规则页面。</summary>
     public enum mlpHelpPage
     {
         Keyboard,
         Rules
     }
 
+    /// <summary>帮助面板演示动作类型：移动、跳跃、投篮、假动作、扣篮、抢断、盖帽等可演示的操作。</summary>
     public enum mlpHelpDemo
     {
         Move,
@@ -24,6 +26,7 @@ namespace mlp
         Block
     }
 
+    /// <summary>帮助面板按钮动作：切换页面、选择演示、关闭面板等按钮可执行的操作。</summary>
     public enum mlpHelpButtonAction
     {
         Close,
@@ -42,6 +45,9 @@ namespace mlp
     }
 
     [ExecuteAlways]
+    /// <summary>
+    /// 帮助面板：按帮助按钮后弹出的界面，有键盘操作和游戏规则两个页面，可以点选不同动作查看女巫角色的演示动画。
+    /// </summary>
     public sealed class mlpHelpPanel : MonoBehaviour
     {
         private const string PrefabResourcePath = "mlp/Prefabs/UI/MlpHelpPanel";
@@ -110,7 +116,9 @@ namespace mlp
         /// </summary>
         public static void ShowKeyboardPage()
         {
+            // 1. 查找已有的帮助面板实例，如果没有则从预制体创建一个新的
             var panel = FindActivePanel(createFallback: true);
+            // 2. 如果找到了面板，显示键盘操作页面
             if (panel != null)
             {
                 panel.Show(mlpHelpPage.Keyboard);
@@ -302,15 +310,21 @@ namespace mlp
         /// </summary>
         private void EnsureInitialized()
         {
+            // 1. 如果已经初始化过，直接返回
             if (initialized)
             {
                 return;
             }
 
+            // 2. 标记为已初始化
             initialized = true;
+            // 3. 隐藏旧版标签页（现在只用键盘操作页面）
             HideLegacyTabs();
+            // 4. 隐藏开发测试控件（普通玩家不需要看到）
             HideQuickTestControls();
+            // 5. 创建女巫角色模型，用于播放动作演示动画
             BuildWitchPreview();
+            // 6. 设置当前页面和选中的演示动作
             SetPage(currentPage);
             SelectDemo(currentDemo, forceRestart: true);
         }
@@ -320,6 +334,7 @@ namespace mlp
         /// </summary>
         private void BuildWitchPreview()
         {
+            // 1. 如果挂载点不存在或已创建过女巫模型，直接返回
             if (witchMount == null || witchArmature != null)
             {
                 return;
@@ -331,12 +346,14 @@ namespace mlp
                 DestroyEditorWitchPreview();
             }
 #endif
+            // 2. 创建女巫角色的骨骼动画模型
             witchArmature = mlpPlayersData.BuildGameplayArmature("HelpWitchPreview");
             if (witchArmature == null)
             {
                 return;
             }
 
+            // 3. 将模型挂载到面板上的指定位置，设置合适的缩放比例
             witchArmature.transform.SetParent(witchMount, false);
             witchArmature.transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
                 witchMount,
@@ -345,8 +362,10 @@ namespace mlp
                 mlpConstants.PixelPerfectCharacterScale * 1.22f,
                 mlpConstants.PixelPerfectCharacterScale * 1.22f,
                 1f);
+            // 4. 应用女巫角色的外观（颜色、服装等），隐藏手中的篮球
             mlpPlayersData.ApplyCharacter(witchArmature, WitchCharacterId);
             HidePreviewBall(witchArmature);
+            // 5. 提升女巫的渲染层级，确保她显示在面板背景之上
             ApplyWitchSortingOrder();
         }
 

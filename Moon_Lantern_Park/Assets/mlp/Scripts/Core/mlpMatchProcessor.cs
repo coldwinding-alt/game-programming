@@ -3,7 +3,9 @@
 
 namespace mlp
 {
-    // 轻量级得分上下文辅助类，用于篮筐传感器处理。
+    /// <summary>
+    /// 投篮和得分判定器：处理篮球是否投进篮筐的检测，计算得几分（2 分还是 3 分），判断球有没有被盖帽，以及篮筐传感器的触发逻辑。
+    /// </summary>
     public sealed class mlpMatchProcessor
     {
         private bool canScore = true;

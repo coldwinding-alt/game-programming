@@ -6,6 +6,9 @@ using UnityEngine;
 
 namespace mlp
 {
+    /// <summary>
+    /// 角色数据管理器：定义 8 个角色的属性（名字、头像、动画骨骼），负责加载角色模型、应用外观、播放动画。
+    /// </summary>
     public static class mlpPlayersData
     {
         private const int ActiveCharacterSkinCount = 8;
@@ -88,7 +91,9 @@ namespace mlp
         /// <returns>已启用角色的索引数组。</returns>
         public static int[] GetActiveCharacterIds()
         {
+            // 1. 创建一个临时列表，用来存放所有已启用角色的编号
             var active = new List<int>(CharacterDefinitions.Length);
+            // 2. 遍历所有角色定义，把已启用的角色编号加入列表
             for (var i = 0; i < CharacterDefinitions.Length; i++)
             {
                 if (CharacterDefinitions[i].Enabled)
@@ -97,6 +102,7 @@ namespace mlp
                 }
             }
 
+            // 3. 把列表转成数组返回
             return active.ToArray();
         }
 
@@ -130,12 +136,14 @@ namespace mlp
         /// <returns>下一个（或上一个）已启用角色的 ID。</returns>
         public static int StepCharacterId(int currentCharacterId, int direction)
         {
+            // 1. 获取所有已启用角色的编号列表
             var active = GetActiveCharacterIds();
             if (active.Length == 0)
             {
                 return 0;
             }
 
+            // 2. 在列表中找到当前角色的位置（索引）
             var currentIndex = 0;
             for (var i = 0; i < active.Length; i++)
             {
@@ -146,12 +154,14 @@ namespace mlp
                 }
             }
 
+            // 3. 根据方向（+1 下一个，-1 上一个）计算下一个位置，超出范围时循环回来
             var nextIndex = (currentIndex + direction) % active.Length;
             if (nextIndex < 0)
             {
                 nextIndex += active.Length;
             }
 
+            // 4. 返回下一个角色的编号
             return active[nextIndex];
         }
 
@@ -253,19 +263,23 @@ namespace mlp
         /// <returns>Y 轴偏移量（源精灵像素单位，已乘以图集源缩放系数）。</returns>
         public static float GetCharacterPortraitOffsetY(int characterId, Sprite portraitSprite = null)
         {
+            // 1. 获取角色定义，计算基础偏移量（乘以图集缩放系数转为像素单位）
             var definition = GetCharacterDefinition(characterId);
             var baseOffset = definition.PortraitOffsetY * PortraitAtlasSourceScale;
+            // 2. 如果没有提供参考精灵，直接返回基础偏移量
             if (portraitSprite == null)
             {
                 return baseOffset;
             }
 
+            // 3. 获取图集中的原始头像精灵
             var baseSprite = GetPortraitBaseSprite(definition);
             if (baseSprite == null)
             {
                 return baseOffset;
             }
 
+            // 4. 比较原始精灵和参考精灵的大小，按比例缩放偏移量
             var baseMaxPixels = Mathf.Max(baseSprite.rect.width, baseSprite.rect.height);
             var spriteMaxPixels = Mathf.Max(portraitSprite.rect.width, portraitSprite.rect.height);
             if (baseMaxPixels <= 0.0001f || spriteMaxPixels <= 0.0001f)
@@ -273,6 +287,7 @@ namespace mlp
                 return baseOffset;
             }
 
+            // 5. 用参考精灵与原始精灵的大小比例来缩放偏移量
             return baseOffset * (spriteMaxPixels / baseMaxPixels);
         }
 
@@ -295,14 +310,17 @@ namespace mlp
         /// <returns>随机选取的已启用角色 ID。</returns>
         public static int GetRandomCharacterId(IList<int> excludedCharacterIds = null)
         {
+            // 1. 创建候选列表，筛选出所有"已启用"且"不在排除名单中"的角色
             var candidates = new List<int>(CharacterDefinitions.Length);
             for (var i = 0; i < CharacterDefinitions.Length; i++)
             {
+                // 跳过被禁用的角色
                 if (!CharacterDefinitions[i].Enabled)
                 {
                     continue;
                 }
 
+                // 跳过需要排除的角色（比如玩家已经选了这个角色）
                 if (excludedCharacterIds != null && excludedCharacterIds.Contains(i))
                 {
                     continue;
@@ -311,11 +329,13 @@ namespace mlp
                 candidates.Add(i);
             }
 
+            // 2. 如果没有可用的候选角色，返回一个安全的默认值
             if (candidates.Count == 0)
             {
                 return SanitizeCharacterId(0);
             }
 
+            // 3. 从候选列表中随机选一个返回
             return candidates[Random.Range(0, candidates.Count)];
         }
 
@@ -332,20 +352,25 @@ namespace mlp
                 return;
             }
 
+            // 1. 将皮肤编号和体型编号限制在有效范围内
             skinId = Mathf.Clamp(skinId, 0, ActiveCharacterSkinCount - 1);
             formId = Mathf.Max(0, formId);
 
+            // 2. 根据皮肤编号查找对应的手部和腿部动画名称
             var hand = Hands[skinId];
             var leg = Legs[skinId];
 
+            // 3. 分别切换头部、身体、左手、右手、挖球手的动画
             armature.GetChildArmature("head")?.Play("head" + (skinId + 1));
             armature.GetChildArmature("body")?.Play("body" + (formId + 1));
             armature.GetChildArmature("left hand")?.Play("hand" + hand);
             armature.GetChildArmature("right hand")?.Play("hand" + hand);
             armature.GetChildArmature("dighand")?.Play("hand" + hand);
+            // 4. 切换左腿、右腿和挖球腿的动画
             armature.GetChildArmature("left leg")?.Play(leg);
             armature.GetChildArmature("right leg")?.Play(leg);
             armature.GetChildArmature("digleg")?.Play(leg);
+            // 5. 播放待机动画，让角色呈现站立状态
             armature.Play("idle");
         }
 
@@ -376,22 +401,27 @@ namespace mlp
         /// <returns>缓存的 DBLiteTextureAtlas 实例，加载失败时返回 null。</returns>
         private static DBLiteTextureAtlas GetPortraitAtlas()
         {
+            // 1. 如果已经加载过头像图集，直接返回缓存的结果
             if (portraitAtlas != null)
             {
                 return portraitAtlas;
             }
 
+            // 2. 拼接头像图集的资源路径，加载纹理和 JSON 配置文件
             var portraitAtlasPath = mlpAssets.Portraits.ResourcePath(mlpAssets.Portraits.UiAtlas);
             var textureJsonAsset = Resources.Load<TextAsset>(portraitAtlasPath);
             var texture = Resources.Load<Texture2D>(portraitAtlasPath);
+            // 3. 如果资源文件缺失，输出警告并返回空
             if (textureJsonAsset == null || texture == null)
             {
                 Debug.LogWarning("Missing UI portrait atlas resources.");
                 return null;
             }
 
+            // 4. 设置纹理的过滤模式为"点采样"（保持像素风格清晰），包裹模式为"钳制"（边缘不重复）
             texture.filterMode = FilterMode.Point;
             texture.wrapMode = TextureWrapMode.Clamp;
+            // 5. 解析 JSON 配置，把纹理和配置组合成图集对象，缓存起来
             portraitAtlas = DBLiteTextureAtlas.Parse(mlpAssets.Portraits.UiAtlas, texture, textureJsonAsset.text);
             return portraitAtlas;
         }
@@ -404,11 +434,13 @@ namespace mlp
         /// <returns>裁剪并缓存后的头像精灵。</returns>
         private static Sprite GetOrCreatePortraitDisplaySprite(string portraitSpriteName, Sprite baseSprite)
         {
+            // 1. 如果这个头像已经裁剪过并缓存了，直接返回缓存的结果
             if (PortraitDisplaySprites.TryGetValue(portraitSpriteName, out var cached))
             {
                 return cached;
             }
 
+            // 2. 获取头像所在的纹理，确认纹理可以读取像素数据
             var texture = baseSprite.texture;
             if (texture == null || !texture.isReadable)
             {
@@ -416,16 +448,19 @@ namespace mlp
                 return baseSprite;
             }
 
+            // 3. 扫描像素，计算头像可见区域的边界框
             var visibleRect = CalculatePortraitVisibleRect(texture, baseSprite.rect);
             if (visibleRect.width <= 0.0001f || visibleRect.height <= 0.0001f)
             {
                 return baseSprite;
             }
 
+            // 4. 计算裁剪后精灵的中心点（锚点），让它保持在原来的位置
             var baseCenter = baseSprite.rect.center;
             var pivot = new Vector2(
                 Mathf.InverseLerp(visibleRect.xMin, visibleRect.xMax, baseCenter.x),
                 Mathf.InverseLerp(visibleRect.yMin, visibleRect.yMax, baseCenter.y));
+            // 5. 创建新的精灵，只包含可见区域的部分
             var sprite = UnityEngine.Sprite.Create(
                 texture,
                 visibleRect,
@@ -435,6 +470,7 @@ namespace mlp
                 SpriteMeshType.FullRect);
             sprite.name = $"{portraitSpriteName}_ui_crop";
 
+            // 6. 把裁剪后的精灵存入缓存，下次直接使用
             PortraitDisplaySprites[portraitSpriteName] = sprite;
             return sprite;
         }
@@ -447,21 +483,26 @@ namespace mlp
         /// <returns>围绕可见像素的紧凑矩形，已添加内边距。</returns>
         private static Rect CalculatePortraitVisibleRect(Texture2D sourceTexture, Rect sourceRect)
         {
+            // 1. 确定要扫描的像素范围（原始精灵在纹理中的矩形区域）
             var xStart = Mathf.Clamp(Mathf.FloorToInt(sourceRect.xMin), 0, sourceTexture.width - 1);
             var xEnd = Mathf.Clamp(Mathf.CeilToInt(sourceRect.xMax), xStart + 1, sourceTexture.width);
             var yStart = Mathf.Clamp(Mathf.FloorToInt(sourceRect.yMin), 0, sourceTexture.height - 1);
             var yEnd = Mathf.Clamp(Mathf.CeilToInt(sourceRect.yMax), yStart + 1, sourceTexture.height);
+            // 2. 一次性读取纹理中所有像素的颜色数据
             var pixels = sourceTexture.GetPixels32();
+            // 3. 初始化边界值为"最不可能"的初始状态，方便后续用 Min/Max 更新
             var minX = xEnd;
             var maxX = xStart - 1;
             var minY = yEnd;
             var maxY = yStart - 1;
 
+            // 4. 逐行逐列扫描每个像素，找到所有不透明像素的最左、最右、最上、最下位置
             for (var y = yStart; y < yEnd; y++)
             {
                 var rowOffset = y * sourceTexture.width;
                 for (var x = xStart; x < xEnd; x++)
                 {
+                    // 跳过透明和半透明的像素（透明度低于阈值的视为不可见）
                     if (pixels[rowOffset + x].a <= PortraitVisibleAlphaThreshold)
                     {
                         continue;
@@ -474,15 +515,18 @@ namespace mlp
                 }
             }
 
+            // 5. 如果没有找到任何可见像素，直接返回原始区域
             if (maxX < minX || maxY < minY)
             {
                 return sourceRect;
             }
 
+            // 6. 在可见区域四周加上一些内边距（留白），防止裁剪得太紧
             minX = Mathf.Max(xStart, minX - PortraitCropPaddingPixels);
             maxX = Mathf.Min(xEnd - 1, maxX + PortraitCropPaddingPixels);
             minY = Mathf.Max(yStart, minY - PortraitCropPaddingPixels);
             maxY = Mathf.Min(yEnd - 1, maxY + PortraitCropPaddingPixels);
+            // 7. 返回最终的裁剪矩形（x, y, 宽度, 高度）
             return new Rect(minX, minY, maxX - minX + 1, maxY - minY + 1);
         }
 
@@ -498,6 +542,7 @@ namespace mlp
                 return;
             }
 
+            // 1. 调整头部的位置和大小，使其对齐到像素网格（防止模糊）
             var head = armature.GetChildArmature("head");
             if (head != null)
             {
@@ -509,6 +554,7 @@ namespace mlp
                 head.transform.localScale = new Vector3(definition.HeadScale, definition.HeadScale, 1f);
             }
 
+            // 2. 调整身体的位置（重置 Y 和 Z 为 0），同样对齐到像素网格
             var body = armature.GetChildArmature("body");
             if (body != null)
             {

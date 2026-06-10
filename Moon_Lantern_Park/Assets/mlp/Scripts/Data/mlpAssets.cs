@@ -3,8 +3,12 @@
 
 namespace mlp
 {
+    /// <summary>
+    /// 游戏资源路径管理器：集中管理所有图片、音效、字体等资源的路径名，避免写错文件名。
+    /// </summary>
     public static class mlpAssets
     {
+        /// <summary>纹理图集（大图合集）的资源名称。</summary>
         public static class Atlases
         {
             public const string Gameplay = "gameplay";
@@ -12,6 +16,7 @@ namespace mlp
             public const string SkillFx = "skillfx";
         }
 
+        /// <summary>游戏图片资源的路径。</summary>
         public static class Images
         {
             private const string Root = "mlp/Images/";
@@ -24,6 +29,7 @@ namespace mlp
             public const string MusicButtonOff = "music_button_off";
             public const string HelpButton = "help_button";
 
+            /// <summary>UI 界面图片路径。</summary>
             public static class Ui
             {
                 public const string FramePanelLarge = "UI/frame_panel_large";
@@ -39,6 +45,7 @@ namespace mlp
                 public const string AwardsPodiumBase = "UI/awards_podium_base";
             }
 
+            /// <summary>剧情漫画图片路径。</summary>
             public static class Story
             {
                 public const string AdventureComicPage01 = "Story/adventure_comic_page_01";
@@ -49,6 +56,7 @@ namespace mlp
                 public const string TournamentComicPage03 = "Story/tournament_comic_page_03";
             }
 
+            /// <summary>技能特效图片路径。</summary>
             public static class SkillFxImages
             {
                 public const string ReaperDashCore = "SkillFx/reaper_dash_core";
@@ -59,6 +67,7 @@ namespace mlp
                 public const string HarvestTimeAccent = "SkillFx/harvest_time_accent";
             }
 
+            /// <summary>技能图标和充能遮罩图片路径。</summary>
             public static class SkillIcons
             {
                 public const string Reaper = "SkillIcons/reaper_skill_icon";
@@ -89,6 +98,7 @@ namespace mlp
                 return string.IsNullOrEmpty(imageKey) ? null : $"{Root}{imageKey}";
             }
 
+            /// <summary>比赛中使用的图片路径（球场、篮筐、篮球、角色动画图集等）。</summary>
             public static class GameplayImages
             {
                 public const string ArenaBackdrop = "Gameplay/arena_halloween_backdrop";
@@ -130,6 +140,7 @@ namespace mlp
             }
         }
 
+        /// <summary>HUD 界面元素（计分板、弹窗等）的资源路径。</summary>
         public static class Hud
         {
             private const string Root = "mlp/Hud/";
@@ -148,6 +159,7 @@ namespace mlp
             }
         }
 
+        /// <summary>角色头像图片的资源路径。</summary>
         public static class Portraits
         {
             private const string Root = "mlp/Portraits/";
@@ -165,6 +177,7 @@ namespace mlp
             }
         }
 
+        /// <summary>音效和背景音乐的资源名称。</summary>
         public static class Sounds
         {
             public const string MenuMusic = "bgm";
