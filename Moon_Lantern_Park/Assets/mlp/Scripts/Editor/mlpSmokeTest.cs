@@ -15,6 +15,18 @@ namespace mlp.EditorTools
     /// </summary>
     public static class mlpSmokeTest
     {
+        private readonly struct DifficultySkillExpectation
+        {
+            public readonly mlpAiDifficulty Difficulty;
+            public readonly int ExpectedSkill;
+
+            public DifficultySkillExpectation(mlpAiDifficulty difficulty, int expectedSkill)
+            {
+                Difficulty = difficulty;
+                ExpectedSkill = expectedSkill;
+            }
+        }
+
         private static void ValidateGuaranteedBlockTeleportsToShot(List<string> errors)
         {
             const float expectedBlockHorizontalOffset = 20f;
@@ -258,12 +270,11 @@ namespace mlp.EditorTools
                 // ---- 第三阶段：验证游戏逻辑 ----
                 // 18. 测试难度切换循环和 AI 技能映射
                 ValidateDifficultyCycleAndSkillMapping(errors);
-                // 19. 在三种难度下分别运行完整锦标赛流程
+                // 19. 在多个难度下分别运行完整锦标赛流程
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Normal, "normal");
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Hard, "hard");
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Hell, "hell");
-                ValidateHardTournamentSkillMapping(errors);
-                ValidateHellTournamentSkillMapping(errors);
+                ValidateFixedTournamentSkillMapping(errors);
                 // 20. 验证球体皮肤选择在不同模式间是否正确保持
                 ValidateBallSelectionStateAndResolution(errors);
                 // 21. 验证运行时材质和网格的共享与释放
@@ -599,13 +610,15 @@ namespace mlp.EditorTools
                 errors.Add("Adventure match did not use the first level Warden as opponent.");
             }
 
-            AssertOpponentSkill(matchData, firstLevel.OpponentSkill, errors, "Adventure normal mapping");
+            AssertOpponentSkill(matchData, 2, errors, "Adventure default normal mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Easy);
-            AssertOpponentSkill(matchData, Mathf.Max(0, firstLevel.OpponentSkill - 1), errors, "Adventure easy mapping");
+            AssertOpponentSkill(matchData, 1, errors, "Adventure easy mapping");
+            matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Normal);
+            AssertOpponentSkill(matchData, 2, errors, "Adventure normal mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Hard);
-            AssertOpponentSkill(matchData, Mathf.Min(mlpAISkillsData.MaxSkillIndex, firstLevel.OpponentSkill + 2), errors, "Adventure hard mapping");
+            AssertOpponentSkill(matchData, 5, errors, "Adventure hard mapping");
             matchData.StartAdventureMatch(adventure, mlpAiDifficulty.Hell);
-            AssertOpponentSkill(matchData, Mathf.Min(mlpAISkillsData.MaxSkillIndex, firstLevel.OpponentSkill + 4), errors, "Adventure hell mapping");
+            AssertOpponentSkill(matchData, 10, errors, "Adventure hell mapping");
 
             adventure.ApplyCurrentMatchResult(true);
             if (!adventure.IsLevelCompleted(0) || !adventure.IsLevelUnlocked(1) || adventure.SigilsCollected != 1)
@@ -1469,19 +1482,26 @@ namespace mlp.EditorTools
                     errors.Add("Difficulty toggle did not cycle from Hell back to Easy.");
                 }
 
-                // 3. 验证不同难度下对手的 AI 技能等级是否映射正确
+                // 3. 验证快速赛和随机赛都使用固定四档难度：
+                //    Easy=1、Normal=2、Hard=5、Hell=10。
                 var matchData = new mlpMatchData(true);
-                matchData.StartQuickMatch(0, mlpAiDifficulty.Hard);
-                AssertOpponentSkill(matchData, 5, errors, "Quick Match hard mapping");
+                var expectedSkills = new[]
+                {
+                    new DifficultySkillExpectation(mlpAiDifficulty.Easy, 1),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Normal, 2),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Hard, 5),
+                    new DifficultySkillExpectation(mlpAiDifficulty.Hell, 10)
+                };
 
-                matchData.StartRandomMatch(0, mlpAiDifficulty.Hard);
-                AssertOpponentSkill(matchData, 5, errors, "Random Match hard mapping");
+                for (var i = 0; i < expectedSkills.Length; i++)
+                {
+                    var expectation = expectedSkills[i];
+                    matchData.StartQuickMatch(0, expectation.Difficulty);
+                    AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"Quick Match {expectation.Difficulty} fixed mapping");
 
-                matchData.StartQuickMatch(0, mlpAiDifficulty.Hell);
-                AssertOpponentSkill(matchData, 10, errors, "Quick Match hell mapping");
-
-                matchData.StartRandomMatch(0, mlpAiDifficulty.Hell);
-                AssertOpponentSkill(matchData, 10, errors, "Random Match hell mapping");
+                    matchData.StartRandomMatch(0, expectation.Difficulty);
+                    AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"Random Match {expectation.Difficulty} fixed mapping");
+                }
             }
             finally
             {
@@ -1560,133 +1580,104 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查困难难度的锦标赛轮次是否映射到预期的递增 AI 技能。
+        /// 检查锦标赛在四档难度下是否始终使用固定 AI 技能值。
         /// </summary>
-        private static void ValidateHardTournamentSkillMapping(List<string> errors)
+        private static void ValidateFixedTournamentSkillMapping(List<string> errors)
+        {
+            var expectations = new[]
+            {
+                new DifficultySkillExpectation(mlpAiDifficulty.Easy, 1),
+                new DifficultySkillExpectation(mlpAiDifficulty.Normal, 2),
+                new DifficultySkillExpectation(mlpAiDifficulty.Hard, 5),
+                new DifficultySkillExpectation(mlpAiDifficulty.Hell, 10)
+            };
+
+            for (var i = 0; i < expectations.Length; i++)
+            {
+                ValidateFixedTournamentSkillMappingForDifficulty(errors, expectations[i]);
+            }
+        }
+
+        /// <summary>
+        /// 检查一个具体难度在锦标赛常规赛、半决赛、决赛和三四名赛中是否保持同一个技能值。
+        /// </summary>
+        private static void ValidateFixedTournamentSkillMappingForDifficulty(
+            List<string> errors,
+            DifficultySkillExpectation expectation)
         {
             var tournament = new mlpTournamentData();
-            if (!tournament.Create(0, mlpAiDifficulty.Hard))
+            if (!tournament.Create(0, expectation.Difficulty))
             {
-                errors.Add("Hard tournament mapping test could not create a tournament.");
+                errors.Add($"{expectation.Difficulty} tournament fixed mapping test could not create a tournament.");
                 return;
             }
 
             var matchData = new mlpMatchData(true);
-            var expectedRoundSkills = new[] { 5, 6, 7 };
-            for (var round = 0; round < expectedRoundSkills.Length; round++)
+            for (var round = 0; round < 3; round++)
             {
                 matchData.StartTournamentMatch(tournament);
-                AssertOpponentSkill(matchData, expectedRoundSkills[round], errors, $"Hard tournament round {round + 1}");
+                AssertOpponentSkill(
+                    matchData,
+                    expectation.ExpectedSkill,
+                    errors,
+                    $"{expectation.Difficulty} tournament fixed round {round + 1}");
                 tournament.ApplyCurrentMatchResult(30 + round, 10 + round);
             }
 
             tournament.BeginFinals();
             if (tournament.CurrentStage != mlpTournamentStage.SemiFinal || !tournament.HasPendingPlayerMatch)
             {
-                errors.Add("Hard tournament did not open a pending semifinal after finals start.");
+                errors.Add($"{expectation.Difficulty} tournament did not open a pending semifinal after finals start.");
                 return;
             }
 
             matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, 7, errors, "Hard tournament semifinal");
+            AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"{expectation.Difficulty} tournament fixed semifinal");
 
             tournament.ApplyCurrentMatchResult(32, 18);
             matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, 8, errors, "Hard tournament final");
+            AssertOpponentSkill(matchData, expectation.ExpectedSkill, errors, $"{expectation.Difficulty} tournament fixed final");
 
             var thirdPlaceTournament = new mlpTournamentData();
-            if (!thirdPlaceTournament.Create(0, mlpAiDifficulty.Hard))
+            if (!thirdPlaceTournament.Create(0, expectation.Difficulty))
             {
-                errors.Add("Hard third-place mapping test could not create a tournament.");
+                errors.Add($"{expectation.Difficulty} third-place mapping test could not create a tournament.");
                 return;
             }
 
             var thirdPlaceMatchData = new mlpMatchData(true);
-            for (var round = 0; round < expectedRoundSkills.Length; round++)
+            for (var round = 0; round < 3; round++)
             {
                 thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-                AssertOpponentSkill(thirdPlaceMatchData, expectedRoundSkills[round], errors, $"Hard tournament third-place path round {round + 1}");
+                AssertOpponentSkill(
+                    thirdPlaceMatchData,
+                    expectation.ExpectedSkill,
+                    errors,
+                    $"{expectation.Difficulty} tournament fixed third-place path round {round + 1}");
                 thirdPlaceTournament.ApplyCurrentMatchResult(28 + round, 12 + round);
             }
 
             thirdPlaceTournament.BeginFinals();
             thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-            AssertOpponentSkill(thirdPlaceMatchData, 7, errors, "Hard tournament third-place path semifinal");
+            AssertOpponentSkill(
+                thirdPlaceMatchData,
+                expectation.ExpectedSkill,
+                errors,
+                $"{expectation.Difficulty} tournament fixed third-place path semifinal");
 
             thirdPlaceTournament.ApplyCurrentMatchResult(18, 24);
             if (thirdPlaceTournament.CurrentStage != mlpTournamentStage.ThirdPlace || !thirdPlaceTournament.HasPendingPlayerMatch)
             {
-                errors.Add("Hard tournament did not route a semifinal loss into a pending third-place match.");
+                errors.Add($"{expectation.Difficulty} tournament did not route a semifinal loss into a pending third-place match.");
                 return;
             }
 
             thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-            AssertOpponentSkill(thirdPlaceMatchData, 7, errors, "Hard tournament third-place match");
-        }
-
-        /// <summary>
-        /// 检查地狱难度的锦标赛轮次是否映射到预期的最高 AI 技能。
-        /// </summary>
-        private static void ValidateHellTournamentSkillMapping(List<string> errors)
-        {
-            var tournament = new mlpTournamentData();
-            if (!tournament.Create(0, mlpAiDifficulty.Hell))
-            {
-                errors.Add("Hell tournament mapping test could not create a tournament.");
-                return;
-            }
-
-            var matchData = new mlpMatchData(true);
-            var expectedRoundSkills = new[] { 8, 9, 10 };
-            for (var round = 0; round < expectedRoundSkills.Length; round++)
-            {
-                matchData.StartTournamentMatch(tournament);
-                AssertOpponentSkill(matchData, expectedRoundSkills[round], errors, $"Hell tournament round {round + 1}");
-                tournament.ApplyCurrentMatchResult(34 + round, 18 + round);
-            }
-
-            tournament.BeginFinals();
-            if (tournament.CurrentStage != mlpTournamentStage.SemiFinal || !tournament.HasPendingPlayerMatch)
-            {
-                errors.Add("Hell tournament did not open a pending semifinal after finals start.");
-                return;
-            }
-
-            matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, 10, errors, "Hell tournament semifinal");
-
-            tournament.ApplyCurrentMatchResult(36, 22);
-            matchData.StartTournamentMatch(tournament);
-            AssertOpponentSkill(matchData, 11, errors, "Hell tournament final");
-
-            var thirdPlaceTournament = new mlpTournamentData();
-            if (!thirdPlaceTournament.Create(0, mlpAiDifficulty.Hell))
-            {
-                errors.Add("Hell third-place mapping test could not create a tournament.");
-                return;
-            }
-
-            var thirdPlaceMatchData = new mlpMatchData(true);
-            for (var round = 0; round < expectedRoundSkills.Length; round++)
-            {
-                thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-                AssertOpponentSkill(thirdPlaceMatchData, expectedRoundSkills[round], errors, $"Hell tournament third-place path round {round + 1}");
-                thirdPlaceTournament.ApplyCurrentMatchResult(31 + round, 16 + round);
-            }
-
-            thirdPlaceTournament.BeginFinals();
-            thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-            AssertOpponentSkill(thirdPlaceMatchData, 10, errors, "Hell tournament third-place path semifinal");
-
-            thirdPlaceTournament.ApplyCurrentMatchResult(21, 27);
-            if (thirdPlaceTournament.CurrentStage != mlpTournamentStage.ThirdPlace || !thirdPlaceTournament.HasPendingPlayerMatch)
-            {
-                errors.Add("Hell tournament did not route a semifinal loss into a pending third-place match.");
-                return;
-            }
-
-            thirdPlaceMatchData.StartTournamentMatch(thirdPlaceTournament);
-            AssertOpponentSkill(thirdPlaceMatchData, 10, errors, "Hell tournament third-place match");
+            AssertOpponentSkill(
+                thirdPlaceMatchData,
+                expectation.ExpectedSkill,
+                errors,
+                $"{expectation.Difficulty} tournament fixed third-place match");
         }
 
         /// <summary>

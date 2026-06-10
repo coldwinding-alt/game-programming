@@ -723,11 +723,14 @@ namespace mlp
         /// </summary>
         public void ShowPauseOverlay()
         {
+            // 1. 隐藏屏幕上的弹出消息、加分提示和倒计时（暂停时不需要这些）
             HideMessage();
             HideBonusNotice();
             HideCountdown();
+            // 2. 标记暂停状态并显示暂停画面（遮罩 + 面板 + 按钮）
             IsPauseOverlayVisible = true;
             SetPauseOverlayVisible(true);
+            // 3. 隐藏右上角的暂停、音乐和帮助按钮（暂停画面有自己的按钮）
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
             musicButton?.SetVisible(false);
@@ -739,8 +742,10 @@ namespace mlp
         /// </summary>
         public void HidePauseOverlay()
         {
+            // 1. 清除暂停状态并隐藏暂停画面
             IsPauseOverlayVisible = false;
             SetPauseOverlayVisible(false);
+            // 2. 重新显示右上角的暂停、音乐和帮助按钮
             pauseButton.SetVisible(true);
             SetGameObjectVisible(pauseButtonIcon, true);
             musicButton?.SetVisible(true);
@@ -752,12 +757,15 @@ namespace mlp
         /// </summary>
         public void BeginResumeCountdown(float duration)
         {
+            // 1. 清除暂停状态并隐藏暂停画面
             IsPauseOverlayVisible = false;
             SetPauseOverlayVisible(false);
+            // 2. 隐藏所有右上角按钮（倒计时期间不允许操作）
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
             musicButton?.SetVisible(false);
             helpButton?.SetVisible(false);
+            // 3. 启动 3-2-1 倒计时，标题显示 "RESUMING IN"
             StartCountdown(duration, "RESUMING IN");
         }
 
@@ -806,15 +814,19 @@ namespace mlp
         /// </summary>
         public void ShowBonusNotice(string message, float duration = 0.9f)
         {
+            // 1. 如果加分提示的根节点不存在，直接返回
             if (bonusNoticeRoot == null)
             {
                 return;
             }
 
+            // 2. 根据消息内容选择合适的文字颜色
             ApplyBonusNoticeTheme(message);
+            // 3. 设置文字内容和显示持续时间
             SetText(bonusNoticeText, message);
             bonusNoticeDuration = Mathf.Max(0.01f, duration);
             bonusNoticeTime = bonusNoticeDuration;
+            // 4. 定位到右上角指定位置，以较小的初始缩放显示（后续帧会播放弹入动画）
             bonusNoticeRoot.transform.position = mlpConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY);
             bonusNoticeRoot.transform.localScale = Vector3.one * 0.72f;
             bonusNoticeRoot.SetActive(true);
@@ -1169,10 +1181,12 @@ namespace mlp
         /// </summary>
         private void UpdatePostMatchVisual(float dt)
         {
+            // 1. 累加动画时间，计算入场进度（0→1）和持续脉冲值
             postMatchAnimTime += dt;
             var intro = Mathf.Clamp01(postMatchAnimTime / 0.34f);
             var eased = 1f - Mathf.Pow(1f - intro, 3f);
             var pulse = 0.5f + (0.5f * Mathf.Sin(postMatchAnimTime * 2.4f));
+            // 2. 卡片从略低位置滑入到最终位置，同时从 0.96 倍放大到 1 倍
             if (postMatchCardRoot != null)
             {
                 postMatchCardRoot.transform.position = mlpConstants.PixelToWorldSnapped(
@@ -1181,6 +1195,7 @@ namespace mlp
                 postMatchCardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0.96f, 1f, eased);
             }
 
+            // 3. 胜者头像和光环持续脉冲放大，败者保持缩小状态
             var winnerAuraScale = 1f + (0.035f * pulse);
             var loserAuraScale = 0.92f;
             var winnerPortraitScale = 1f + (0.014f * pulse);
@@ -1205,6 +1220,7 @@ namespace mlp
                 postMatchRightPortrait.transform.localScale = postMatchRightPortraitBaseScale * (postMatchWinnerSide == 1 ? winnerPortraitScale : loserPortraitScale);
             }
 
+            // 4. 提示文字和发光效果跟随脉冲值变化，营造呼吸灯效果
             postMatchPromptText.color = new Color(0.93f, 0.96f, 0.84f, Mathf.Lerp(0.72f, 1f, pulse));
             SetSpriteTint(
                 postMatchPromptFrame,
@@ -1222,12 +1238,15 @@ namespace mlp
         /// </summary>
         private void UpdateMessageVisual()
         {
+            // 1. 如果消息根节点不存在或未激活，跳过动画
             if (messageRoot == null || !messageRoot.activeSelf)
             {
                 return;
             }
 
+            // 2. 计算动画进度（0 = 刚出现，1 = 即将消失）
             var progress = 1f - Mathf.Clamp01(messageTime / Mathf.Max(0.01f, messageDuration));
+            // 3. 弹入动画：先从 0.78 放大到 1.08（过冲），再弹回到 1.0
             float scale;
             if (progress < 0.2f)
             {
@@ -1242,11 +1261,13 @@ namespace mlp
                 scale = 1f;
             }
 
+            // 4. 即将消失时略微缩小，营造退场感
             if (messageTime < MessageExitWindow)
             {
                 scale *= Mathf.Lerp(0.92f, 1f, messageTime / MessageExitWindow);
             }
 
+            // 5. 消息出现时从下方微微上浮，然后停在中央
             var lift = Mathf.Lerp(5f, 0f, Mathf.Clamp01(progress * 1.2f));
             messageRoot.transform.position = mlpConstants.PixelToWorldSnapped(mlpConstants.Width2, PopupCenterY - lift);
             messageRoot.transform.localScale = Vector3.one * (scale * messageVisualScale);
@@ -1257,15 +1278,19 @@ namespace mlp
         /// </summary>
         private void UpdateBonusNoticeVisual()
         {
+            // 1. 如果加分提示根节点不存在或未激活，跳过动画
             if (bonusNoticeRoot == null || !bonusNoticeRoot.activeSelf)
             {
                 return;
             }
 
+            // 2. 计算动画进度（0 = 刚出现，1 = 即将消失）
             var progress = 1f - Mathf.Clamp01(bonusNoticeTime / Mathf.Max(0.01f, bonusNoticeDuration));
+            // 3. 缩放动画：先从 0.62 弹入到 0.8，再缓缓缩小到 0.72
             var scale = progress < 0.2f
                 ? Mathf.Lerp(0.62f, 0.8f, progress / 0.2f)
                 : Mathf.Lerp(0.8f, 0.72f, (progress - 0.2f) / 0.8f);
+            // 4. 缓缓向上漂移，营造轻盈感
             var drift = Mathf.Lerp(4f, 0f, Mathf.Clamp01(progress * 1.1f));
             bonusNoticeRoot.transform.position = mlpConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY - drift);
             bonusNoticeRoot.transform.localScale = Vector3.one * scale;
@@ -1276,7 +1301,9 @@ namespace mlp
         /// </summary>
         private void UpdateCountdownVisual()
         {
+            // 1. 计算脉冲动画进度（0 = 刚触发，1 = 动画结束）
             var progress = 1f - Mathf.Clamp01(countdownPulseTime / CountdownPulseDuration);
+            // 2. 先从 0.72 快速放大到 1.16（弹出感），再缓慢回到 1.0（稳定）
             float scale;
             if (progress < 0.24f)
             {
@@ -1287,6 +1314,7 @@ namespace mlp
                 scale = Mathf.Lerp(1.16f, 1f, (progress - 0.24f) / 0.76f);
             }
 
+            // 3. 应用缩放到倒计时文字上
             countdownText.transform.localScale = countdownBaseScale * scale;
         }
 
@@ -1295,29 +1323,38 @@ namespace mlp
         /// </summary>
         private void ApplyMessageTheme(string message)
         {
+            // 1. 根据消息内容匹配不同的主题颜色
             switch (message)
             {
+                // 2. 三分球：橙色
                 case "3 POINT":
                     messageText.color = new Color32(0xFF, 0x98, 0x10, 0xFF);
                     break;
+                // 3. 投篮得分：金色
                 case "BASKET":
                     messageText.color = new Color32(0xFF, 0xC5, 0x57, 0xFF);
                     break;
+                // 4. 比赛开始：绿色
                 case "GO!!!":
                     messageText.color = new Color32(0x9C, 0xFF, 0x4A, 0xFF);
                     break;
+                // 5. 时间到：暖黄色
                 case "TIME!!!":
                     messageText.color = new Color32(0xFF, 0xBA, 0x40, 0xFF);
                     break;
+                // 6. 加时赛：青色
                 case "OVERTIME":
                     messageText.color = new Color32(0x42, 0xFF, 0xEA, 0xFF);
                     break;
+                // 7. 地狱冲刺：橙红色
                 case "HELL DASH!":
                     messageText.color = new Color32(0xFF, 0x62, 0x32, 0xFF);
                     break;
+                // 8. 地狱护盾：粉红色
                 case "HELL SHIELD!":
                     messageText.color = new Color32(0xFF, 0x52, 0x92, 0xFF);
                     break;
+                // 9. 其他消息：紫色（默认）
                 default:
                     messageText.color = new Color32(0x8B, 0x2D, 0xFF, 0xFF);
                     break;
@@ -1741,8 +1778,10 @@ namespace mlp
             int sortingOrder = 50,
             mlpTextStyle labelStyle = mlpTextStyle.ButtonLabel)
         {
+            // 1. 保存点击回调函数，计算按钮在屏幕上的碰撞矩形
             this.action = action;
             rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
+            // 2. 加载按钮背景纹理（优先使用独立纹理，否则回退到图集精灵）
             var buttonTexture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.MenuButtonPlate));
             float sourceWidth;
             float sourceHeight;
@@ -1760,12 +1799,15 @@ namespace mlp
                 sourceHeight = frame != null ? Mathf.Max(1f, frame.H) : 1f;
             }
 
+            // 3. 将背景精灵缩放到指定的像素尺寸
             sprite.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / sourceWidth,
                 mlpConstants.UnitsPerPixel * height / sourceHeight,
                 1f);
 
+            // 4. 记录基础缩放值（悬停时会在此基础上放大）
             baseScale = sprite.transform.localScale;
+            // 5. 根据按钮高度计算字号，创建文字标签（优先使用原生文字层，否则用 TextMesh）
             var fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
             if (mlpNativeMenuTextLayer.Active != null && mlpNativeMenuTextLayer.Active.Owns(parent))
             {
@@ -1796,6 +1838,7 @@ namespace mlp
                 labelTransform = label.transform;
             }
 
+            // 6. 记录标签的基础缩放值
             labelBaseScale = labelTransform != null ? labelTransform.localScale : Vector3.one;
         }
 
@@ -1804,6 +1847,7 @@ namespace mlp
         /// </summary>
         public void Update(Camera camera)
         {
+            // 1. 按钮不可见或没有相机时，重置按下状态并跳过
             if (!visible)
             {
                 pressed = false;
@@ -1816,6 +1860,7 @@ namespace mlp
                 return;
             }
 
+            // 2. 获取鼠标位置，转换为游戏像素坐标，判断是否在按钮区域内
             var mouse = Input.mousePosition;
             Vector2 pixel;
             bool inside;
@@ -1839,12 +1884,14 @@ namespace mlp
                 }
             }
 
+            // 3. 悬停时按钮和标签略微放大（1.035 倍），否则恢复原始大小
             sprite.transform.localScale = inside ? baseScale * 1.035f : baseScale;
             if (labelTransform != null)
             {
                 labelTransform.localScale = inside ? labelBaseScale * 1.035f : labelBaseScale;
             }
 
+            // 4. 悬停时文字变为金黄色，否则为白色
             var labelColor = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
             if (label != null)
             {
@@ -1855,11 +1902,13 @@ namespace mlp
                 nativeLabel.color = labelColor;
             }
 
+            // 5. 鼠标按下时记录"已按下"状态
             if (inside && Input.GetMouseButtonDown(0))
             {
                 pressed = true;
             }
 
+            // 6. 鼠标松开时：如果之前按下了且仍在按钮区域内，播放音效并执行回调
             if (pressed && Input.GetMouseButtonUp(0))
             {
                 pressed = false;

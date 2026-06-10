@@ -37,6 +37,9 @@ namespace mlp
         public readonly float MapX;
         public readonly float MapY;
         public readonly mlpBallSelection BallSelection;
+        // 旧版冒险模式曾用这个字段表示每一关的基础 AI 技能值。
+        // 当前固定四档难度模式下，实际比赛强度只看玩家选择的 Easy/Normal/Hard/Hell，
+        // 所以这个字段暂时不直接参与 AI 技能计算；继续保留它是为了不改动关卡数据结构和旧数据。
         public readonly int OpponentSkill;
         public readonly string VictoryBeat;
         public readonly string[] VictoryLines;
@@ -57,7 +60,7 @@ namespace mlp
         /// <param name="mapX">在冒险地图上的 X 坐标。</param>
         /// <param name="mapY">在冒险地图上的 Y 坐标。</param>
         /// <param name="ballSelection">该关卡使用的篮球皮肤。</param>
-        /// <param name="opponentSkill">对手的 AI 难度等级。</param>
+        /// <param name="opponentSkill">旧版关卡基础 AI 技能值；当前固定四档难度模式下不直接参与比赛强度计算。</param>
         /// <param name="victoryLines">玩家获胜时显示的对话台词。</param>
         /// <param name="defeatLines">玩家失败时显示的对话台词。</param>
         public mlpAdventureLevelDefinition(

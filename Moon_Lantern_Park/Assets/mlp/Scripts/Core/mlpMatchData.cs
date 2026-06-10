@@ -8,13 +8,22 @@ using UnityEngine;
 namespace mlp
 {
     /// <summary>
-    /// AI 难度等级：简单、普通、困难、地狱。难度越高，电脑对手越厉害。
+    /// AI 难度等级：全游戏只保留 Easy、Normal、Hard、Hell 四档。
+    /// 这些枚举值只表示玩家选择的难度档位，不再表示锦标赛轮次、冒险关卡编号等递增进度。
+    /// 具体会转换成哪个 AI 技能数值，由 mlpMatchData.GetOpponentSkillForDifficulty 统一决定。
     /// </summary>
     public enum mlpAiDifficulty
     {
+        /// <summary>简单：给新玩家和练习使用，AI 技能值最低。</summary>
         Easy,
+
+        /// <summary>普通：默认难度，适合作为标准体验。</summary>
         Normal,
+
+        /// <summary>困难：AI 更主动、更稳定，但不会因为赛段继续变强。</summary>
         Hard,
+
+        /// <summary>地狱：最高难度，仍保留 Hell 专属强化，但基础技能值固定。</summary>
         Hell
     }
 
@@ -370,7 +379,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 配置锦标赛中的下一场比赛，使用锦标赛当前对手和基于赛段的技能等级。
+        /// 配置锦标赛中的下一场比赛，使用锦标赛当前对手和固定四档难度。
         /// </summary>
         /// <param name="tournament">当前进行中的锦标赛数据。</param>
         /// <param name="ballSelection">使用的球皮。</param>
@@ -401,6 +410,11 @@ namespace mlp
             StartAdventureMatch(adventure, mlpAiDifficulty.Normal);
         }
 
+        /// <summary>
+        /// 配置冒险模式中的下一场比赛。
+        /// </summary>
+        /// <param name="adventure">当前进行中的冒险数据。</param>
+        /// <param name="difficulty">玩家选择的固定四档 AI 难度。</param>
         public void StartAdventureMatch(mlpAdventureData adventure, mlpAiDifficulty difficulty)
         {
             ResetAll();
@@ -451,53 +465,58 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将难度等级映射为快速比赛的 AI 技能数值索引。
+        /// 将玩家选择的四档难度映射为 AI 技能数值索引。
         /// </summary>
         /// <param name="difficulty">选择的 AI 难度。</param>
         /// <returns>技能索引（1 = 简单，2 = 普通，5 = 困难，10 = 地狱）。</returns>
-        private static int GetQuickMatchOpponentSkill(mlpAiDifficulty difficulty)
+        private static int GetOpponentSkillForDifficulty(mlpAiDifficulty difficulty)
         {
+            int skill;
             switch (difficulty)
             {
                 case mlpAiDifficulty.Easy:
-                    return 1;
-                case mlpAiDifficulty.Hell:
-                    return 10;
+                    // Easy 固定使用技能 1：让 AI 会基本行动，但反应和进攻都比较保守。
+                    skill = 1;
+                    break;
                 case mlpAiDifficulty.Hard:
-                    return 5;
+                    // Hard 固定使用技能 5：明显强于普通，但不会因为锦标赛后期或冒险后期继续上涨。
+                    skill = 5;
+                    break;
+                case mlpAiDifficulty.Hell:
+                    // Hell 固定使用技能 10：基础技能值最高；Hell 专属额外强化仍由控制器逻辑处理。
+                    skill = 10;
+                    break;
                 default:
-                    return 2;
+                    // Normal 是默认值。传入未知难度时也回到普通，避免出现 0 或异常难度。
+                    skill = 2;
+                    break;
             }
+
+            // 技能表有最大索引限制。即使以后调整数值，也通过 Clamp 保证不会越界。
+            return Mathf.Clamp(skill, 0, mlpAISkillsData.MaxSkillIndex);
+        }
+
+        /// <summary>
+        /// 快速赛也使用统一的四档难度映射。
+        /// </summary>
+        private static int GetQuickMatchOpponentSkill(mlpAiDifficulty difficulty)
+        {
+            return GetOpponentSkillForDifficulty(difficulty);
         }
 
         private static int GetAdventureOpponentSkill(mlpAdventureLevelDefinition level, mlpAiDifficulty difficulty)
         {
-            var baseSkill = level != null ? level.OpponentSkill : 0;
-            int adjustedSkill;
-            switch (difficulty)
-            {
-                case mlpAiDifficulty.Easy:
-                    adjustedSkill = baseSkill - 1;
-                    break;
-                case mlpAiDifficulty.Hard:
-                    adjustedSkill = baseSkill + 2;
-                    break;
-                case mlpAiDifficulty.Hell:
-                    adjustedSkill = baseSkill + 4;
-                    break;
-                default:
-                    adjustedSkill = baseSkill;
-                    break;
-            }
-
-            return Mathf.Clamp(adjustedSkill, 0, mlpAISkillsData.MaxSkillIndex);
+            // 冒险关卡本身仍保留关卡编号、特殊规则、剧情和球皮。
+            // 但当前“固定四档难度”设计下，AI 技能值不再读取 level.OpponentSkill，
+            // 也不再因为玩家打到后面的关卡而自动增加。
+            return GetOpponentSkillForDifficulty(difficulty);
         }
 
         /// <summary>
-        /// 根据锦标赛的难度和当前赛段计算 AI 技能等级。后续轮次和更高难度会让对手拥有更高的技能等级。
+        /// 根据锦标赛选择的固定四档难度计算 AI 技能等级。
         /// </summary>
         /// <param name="tournament">当前进行中的锦标赛数据。</param>
-        /// <returns>适合当前锦标赛赛段的技能索引（经范围限制）。</returns>
+        /// <returns>该难度固定对应的技能索引（经范围限制）。</returns>
         private static int GetTournamentOpponentSkill(mlpTournamentData tournament)
         {
             if (tournament == null)
@@ -505,50 +524,10 @@ namespace mlp
                 return 0;
             }
 
-            int skill;
-            switch (tournament.Difficulty)
-            {
-                case mlpAiDifficulty.Easy:
-                    skill = tournament.CurrentStage switch
-                    {
-                        mlpTournamentStage.SemiFinal => 3,
-                        mlpTournamentStage.ThirdPlace => 3,
-                        mlpTournamentStage.Final => 4,
-                        _ => 2
-                    };
-                    break;
-                case mlpAiDifficulty.Hard:
-                    skill = tournament.CurrentStage switch
-                    {
-                        mlpTournamentStage.RegularSeason => 5 + Mathf.Clamp(tournament.CurrentRegularSeasonRoundIndex, 0, 2),
-                        mlpTournamentStage.SemiFinal => 7,
-                        mlpTournamentStage.ThirdPlace => 7,
-                        mlpTournamentStage.Final => 8,
-                        _ => 5
-                    };
-                    break;
-                case mlpAiDifficulty.Hell:
-                    skill = tournament.CurrentStage switch
-                    {
-                        mlpTournamentStage.RegularSeason => 8 + Mathf.Clamp(tournament.CurrentRegularSeasonRoundIndex, 0, 2),
-                        mlpTournamentStage.SemiFinal => 10,
-                        mlpTournamentStage.ThirdPlace => 10,
-                        mlpTournamentStage.Final => 11,
-                        _ => 8
-                    };
-                    break;
-                default:
-                    skill = tournament.CurrentStage switch
-                    {
-                        mlpTournamentStage.SemiFinal => 4,
-                        mlpTournamentStage.ThirdPlace => 4,
-                        mlpTournamentStage.Final => 5,
-                        _ => 3
-                    };
-                    break;
-            }
-
-            return Mathf.Clamp(skill, 0, mlpAISkillsData.MaxSkillIndex);
+            // 锦标赛仍然保留常规赛、半决赛、三四名赛、决赛等赛制流程。
+            // 这些赛段只决定对阵和排名，不再决定 AI 技能值是否递增。
+            // 这样同一场锦标赛从第一轮到决赛都会保持玩家选择的同一个难度。
+            return GetOpponentSkillForDifficulty(tournament.Difficulty);
         }
 
         /// <summary>

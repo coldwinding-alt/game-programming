@@ -496,11 +496,14 @@ namespace mlp
         /// </summary>
         private void HandleMenuEscape()
         {
+            // 1. 根据当前所在界面，决定按 Escape 后返回哪里
             switch (currentScreen)
             {
+                // 2. 比赛类型选择界面：返回角色选择界面
                 case mlpBootstrapScreen.MatchType:
                     ShowSinglePlayerCharacterSetup();
                     break;
+                // 3. 故事介绍界面：如果传说面板开着就关闭它，否则取消整个故事介绍
                 case mlpBootstrapScreen.StoryIntro:
                     if (storyIntroLoreOpen)
                     {
@@ -510,6 +513,7 @@ namespace mlp
 
                     CancelSinglePlayerStoryIntro();
                     break;
+                // 4. 冒险/快速比赛/锦标赛设置界面：返回比赛类型选择
                 case mlpBootstrapScreen.AdventurePreview:
                 case mlpBootstrapScreen.AdventureMap:
                 case mlpBootstrapScreen.AdventureResult:
@@ -517,16 +521,19 @@ namespace mlp
                 case mlpBootstrapScreen.TournamentSetup:
                     ShowMatchTypeMenu();
                     break;
+                // 5. 单人角色选择、双人设置、训练设置界面：返回主菜单
                 case mlpBootstrapScreen.SinglePlayerCharacterSetup:
                 case mlpBootstrapScreen.TwoPlayerSetup:
                 case mlpBootstrapScreen.TrainingSetup:
                     ShowPlayerCountMenu();
                     break;
+                // 6. 锦标赛对阵图或完成界面：放弃锦标赛并返回主菜单
                 case mlpBootstrapScreen.TournamentBracket:
                 case mlpBootstrapScreen.TournamentComplete:
                     mlpInventory.Instance.AbandonTournament();
                     ShowPlayerCountMenu();
                     break;
+                // 7. 锦标赛颁奖界面：返回对阵图
                 case mlpBootstrapScreen.TournamentAwards:
                     ShowTournamentBracket();
                     break;
@@ -2232,22 +2239,29 @@ namespace mlp
         /// </summary>
         private bool HandlePendingTutorialAction()
         {
+            // 1. 读取教程结束后玩家选择的下一步操作
             var inventory = mlpInventory.Instance;
             var action = inventory.PendingTutorialNextAction;
+            // 2. 清除待处理标记，防止重复触发
             inventory.PendingTutorialNextAction = mlpTutorialNextAction.None;
+            // 3. 根据选择执行对应操作
             switch (action)
             {
+                // 4. 重玩教程：重新启动教程流程
                 case mlpTutorialNextAction.ReplayTutorial:
                     StartTutorialFlow();
                     return true;
+                // 5. 开始训练：进入训练模式
                 case mlpTutorialNextAction.StartTraining:
                     StartTrainingFlow();
                     return true;
+                // 6. 开始快速比赛：把训练时的选择同步到快速比赛，然后开始
                 case mlpTutorialNextAction.StartQuickMatch:
                     quickCharacterId = trainingCharacterId;
                     quickBallSelection = trainingBallSelection;
                     StartQuickMatchFlow();
                     return true;
+                // 7. 没有待处理操作：返回 false 表示不需要跳转
                 default:
                     return false;
             }
@@ -2499,14 +2513,17 @@ namespace mlp
         /// </summary>
         private void EnableGameplayPresentation()
         {
+            // 1. 关闭原生 UI 模式，重置视口缓存尺寸
             usingNativeUiPresentation = false;
             viewportScreenWidth = -1;
             viewportScreenHeight = -1;
+            // 2. 没有摄像机则直接返回
             if (mainCamera == null)
             {
                 return;
             }
 
+            // 3. 设置摄像机为全屏，附加像素完美分辨率适配器
             mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
             fixedResolutionPresenter?.Attach(mainCamera);
         }
@@ -2516,8 +2533,10 @@ namespace mlp
         /// </summary>
         private void EnableNativeMenuPresentation()
         {
+            // 1. 开启原生 UI 模式，移除像素完美适配器
             usingNativeUiPresentation = true;
             fixedResolutionPresenter?.Detach();
+            // 2. 强制刷新菜单视口，确保文字清晰
             RefreshNativeMenuViewport(force: true);
         }
 
@@ -2526,11 +2545,13 @@ namespace mlp
         /// </summary>
         private void RefreshNativeMenuViewport(bool force = false)
         {
+            // 1. 不在原生 UI 模式或没有摄像机时跳过
             if (!usingNativeUiPresentation || mainCamera == null)
             {
                 return;
             }
 
+            // 2. 获取当前屏幕尺寸，如果没变化且非强制刷新则跳过
             var screenWidth = Mathf.Max(1, Screen.width);
             var screenHeight = Mathf.Max(1, Screen.height);
             if (!force && screenWidth == viewportScreenWidth && screenHeight == viewportScreenHeight)
@@ -2538,17 +2559,21 @@ namespace mlp
                 return;
             }
 
+            // 3. 缓存新尺寸，刷新原生文字层布局
             viewportScreenWidth = screenWidth;
             viewportScreenHeight = screenHeight;
             nativeMenuTextLayer?.RefreshLayout(screenWidth, screenHeight);
 
+            // 4. 计算屏幕宽高比，调整摄像机视口保持目标比例
             var screenAspect = screenWidth / (float)screenHeight;
+            // 5. 宽高比刚好匹配：全屏显示
             if (Mathf.Abs(screenAspect - NativeUiAspect) <= 0.0001f)
             {
                 mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
                 return;
             }
 
+            // 6. 屏幕更宽：左右加黑边，居中显示
             if (screenAspect > NativeUiAspect)
             {
                 var normalizedWidth = NativeUiAspect / screenAspect;
@@ -2556,6 +2581,7 @@ namespace mlp
                 return;
             }
 
+            // 7. 屏幕更高：上下加黑边，居中显示
             var normalizedHeight = screenAspect / NativeUiAspect;
             mainCamera.rect = new Rect(0f, (1f - normalizedHeight) * 0.5f, 1f, normalizedHeight);
         }
@@ -2609,13 +2635,16 @@ namespace mlp
             mlpTextStyle style,
             Transform parent = null)
         {
+            // 1. 确定文字的父容器，默认挂在菜单根节点下
             var resolvedParent = parent ?? runtimeRoot;
+            // 2. 如果支持原生文字层（TextMeshPro），用原生方式创建，文字更清晰
             if (ShouldUseNativeMenuText(resolvedParent))
             {
                 nativeMenuTextLayer?.CreateText(name, text, x, y, fontSize, color, anchor, style);
                 return;
             }
 
+            // 3. 否则用旧版 TextMesh 方式创建文字
             mlpRender.Text(name, text, x, y, fontSize, color, anchor, sortingOrder, resolvedParent, style);
         }
 
@@ -2630,6 +2659,7 @@ namespace mlp
             int sortingOrder,
             mlpTextStyle style)
         {
+            // 1. 根据可用的渲染方式（原生或旧版）创建文字对象
             GameObject textObject = null;
             if (ShouldUseNativeMenuText(runtimeRoot))
             {
@@ -2642,6 +2672,7 @@ namespace mlp
                 textObject = legacyText != null ? legacyText.gameObject : null;
             }
 
+            // 2. 把文字加入传说文本列表，并根据传说面板是否打开设置可见性
             if (textObject != null)
             {
                 storyIntroLoreTextObjects.Add(textObject);
@@ -2653,6 +2684,7 @@ namespace mlp
 
         private GameObject CreateStoryIntroLoreButtonLabel(string text, float x, float y)
         {
+            // 1. 优先使用原生文字层创建传说按钮标签
             if (ShouldUseNativeMenuText(runtimeRoot))
             {
                 var nativeText = nativeMenuTextLayer?.CreateText(
@@ -2667,6 +2699,7 @@ namespace mlp
                 return nativeText != null ? nativeText.gameObject : null;
             }
 
+            // 2. 原生文字层不可用时，用旧版 TextMesh 创建
             var legacyText = mlpRender.Text(
                 "StoryIntroLoreButtonLabel",
                 text,
@@ -2725,14 +2758,18 @@ namespace mlp
 
         private void RefreshStoryIntroLoreButtonLayout(bool isVisible)
         {
+            // 1. 根据传说面板是否打开，选择对应的位置和偏移值
             var buttonX = isVisible ? StoryIntroLoreOpenButtonX : StoryIntroLoreButtonX;
             var buttonY = isVisible ? StoryIntroLoreOpenButtonY : StoryIntroLoreButtonY;
             var labelOffsetX = isVisible ? StoryIntroLoreOpenLabelOffsetX : StoryIntroLoreLabelOffsetX;
             var labelOffsetY = isVisible ? StoryIntroLoreOpenLabelOffsetY : StoryIntroLoreLabelOffsetY;
+            // 2. 移动按钮到新位置
             storyIntroLoreButton?.SetPosition(buttonX, buttonY);
+            // 3. 移动按钮上的文字标签到按钮旁边的偏移位置
             SetStoryIntroLoreLabelPosition(
                 buttonX + labelOffsetX,
                 buttonY + labelOffsetY);
+            // 4. 移动传说面板的美术元素，偏移量基于按钮与初始位置的差值
             SetStoryIntroLoreArtOffset(
                 buttonX - StoryIntroLoreButtonX,
                 buttonY - StoryIntroLoreButtonY);
@@ -3102,12 +3139,15 @@ namespace mlp
 
         private void CreateTournamentSeasonBanner(mlpTournamentData tournament)
         {
+            // 1. 获取当前赛事阶段的标题文字
             var title = mlpSinglePlayerNarrative.GetTournamentStageTitle(tournament);
             if (title == "DIVISIONS")
             {
+                // 2. 如果是分区赛阶段则不显示横幅，直接返回
                 return;
             }
 
+            // 3. 创建标题背景面板
             CreatePanel(
                 "TournamentSeasonBannerPanel",
                 mlpConstants.Width2,
@@ -3116,6 +3156,7 @@ namespace mlp
                 24f,
                 18,
                 new Color(0.03f, 0.06f, 0.1f, 0.74f));
+            // 4. 在背景上显示阶段标题文字（如"常规赛"、"半决赛"等）
             CreateMenuText(
                 "TournamentSeasonBannerTitle",
                 title,
@@ -3133,6 +3174,7 @@ namespace mlp
         /// </summary>
         private void CreateTournamentRegularSeasonBoard(mlpTournamentData tournament)
         {
+            // 1. 创建排名表的整体半透明背景
             CreatePanel(
                 "RegularSeasonBackdrop",
                 mlpConstants.Width2,
@@ -3142,7 +3184,9 @@ namespace mlp
                 8,
                 new Color(0.01f, 0.04f, 0.08f, 0.28f));
 
+            // 2. 左侧绘制 A 分区的队伍排名列表
             CreateTournamentDivisionBoard("DivisionA", 222f, 242f, "DIV. A", tournament, 0);
+            // 3. 右侧绘制 B 分区的队伍排名列表
             CreateTournamentDivisionBoard("DivisionB", 578f, 242f, "DIV. B", tournament, 1);
         }
 
@@ -3389,6 +3433,7 @@ namespace mlp
             const float semiPanelOffsetX = 200f;
             const float placementPanelY = 324f;
 
+            // 1. 创建季后赛整体背景面板
             CreatePanel(
                 "PlayoffBackdrop",
                 mlpConstants.Width2,
@@ -3398,7 +3443,9 @@ namespace mlp
                 8,
                 new Color(0.02f, 0.05f, 0.08f, 0.28f));
 
+            // 2. 判断当前是否处于半决赛阶段（用于高亮显示）
             var semiCurrent = !tournament.Completed && tournament.CurrentStage == mlpTournamentStage.SemiFinal;
+            // 3. 绘制左侧半决赛比赛卡片
             CreateTournamentPlayoffMatchPanel(
                 "SemiFinalLeft",
                 mlpConstants.Width2 - semiPanelOffsetX,
@@ -3406,6 +3453,7 @@ namespace mlp
                 "SEMIFINAL",
                 tournament.SemiFinalResults[0],
                 semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[0], tournament.PlayerCharacterId));
+            // 4. 绘制右侧半决赛比赛卡片
             CreateTournamentPlayoffMatchPanel(
                 "SemiFinalRight",
                 mlpConstants.Width2 + semiPanelOffsetX,
@@ -3413,6 +3461,7 @@ namespace mlp
                 "SEMIFINAL",
                 tournament.SemiFinalResults[1],
                 semiCurrent && MatchIncludesPlayer(tournament.SemiFinalResults[1], tournament.PlayerCharacterId));
+            // 5. 绘制决赛比赛卡片
             CreateTournamentPlayoffMatchPanel(
                 "FinalMatch",
                 mlpConstants.Width2,
@@ -3420,6 +3469,7 @@ namespace mlp
                 "FINAL",
                 tournament.FinalResult,
                 !tournament.Completed && tournament.CurrentStage == mlpTournamentStage.Final);
+            // 6. 绘制季军赛比赛卡片
             CreateTournamentPlayoffMatchPanel(
                 "ThirdPlaceMatch",
                 mlpConstants.Width2,
@@ -3442,14 +3492,18 @@ namespace mlp
             const float rowOffset = 18f;
             const float titleOffsetY = 58f;
 
+            // 1. 根据比赛状态选择面板颜色（当前进行中/已完成/未开始）
             var tint = current
                 ? new Color(1f, 0.78f, 0.52f, 1f)
                 : match.Completed
                     ? new Color(0.8f, 0.98f, 0.9f, 1f)
                     : new Color(0.76f, 0.82f, 0.9f, 0.9f);
+            // 2. 选择边框样式（当前比赛用高亮边框，其他用普通边框）
             var frame = current ? "MatchBack0002" : "MatchBack0001";
 
+            // 3. 创建带边框的比赛卡片面板
             CreateFramedPanel($"{key}_Frame", frame, x, y, panelWidth, panelHeight, 13, tint);
+            // 4. 在面板内绘制半透明阴影层
             CreatePanel(
                 $"{key}_Shade",
                 x,
@@ -3459,6 +3513,7 @@ namespace mlp
                 14,
                 new Color(0.03f, 0.05f, 0.08f, 0.3f));
 
+            // 5. 显示比赛阶段标题（如"SEMIFINAL"、"FINAL"）
             CreateMenuText(
                 $"{key}_Title",
                 title,
@@ -3470,8 +3525,10 @@ namespace mlp
                 15,
                 mlpTextStyle.TournamentAccent);
 
+            // 6. 绘制水平分隔线，将两个选手区域隔开
             CreatePanel($"{key}_DividerHorizontal", x, y, panelWidth - 28f, 2f, 15, new Color(0.3f, 0.86f, 0.9f, 0.46f));
 
+            // 7. 绘制左侧选手的头像、名称和得分
             var leftRowY = y - rowOffset;
             var rightRowY = y + rowOffset;
             CreateTournamentPlayoffEntry(
@@ -3485,6 +3542,7 @@ namespace mlp
                 match.LeftScore,
                 match.Completed,
                 current);
+            // 8. 绘制右侧选手的头像、名称和得分
             CreateTournamentPlayoffEntry(
                 $"{key}_Right",
                 match.RightCharacterId,
@@ -3497,6 +3555,7 @@ namespace mlp
                 match.Completed,
                 current);
 
+            // 9. 比赛未完成时显示对战分隔标记
             if (!match.Completed)
             {
                 CreateMenuText(
@@ -3527,11 +3586,13 @@ namespace mlp
             bool showScore,
             bool current)
         {
+            // 1. 根据胜负和比赛状态选择发光颜色（金色/青色/绿色）
             var glowColor = winner
                 ? new Color(1f, 0.74f, 0.28f, 0.36f)
                 : current
                     ? new Color(0.3f, 0.96f, 1f, 0.32f)
                     : new Color(0.24f, 0.94f, 0.78f, 0.24f);
+            // 2. 绘制选手头像徽章（带发光底座）
             CreateTournamentBadge(
                 key,
                 characterId,
@@ -3543,6 +3604,7 @@ namespace mlp
                 TournamentBracketPortraitPixels,
                 glowColor);
 
+            // 3. 显示选手名称，获胜者用金色高亮
             var name = CharacterNameOrTbd(characterId);
             CreateStandingsBodyText(
                 $"{key}_Name",
@@ -3553,6 +3615,7 @@ namespace mlp
                 winner ? new Color32(0xFF, 0xD6, 0x6D, 0xFF) : Color.white,
                 TextAnchor.MiddleLeft,
                 17);
+            // 4. 显示选手得分，比赛未结束时为空
             CreateStandingsAccentText(
                 $"{key}_Score",
                 showScore ? score.ToString() : string.Empty,
@@ -3569,10 +3632,12 @@ namespace mlp
         /// </summary>
         private void CreateTournamentSummaryPanel(mlpTournamentData tournament)
         {
+            // 1. 根据赛事是否结束，调整面板尺寸和位置
             var summaryCompleted = tournament.Completed;
             var summaryWidth = summaryCompleted ? 312f : 328f;
             var summaryHeight = summaryCompleted ? 72f : 40f;
             var summaryY = summaryCompleted ? TournamentSummaryY : TournamentSummaryY + 6f;
+            // 2. 创建带边框的摘要面板
             CreateFramedPanel(
                 "TournamentSummaryPanel",
                 "btn_bg0000",
@@ -3585,9 +3650,12 @@ namespace mlp
                     ? new Color(0.2f, 0.78f, 0.88f, 0.96f)
                     : new Color(0.22f, 0.86f, 0.94f, 0.94f));
 
+            // 3. 赛事已结束时显示冠军信息和玩家排名
             if (summaryCompleted)
             {
+                // 4. 绘制冠军头像小型徽章
                 CreateTournamentMiniBadge("ChampionBadge", tournament.ChampionCharacterId, 280f, summaryY, 16);
+                // 5. 显示"CHAMPION"标签
                 CreateMenuText(
                     "ChampionLabel",
                     "CHAMPION",
@@ -3598,6 +3666,7 @@ namespace mlp
                     TextAnchor.MiddleLeft,
                     17,
                     mlpTextStyle.TournamentAccent);
+                // 6. 显示冠军角色名称
                 CreateMenuText(
                     "ChampionName",
                     CharacterNameOrTbd(tournament.ChampionCharacterId),
@@ -3608,6 +3677,7 @@ namespace mlp
                     TextAnchor.MiddleLeft,
                     17,
                     mlpTextStyle.TournamentBody);
+                // 7. 显示玩家最终排名（如"YOU FINISHED #3"）
                 CreateMenuText(
                     "PlacementLabel",
                     $"YOU FINISHED #{tournament.PlayerPlacement}",
@@ -3621,6 +3691,7 @@ namespace mlp
                 return;
             }
 
+            // 8. 赛事进行中时，根据当前阶段生成提示标题和详情
             string headline;
             string detail;
             if (tournament.CurrentStage == mlpTournamentStage.RegularSeason)
@@ -3652,6 +3723,7 @@ namespace mlp
                 detail = GetMatchupText(tournament.FinalResult, "FINAL");
             }
 
+            // 9. 显示摘要信息文字（如"ROUND 3 - P1 VS P4"）
             CreateStandingsBodyText(
                 "TournamentSummaryDetail",
                 $"{headline} - {detail}",
@@ -3678,20 +3750,24 @@ namespace mlp
             Color glowColor,
             Transform parent = null)
         {
+            // 1. 如果没有指定父对象，默认挂到运行时根节点下
             if (parent == null)
             {
                 parent = runtimeRoot;
             }
 
+            // 2. 计算徽章底座的像素尺寸（取头像和缩放的最大值）
             const float legacyBadgePixels = 150f;
             var badgePixels = Mathf.Max(
                 portraitPixels + 10f,
                 Mathf.Max(legacyBadgePixels * badgeScale, legacyBadgePixels * glowScale * 0.82f));
+            // 3. 在发光颜色基础上混合生成光环边缘颜色
             var ringColor = new Color(
                 Mathf.Clamp01(0.48f + glowColor.r * 0.55f),
                 Mathf.Clamp01(0.48f + glowColor.g * 0.55f),
                 Mathf.Clamp01(0.48f + glowColor.b * 0.55f),
                 0.96f);
+            // 4. 绘制徽章底座（含发光圈和深色背景）
             mlpRender.PortraitBackplate(
                 $"{key}_Badge",
                 x,
@@ -3703,6 +3779,7 @@ namespace mlp
                 new Color(0.01f, 0.025f, 0.06f, characterId >= 0 ? 0.94f : 0.62f),
                 ringColor);
 
+            // 5. 如果角色 ID 有效，叠加上角色头像精灵
             if (characterId >= 0)
             {
                 CreateTournamentPortrait($"{key}_Portrait", characterId, x, y + 1f, portraitPixels, sortingOrder + 3, parent);

@@ -714,30 +714,36 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         protected virtual void StrategyDefence(float dt)
         {
+            // 1. 如果没有对手信息，直接退出
             if (opponent == null)
             {
                 return;
             }
 
+            // 2. 尝试使用超级冲刺拦截持球对手，如果成功则本帧不再做其他操作
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashAgainstHolder()))
             {
                 return;
             }
 
+            // 3. 更新抢断和移动延迟计时器
             var stealState = stealDelay.Update(dt);
             var moveState = moveDelay.Update(dt);
+            // 4. 如果被假动作骗到（"被晃飞"），则停下不动
             if (isPumped)
             {
                 CurrentMove = 0;
             }
             else
             {
+                // 5. 计算防守目标位置：如果对手超出防守边界就守住边界，否则紧跟对手身后一段距离
                 var target = (opponent.Position.x - endPoint) * player.Side < 0f
                     ? endPoint
                     : opponent.IsGrounded
                         ? opponent.Position.x + player.Side * mlpObjectsData.OpponentDelta
                         : opponent.Position.x + player.Side * (mlpObjectsData.OpponentDelta - 10f);
 
+                // 6. 站在地上时按移动延迟节奏跟防，跳起时则直接跟踪对手
                 if (player.IsGrounded)
                 {
                     if (moveState == -1)
@@ -751,14 +757,18 @@ namespace mlp
                     CurrentMove = MoveTo(opponent.Position.x + player.Side * (mlpObjectsData.OpponentDelta - 10f));
                 }
 
+                // 7. 当抢断计时器到期时，尝试抢断
                 if (stealState == -1)
                 {
                     TryToSteal();
                 }
             }
 
+            // 8. 当盖帽计时器到期且对手在身边时起跳干扰投篮
             CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseAbs(GetDefenceContestDistance());
+            // 9. 抢断计时器激活时执行抢断动作
             CurrentAction = stealState == 1;
+            // 10. 如果长时间没有动作（站着不动），将防守边界重置到场地另一侧，防止消极防守
             if (!CurrentAction && !CurrentJump && CurrentMove == 0)
             {
                 deltaDownTime += dt;
@@ -789,20 +799,24 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         protected virtual void StrategyBallFight(float dt)
         {
+            // 1. 获取自由球的目标 X 坐标（地狱难度会预测落点），并向球的方向移动（带一点偏移避免撞到球）
             var ballX = GetTechnicalLooseBallTargetX();
             var offset = ballX - player.Position.x >= 0f ? 10f : -10f;
             CurrentMove = MoveTo(ballX + offset);
             CurrentJump = false;
 
+            // 2. 如果球在空中且距离够远，尝试使用超级冲刺抢先捡球
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashForBall()))
             {
                 return;
             }
 
+            // 3. 根据球的状态决定是否起跳
             if (ball.State != "bounce" && ball.State != "shooting")
             {
                 if (ball.State == "basket")
                 {
+                    // 3a. 球在篮筐附近弹跳 → 争抢篮板：使用篮板延迟计时器，在篮板区域起跳
                     var reboundState = reboundDelay.Update(dt);
                     if (reboundState == -1 && IsBallInReboundZone())
                     {
@@ -815,10 +829,12 @@ namespace mlp
                 }
                 else
                 {
+                    // 3b. 球在其他状态（如抢断中）→ 水平距离近且垂直距离远时起跳
                     CurrentJump = Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f;
                 }
             }
 
+            // 4. 争球状态下不执行投篮/抢断等动作
             CurrentAction = false;
         }
 
@@ -828,22 +844,26 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         protected virtual void StrategyAttack(float dt)
         {
+            // 1. 如果没有持球，直接退出
             if (!player.WithBall)
             {
                 return;
             }
 
+            // 2. 如果拥有扣篮类大招且计时器到期，触发大招投篮
             if (player.UsesPossessionSkill && megaDunkDelay.Update(dt) == 1)
             {
                 TriggerSuperInput();
                 return;
             }
 
+            // 3. 尝试使用超级冲刺甩开防守者
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashInAttack()))
             {
                 return;
             }
 
+            // 4. 如果正在执行躲避抢断的动作（跳起或侧移），优先完成躲避
             if (avoidStealJump || avoidStealMove != 0)
             {
                 CurrentMove = avoidStealMove;
@@ -851,18 +871,23 @@ namespace mlp
                 return;
             }
 
+            // 5. 站在地面上时的进攻逻辑
             if (player.IsGrounded)
             {
+                // 5a. 移动延迟计时器到期时做一次决策
                 if (moveDelay.Update(dt) == -1)
                 {
+                    // 5b. 向跳跃点/攻击点移动，并判断是否应该起跳投篮
                     var move = MoveInAttack();
                     if (attackJump)
                     {
+                        // 5c. 到达跳跃点 → 起跳投篮
                         CurrentJump = true;
                         CurrentMove = move;
                     }
                     else if (IsAICloserForBasket())
                     {
+                        // 5d. AI 比对手更靠近篮筐 → 可以直接上篮
                         if (move == -player.Side)
                         {
                             CurrentMove = -player.Side;
@@ -876,12 +901,15 @@ namespace mlp
                     }
                     else
                     {
+                        // 5e. 对手挡在前面 → 处理各种被防守的情况
                         CurrentJump = false;
                         CurrentDash = 0;
                         if (IsOpponentCloseBehind())
                         {
+                            // 5f. 对手从后面追上来施压
                             if (IsUnderOwnBasket())
                             {
+                                // 5g. 在自家篮筐下 → 用冲刺甩开（非简单难度）
                                 if (player.ReadyForDash && difficulty != mlpAiDifficulty.Easy)
                                 {
                                     CurrentDash = -player.Side;
@@ -895,6 +923,7 @@ namespace mlp
                             }
                             else if (UnityEngine.Random.value <= profile.ReactOnOpponent)
                             {
+                                // 5h. 有一定概率对背后防守做出反应
                                 CurrentJump = false;
                                 if (player.ReadyForDash && InDashingZone() && UnityEngine.Random.value <= profile.MakeDash && difficulty != mlpAiDifficulty.Easy)
                                 {
@@ -908,16 +937,19 @@ namespace mlp
                             }
                             else
                             {
+                                // 5i. 没反应过来 → 继续向篮筐方向移动
                                 CurrentMove = -player.Side;
                                 moveDelay.Activate();
                             }
                         }
                         else
                         {
+                            // 5j. 对手不在后面 → 安全地向篮筐推进
                             CurrentMove = -player.Side;
                         }
                     }
 
+                    // 5k. 如果已决定起跳投篮，激活攻击计时器并计算飞行方向
                     if (attackJump)
                     {
                         attack.Activate();
@@ -927,6 +959,7 @@ namespace mlp
             }
             else
             {
+                // 6. 在空中时：保持飞行方向，攻击计时器到期时执行投篮
                 CurrentMove = (player.Position.x - attackPoint) * directionToFly > 0f ? Mathf.RoundToInt(directionToFly) : 0;
                 CurrentJump = false;
                 CurrentAction = attack.Update(dt) == 1;
@@ -950,32 +983,40 @@ namespace mlp
         /// <param name="dt">帧间隔时间（秒）</param>
         protected virtual void StrategyRebound(float dt)
         {
+            // 1. 如果拥有"必定盖帽"大招且对手投出可盖帽的球，触发大招
             if (player.UsesGuaranteedBlockSkill && player.ReadyForSuper && ball != null && ball.IsBlockable && ball.Side != player.Side)
             {
                 TriggerSuperInput();
                 return;
             }
 
+            // 2. 如果拥有"篮板磁铁"大招且球在篮筐附近弹跳，触发大招
             if (player.UsesReboundMagnetSkill && player.ReadyForSuper && ball != null && ball.State == "basket")
             {
                 TriggerSuperInput();
                 return;
             }
 
+            // 3. 如果球在篮筐附近弹跳，尝试超级冲刺抢占篮板位置
             if (TryUseDelayedSuperDash(dt, ball != null && ball.State == "basket" && ShouldUseSuperDashForBall()))
             {
                 return;
             }
 
+            // 4. 处理"提前排队的起跳"指令（比如对手投篮时提前起跳干扰）
             var contestJump = queuedReboundJump && player.IsGrounded;
             if (contestJump)
             {
                 queuedReboundJump = false;
             }
 
+            // 5. 当球在身边（水平近、垂直远）或者有排队起跳时才起跳
             CurrentJump = contestJump || (Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f);
+            // 6. 地狱难度使用弹道预测落点，其他难度用固定篮板位置
             var targetReboundPoint = ShouldUseTechnicalPrediction() ? GetTechnicalReboundTargetX() : reboundPoint;
+            // 7. 起跳时不动，落地后向篮板位置移动
             CurrentMove = CurrentJump ? 0 : player.IsGrounded ? MoveTo(targetReboundPoint) : 0;
+            // 8. 篮板阶段不执行投篮/抢断动作
             CurrentAction = false;
         }
 
@@ -984,11 +1025,13 @@ namespace mlp
         /// </summary>
         protected void TryToSteal()
         {
+            // 1. 简单难度不抢断；对手为空或在空中时也不抢断
             if (difficulty == mlpAiDifficulty.Easy || opponent == null || !opponent.IsGrounded)
             {
                 return;
             }
 
+            // 2. 如果从后面接近对手，按技能概率决定是否发起抢断
             if (IsOpponentCloseBehind(GetStealBehindDistance()))
             {
                 if (UnityEngine.Random.value <= profile.MakeSteal)
@@ -1000,6 +1043,7 @@ namespace mlp
                     stealDelay.SkipIt();
                 }
             }
+            // 3. 如果对手在篮筐附近（更危险），抢断概率提高到 1.5 倍
             else if (IsOpponentCloseToBasket(GetStealBasketDistance()))
             {
                 if (UnityEngine.Random.value <= 1.5f * profile.MakeSteal)
@@ -1021,26 +1065,32 @@ namespace mlp
         /// <returns>操作成功时返回 true；否则返回 false。</returns>
         protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
         {
+            // 1. 检查是否有可用的超级冲刺（角色自带或地狱难度奖励），以及当前场景是否值得使用
             var canUseNativeSuperDash = player.UsesDashSkill && player.ReadyForSuper;
             var canUseHellBonusSuperDash = player.CanUseHellBonusSuperDash;
+            // 2. 如果没有可用的超级冲刺或者场景不需要，重置计时器并返回
             if ((!canUseNativeSuperDash && !canUseHellBonusSuperDash) || !shouldUse)
             {
                 superDashDelay.Reset();
                 return false;
             }
 
+            // 3. 更新超级冲刺延迟计时器
             var state = superDashDelay.Update(dt);
+            // 4. 计时器首次激活（-1 表示刚开始计时）
             if (state == -1)
             {
                 superDashDelay.Activate();
                 return false;
             }
 
+            // 5. 计时器还没到期，继续等待
             if (state != 1)
             {
                 return false;
             }
 
+            // 6. 计时器到期 → 使用角色自带的超级冲刺
             if (canUseNativeSuperDash)
             {
                 TriggerSuperInput();
@@ -1048,12 +1098,14 @@ namespace mlp
                 return true;
             }
 
+            // 7. 尝试使用地狱难度奖励的超级冲刺
             if (player.TryUseHellBonusSuperDash())
             {
                 superDashDelay.Reset();
                 return true;
             }
 
+            // 8. 两种都失败了，重置计时器
             superDashDelay.Reset();
             return false;
         }
@@ -1128,26 +1180,31 @@ namespace mlp
         /// </summary>
         protected void HandleBallInOwnHands()
         {
+            // 1. 重置所有延迟计时器和输入状态，切换到进攻策略（策略编号 2）
             ResetBaseDelays();
             ResetCurrents();
             queuedReboundJump = false;
             strategy = 2;
             superDashDelay.Reset();
 
+            // 2. 根据球员在场上的位置，决定投篮目标点
             var reboundZone = IsReboundInAttackZone();
             if (reboundZone == -1)
             {
+                // 2a. 在进攻区域之前（离篮筐远）→ 设定一个近筐攻击点，如果在空中则立即准备投篮
                 willAttackAtOnce = !player.IsGrounded;
                 SetAttackPoint(150f, player.Position.x);
             }
             else if (reboundZone == 0)
             {
+                // 2b. 在进攻区域内 → 在当前位置投篮，如果在空中则立即投
                 willAttackAtOnce = !player.IsGrounded;
                 var currentX = player.Position.x;
                 SetAttackPoint(currentX, currentX);
             }
             else
             {
+                // 2c. 在进攻区域之后（已深入对方半场）→ 自动选择最佳投篮点
                 SetAttackPoint(0f, 0f);
                 willAttackAtOnce = !player.IsGrounded && Mathf.Abs(player.Position.x - attackPoint) < 50f;
             }
@@ -1187,12 +1244,14 @@ namespace mlp
         /// <param name="signalPlayerNo">触发信号的玩家编号</param>
         protected void ProcessPlayerSignal(mlpPlayerSignalType signal, int side, int signalPlayerNo)
         {
+            // 1. 收到"开始抢断"信号 → 处理抢断反应（躲避或跟进）
             if (signal == mlpPlayerSignalType.StartSteal)
             {
                 PlayerStartSteal(side);
                 return;
             }
 
+            // 2. 收到"抢断完成"信号 → 如果是对手的抢断，清除躲避状态
             if (signal == mlpPlayerSignalType.Steal)
             {
                 if (side == -player.Side)
@@ -1203,16 +1262,19 @@ namespace mlp
                 return;
             }
 
+            // 3. 收到"起跳"信号
             if (signal == mlpPlayerSignalType.JumpA)
             {
                 if (side == player.Side && signalPlayerNo == playerNo)
                 {
+                    // 3a. 自己起跳 → 清除躲避状态，激活攻击计时器，记录飞行方向
                     ResetAvoidSteal();
                     attack.Activate();
                     directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                 }
                 else if (side == -player.Side)
                 {
+                    // 3b. 对手起跳 → 根据难度和概率决定是否跟着起跳干扰投篮
                     if (ShouldUsePerfectContestOnJump() || UnityEngine.Random.value <= profile.JumpThrow)
                     {
                         defenceDelay.Activate();
@@ -1222,17 +1284,21 @@ namespace mlp
                 return;
             }
 
+            // 4. 收到"假动作"信号 → 对手做假动作时可能被骗起跳
             if (signal == mlpPlayerSignalType.Pump)
             {
                 if (side == -player.Side && player.CanAct && IsOpponentCloseBehind(90f))
                 {
+                    // 4a. 限制最多被骗 3 次
                     if (++pumpCount <= 3)
                     {
+                        // 4b. 地狱难度下可能识破假动作，不被骗
                         if (ShouldIgnorePumpFake())
                         {
                             return;
                         }
 
+                        // 4c. 按概率被骗：起跳防守并停下移动，标记为"被晃飞"
                         if (UnityEngine.Random.value <= profile.JumpPump)
                         {
                             defenceDelay.Activate();
@@ -1246,14 +1312,17 @@ namespace mlp
                 return;
             }
 
+            // 5. 收到"冲刺"信号
             if (signal == mlpPlayerSignalType.Dash)
             {
                 if (side == player.Side)
                 {
+                    // 5a. 队友冲刺 → 重置攻击计时器（队友在跑，重新规划）
                     attack.Reset();
                 }
                 else if (strategy == 0 && player.CanAct && IsOpponentInRangeBehind(40f, GetDashBlockRangeMaxDistance()))
                 {
+                    // 5b. 对手在身后冲刺 → 按概率尝试盖帽
                     if (UnityEngine.Random.value <= profile.MakeBlock)
                     {
                         ResetCurrents();
@@ -1266,6 +1335,7 @@ namespace mlp
                 return;
             }
 
+            // 6. 收到"眩晕"信号 → 如果是自己被眩晕，重置所有计时器
             if (signal == mlpPlayerSignalType.Stun && side == player.Side)
             {
                 ResetAllDelays();
@@ -1425,12 +1495,15 @@ namespace mlp
         /// </summary>
         protected void InitZones()
         {
+            // 1. 根据玩家所在阵营（左=1，右=-1）设置进攻和冲刺区域的边界
             if (player.Side == 1)
             {
+                // 1a. 右侧阵营：直接使用配置中的区域值
                 attackZoneStart = mlpObjectsData.AttackZoneStart;
                 attackZoneEnd = mlpObjectsData.AttackZoneEnd;
                 dashZoneStart = mlpObjectsData.DashZoneStart;
                 dashZoneEnd = mlpObjectsData.DashZoneEnd;
+                // 1b. 根据球员编号（0=主力，1=辅助）设置不同的防守/篮板位置
                 if (playerNo == 0)
                 {
                     baseEndPoint = 280f;
@@ -1446,6 +1519,7 @@ namespace mlp
             }
             else
             {
+                // 1c. 左侧阵营：将坐标镜像翻转（场地关于中心对称）
                 attackZoneStart = mlpConstants.Width - mlpObjectsData.AttackZoneEnd;
                 attackZoneEnd = mlpConstants.Width - mlpObjectsData.AttackZoneStart;
                 dashZoneStart = mlpConstants.Width - mlpObjectsData.DashZoneEnd;
@@ -1464,6 +1538,7 @@ namespace mlp
                 }
             }
 
+            // 2. 设置防守站位点和默认终点位置
             defensePoint = player.Side == -1 ? mlpObjectsData.DefensePoint : mlpConstants.Width - mlpObjectsData.DefensePoint;
             endPoint = baseEndPoint;
         }
@@ -1491,19 +1566,27 @@ namespace mlp
         /// </summary>
         protected void ResetForRestart()
         {
+            // 1. 设置默认策略为"跳球"（编号 3），重置无聊等待计时
             strategy = 3;
             deltaDownTime = 0f;
+            // 2. 恢复默认防守终点位置
             endPoint = baseEndPoint;
+            // 3. 重置所有延迟计时器和当前输入
             ResetAllDelays();
             ResetCurrents();
+            // 4. 清除盖帽、大招、排队大招等状态
             CurrentBlockOrPump = false;
             CurrentSuper = false;
             queuedSuperInput = false;
+            // 5. 清除假动作被骗状态和计数
             isPumped = false;
             pumpCount = 0;
+            // 6. 清除排队篮板起跳和立即进攻标志
             queuedReboundJump = false;
             willAttackAtOnce = false;
+            // 7. 篮板位置默认为防守篮板位置
             reboundPoint = reboundPointInDefence;
+            // 8. 清除抢断躲避状态
             ResetAvoidSteal();
         }
 
@@ -1580,6 +1663,7 @@ namespace mlp
         /// <param name="jump">跳跃点 X 位置，用于决定何时起跳投篮</param>
         protected void SetAttackPoint(float point, float jump)
         {
+            // 1. 如果调用方指定了具体的攻击点（非 0），直接使用
             if (!Mathf.Approximately(point, 0f))
             {
                 attackPoint = point;
@@ -1587,30 +1671,38 @@ namespace mlp
             }
             else
             {
+                // 2. 没有指定攻击点 → 根据比赛情况和概率自动选择投篮位置
                 if (ShouldForceClutchThree())
                 {
+                    // 2a. 比赛快结束且落后 → 强制选择三分线位置
                     attackPoint = 500f + 24f * UnityEngine.Random.value;
                 }
                 else if (ShouldPreferSafeClutchTwo())
                 {
+                    // 2b. 比赛快结束且领先 → 选择安全的近距离两分位置
                     attackPoint = 140f + 80f * UnityEngine.Random.value;
                 }
                 else if ((player.Position.x - 450f) * player.Side > 0f && UnityEngine.Random.value <= mlpObjectsData.ChanceForThree)
                 {
+                    // 2c. 已经在对方半场且随机命中 → 尝试三分
                     attackPoint = 510f;
                 }
                 else if (UnityEngine.Random.value <= 0.7f)
                 {
+                    // 2d. 大概率选择中距离投篮位置
                     attackPoint = 120f + 200f * UnityEngine.Random.value;
                 }
                 else
                 {
+                    // 2e. 小概率选择远距离中投位置
                     attackPoint = 320f + 160f * UnityEngine.Random.value;
                 }
 
+                // 3. 跳跃点：近距离投篮需要先跳到更靠近篮筐的位置再出手
                 jumpPoint = attackPoint <= 200f ? attackPoint + 100f : attackPoint;
             }
 
+            // 4. 左侧阵营需要将 X 坐标镜像翻转
             if (player.Side == -1)
             {
                 attackPoint = mlpConstants.Width - attackPoint;

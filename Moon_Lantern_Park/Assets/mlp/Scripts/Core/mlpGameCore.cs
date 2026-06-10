@@ -100,18 +100,23 @@ namespace mlp
         /// </summary>
         public void Shutdown()
         {
+            // 1. 如果已经释放过资源，直接返回，防止重复释放
             if (runtimeResourcesReleased)
             {
                 return;
             }
 
+            // 2. 关闭教程流程（如果有的话）
             tutorialFlow?.Shutdown();
+            // 3. 标记资源已释放
             runtimeResourcesReleased = true;
+            // 4. 遍历左侧队伍，释放每个球员的运行时资源
             foreach (var player in playersLeft)
             {
                 player.ReleaseRuntimeResources();
             }
 
+            // 5. 遍历右侧队伍，释放每个球员的运行时资源
             foreach (var player in playersRight)
             {
                 player.ReleaseRuntimeResources();
@@ -428,12 +433,15 @@ namespace mlp
         /// <returns>最近的对手，不存在对手时返回 null。</returns>
         public mlpPlayerObject FindClosestOpponent(mlpPlayerObject source)
         {
+            // 1. 如果传入的球员为空，直接返回 null
             if (source == null)
             {
                 return null;
             }
 
+            // 2. 根据当前球员所在队伍，选择对手队伍列表
             var opponents = source.Side == -1 ? playersRight : playersLeft;
+            // 3. 遍历对手队伍，用平方距离找最近的对手
             mlpPlayerObject closest = null;
             var bestDistance = float.MaxValue;
             foreach (var opponent in opponents)
@@ -446,6 +454,7 @@ namespace mlp
                 }
             }
 
+            // 4. 返回最近的对手（如果没有对手则返回 null）
             return closest;
         }
 
@@ -600,12 +609,14 @@ namespace mlp
             float playerFacing,
             float opponentFacing)
         {
+            // 1. 重置比赛处理器和特殊投篮标记
             MatchProcessor.Reset();
             IsSuperShot = false;
             IsAlleyOop = false;
             restartDelay = 0f;
             waitingForBallAfterBuzzer = false;
 
+            // 2. 重置篮球和所有球员到初始状态
             Ball.Restart();
             foreach (var leftPlayer in playersLeft)
             {
@@ -617,16 +628,19 @@ namespace mlp
                 rightPlayer.Restart(0);
             }
 
+            // 3. 如果缺少球员则提前返回
             if (playersLeft.Count == 0 || playersRight.Count == 0)
             {
                 return;
             }
 
+            // 4. 将玩家和对手分别移动到指定位置和朝向
             var left = playersLeft[0];
             var right = playersRight[0];
             left.TutorialSnapTo(playerPosition, playerFacing);
             right.TutorialSnapTo(opponentPosition, opponentFacing);
 
+            // 5. 根据参数决定谁持球，或者把球放在两人中间
             if (givePlayerBall)
             {
                 left.TakeBallInHands();
@@ -651,13 +665,16 @@ namespace mlp
         /// <returns>已发起抢断尝试时返回 true（无论是否实际抢到球）。</returns>
         public bool TryStealBall(mlpPlayerObject thief, float facingDirection)
         {
+            // 1. 前置检查：球权交接中、赛前倒计时、比赛未开始或超级投篮时不能抢断
             if (thief == null || restartDelay > 0f || preMatchCountdown || !isPlaying || IsSuperShot)
             {
                 return false;
             }
 
+            // 2. 确定对手队伍，计算抢断距离（基础距离 + 球员加成）
             var opponents = thief.Side == -1 ? playersRight : playersLeft;
             var stealDistance = mlpObjectsData.StealDistance + thief.GetStealDistanceBonus();
+            // 3. 遍历对手，找到最近的可抢断目标
             mlpPlayerObject target = null;
             var bestDistance = float.MaxValue;
             foreach (var opponent in opponents)
@@ -670,11 +687,13 @@ namespace mlp
                 }
             }
 
+            // 4. 没有可抢断的目标，返回失败
             if (target == null)
             {
                 return false;
             }
 
+            // 5. 对目标执行抢断，成功时发送信号并播放音效
             var stoleBall = target.GetBeStolen(thief.Position.x);
             if (stoleBall)
             {
@@ -690,11 +709,13 @@ namespace mlp
         /// </summary>
         private void ResolvePlayerBlocking()
         {
+            // 1. 前置检查：需要双方都有球员，且不在超级投篮状态
             if (playersLeft.Count == 0 || playersRight.Count == 0 || IsSuperShot)
             {
                 return;
             }
 
+            // 2. 获取双方主力球员，确认都支持地面碰撞
             var left = playersLeft[0];
             var right = playersRight[0];
             if (left == null || right == null || !left.CanResolveGroundBlock || !right.CanResolveGroundBlock)
@@ -702,11 +723,13 @@ namespace mlp
                 return;
             }
 
+            // 3. 至少一方需要有碰撞体
             if (!left.HasGroundBlockBody && !right.HasGroundBlockBody)
             {
                 return;
             }
 
+            // 4. 计算 X 轴重叠量，没有重叠则跳过
             var deltaX = right.Position.x - left.Position.x;
             var overlapX = mlpObjectsData.BlockWidth - Mathf.Abs(deltaX);
             if (overlapX <= 0f)
@@ -714,12 +737,14 @@ namespace mlp
                 return;
             }
 
+            // 5. 计算 Y 轴重叠量，没有重叠则跳过
             var overlapY = mlpObjectsData.BlockHeight - Mathf.Abs(right.Position.y - left.Position.y);
             if (overlapY <= 0f)
             {
                 return;
             }
 
+            // 6. 检查是否有一方正在向对方移动，都不动则跳过
             var leftApproaching = left.IsMovingToward(right);
             var rightApproaching = right.IsMovingToward(left);
             if (!leftApproaching && !rightApproaching)
@@ -727,6 +752,7 @@ namespace mlp
                 return;
             }
 
+            // 7. 根据双方质量比例，将两人推开（质量大的移动少）
             var leftMass = left.GetCollisionMass();
             var rightMass = right.GetCollisionMass();
             var totalMass = Mathf.Max(0.001f, leftMass + rightMass);
@@ -734,6 +760,7 @@ namespace mlp
             left.ApplyHorizontalSeparation(-overlapX * (rightMass / totalMass) * separationSign);
             right.ApplyHorizontalSeparation(overlapX * (leftMass / totalMass) * separationSign);
 
+            // 8. 如果一方正在冲刺并撞上有碰撞体的对方，中断冲刺
             if (left.HasGroundBlockBody && right.IsDashingInto(left))
             {
                 right.InterruptDashByBlock();
@@ -867,14 +894,17 @@ namespace mlp
         /// <param name="command">要执行的暂停操作（None、Toggle、Resume 或 Menu）。</param>
         private void HandlePauseCommand(mlpPauseCommand command)
         {
+            // 1. 前置检查：无命令、正在倒计时、赛后延迟中或结算界面时忽略暂停操作
             if (command == mlpPauseCommand.None || pauseResumeCountdown || postMatchDelay > 0f || hud.IsPostMatchVisible)
             {
                 return;
             }
 
+            // 2. 根据命令类型执行对应的暂停操作
             switch (command)
             {
                 case mlpPauseCommand.Toggle:
+                    // 3. 切换暂停：已暂停则恢复，未暂停则暂停
                     if (isPaused)
                     {
                         BeginPauseResumeCountdown();
@@ -885,9 +915,11 @@ namespace mlp
                     }
                     break;
                 case mlpPauseCommand.Resume:
+                    // 4. 恢复：开始恢复倒计时
                     BeginPauseResumeCountdown();
                     break;
                 case mlpPauseCommand.Menu:
+                    // 5. 返回菜单：取消暂停并标记返回请求
                     SetPaused(false);
                     ReturnToMenuRequested = true;
                     break;
@@ -914,6 +946,7 @@ namespace mlp
         /// <param name="paused">true 暂停，false 取消暂停。</param>
         private void SetPaused(bool paused)
         {
+            // 1. 如果状态没有变化，只同步显示/隐藏暂停遮罩
             if (isPaused == paused)
             {
                 if (paused)
@@ -928,14 +961,17 @@ namespace mlp
                 return;
             }
 
+            // 2. 更新暂停状态
             isPaused = paused;
             if (paused)
             {
+                // 3. 暂停：清除恢复倒计时，显示暂停遮罩
                 pauseResumeCountdown = false;
                 hud.ShowPauseOverlay();
             }
             else
             {
+                // 4. 取消暂停：清除倒计时，隐藏暂停遮罩和恢复倒计时
                 pauseResumeCountdown = false;
                 hud.HidePauseOverlay();
                 hud.EndResumeCountdown();
@@ -948,10 +984,12 @@ namespace mlp
         /// <param name="side">哪一方获得球权（-1 = 左侧，1 = 右侧，0 = 无人）。</param>
         private void Restart(int side)
         {
+            // 1. 重置篮球和比赛处理器状态
             Ball.Restart();
             IsSuperShot = false;
             IsAlleyOop = false;
             MatchProcessor.Reset();
+            // 2. 重置所有球员位置和状态
             foreach (var player in playersLeft)
             {
                 player.Restart(side);
@@ -962,6 +1000,7 @@ namespace mlp
                 player.Restart(side);
             }
 
+            // 3. 分配球权：训练模式给左侧，正式比赛给指定一方
             if (isTraining)
             {
                 Ball.TakeInHands(-1);
@@ -980,7 +1019,9 @@ namespace mlp
         /// </summary>
         private void RestartAfterScore()
         {
+            // 1. 重置比赛处理器
             MatchProcessor.Reset();
+            // 2. 通知所有球员球已脱离控制
             foreach (var player in playersLeft)
             {
                 player.NotifyBallLoose();
@@ -991,6 +1032,7 @@ namespace mlp
                 player.NotifyBallLoose();
             }
 
+            // 3. 以得分对方的球权重新开球
             Restart(restartSide);
         }
 
@@ -1050,7 +1092,9 @@ namespace mlp
         /// </summary>
         private void ResolvePostMatchDelay()
         {
+            // 1. 清除赛后延迟计时器
             postMatchDelay = 0f;
+            // 2. 如果需要加时赛，启动加时赛
             if (overtimePending)
             {
                 overtimePending = false;
@@ -1058,6 +1102,7 @@ namespace mlp
                 return;
             }
 
+            // 3. 有获胜方时，显示赛后结算界面
             if (postMatchWinner != 0)
             {
                 hud.ShowPostMatch(postMatchWinner, MatchData.MatchScore[0], MatchData.MatchScore[1]);
@@ -1069,14 +1114,17 @@ namespace mlp
         /// </summary>
         private void StartOvertime()
         {
+            // 1. 重置计时器为加时时长
             matchTime = 0f;
             endTime = mlpConstants.OvertimeTime;
             regularMatchTimeActive = false;
             waitingForBallAfterBuzzer = false;
+            // 2. 清理 HUD 显示
             hud.UpdateTimer(endTime);
             hud.HideCountdown();
             hud.HideMessage();
             hud.HidePostMatch();
+            // 3. 重置球员和球位置，开始赛前倒计时
             Restart(0);
             preMatchCountdown = true;
             pauseResumeCountdown = false;
@@ -1098,11 +1146,13 @@ namespace mlp
 
         private bool SyncQuickTestMatchTime()
         {
+            // 1. 非正式比赛或训练模式下不需要同步
             if (!regularMatchTimeActive || isTraining)
             {
                 return false;
             }
 
+            // 2. 如果快速测试设置中的比赛时长发生变化，同步更新
             var targetEndTime = mlpQuickTestSettings.GetMatchTime(true);
             if (!Mathf.Approximately(endTime, targetEndTime))
             {
@@ -1110,29 +1160,35 @@ namespace mlp
                 hud.UpdateTimer(Mathf.Max(0f, endTime - matchTime));
             }
 
+            // 3. 比赛未在进行中、倒计时中、等球落地或时间未到，不需要触发终场
             if (!isPlaying || preMatchCountdown || waitingForBallAfterBuzzer || matchTime < endTime)
             {
                 return false;
             }
 
+            // 4. 时间到了，触发终场
             BeginEndOfTime();
             return true;
         }
 
         private void UpdateAdventureMechanics(float dt)
         {
+            // 1. 非冒险关卡、训练中或未比赛时跳过
             if (adventureLevel == null || isTraining || !isPlaying)
             {
                 return;
             }
 
+            // 2. 获取当前生效的冒险机制，检查是否处于激活状态
             var mechanic = GetActiveAdventureMechanic();
             var active = IsAdventureMechanicCurrentlyActive(mechanic);
+            // 3. 机制刚激活或切换时，在 HUD 上显示提示
             if (active && (!adventureCueWasActive || mechanic != lastAdventureCue))
             {
                 hud.ShowMessage(GetAdventureMechanicCue(mechanic), 1.15f, false);
             }
 
+            // 4. 记录当前机制状态，用于下一帧检测变化
             lastAdventureCue = mechanic;
             adventureCueWasActive = active;
             if (!active)
@@ -1140,6 +1196,7 @@ namespace mlp
                 return;
             }
 
+            // 5. 根据机制类型执行特殊效果（如自动充能必杀技）
             switch (mechanic)
             {
                 case mlpAdventureMechanic.CandyCharge:
@@ -1154,66 +1211,78 @@ namespace mlp
 
         private void ApplyAdventureBallWind(float dt)
         {
+            // 1. 非冒险关卡或球不存在时跳过
             if (adventureLevel == null || Ball == null)
             {
                 return;
             }
 
+            // 2. 检查当前机制是否为迷雾风且处于激活状态
             var mechanic = GetActiveAdventureMechanic();
             if (mechanic != mlpAdventureMechanic.FogWind || !IsAdventureMechanicCurrentlyActive(mechanic))
             {
                 return;
             }
 
+            // 3. 只对飞行中的球施加风力（投篮、入篮、盖帽、空中接力状态）
             if (Ball.State != "shooting" && Ball.State != "basket" && Ball.State != "block" && Ball.State != "alleyOop")
             {
                 return;
             }
 
+            // 4. 用正弦函数计算风向，对球施加水平风力
             var direction = Mathf.Sin((matchTime + 0.7f) * 1.35f) >= 0f ? 1f : -1f;
             Ball.Velocity.x += direction * AdventureFogWindForce * dt;
         }
 
         private string ResolveAdventureScoreModifier(ref int points)
         {
+            // 1. 非冒险关卡直接返回
             if (adventureLevel == null)
             {
                 return null;
             }
 
+            // 2. 获取当前机制，未激活则不修改分数
             var mechanic = GetActiveAdventureMechanic();
             if (!IsAdventureMechanicCurrentlyActive(mechanic))
             {
                 return null;
             }
 
+            // 3. 双倍篮筐：分数翻倍
             if (mechanic == mlpAdventureMechanic.DoubleHoop)
             {
                 points *= 2;
                 return $"DOUBLE RIM {points}!";
             }
 
+            // 4. 丰收时刻：分数加 1
             if (mechanic == mlpAdventureMechanic.HarvestTime)
             {
                 points += 1;
                 return $"HARVEST +1 {points}!";
             }
 
+            // 5. 其他机制不影响分数
             return null;
         }
 
         private mlpAdventureMechanic GetActiveAdventureMechanic()
         {
+            // 1. 非冒险关卡返回默认的普通对决
             if (adventureLevel == null)
             {
                 return mlpAdventureMechanic.BasicDuel;
             }
 
+            // 2. 非混合机制关卡直接返回该关卡的机制
             if (adventureLevel.Mechanic != mlpAdventureMechanic.MoonLanternMix)
             {
                 return adventureLevel.Mechanic;
             }
 
+            // 3. 月灯混合关卡：每 10 秒轮换一次机制（充能->双倍->风->血月）
             var phase = Mathf.FloorToInt(matchTime / 10f) % 4;
             switch (phase)
             {
@@ -1232,16 +1301,21 @@ namespace mlp
         {
             switch (mechanic)
             {
+                // 1. 普通对决：始终激活
                 case mlpAdventureMechanic.BasicDuel:
                     return true;
+                // 2. 双倍篮筐：混合关卡中始终激活，否则按周期激活（每 12 秒中前 6 秒生效）
                 case mlpAdventureMechanic.DoubleHoop:
                     return (adventureLevel != null &&
                             adventureLevel.Mechanic == mlpAdventureMechanic.MoonLanternMix) ||
                            Mathf.Repeat(matchTime, AdventureDoubleRimCycle) < AdventureDoubleRimActiveTime;
+                // 3. 血月：始终激活
                 case mlpAdventureMechanic.BloodMoon:
                     return true;
+                // 4. 丰收时刻：仅在最后 15 秒内激活
                 case mlpAdventureMechanic.HarvestTime:
                     return RemainingMatchTime <= 15f;
+                // 5. 其他机制（糖果充能、烛环、迷雾风等）：始终激活
                 default:
                     return true;
             }
@@ -1308,11 +1382,13 @@ namespace mlp
         /// </summary>
         private void TryPickupLooseBall()
         {
+            // 1. 球不存在或不在可捡起状态时跳过
             if (Ball == null || !Ball.CanBeTakenInHands)
             {
                 return;
             }
 
+            // 2. 遍历左右两队，找到距离球最近的可捡球球员
             mlpPlayerObject picker = null;
             var bestDistance = float.MaxValue;
             foreach (var player in playersLeft)
@@ -1335,11 +1411,13 @@ namespace mlp
                 }
             }
 
+            // 3. 没人能捡球则返回
             if (picker == null)
             {
                 return;
             }
 
+            // 4. 让最近的球员拿球，播放捡球音效
             picker.TakeBallInHands();
             mlpAudio.Instance?.Play(mlpAssets.Sounds.BSteel);
         }
@@ -1417,45 +1495,56 @@ namespace mlp
         /// <returns>初始化完成的游戏核心实例，可用于每帧更新。</returns>
         public mlpGameCore Build(Transform root)
         {
+            // 1. 获取全局物品清单实例
             var inventory = mlpInventory.Instance;
+            // 2. 如果比赛已经预先配置好，直接使用（跳过配置步骤）
             if (inventory.MatchPrepared)
             {
                 inventory.MatchPrepared = false;
             }
+            // 3. 训练模式：使用训练角色和球皮配置比赛
             else if (inventory.GameMode == mlpGameModeIds.Training)
             {
                 inventory.MatchData.StartTraining(inventory.SelectedTrainingCharacterId, inventory.SelectedTrainingBallSelection);
             }
+            // 4. 教程模式：使用教程配置
             else if (inventory.GameMode == mlpGameModeIds.Tutorial)
             {
                 inventory.MatchData.StartTutorial(inventory.SelectedTrainingCharacterId, inventory.SelectedTrainingBallSelection);
             }
+            // 5. 重新开始：保持现有配置，只重置比分
             else if (inventory.MatchData.Restarted)
             {
                 inventory.MatchData.Restarted = false;
                 inventory.MatchData.ResetScore();
             }
+            // 6. 锦标赛模式：使用锦标赛当前对手配置
             else if (inventory.IsTournamentActive)
             {
                 inventory.MatchData.StartTournamentMatch(inventory.Tournament, inventory.SelectedTournamentBallSelection);
             }
+            // 7. 冒险模式：使用冒险关卡配置
             else if (inventory.IsAdventureActive)
             {
                 inventory.MatchData.StartAdventureMatch(inventory.Adventure, inventory.Difficulty);
             }
+            // 8. 快速比赛：使用选定角色和难度
             else if (inventory.GameMode == mlpGameModeIds.QuickMatch)
             {
                 inventory.MatchData.StartQuickMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
+            // 9. 随机快速比赛：随机选对手
             else if (inventory.GameMode == mlpGameModeIds.RandomQuick)
             {
                 inventory.MatchData.StartRandomMatch(inventory.SelectedQuickCharacterId, inventory.Difficulty, inventory.SelectedQuickBallSelection);
             }
+            // 10. 双人对战：使用双方选定角色
             else if (inventory.GameMode == mlpGameModeIds.TwoPlayers)
             {
                 inventory.MatchData.StartPlayers2Match(inventory.SelectedVersusBallSelection);
             }
 
+            // 11. 创建游戏核心实例并启动比赛
             var core = new mlpGameCore(root);
             core.Start();
             return core;
