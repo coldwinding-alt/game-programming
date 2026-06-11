@@ -11,33 +11,32 @@ namespace mlp
     /// </summary>
     public static class mlpPlayersData
     {
-        private const int ActiveCharacterSkinCount = 8;
-        private const float PortraitAtlasSourceScale = 4f;
-        private const int PortraitCropPaddingPixels = 6;
-        private const byte PortraitVisibleAlphaThreshold = 8;
-        private const float GlobalCharacterModelScaleMultiplier = 1.08f;
+        private const int ActiveCharacterSkinCount = 8;              // 角色皮肤总数（共 8 个角色）
+        private const float PortraitAtlasSourceScale = 4f;           // 头像图集的源缩放系数，用于将偏移量转换为像素单位
+        private const int PortraitCropPaddingPixels = 6;             // 头像裁剪时在可见区域四周留的内边距（像素）
+        private const byte PortraitVisibleAlphaThreshold = 8;        // 像素透明度阈值，低于此值视为透明（0-255）
+        private const float GlobalCharacterModelScaleMultiplier = 1.08f; // 全局角色模型缩放倍数，所有角色都会乘以这个值
 
         private sealed class mlpCharacterDefinition
         {
-            public string DisplayName;
-            public int SkinIndex;
-            public int FormIndex;
-            public int SuperId;
-            public bool Enabled;
-            public string PortraitSpriteName;
-            public float HeadOffsetX;
-            public float HeadOffsetY;
-            public float HeadScale = 1f;
-            public float ModelScaleMultiplier = 1f;
-            public float PreviewScaleMultiplier = 1f;
-            public float PreviewOffsetY;
-            public float PortraitScaleMultiplier = 1f;
-            // 头像偏移量以源精灵像素为单位，这样可以根据不同的 UI 槽位大小自动缩放。
-            public float PortraitOffsetY;
+            public string DisplayName;                  // 角色显示名称（如 "REAPER"、"WITCH"）
+            public int SkinIndex;                       // 皮肤索引（0-7），决定头部、手部、腿部的动画外观
+            public int FormIndex;                       // 体型索引，决定身体动画的样式
+            public int SuperId;                         // 必杀技 ID，对应 mlpCharacterSkillType 中的技能类型
+            public bool Enabled;                        // 是否启用该角色（false 则在选择界面中隐藏）
+            public string PortraitSpriteName;           // 头像在图集中的精灵名称
+            public float HeadOffsetX;                   // 头部相对于身体的 X 轴偏移量（像素）
+            public float HeadOffsetY;                   // 头部相对于身体的 Y 轴偏移量（像素）
+            public float HeadScale = 1f;                // 头部缩放倍数（1 为原始大小）
+            public float ModelScaleMultiplier = 1f;     // 模型整体缩放倍数（会乘以全局缩放系数）
+            public float PreviewScaleMultiplier = 1f;   // 预览界面（菜单/选角）中的模型缩放倍数
+            public float PreviewOffsetY;                // 预览界面中模型的 Y 轴偏移量（像素）
+            public float PortraitScaleMultiplier = 1f;  // 头像在 UI 中显示时的缩放倍数
+            public float PortraitOffsetY;               // 头像在 UI 中的 Y 轴偏移量（源精灵像素单位，会乘以图集缩放系数）
         }
 
-        private static DBLiteTextureAtlas portraitAtlas;
-        private static readonly Dictionary<string, Sprite> PortraitDisplaySprites = new Dictionary<string, Sprite>();
+        private static DBLiteTextureAtlas portraitAtlas;                                                // 缓存的头像纹理图集（首次加载后复用）
+        private static readonly Dictionary<string, Sprite> PortraitDisplaySprites = new Dictionary<string, Sprite>(); // 裁剪后的头像精灵缓存（按精灵名索引，避免重复裁剪）
 
         private static readonly mlpCharacterDefinition[] CharacterDefinitions =
         {
@@ -51,8 +50,8 @@ namespace mlp
             new mlpCharacterDefinition { DisplayName = "BLACK CAT", SkinIndex = 7, FormIndex = 7, SuperId = 1, Enabled = true, PortraitSpriteName = "custom_head_blackcat", HeadOffsetX = 6f, HeadOffsetY = 7f, HeadScale = 0.99f, PreviewScaleMultiplier = 0.97f, PreviewOffsetY = 1f, PortraitScaleMultiplier = 0.96f, PortraitOffsetY = -5f }
         };
 
-        private static readonly int[] Hands = { 1, 2, 3, 4, 5, 6, 7, 8 };
-        private static readonly string[] Legs =
+        private static readonly int[] Hands = { 1, 2, 3, 4, 5, 6, 7, 8 }; // 每个角色对应的手部动画编号（用于 DragonBones 换手）
+        private static readonly string[] Legs =                            // 每个角色对应的腿部动画名称（用于 DragonBones 换腿）
         {
             "leg1",
             "leg2",
@@ -64,7 +63,7 @@ namespace mlp
             "leg8"
         };
 
-        public static int CharacterCount => CharacterDefinitions.Length;
+        public static int CharacterCount => CharacterDefinitions.Length; // 角色总数（只读属性）
 
         /// <summary>
         /// 初始化玩家角色系统。游戏启动时调用一次，准备好所有角色数据。

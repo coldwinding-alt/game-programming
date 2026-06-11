@@ -10,32 +10,53 @@ namespace mlp
     /// </summary>
     public enum mlpAdventureMechanic
     {
+        /// <summary>基础对决：纯 1v1 投篮比赛，无任何特殊规则，是第一关的教学关卡。</summary>
         BasicDuel,
+        /// <summary>糖果充能：玩家的超级计量槽（super meter）充能速度加快，更容易释放必杀技。</summary>
         CandyCharge,
+        /// <summary>双倍篮筐：场上出现活动窗口（active windows），在此期间进球双倍计分。</summary>
         DoubleHoop,
+        /// <summary>烛光圆环：双方超级计量槽都会自动充能，但玩家的充能速度更快，形成节奏博弈。</summary>
         CandleCircle,
+        /// <summary>迷雾风：飞行中的篮球会被风横向吹偏一小段距离，考验玩家的投篮预判和修正能力。</summary>
         FogWind,
+        /// <summary>血月：整场比赛节奏加快（时间流速 ×1.14），增加反应压力。</summary>
         BloodMoon,
+        /// <summary>丰收时刻：比赛最后 15 秒进入丰收状态，每个进球额外 +1 分，鼓励终场绝杀。</summary>
         HarvestTime,
+        /// <summary>月灯混合：最终 Boss 关，每 10 秒自动轮换上述所有机制（充能→双倍→风→加速→循环），考验全面能力。</summary>
         MoonLanternMix
     }
 
     /// <summary>
-    /// 冒险模式单关定义：描述一个关卡的所有信息——关卡名称、对手角色、场景气氛、特殊规则、球皮和难度。
+    /// 冒险模式单关定义：一个不可变的数据容器，描述一个关卡的全部信息。
+    /// 游戏的各个系统（场景加载、AI 配置、地图渲染、UI 显示）都会从这里各取所需。
     /// </summary>
     public sealed class mlpAdventureLevelDefinition
     {
+        /// <summary>关卡索引（从 0 开始），用于标识关卡顺序和进度判断。</summary>
         public readonly int Index;
+        /// <summary>关卡区域的显示名称，如 "PUMPKIN GATEWAY"，展示在 UI 和地图上。</summary>
         public readonly string AreaName;
+        /// <summary>守护该关卡的守卫者角色 ID，决定对手使用哪个角色模型和技能。</summary>
         public readonly int WardenCharacterId;
+        /// <summary>关卡的简短氛围描述，供美术和音效参考，如 "First gate."、"Red pressure."。</summary>
         public readonly string Mood;
+        /// <summary>该关卡使用的独特玩法机制，决定比赛中的特殊规则。</summary>
         public readonly mlpAdventureMechanic Mechanic;
+        /// <summary>玩法机制的显示标题，展示在规则覆盖层上，如 "CANDY CHARGE"、"BLOOD MOON"。</summary>
         public readonly string MechanicTitle;
+        /// <summary>玩法机制的简要说明文字，帮助玩家理解当前关卡的特殊规则。</summary>
         public readonly string MechanicSummary;
+        /// <summary>场景的美术指导说明，描述关卡的视觉风格和场景元素。</summary>
         public readonly string SceneDirection;
+        /// <summary>规则覆盖层上显示的图标键名数组，如 { "1V1", "SIGIL", "GATE" }。</summary>
         public readonly string[] RuleIcons;
+        /// <summary>在冒险地图上的 X 坐标，用于地图界面定位关卡节点。</summary>
         public readonly float MapX;
+        /// <summary>在冒险地图上的 Y 坐标，用于地图界面定位关卡节点。</summary>
         public readonly float MapY;
+        /// <summary>该关卡使用的篮球皮肤，决定比赛中篮球的外观。</summary>
         public readonly mlpBallSelection BallSelection;
         // 旧版冒险模式曾用这个字段表示每一关的基础 AI 技能值。
         // 当前固定四档难度模式下，实际比赛强度只看玩家选择的 Easy/Normal/Hard/Hell，

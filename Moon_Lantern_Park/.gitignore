@@ -32,3 +32,9 @@ Thumbs.db
 # Python tool caches
 __pycache__/
 *.py[cod]
+
+# Unity editor-only scripts
+Assets/**/Editor/
+
+# Local Python tooling
+Tools/**/*.py

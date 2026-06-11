@@ -1,5 +1,5 @@
-// AI 技能参数表
-// 全游戏单人 AI 只保留 Easy / Normal / Hard / Hell 四档。每档对应一组固定参数，不再按赛制或关卡递增。
+// AI 技能参数表  AI 的"操作水平"
+// 全游戏单人 AI 有 Easy / Normal / Hard / Hell 四档。每档对应一组固定参数。
 
 using UnityEngine;
 
@@ -10,26 +10,47 @@ namespace mlp
     /// </summary>
     public readonly struct mlpAISkillProfile
     {
+        // 投篮精度。【数值叠加】塞入 CalcDispersion() 公式计算球的飞行偏差，越低越准，0 = 百发百中
         public readonly float Accuracy;
+        // 扣篮成功率。【概率掷骰】扣篮出手后 Random.value < 此值才算扣进，否则扣飞
         public readonly float ChanceToCompleteDunk;
+        // 超能力冷却时间。【延迟计时】充能所需秒数，每帧累加 dt，充满后才能释放超能力
         public readonly float CoolDown;
+        // 跳球反应速度。【延迟计时】传入 NegativeDelay 计时器控制起跳时机，值越小 AI 越早起跳
         public readonly float JumpBall;
+        // 篮板争抢概率。【概率掷骰】球在篮板区域时，Random.value < 此值才起跳（还需先通过位置和计时器判断）
         public readonly float ChanceToRebound;
+        // 投篮出手延迟。【延迟计时】传入 FullDelay 计时器，控制 AI 起跳后到出手之间的延迟，越小出手越快
         public readonly float Attack;
+        // 接球即投概率。【概率掷骰】落地持球后，Random.value < 此值则立刻起跳投篮，否则先运球再决策
         public readonly float AttackAtOnce;
+        // 闪避抢断能力。【概率掷骰】对手发起抢断时，Random.value < 此值则 AI 尝试闪避（冲刺/跳跃/侧移）
         public readonly float AvoidSteal;
+        // 假动作概率。【未使用】原计划控制 AI 进攻时做假动作的概率，当前代码未接入，属于死代码
         public readonly float MakePump;
+        // 防守反应概率。【概率掷骰】进攻时身后有防守者，Random.value < 此值则 AI 做出反应（变向或冲刺），否则无视继续冲
         public readonly float ReactOnOpponent;
+        // 冲刺闪避概率。【概率掷骰】ReactOnOpponent 通过后的二级判定，Random.value < 此值则用冲刺闪避，否则只变向
         public readonly float MakeDash;
+        // 冲刺冷却间隔。【延迟计时】传入 AIUseDelay，控制两次冲刺决策之间的冷却秒数，越短冲刺越频繁
         public readonly float DelayDash;
+        // 防守干扰延迟。【延迟计时】传入 SimpleDelay，控制对手起跳投篮后 AI 起跳干扰的延迟，越小反应越快
         public readonly float Defence;
+        // 跳投干扰概率。【概率掷骰】两个用途：(1) 持球时身后有人，决定是否抢先起跳投篮；(2) 对手起跳时，决定是否起跳干扰
         public readonly float JumpThrow;
+        // 抢断尝试概率。【概率掷骰】靠近持球者时 Random.value < 此值发起抢断；对手靠近篮筐时概率 ×1.5
         public readonly float MakeSteal;
+        // 抢断冷却间隔。【延迟计时】加到基础抢断动作时长上，控制两次抢断尝试之间的冷却秒数
         public readonly float DelaySteal;
+        // 被假动作骗到的概率。【概率掷骰】对手做假动作时，Random.value < 此值则 AI 被骗起跳（值越高越容易上当）
         public readonly float JumpPump;
+        // 盖帽尝试概率。【概率掷骰】对手从身后冲刺时，Random.value < 此值则 AI 尝试起跳盖帽
         public readonly float MakeBlock;
+        // 篮板固定延迟。【延迟计时】传入 FullDelay 作为固定延迟分量，控制篮板起跳时机的基础等待时间
         public readonly float ReboundFixed;
+        // 篮板随机浮动范围。【延迟计时】传入 FullDelay 作为随机浮动分量，和 ReboundFixed 共同决定篮板起跳的延迟窗口
         public readonly float ReboundRange;
+        // 移动决策间隔。【延迟计时】传入 FullDelay，控制 AI 攻防移动决策之间的间隔，越小 AI 移动越敏捷
         public readonly float MoveDelay;
 
         public mlpAISkillProfile(

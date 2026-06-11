@@ -1,4 +1,4 @@
-// AI 难度调节参数
+// AI 难度调节参数  AI 的"身体素质"
 // 根据难度等级（简单、普通、困难、地狱）调整电脑对手的表现：反应速度、投篮准确度、防守积极性等。难度越高，电脑越厉害。
 
 namespace mlp
@@ -8,22 +8,82 @@ namespace mlp
     /// </summary>
     public readonly struct mlpAIDifficultyTuningProfile
     {
+        // ===== 防守类参数 =====
+
+        /// <summary>防守干扰距离：AI 在对手投篮时，多大范围内会尝试干扰/封盖。
+        /// 值越大 → AI 防守覆盖范围越广 → 难度越高。例如 Easy=180, Hell=260。</summary>
         public readonly float DefenceContestDistance;
+
+        /// <summary>身后抢断距离：AI 在持球人身后时，多大范围内会尝试抢断。
+        /// 值越大 → AI 从背后抢断越容易 → 难度越高。例如 Easy=80, Hell=140。</summary>
         public readonly float StealBehindDistance;
+
+        /// <summary>篮下抢断距离：AI 在篮筐附近时，多大范围内会尝试抢断。
+        /// 值越大 → AI 在篮筐附近防守越积极 → 难度越高。例如 Easy=45, Hell=90。</summary>
         public readonly float StealBasketDistance;
+
+        // ===== 冲刺类参数 =====
+
+        /// <summary>持球人超级冲刺最短距离：持球的 AI 必须跑过至少多远才能触发超级冲刺。
+        /// 值越小 → AI 越容易触发冲刺 → 难度越高。例如 Easy=90, Hell=40。</summary>
         public readonly float HolderSuperDashMinDistance;
+
+        /// <summary>持球人超级冲刺最大距离：持球 AI 使用超级冲刺的有效范围上限。
+        /// 值越大 → AI 冲刺覆盖范围越远 → 难度越高。例如 Easy=460, Hell=620。</summary>
         public readonly float HolderSuperDashMaxDistance;
+
+        /// <summary>自由球超级冲刺距离：球处于无人控制状态时，AI 冲刺抢球的最大距离。
+        /// 值越小 → AI 越早开始冲刺抢球（反应越快）→ 难度越高。例如 Easy=120, Hell=60。</summary>
         public readonly float LooseBallSuperDashDistance;
+
+        // ===== 进攻类参数 =====
+
+        /// <summary>进攻施压距离：AI 进攻时，多大范围内开始对防守方施加压力。
+        /// 值越大 → AI 进攻时越早开始施压 → 难度越高。例如 Easy=140, Hell=240。</summary>
         public readonly float AttackPressureDistance;
+
+        /// <summary>进攻超级冲刺距离：AI 向篮筐发起进攻性超级冲刺的最大距离。
+        /// 值越小 → AI 越倾向于近距离精确冲刺（更高效）→ 难度越高。例如 Easy=260, Hell=150。</summary>
         public readonly float AttackSuperDashDistance;
+
+        /// <summary>冲刺封盖最远距离：AI 尝试用冲刺动作封盖投篮的最远距离。
+        /// 值越大 → AI 封盖覆盖范围越广 → 难度越高。例如 Easy=180, Hell=280。</summary>
         public readonly float DashBlockRangeMaxDistance;
+
+        // ===== 倍率/加成类参数（仅高难度启用） =====
+
+        /// <summary>冲刺冷却倍率：AI 冲刺后冷却时间的缩放系数（基于默认冷却时间）。
+        /// 值越小 → 冷却越短 → AI 冲刺越频繁 → 难度越高。默认=1.0，Hell=0.6。</summary>
         public readonly float DashCooldownMultiplier;
+
+        /// <summary>抢断范围加成：AI 抢断判定距离的额外增量（直接加到基础上）。
+        /// 值越大 → AI 抢断判定范围越大 → 难度越高。默认=0，Hell=20。</summary>
         public readonly float StealRangeBonus;
+
+        /// <summary>眩晕持续时间倍率：AI 被眩晕时的持续时间缩放系数（基于默认眩晕时间）。
+        /// 值越小 → AI 恢复越快 → 难度越高。默认=1.0，Hell=0.65。</summary>
         public readonly float StunDurationMultiplier;
+
+        // ===== 必杀技/能量类参数（仅高难度启用） =====
+
+        /// <summary>开局必杀技能量比例：比赛开始时 AI 拥有的必杀技能量占满槽的百分比。
+        /// 值越大 → AI 开局就有更多能量 → 难度越高。默认=0，Hell=0.55（开局半管以上）。</summary>
         public readonly float OpeningSuperChargeFraction;
+
+        /// <summary>必杀技能量返还比例：AI 使用必杀技后，返还的能量占消耗量的百分比。
+        /// 值越大 → AI 能更快攒出下一个必杀技 → 难度越高。默认=0，Hell=0.35。</summary>
         public readonly float NativeSuperRefundFraction;
+
+        /// <summary>额外超级冲刺冷却（秒）：AI 超级冲刺在基础冷却之上额外增加的冷却时间。
+        /// 值越大 → AI 冲刺间隔越长 → 难度越低（此为限制高难度 AI 的平衡参数）。默认=0，Hell=10。</summary>
         public readonly float BonusSuperDashCooldown;
+
+        /// <summary>额外护盾冷却（秒）：AI 护盾技能在基础冷却之上额外增加的冷却时间。
+        /// 值越大 → AI 护盾使用频率越低 → 难度越低（同为平衡参数）。默认=0，Hell=24。</summary>
         public readonly float BonusShieldCooldown;
+
+        /// <summary>是否拥有额外必杀技：高难度 AI 是否解锁额外的必杀技能力。
+        /// true → AI 拥有更多技能选项 → 难度更高。默认=false，Hell=true。</summary>
         public readonly bool HasBonusSupers;
 
         /// <summary>

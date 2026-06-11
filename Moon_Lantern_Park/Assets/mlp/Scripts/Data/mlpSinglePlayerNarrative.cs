@@ -17,11 +17,11 @@ namespace mlp
     /// </summary>
     public sealed class mlpStoryPanelDefinition
     {
-        public readonly string Caption;
-        public readonly string ArtDirection;
-        public readonly string ImageKey;
-        public readonly string LoreTitle;
-        public readonly string LoreBody;
+        public readonly string Caption;       // 面板标题，漫画页面上显示的文字标题
+        public readonly string ArtDirection;  // 美术指导，描述这一页漫画应该怎么画（风格、构图等），给画师或 AI 生图用的提示词
+        public readonly string ImageKey;      // 图片资源键名，用于从资源系统中查找对应的漫画图片
+        public readonly string LoreTitle;     // 背景故事标题，面板下方可选显示的 Lore 文本的标题
+        public readonly string LoreBody;      // 背景故事正文，面板下方可选显示的 Lore 文本内容（支持多行）
 
         /// <summary>
         /// 创建一个仅有标题和美术指导的故事面板，不包含图片和背景故事。
@@ -85,15 +85,15 @@ namespace mlp
     /// </summary>
     public sealed class mlpSinglePlayerModeDefinition
     {
-        public readonly mlpSinglePlayerNarrativeMode Mode;
-        public readonly string ModeName;
-        public readonly string MenuTitle;
-        public readonly string Subtitle;
-        public readonly string Objective;
-        public readonly string Tone;
-        public readonly string GameplayWrapper;
-        public readonly string WorldRole;
-        public readonly mlpStoryPanelDefinition[] OpeningComic;
+        public readonly mlpSinglePlayerNarrativeMode Mode;       // 叙事模式类型（冒险或锦标赛），例：Adventure
+        public readonly string ModeName;                         // 内部模式名称，用于程序逻辑中的标识，例："ADVENTURE MODE"
+        public readonly string MenuTitle;                        // 菜单界面上显示的模式标题，例："ESCAPE MOON LANTERN"
+        public readonly string Subtitle;                         // 菜单标题下方的副标题，简短描述模式目标，例："Collect every Lantern Sigil before dawn."
+        public readonly string Objective;                        // 模式的完整目标描述，例："Win 1v1 duels, reclaim every Lantern Sigil, and reopen the park gates."
+        public readonly string Tone;                             // 模式的叙事风格基调，例："Tense, adventurous, mysterious, but never grim."
+        public readonly string GameplayWrapper;                  // 玩法结构描述，例："A park map links one Warden duel to the next."
+        public readonly string WorldRole;                        // 该模式在游戏世界观中的角色定位，例："The night Moon Lantern Park locked its gates."
+        public readonly mlpStoryPanelDefinition[] OpeningComic;  // 模式开始时播放的开场漫画面板数组，冒险模式有3页：公园开放→心灯熄灭→首次决斗
 
         /// <summary>
         /// 创建单人模式定义，包含所有叙事和展示数据。
@@ -135,30 +135,33 @@ namespace mlp
     /// </summary>
     public static class mlpSinglePlayerNarrative
     {
-        public const string ParkName = "MOON LANTERN PARK";
-        public const string PumpkinHeartLantern = "PUMPKIN HEART LANTERN";
-        public const string LanternSigil = "LANTERN SIGIL";
-        public const string LanternSigils = "LANTERN SIGILS";
-        public const string Warden = "WARDEN";
-        public const string Wardens = "WARDENS";
-        public const string MidnightLockdownProtocol = "MIDNIGHT LOCKDOWN PROTOCOL";
-        public const string LanternChampion = "LANTERN CHAMPION";
+        // ── 世界观术语（出现在漫画 Lore、剧情文本、HUD 等多处） ──
+        public const string ParkName = "MOON LANTERN PARK";                // 公园名称，出现在开场漫画和各处剧情描述中
+        public const string PumpkinHeartLantern = "PUMPKIN HEART LANTERN"; // 南瓜心灯，公园核心道具，出现在漫画 Lore 和结局文本中
+        public const string LanternSigil = "LANTERN SIGIL";                // 灯印记（单数），击败 Warden 后获得的收集物
+        public const string LanternSigils = "LANTERN SIGILS";              // 灯印记（复数），用于菜单副标题等需要复数形式的场景
+        public const string Warden = "WARDEN";                             // 守护者（单数），冒险模式中的对手角色
+        public const string Wardens = "WARDENS";                           // 守护者（复数），锦标赛中作为明星选手回归
+        public const string MidnightLockdownProtocol = "MIDNIGHT LOCKDOWN PROTOCOL"; // 午夜封锁协议，公园自动封锁的机制名称
+        public const string LanternChampion = "LANTERN CHAMPION";          // 灯冠军，锦标赛冠军头衔，出现在 HUD 和颁奖界面
 
-        public const string AdventureMenuTitle = "ESCAPE MOON LANTERN";
-        public const string AdventureSubtitle = "Collect every Lantern Sigil before dawn.";
-        public const string TournamentMenuTitle = "MOON LANTERN CUP";
-        public const string TournamentSubtitle = "Win the season and become the Lantern Champion.";
-        public const string TournamentResultSubtitle = "MOON LANTERN RESULT";
-        public const string TournamentSeasonCompleteTitle = "SEASON COMPLETE";
-        public const string TournamentFormatLine = "8 PLAYERS / 2 DIVISIONS";
-        public const string AdventurePreviewStatus = "PARK MAP PLAYABLE";
-        public const string TournamentPreviewStatus = "FULL SEASON PLAYABLE";
-        public const string TournamentSeasonBanner = "PUBLIC CHAMPIONSHIP SEASON";
-        public const string TournamentSeasonHook = "A restored park turns its hidden ritual into an annual Halloween cup.";
-        public const string ComicReplayButton = "READ COMIC";
-        public const string AdventureLinkToCup = "The public Cup later turns this lockdown ritual into a season.";
-        public const string CupLinkToAdventure = "The season quietly honors the night the park gates locked.";
+        // ── 模式选择菜单 UI ──
+        public const string AdventureMenuTitle = "ESCAPE MOON LANTERN";    // 冒险模式菜单标题，显示在模式选择页面和开场漫画标题栏
+        public const string AdventureSubtitle = "Collect every Lantern Sigil before dawn."; // 冒险模式副标题，显示在菜单标题下方
+        public const string TournamentMenuTitle = "MOON LANTERN CUP";      // 锦标赛菜单标题，显示在模式选择页面和各锦标赛界面
+        public const string TournamentSubtitle = "Win the season and become the Lantern Champion."; // 锦标赛副标题，显示在菜单标题下方
+        public const string TournamentResultSubtitle = "MOON LANTERN RESULT"; // 锦标赛比赛结果页面副标题，出现在每场比赛结算界面
+        public const string TournamentSeasonCompleteTitle = "SEASON COMPLETE"; // 赛季完成标题，显示在颁奖界面顶部
+        public const string TournamentFormatLine = "8 PLAYERS / 2 DIVISIONS"; // 锦标赛赛制说明，显示在锦标赛设置页面
+        public const string AdventurePreviewStatus = "PARK MAP PLAYABLE";  // 冒险模式入口状态标签，显示在模式选择页面表示可游玩
+        public const string TournamentPreviewStatus = "FULL SEASON PLAYABLE"; // 锦标赛入口状态标签，显示在模式选择页面表示可游玩
+        public const string TournamentSeasonBanner = "PUBLIC CHAMPIONSHIP SEASON"; // 锦标赛赛季横幅标题，显示在锦标赛主页顶部
+        public const string TournamentSeasonHook = "A restored park turns its hidden ritual into an annual Halloween cup."; // 赛季简介描述，显示在锦标赛页面
+        public const string ComicReplayButton = "READ COMIC";              // 漫画重播按钮文字，显示在冒险和锦标赛菜单页面供玩家回顾漫画
+        public const string AdventureLinkToCup = "The public Cup later turns this lockdown ritual into a season."; // 冒险→锦标赛关联文案，暗示两个模式的故事联系
+        public const string CupLinkToAdventure = "The season quietly honors the night the park gates locked."; // 锦标赛→冒险关联文案，暗示两个模式的故事联系
 
+        //两个模式定义实例
         public static readonly mlpSinglePlayerModeDefinition Adventure =
             new mlpSinglePlayerModeDefinition(
                 mlpSinglePlayerNarrativeMode.Adventure,

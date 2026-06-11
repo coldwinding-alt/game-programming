@@ -10,26 +10,26 @@ namespace mlp
     /// </summary>
     public static class mlpConstants
     {
-        public const int Width = 800;
-        public const int Width2 = 400;
-        public const int GameW = 1066;
-        public const int GameH = 640;
-        public const int GameW2 = 533;
-        public const int GameH2 = 320;
-        public const int DisplayW = 1066;
-        public const int DisplayH = 640;
-        public const int DisplayW2 = 533;
-        public const int DisplayH2 = 320;
+        public const int Width = 800;           // 基础参考宽度（像素），用于 UI 布局等场景
+        public const int Width2 = 400;          // 基础宽度的一半，用于水平居中计算
+        public const int GameW = 1066;          // 游戏画面实际宽度（像素），4:3 比例下的宽度
+        public const int GameH = 640;           // 游戏画面实际高度（像素），4:3 比例下的高度
+        public const int GameW2 = 533;          // 游戏画面宽度的一半，用于坐标原点居中（像素坐标系中心）
+        public const int GameH2 = 320;          // 游戏画面高度的一半，用于坐标原点居中
+        public const int DisplayW = 1066;       // 显示区域宽度（像素），与 GameW 一致
+        public const int DisplayH = 640;        // 显示区域高度（像素），与 GameH 一致
+        public const int DisplayW2 = 533;       // 显示区域宽度的一半
+        public const int DisplayH2 = 320;       // 显示区域高度的一半
 
-        public const float PreloaderTime = 0.325f;
-        public const float Step = 0.025f;
-        public const float MatchTime = 60f;
-        public const float OvertimeTime = 15f;
+        public const float PreloaderTime = 0.325f;  // 预加载画面持续时间（秒）
+        public const float Step = 0.025f;           // 固定物理帧间隔（秒），即 40 FPS 的物理更新频率
+        public const float MatchTime = 60f;         // 一场比赛的正常时长（秒）
+        public const float OvertimeTime = 15f;      // 加时赛时长（秒）
 
-        public const float RenderScale = 4f / 3f;
-        public const float PixelsPerUnit = 100f;
-        public const float UnitsPerPixel = RenderScale / PixelsPerUnit;
-        public const float PixelPerfectCharacterScale = 1f / RenderScale;
+        public const float RenderScale = 4f / 3f;   // 渲染缩放比，像素坐标到渲染坐标的缩放因子（4:3 比例）
+        public const float PixelsPerUnit = 100f;     // Unity 中每单位对应的像素数，控制世界坐标的缩放精度
+        public const float UnitsPerPixel = RenderScale / PixelsPerUnit;          // 每像素对应的 Unity 世界单位数，用于像素→世界坐标转换
+        public const float PixelPerfectCharacterScale = 1f / RenderScale;        // 角色精灵的像素完美缩放值，确保精灵在屏幕上清晰不模糊
 
         public static readonly int[] LimitsForAchievements =
         {

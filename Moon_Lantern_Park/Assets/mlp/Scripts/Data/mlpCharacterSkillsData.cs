@@ -10,16 +10,14 @@ namespace mlp
     /// </summary>
     public enum mlpCharacterSkillType
     {
-        SoulReap,
-        CarnivalJackpot,
-        GhostSail,
-        BloodMoonBlink,
-        WaxOverdrive,
-        HarvestTime,
-        HexGate,
-        BadLuck,
-        ReboundMagnet,
-        SureBlock
+        SoulReap,           // 死神 — 冲刺抢断
+        CarnivalJackpot,    // 稻草人 — 下次得分+2
+        GhostSail,          // 骷髅海盗 — 篮筐护盾
+        BloodMoonBlink,     // 吸血鬼 — 闪现扣篮
+        WaxOverdrive,       // 蜡像人 — 速度加成
+        BadLuck,            // 女巫 — 冰冻对手
+        ReboundMagnet,      // 幽灵小丑 — 篮板磁铁
+        SureBlock           // 黑猫 — 必定封盖
     }
 
     /// <summary>
@@ -103,8 +101,7 @@ namespace mlp
         /// 判断该技能是否使用传送扣篮机制。
         /// </summary>
         public bool UsesTeleportDunk =>
-            SkillType == mlpCharacterSkillType.BloodMoonBlink ||
-            SkillType == mlpCharacterSkillType.HexGate;
+            SkillType == mlpCharacterSkillType.BloodMoonBlink;
 
         /// <summary>
         /// 判断该技能是否使用篮筐护盾机制。
@@ -122,9 +119,7 @@ namespace mlp
         public bool UsesPossessionSkill =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
             SkillType == mlpCharacterSkillType.BloodMoonBlink ||
-            SkillType == mlpCharacterSkillType.WaxOverdrive ||
-            SkillType == mlpCharacterSkillType.HarvestTime ||
-            SkillType == mlpCharacterSkillType.HexGate;
+            SkillType == mlpCharacterSkillType.WaxOverdrive;
 
         /// <summary>
         /// 判断该技能是否使用冰冻机制。
@@ -145,17 +140,14 @@ namespace mlp
         /// 判断该技能是否能提升下一次投篮的得分值。
         /// </summary>
         public bool UsesScoreUpgrade =>
-            SkillType == mlpCharacterSkillType.CarnivalJackpot ||
-            SkillType == mlpCharacterSkillType.HarvestTime;
+            SkillType == mlpCharacterSkillType.CarnivalJackpot;
 
         /// <summary>
         /// 判断玩家是否必须持球才能激活该技能。
         /// </summary>
         public bool RequiresBallToCast =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
-            SkillType == mlpCharacterSkillType.BloodMoonBlink ||
-            SkillType == mlpCharacterSkillType.HarvestTime ||
-            SkillType == mlpCharacterSkillType.HexGate;
+            SkillType == mlpCharacterSkillType.BloodMoonBlink;
 
         /// <summary>
         /// 判断该技能是否拥有独立的图标和充能遮罩美术资源。

@@ -2420,9 +2420,6 @@ namespace mlp
                 case mlpCharacterSkillType.BadLuck:
                     UpdateFreezeFx(t);
                     break;
-                case mlpCharacterSkillType.HarvestTime:
-                    UpdateHarvestTimeFx(t);
-                    break;
             }
         }
 
@@ -2465,28 +2462,6 @@ namespace mlp
             accentRenderer.color = WithAlpha(Color.white, 0.66f * fade);
         }
 
-        private void UpdateHarvestTimeFx(float t)
-        {
-            var fade = mode == FxMode.Burst ? 1f - t : 0.96f;
-            var pulse = mode == FxMode.Burst
-                ? Mathf.Lerp(0.76f, 1f, t)
-                : 0.97f + Mathf.Sin(Time.time * 6f) * 0.035f;
-
-            SetRendererPixelSize(glowRenderer, 96f * pulse, 34f * pulse);
-            SetRendererPixelSize(coreRenderer, 62f * pulse, 78f * pulse);
-            SetRendererPixelSize(accentRenderer, 110f * pulse, 46f * pulse);
-
-            glowRenderer.transform.localPosition = new Vector3(0f, -1f, 0f);
-            coreRenderer.transform.localPosition = new Vector3(28f, -26f, 0f);
-            accentRenderer.transform.localPosition = new Vector3(0f, -4f, 0f);
-
-            coreRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2.1f) * 2f);
-            accentRenderer.transform.localRotation = Quaternion.Euler(0f, 0f, -Time.time * 7f);
-
-            glowRenderer.color = WithAlpha(skillDefinition.PrimaryColor, 0.09f + Mathf.Sin(Time.time * 5f) * 0.012f);
-            coreRenderer.color = WithAlpha(Color.white, 0.62f * fade);
-            accentRenderer.color = WithAlpha(Color.white, 0.52f * fade);
-        }
 
         private static void SetRendererPixelSize(SpriteRenderer renderer, float widthPixels, float heightPixels)
         {
@@ -2558,10 +2533,6 @@ namespace mlp
                     return "fx_smoke_0";
                 case mlpCharacterSkillType.WaxOverdrive:
                     return "fx_fire_2";
-                case mlpCharacterSkillType.HarvestTime:
-                    return "wind1";
-                case mlpCharacterSkillType.HexGate:
-                    return "dbanims/circle2";
                 case mlpCharacterSkillType.BadLuck:
                     return "fx_smoke_6";
                 default:
@@ -2583,10 +2554,6 @@ namespace mlp
                     return "fx_spl2_0";
                 case mlpCharacterSkillType.WaxOverdrive:
                     return "fx_Blur_mol4";
-                case mlpCharacterSkillType.HarvestTime:
-                    return "fx_smoke_2";
-                case mlpCharacterSkillType.HexGate:
-                    return "fx_spl2_0";
                 case mlpCharacterSkillType.BadLuck:
                     return "dbanims/eye34635";
                 default:
@@ -3689,7 +3656,7 @@ namespace mlp
             removedFromPlay = true;
             superPhase = SuperPhase.AlleyTeleportOut;
             superTimer = 0f;
-            superDuration = skillDefinition.SkillType == mlpCharacterSkillType.HexGate ? 0.34f : 0.4f;
+            superDuration = 0.4f;
         }
 
         /// <summary>
@@ -4118,12 +4085,6 @@ namespace mlp
                 case mlpCharacterSkillType.WaxOverdrive:
                     MakeWaxOverdrive();     // 蜡像过载：特殊移动效果
                     return true;
-                case mlpCharacterSkillType.HarvestTime:
-                    MakeScoreUpgradeBuff(); // 丰收时刻：下次得分加成
-                    return true;
-                case mlpCharacterSkillType.HexGate:
-                    MakeAlleyOop();         // 咒术门：传送到篮下空接扣篮
-                    return true;
                 case mlpCharacterSkillType.BadLuck:
                     MakeFreeze();           // 厄运：冻结对手球员
                     return true;
@@ -4539,7 +4500,7 @@ namespace mlp
             // 4. 切换到传送入场阶段
             superPhase = SuperPhase.AlleyTeleportIn;
             superTimer = 0f;
-            superDuration = skillDefinition.SkillType == mlpCharacterSkillType.HexGate ? 0.34f : 0.4f;
+            superDuration = 0.4f;
         }
 
         /// <summary>
