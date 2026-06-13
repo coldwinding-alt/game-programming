@@ -1,5 +1,21 @@
 // 游戏核心逻辑（比赛主循环）
 // 管理一场篮球比赛的全部流程：创建球场和球员、控制计时器、处理得分、判断胜负、暂停和恢复、教程模式。每帧由 Update 驱动，是整个游戏运行的核心。
+//
+// 比赛生命周期方法链：
+//
+//   StartMatch()            ← 开始新比赛（重置状态、显示倒计时）
+//     ↓ (比赛进行中，Update 每帧驱动)
+//   BeginEndOfTime()        ← 时间到，播放终场蜂鸣
+//     ↓
+//   FinalizeEndMatch()      ← 判定胜负（平局→加时赛，否则显示结果）
+//     ↓
+//   ResolvePostMatchDelay() ← 赛后延迟结束后   第九层
+//     ├─ 平局 → StartOvertime()   ← 加时赛（更短计时器、重新倒计时）
+//     └─ 有胜负 → 显示结算界面
+//     ↓
+//   (等待玩家点击)
+//     ├─ 锦标赛/冒险 → AdvanceFlowRequested = true  ← 推进流程
+//     └─ 普通模式 → ReturnToMenuRequested = true     ← 回主菜单
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,36 +27,40 @@ namespace mlp
     /// </summary>
     public sealed class mlpGameCore
     {
-        private readonly Transform root;
-        private readonly List<mlpPlayerObject> playersLeft = new List<mlpPlayerObject>();
-        private readonly List<mlpPlayerObject> playersRight = new List<mlpPlayerObject>();
-        private const float AdventureDoubleRimCycle = 12f;
-        private const float AdventureDoubleRimActiveTime = 6f;
-        private const float AdventureBloodMoonTimeScale = 1.14f;
-        private const float AdventureFogWindForce = 30f;
-        private mlpArenaObject arena;
-        private mlpBasketObject basketLeft;
-        private mlpBasketObject basketRight;
-        private mlpHudView hud;
-        private bool isPlaying;
-        private bool isPaused;
-        private bool isTraining;
-        private float matchTime;
-        private float endTime;
-        private float restartDelay;
-        private int restartSide;
-        private bool preMatchCountdown;
-        private bool pauseResumeCountdown;
-        private bool waitingForBallAfterBuzzer;
-        private float postMatchDelay;
-        private int postMatchWinner;
-        private bool overtimePending;
-        private bool regularMatchTimeActive;
-        private bool runtimeResourcesReleased;
-        private mlpTutorialFlow tutorialFlow;
-        private mlpAdventureLevelDefinition adventureLevel;
-        private mlpAdventureMechanic lastAdventureCue = mlpAdventureMechanic.BasicDuel;
-        private bool adventureCueWasActive;
+        private readonly Transform root;                                              // 所有游戏对象（球场、球员、球）挂载的父级 Transform
+        private readonly List<mlpPlayerObject> playersLeft = new List<mlpPlayerObject>();  // 左侧队伍的球员列表
+        private readonly List<mlpPlayerObject> playersRight = new List<mlpPlayerObject>(); // 右侧队伍的球员列表
+        private const float AdventureDoubleRimCycle = 12f;                            // 冒险模式"双倍篮筐"机制的完整周期（秒）
+        private const float AdventureDoubleRimActiveTime = 6f;                        // 冒险模式"双倍篮筐"每周期内生效的时长（秒）
+        private const float AdventureBloodMoonTimeScale = 1.14f;                      // 冒险模式"血月"机制的游戏速度倍率（加速 14%）
+        private const float AdventureFogWindForce = 60f;
+        private const float AdventureFogWindMinMultiplier = 0.7f;
+        private const float AdventureFogWindMaxMultiplier = 1f;
+        private const float AdventureFogWindPhaseOffset = 0.7f;
+        private const float AdventureFogWindFrequency = 1.35f;
+        private mlpArenaObject arena;                                                 // 球场背景对象
+        private mlpBasketObject basketLeft;                                           // 左侧篮筐
+        private mlpBasketObject basketRight;                                          // 右侧篮筐
+        private mlpHudView hud;                                                       // HUD 界面（比分板、计时器、消息提示、暂停遮罩）
+        private bool isPlaying;                                                       // 比赛是否正在进行中（倒计时结束后为 true）
+        private bool isPaused;                                                        // 是否处于暂停状态
+        private bool isTraining;                                                      // 是否为训练模式或教程模式（无计时器限制）
+        private float matchTime;                                                      // 当前比赛已进行的时间（秒）
+        private float endTime;                                                        // 比赛结束时间（秒），训练模式为 99999
+        private float restartDelay;                                                   // 得分后重新开球前的等待时间（秒），归零时开球
+        private int restartSide;                                                      // 得分后获得球权的一方（-1=左侧，1=右侧）
+        private bool preMatchCountdown;                                               // 是否处于赛前 3-2-1 倒计时阶段
+        private bool pauseResumeCountdown;                                            // 是否处于暂停恢复的 3-2-1 倒计时阶段
+        private bool waitingForBallAfterBuzzer;                                       // 终场蜂鸣后是否正在等待飞行中的篮球落地
+        private float postMatchDelay;                                                 // 赛后延迟计时器（秒），用于在显示结果前留出缓冲时间
+        private int postMatchWinner;                                                  // 赛后判定的获胜方（-1=左侧，1=右侧，0=平局/未定）
+        private bool overtimePending;                                                 // 是否需要进入加时赛（平局时为 true）
+        private bool regularMatchTimeActive;                                          // 是否为正式时长比赛（非加时、非训练）
+        private bool runtimeResourcesReleased;                                        // 运行时资源是否已释放（防止重复释放）
+        private mlpTutorialFlow tutorialFlow;                                         // 教程流程控制器（非教程模式为 null）
+        private mlpAdventureLevelDefinition adventureLevel;                           // 当前冒险关卡定义（非冒险模式为 null）
+        private mlpAdventureMechanic lastAdventureCue = mlpAdventureMechanic.BasicDuel; // 上一帧生效的冒险机制（用于检测机制切换）
+        private bool adventureCueWasActive;                                           // 上一帧冒险机制是否处于激活状态（用于检测激活/失效变化）
 
         public mlpBallObject Ball { get; private set; }
         public mlpMatchData MatchData => mlpInventory.Instance.MatchData;
@@ -125,11 +145,18 @@ namespace mlp
 
         /// <summary>
         /// 主游戏循环每帧调用。处理暂停输入、倒计时、球物理、球员更新、碰撞检测、计时器倒数和比赛结束逻辑。
+        /// 整体采用"状态机 + 提前返回"的结构：每一层判断当前所处的比赛阶段，如果条件命中就执行对应逻辑后立即 return，
+        /// 把后续更深层的状态判断"短路"掉。这样每一帧只会命中一个阶段，不会出现逻辑重叠。
+        /// 阶段优先级从高到低依次为：
+        ///   帮助面板 → 暂停输入 → HUD/教程更新 → 返回菜单请求 → 恢复倒计时 → 暂停 → 快速测试同步 → 教程冻结 →
+        ///   篮筐动画 → 赛后延迟 → 结算界面 → 赛前倒计时 → 得分后延迟 → 比赛进行中 → 计时器
         /// </summary>
-        /// <param name="dt">自上一帧以来经过的时间（秒）。</param>
+        /// <param name="dt">自上一帧以来经过的时间（秒），由 Unity 的 Time.deltaTime 传入。</param>
         public void Update(float dt)
         {
-            // 1. 帮助面板打开时只更新 HUD 和教程，不处理游戏逻辑
+            // ── 第 1 层：帮助面板（模态对话框） ──────────────────────────────
+            // 帮助面板打开时游戏进入"冻结"状态：暂停所有比赛物理和输入，
+            // 但 HUD（计时器动画、消息淡出）和教程流程仍需正常刷新。
             if (mlpHelpPanel.IsAnyOpen)
             {
                 hud.Update(dt);
@@ -137,7 +164,11 @@ namespace mlp
                 return;
             }
 
-            // 2. 检测暂停按键（P 或 Esc），在非赛后延迟且非结算界面时切换暂停
+            // ── 第 2 层：暂停按键检测 ──────────────────────────────────────
+            // 玩家按下 P 或 Esc 时切换暂停状态。以下情况不允许触发暂停：
+            //   - pauseResumeCountdown：正在从暂停恢复的 3-2-1 倒计时中，不能打断
+            //   - postMatchDelay > 0：赛后延迟中（等待显示结果），暂停会干扰流程
+            //   - hud.IsPostMatchVisible：结算界面已显示，暂停无意义
             if (!pauseResumeCountdown &&
                 (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape)) &&
                 postMatchDelay <= 0f &&
@@ -146,21 +177,31 @@ namespace mlp
                 HandlePauseCommand(mlpPauseCommand.Toggle);
             }
 
-            // 3. 更新 HUD 和教程，处理暂停命令
+            // ── 第 3 层：HUD 和教程更新 ──────────────────────────────────
+            // HUD 每帧刷新：消息文字淡出、计时器动画、按钮悬停状态等。
+            // 教程流程每帧刷新：对话气泡显示、步骤推进等。
+            // hud.ConsumePauseCommand() 检查 HUD 上的暂停按钮是否被点击，
+            // 如果被点击则返回对应的暂停命令（Toggle/Resume/Menu）。
             hud.Update(dt);
             tutorialFlow?.UpdateFrame(dt);
             HandlePauseCommand(hud.ConsumePauseCommand());
+
+            // HUD 更新后再次检查帮助面板——因为 HUD 的按钮点击可能刚打开了帮助面板
             if (mlpHelpPanel.IsAnyOpen)
             {
                 return;
             }
 
+            // 玩家在结算界面或暂停菜单中请求返回主菜单，由外层 mlpGameBootstrap 处理
             if (ReturnToMenuRequested)
             {
                 return;
             }
 
-            // 4. 暂停恢复倒计时：倒计时结束后取消暂停并吹哨
+            // ── 第 4 层：暂停恢复倒计时 ────────────────────────────────────
+            // 从暂停恢复时先显示 3-2-1 倒计时，倒计时结束后才真正取消暂停。
+            // 这样玩家有准备时间，不会在毫无预警的情况下突然恢复比赛。
+            // 倒计时由 HUD 驱动（UpdateCountdown 返回 false 表示倒计时结束）。
             if (pauseResumeCountdown)
             {
                 pauseResumeCountdown = hud.UpdateCountdown(dt);
@@ -168,6 +209,7 @@ namespace mlp
                 {
                     hud.EndResumeCountdown();
                     isPaused = false;
+                    // 赛前倒计时阶段恢复时不吹哨（因为赛前本身就有倒计时）
                     if (!preMatchCountdown)
                     {
                         mlpAudio.Instance?.Play(mlpAssets.Sounds.MWhistle);
@@ -177,33 +219,46 @@ namespace mlp
                 return;
             }
 
-            // 5. 暂停状态直接跳过所有游戏逻辑
+            // ── 第 5 层：暂停状态 ──────────────────────────────────────────
+            // 暂停中跳过所有游戏物理和逻辑，画面完全冻结。
             if (isPaused)
             {
                 return;
             }
 
+            // 快速测试模式下可能动态修改比赛时长，这里同步并检查是否需要触发终场
             if (SyncQuickTestMatchTime())
             {
                 return;
             }
 
-            // 6. 教程冻结时暂停游戏物理（教程对话期间球和球员不动）
+            // ── 第 6 层：教程冻结 ──────────────────────────────────────────
+            // 教程对话框打开期间（FreezeGameplay = true），球和球员都不动，
+            // 让玩家专注于阅读操作指引。只有 HUD 和教程流程继续刷新。
             if (tutorialFlow != null && tutorialFlow.FreezeGameplay)
             {
                 return;
             }
 
-            // 7. 计算实际游戏时间（可能被教程或冒险模式减速/加速）
+            // ── 第 7 层：计算实际游戏时间 ──────────────────────────────────
+            // gameplayDt 是经过时间缩放后的真实游戏时间：
+            //   - 教程模式下可通过 GameplayTimeScale 减速（如 0.5x），让新手看清动作
+            //   - 冒险模式的"血月"机制会加速 14%（1.14x），增加紧张感
+            // UpdateAdventureMechanics 处理冒险模式的特殊机制激活/失效逻辑
             var gameplayDt = tutorialFlow != null ? dt * tutorialFlow.GameplayTimeScale : dt;
             gameplayDt *= GetAdventureGameplayTimeScale();
             UpdateAdventureMechanics(gameplayDt);
 
-            // 8. 更新篮筐动画
+            // ── 第 8 层：篮筐动画 ──────────────────────────────────────────
+            // 篮筐有弹性晃动动画（进球后网兜摇摆），需要每帧独立更新。
+            // 篮筐动画不受比赛阶段影响，在赛后延迟期间也能看到余韵。
             basketLeft.Update(gameplayDt);
             basketRight.Update(gameplayDt);
 
-            // 9. 赛后延迟：等待指定时间后进入加时赛或显示结果
+            // ── 第 9 层：赛后延迟 ──────────────────────────────────────────
+            // 比赛时间到或分出胜负后，不立即显示结算界面，而是等待一段短暂延迟
+            // （约 1.15~1.2 秒），让"TIME!!!"或"OVERTIME"消息有时间展示。
+            // 延迟结束后 ResolvePostMatchDelay 决定：平局→进入加时赛，否则→显示结算。
             if (postMatchDelay > 0f)
             {
                 postMatchDelay -= gameplayDt;
@@ -214,7 +269,10 @@ namespace mlp
                 return;
             }
 
-            // 10. 结算界面显示中：点击后推进到下一阶段（锦标赛/冒险回到流程，普通模式回菜单）
+            // ── 第 10 层：结算界面交互 ─────────────────────────────────────
+            // 结算界面显示比赛结果（比分、胜负）。玩家点击鼠标/按回车/空格后：
+            //   - 锦标赛/冒险模式：设置 AdvanceFlowRequested，由外层推进到下一关/下一轮
+            //   - 普通模式：设置 ReturnToMenuRequested，返回主菜单
             if (hud.IsPostMatchVisible)
             {
                 if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
@@ -232,7 +290,10 @@ namespace mlp
                 return;
             }
 
-            // 11. 赛前倒计时：更新球员冷却，倒计时结束后吹哨开球
+            // ── 第 11 层：赛前倒计时 ──────────────────────────────────────
+            // 新比赛开始时显示 "TIP OFF IN 3...2...1..." 倒计时。
+            // 倒计时期间球员可以移动但不能投篮（TickPreMatch 更新技能冷却等）。
+            // 倒计时结束后设置 isPlaying = true，吹哨开球，正式进入比赛。
             if (preMatchCountdown)
             {
                 foreach (var player in playersLeft)
@@ -253,7 +314,9 @@ namespace mlp
                 return;
             }
 
-            // 12. 得分后延迟：等待后重新开球
+            // ── 第 12 层：得分后延迟 ──────────────────────────────────────
+            // 一方得分后等待约 1.15 秒再重新开球。这段时间让进球动画和得分消息展示。
+            // 延迟结束后 RestartAfterScore 将球权交给被得分的一方，重新开始比赛。
             if (restartDelay > 0f)
             {
                 restartDelay -= gameplayDt;
@@ -264,12 +327,16 @@ namespace mlp
                 return;
             }
 
+            // isPlaying 为 false 表示比赛尚未正式开始（例如刚创建但还没吹哨）
             if (!isPlaying)
             {
                 return;
             }
 
-            // 13. 终场后等待篮球落地：球在空中时继续物理更新，落地后判定胜负
+            // ── 第 13 层：终场后等待球落地 ────────────────────────────────
+            // 终场蜂鸣器响后，如果球还在空中飞行（投篮弧线中），不能立即判定胜负。
+            // 因为球可能还在飞向篮筐，有可能在蜂鸣后命中——这种情况应该算分。
+            // 所以继续更新球的物理和盖帽检测，等球落地或入篮后再 FinalizeEndMatch。
             if (waitingForBallAfterBuzzer)
             {
                 ApplyAdventureBallWind(gameplayDt);
@@ -282,9 +349,19 @@ namespace mlp
                 return;
             }
 
-            // 14. 正常比赛进行中：更新篮球物理、所有球员、盖帽检测、捡球检测
+            // ── 第 14 层：正常比赛进行（核心物理循环） ────────────────────
+            // 这是比赛的主循环，每帧按顺序执行以下步骤：
+            //
+            // 14a. 冒险模式风力效果：迷雾风机制会向飞行中的球施加水平风力，
+            //      用正弦函数计算风向，让球的飞行轨迹产生不可预测的偏移。
             ApplyAdventureBallWind(gameplayDt);
+
+            // 14b. 篮球物理更新：包括重力、抛物线飞行、反弹、入篮检测等。
+            //      传入左右篮筐用于碰撞检测（判断球是否穿过篮筐）。
             Ball.Update(gameplayDt, basketLeft, basketRight);
+
+            // 14c. 球员更新：每个球员的 AI 决策、移动、动画状态机、技能冷却等。
+            //      先更新左队再更新右队，顺序对结果无影响（纯逻辑更新）。
             foreach (var player in playersLeft)
             {
                 player.Update(gameplayDt);
@@ -294,12 +371,22 @@ namespace mlp
                 player.Update(gameplayDt);
             }
 
+            // 14d. 碰撞检测三连：
+            //      ResolvePlayerBlocking — 两名主力球员物理重叠时推开（基于质量比例），
+            //                             同时中断冲撞到防守球员的冲刺。
+            //      TryBlockBall — 检查是否有球员能盖帽（球在可盖帽状态且球员在范围内）。
+            //      TryPickupLooseBall — 检查是否有球员能捡起无人控制的球（最近的球员获得球权）。
             ResolvePlayerBlocking();
             TryBlockBall();
             TryPickupLooseBall();
+
+            // 14e. 教程后处理：教程流程在游戏物理之后更新，用于检测玩家是否完成了操作目标。
             tutorialFlow?.UpdateAfterGameplay(dt);
 
-            // 15. 更新比赛计时器，时间到则触发终场
+            // ── 第 15 层：比赛计时器 ──────────────────────────────────────
+            // 训练模式和超级投篮（SuperShot）不倒计时——训练无时间限制，超级投篮有独立计时。
+            // 每帧累加比赛时间，更新 HUD 上的倒计时显示，时间到则触发终场流程
+            // （BeginEndOfTime 会播放蜂鸣音，并处理球在空中的延迟判定）。
             if (!isTraining && !IsSuperShot)
             {
                 matchTime += gameplayDt;
@@ -313,23 +400,40 @@ namespace mlp
 
         /// <summary>
         /// 当球穿过篮筐时调用。计算得分、更新比分、在 HUD 上显示消息，并安排对方球队的重新开球。
+        /// 这是得分的核心处理函数，由篮球碰撞检测模块在判定球入篮后回调。
+        /// 注意 scoringSide 是"被得分方"的半场，不是得分方——球穿过左侧篮筐意味着右侧得分。
         /// </summary>
-        /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>
+        /// <param name="scoringSide">被得分方的半场（-1 = 左侧篮筐被投进，1 = 右侧篮筐被投进）。</param>
         public void OnBallScored(int scoringSide)
         {
-            // 1. 防止重复触发得分（延迟期间不处理）
+            // ── 第 1 步：防重复触发 ──────────────────────────────────────
+            // restartDelay > 0 说明上一次得分后的延迟还没结束（约 1.15 秒）。
+            // 这期间如果球又弹进了篮筐（比如球在篮筐边缘弹跳多次），不应该重复计分。
             if (restartDelay > 0f)
             {
                 return;
             }
 
-            // 2. 计算得分：根据投篮距离判断 2 分还是 3 分，冒险模式可能有加成
+            // ── 第 2 步：计算基础得分 ────────────────────────────────────
+            // teamIndex：得分方在数组中的索引（左队=0，右队=1）。
+            // fallbackPoints：根据投篮位置判断是 2 分还是 3 分球。
+            //   - IsThreePointer 检查投篮时球是否在三分线以外
+            //   - 这只是"默认值"，后续可能被技能或冒险模式修改
+            // ResolvePointsForScore：MatchProcessor 可能有额外的得分规则（如特殊投篮加成）
+            // ResolveAdventureScoreModifier：冒险模式的特殊机制可能修改分数
+            //   - "双倍篮筐"机制：分数翻倍
+            //   - "丰收时刻"机制：分数 +1
+            //   注意 ref points——直接修改原始变量，函数返回提示文字（如 "DOUBLE RIM 4!"）
             var teamIndex = scoringSide == -1 ? 0 : 1;
             var fallbackPoints = IsThreePointer(scoringSide) ? 3 : 2;
             var points = MatchProcessor.ResolvePointsForScore(scoringSide, fallbackPoints);
             var adventureScoreNotice = ResolveAdventureScoreModifier(ref points);
 
-            // 3. 查找投篮球员，应用其得分加成技能（如狂欢大奖）
+            // ── 第 3 步：查找投篮球员并应用其个人技能加成 ────────────────
+            // MatchProcessor 记录了最后一次投篮的球员信息（哪一队、几号球员）。
+            // 通过这些信息找到具体的球员对象，让他应用自己的得分技能。
+            // 例如某些角色的"狂欢大奖"技能可能随机将得分翻倍。
+            // ResolveScorePoints 返回修改后的分数，同时通过 out 参数输出技能提示文字。
             var scoringPlayer = FindPlayerBySideAndPlayerNo(MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
             string scoreNotice = null;
             if (scoringPlayer != null)
@@ -337,7 +441,11 @@ namespace mlp
                 points = scoringPlayer.ResolveScorePoints(points, out scoreNotice);
             }
 
-            // 4. 更新比分和 HUD 显示
+            // ── 第 4 步：更新比分并同步到 HUD ────────────────────────────
+            // 累加得分方的比分，然后刷新 HUD 上两边的比分显示。
+            // Dispatch 发送得分信号——其他球员的 AI 可能会据此调整行为
+            // （比如队友庆祝、对手沮丧等动画触发）。
+            // HideCountdown 隐藏可能正在显示的倒计时（比如赛前倒计时被打断的情况）。
             MatchData.MatchScore[teamIndex] += points;
             hud.UpdateScore(MatchData.MatchScore[0], MatchData.MatchScore[1]);
             if (MatchProcessor.ShotPlayerNo >= 0)
@@ -345,6 +453,11 @@ namespace mlp
                 PlayerSignals.Dispatch(mlpPlayerSignalType.Score, MatchProcessor.ShotSide, MatchProcessor.ShotPlayerNo);
             }
             hud.HideCountdown();
+
+            // ── 第 5 步：在 HUD 上显示得分消息 ──────────────────────────
+            // waitingForBallAfterBuzzer 为 true 表示这是终场蜂鸣后球才进的——
+            // 这种情况下不显示得分消息，因为 "TIME!!!" 消息已经占位了。
+            // 消息优先级：球员技能提示 > 冒险模式提示 > 高分通用提示 > 普通得分
             if (!waitingForBallAfterBuzzer)
             {
                 if (!string.IsNullOrEmpty(scoreNotice))
@@ -365,6 +478,12 @@ namespace mlp
                 }
             }
 
+            // ── 第 6 步：播放篮筐和音效 ─────────────────────────────────
+            // HitNet 让"被得分方"的篮筐播放网兜晃动动画。
+            // 注意：球进了左侧篮筐（scoringSide==-1）→ 右侧篮筐晃动？
+            // 不对——scoringSide 是被得分方的半场，球穿过的是该半场的篮筐，
+            // 所以是该半场的篮筐播放网兜动画。逻辑上是 basketRight.HitNet() 对应右侧篮筐。
+            // BBasket 是进球音效。
             if (scoringSide == -1)
             {
                 basketRight.HitNet();
@@ -376,12 +495,22 @@ namespace mlp
 
             mlpAudio.Instance?.Play(mlpAssets.Sounds.BBasket);
             scoringPlayer?.OnScoreConfirmed();
+
+            // ── 第 7 步：终场得分特殊处理 ────────────────────────────────
+            // 如果是终场蜂鸣后球才进的，不需要安排重新开球（比赛已经结束了）。
+            // 直接把 restartDelay 设为 0 并返回，让 Update 中的
+            // waitingForBallAfterBuzzer 逻辑去调用 FinalizeEndMatch 判定胜负。
             if (waitingForBallAfterBuzzer)
             {
                 restartDelay = 0f;
                 return;
             }
 
+            // ── 第 8 步：安排重新开球 ────────────────────────────────────
+            // restartSide = -scoringSide：球权交给被得分的一方（对方进球后我方开球）。
+            // restartDelay = 1.15 秒：进球后等待 1.15 秒再开球，
+            //   这段时间让进球动画和得分消息展示完，Update 中会倒计时，
+            //   归零后调用 RestartAfterScore 执行实际的开球操作。
             restartSide = -scoringSide;
             restartDelay = 1.15f;
         }
@@ -1176,6 +1305,7 @@ namespace mlp
             // 1. 非冒险关卡、训练中或未比赛时跳过
             if (adventureLevel == null || isTraining || !isPlaying)
             {
+                arena?.UpdateFogWindFx(false, 0f, 0f);
                 return;
             }
 
@@ -1193,7 +1323,18 @@ namespace mlp
             adventureCueWasActive = active;
             if (!active)
             {
+                arena?.UpdateFogWindFx(false, 0f, 0f);
                 return;
+            }
+
+            if (mechanic == mlpAdventureMechanic.FogWind)
+            {
+                var gustWave = GetAdventureFogWindWave();
+                arena?.UpdateFogWindFx(true, gustWave, ResolveAdventureFogWindStrength(gustWave));
+            }
+            else
+            {
+                arena?.UpdateFogWindFx(false, 0f, 0f);
             }
 
             // 5. 根据机制类型执行特殊效果（如自动充能必杀技）
@@ -1207,6 +1348,16 @@ namespace mlp
                     ApplyAdventureBonusCharge(playersRight, dt * 0.26f);
                     break;
             }
+        }
+
+        private float GetAdventureFogWindWave()
+        {
+            return Mathf.Sin((matchTime + AdventureFogWindPhaseOffset) * AdventureFogWindFrequency);
+        }
+
+        private static float ResolveAdventureFogWindStrength(float gustWave)
+        {
+            return Mathf.Lerp(AdventureFogWindMinMultiplier, AdventureFogWindMaxMultiplier, Mathf.Abs(gustWave));
         }
 
         private void ApplyAdventureBallWind(float dt)
@@ -1231,8 +1382,10 @@ namespace mlp
             }
 
             // 4. 用正弦函数计算风向，对球施加水平风力
-            var direction = Mathf.Sin((matchTime + 0.7f) * 1.35f) >= 0f ? 1f : -1f;
-            Ball.Velocity.x += direction * AdventureFogWindForce * dt;
+            var gustWave = GetAdventureFogWindWave();
+            var direction = gustWave >= 0f ? 1f : -1f;
+            var gustStrength = ResolveAdventureFogWindStrength(gustWave);
+            Ball.Velocity.x += direction * AdventureFogWindForce * gustStrength * dt;
         }
 
         private string ResolveAdventureScoreModifier(ref int points)

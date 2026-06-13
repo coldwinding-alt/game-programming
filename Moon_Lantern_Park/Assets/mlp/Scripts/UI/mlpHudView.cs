@@ -1354,6 +1354,9 @@ namespace mlp
                 case "HELL SHIELD!":
                     messageText.color = new Color32(0xFF, 0x52, 0x92, 0xFF);
                     break;
+                case "FOG WIND ACTIVE":
+                    messageText.color = new Color32(0xA8, 0xF7, 0xFF, 0xFF);
+                    break;
                 // 9. 其他消息：紫色（默认）
                 default:
                     messageText.color = new Color32(0x8B, 0x2D, 0xFF, 0xFF);
@@ -1750,19 +1753,19 @@ namespace mlp
     /// </summary>
     public sealed class mlpMenuButton
     {
-        private Rect rect;
-        private readonly System.Action action;
-        private readonly GameObject sprite;
-        private readonly TextMesh label;
-        private readonly TMP_Text nativeLabel;
-        private readonly Transform labelTransform;
-        private readonly Vector3 baseScale;
-        private readonly Vector3 labelBaseScale;
-        private bool visible = true;
-        private bool backgroundVisible = true;
-        private bool labelVisible = true;
-        private bool pressed;
-        public GameObject Root => sprite;
+        private Rect rect;                              // 按钮的矩形区域（用于鼠标碰撞检测）
+        private readonly System.Action action;           // 点击时执行的回调函数
+        private readonly GameObject sprite;              // 按钮背景的 GameObject
+        private readonly TextMesh label;                 // 按钮文字（旧版 Unity 文字系统）
+        private readonly TMP_Text nativeLabel;           // 按钮文字（TextMeshPro 文字系统）
+        private readonly Transform labelTransform;       // 文字的 Transform 组件
+        private readonly Vector3 baseScale;              // 背景精灵的基础缩放值
+        private readonly Vector3 labelBaseScale;         // 文字的基础缩放值
+        private bool visible = true;                     // 按钮整体是否可见
+        private bool backgroundVisible = true;           // 背景精灵是否可见
+        private bool labelVisible = true;                // 文字标签是否可见
+        private bool pressed;                            // 当前是否处于按下状态
+        public GameObject Root => sprite;                // 公开访问背景 GameObject 的属性
 
         /// <summary>
         /// 创建一个带背景精灵和文字标签的可点击菜单按钮。

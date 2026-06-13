@@ -1,6 +1,9 @@
 ﻿// 游戏启动器和菜单界面控制器
 // 管理从主菜单到比赛开始的所有界面：选择 1 人或 2 人模式、选择角色和篮球皮肤、选择难度、进入冒险模式或锦标赛、显示故事漫画、锦标赛对阵图和颁奖画面。也负责创建摄像机和音频系统。
 
+//  worldX = (x * 4/3 - 533) / 100
+//  worldY = (320 - y * 4/3) / 100
+
 using System.Text;
 using UnityEngine;
 
@@ -9,302 +12,383 @@ namespace mlp
     /// <summary>
     /// 游戏启动器和菜单控制器：管理从主菜单到比赛的所有界面——选择模式、角色、篮球皮肤、难度，以及冒险/锦标赛的流程控制。也负责创建摄像机和音频系统。
     /// </summary>
+    // ═══════════════════════════════════════════════════════════════════
+    // 第 1 块：类定义、枚举、数据结构和常量
+    // ═══════════════════════════════════════════════════════════════════
     public sealed class mlpGameBootstrap : MonoBehaviour
     {
         private static mlpGameBootstrap activeInstance;
 
+        //整个脚本的"地图"，列出了所有可能出现的界面
         private enum mlpBootstrapScreen
         {
-            PlayerCount,
-            MatchType,
-            SinglePlayerCharacterSetup,
-            StoryIntro,
-            AdventurePreview,
-            AdventureMap,
-            AdventureResult,
-            SinglePlayerSetup,
-            TwoPlayerSetup,
-            TrainingSetup,
-            TournamentSetup,
-            TournamentBracket,
-            TournamentComplete,
-            TournamentAwards
+            PlayerCount,                 // 选择玩家人数（1人/2人）
+            MatchType,                   // 选择比赛类型（快速/冒险/锦标赛）
+            SinglePlayerCharacterSetup,  // 单人模式选择角色
+            StoryIntro,                  // 故事漫画过场
+            AdventurePreview,            // 冒险模式预告页
+            AdventureMap,                // 冒险模式藏宝地图
+            AdventureResult,             // 冒险关卡结果（过关/失败）
+            SinglePlayerSetup,           // 单人赛前设置（选球、难度）
+            TwoPlayerSetup,              // 双人赛前设置
+            TrainingSetup,               // 训练模式设置
+            TournamentSetup,             // 锦标赛设置
+            TournamentBracket,           // 锦标赛对阵图
+            TournamentComplete,          // 锦标赛结束
+            TournamentAwards             // 锦标赛颁奖典礼
         }
 
+        // 颁奖典礼中每个选手的排名信息
         private sealed class TournamentAwardsPlacement
         {
-            public int Placement;
-            public int CharacterId;
-            public bool IsPlayer;
-            public string CupAnimation;
-            public Color AccentColor;
-            public Color GlowColor;
+            public int Placement;            // 名次（1=冠军，2=亚军，3=季军）
+            public int CharacterId;          // 角色 ID
+            public bool IsPlayer;            // 是否是玩家操控的角色
+            public string CupAnimation;      // 奖杯动画名称
+            public Color AccentColor;        // 强调色（用于排名标识）
+            public Color GlowColor;          // 发光效果颜色
         }
 
+        // 颁奖典礼中单个动画元素的定义（用于入场动画）
         private sealed class TournamentAwardsAnimatedItem
         {
-            public Transform Root;
-            public Vector3 TargetLocalPosition;
-            public Vector3 TargetLocalScale;
-            public Vector3 StartLocalOffset;
-            public float Delay;
-            public float Duration;
-            public float StartScale = 1f;
-            public bool Fade = true;
-            public SpriteRenderer[] SpriteRenderers;
-            public Color[] SpriteBaseColors;
-            public TextMesh[] TextMeshes;
-            public Color[] TextBaseColors;
+            public Transform Root;           // 动画目标对象的 Transform
+            public Vector3 TargetLocalPosition; // 动画结束时的本地位置
+            public Vector3 TargetLocalScale;    // 动画结束时的本地缩放
+            public Vector3 StartLocalOffset;    // 动画开始时的偏移量（从远处滑入）
+            public float Delay;             // 动画延迟播放时间（秒）
+            public float Duration;          // 动画持续时间（秒）
+            public float StartScale = 1f;   // 动画开始时的缩放
+            public bool Fade = true;        // 是否有淡入效果
+            public SpriteRenderer[] SpriteRenderers;  // 需要淡入的精灵渲染器数组
+            public Color[] SpriteBaseColors;          // 精灵的原始颜色（用于计算透明度）
+            public TextMesh[] TextMeshes;             // 需要淡入的文字网格数组
+            public Color[] TextBaseColors;            // 文字的原始颜色
         }
 
+        // 锦标赛积分榜中单个单元格的显示数据
         private sealed class TournamentStandingsCellViewModel
         {
-            public string TopText;
-            public string BottomText;
-            public Color TopColor = Color.white;
-            public Color BottomColor = Color.white;
+            public string TopText;           // 上方文字（如比赛结果 "W" 或 "L"）
+            public string BottomText;        // 下方文字（如比分 "21-18"）
+            public Color TopColor = Color.white;    // 上方文字颜色
+            public Color BottomColor = Color.white; // 下方文字颜色
         }
 
+        // 锦标赛积分榜中单行选手的显示数据
         private sealed class TournamentStandingsRowViewModel
         {
-            public int Seed;
-            public int CharacterId;
-            public bool IsPlayer;
-            public bool IsCurrent;
-            public bool IsChampion;
-            public bool IsFinalist;
-            public int Wins;
-            public int Losses;
-            public string PercentageText;
-            public string StatusText;
-            public Color StatusColor;
-            public TournamentStandingsCellViewModel SemiCell = new TournamentStandingsCellViewModel();
-            public TournamentStandingsCellViewModel FinalCell = new TournamentStandingsCellViewModel();
+            public int Seed;                 // 种子排名
+            public int CharacterId;          // 角色 ID
+            public bool IsPlayer;            // 是否是玩家
+            public bool IsCurrent;           // 是否是当前正在查看的选手
+            public bool IsChampion;          // 是否是冠军
+            public bool IsFinalist;          // 是否进入决赛
+            public int Wins;                 // 胜场数
+            public int Losses;               // 负场数
+            public string PercentageText;    // 胜率文字（如 "75.0%"）
+            public string StatusText;        // 状态文字（如 "晋级"、"淘汰"）
+            public Color StatusColor;        // 状态文字颜色
+            public TournamentStandingsCellViewModel SemiCell = new TournamentStandingsCellViewModel();  // 半决赛单元格
+            public TournamentStandingsCellViewModel FinalCell = new TournamentStandingsCellViewModel(); // 决赛单元格
         }
 
+        // 菜单按钮列表（记录当前界面上所有可点击的按钮）
         private readonly System.Collections.Generic.List<mlpMenuButton> menuButtons = new System.Collections.Generic.List<mlpMenuButton>();
+        // 颁奖典礼动画对象列表（用于驱动颁奖时的入场动画）
         private readonly System.Collections.Generic.List<TournamentAwardsAnimatedItem> awardsAnimatedItems = new System.Collections.Generic.List<TournamentAwardsAnimatedItem>();
-        private const float SelectorHeaderY = 126f;
-        private const float SelectorArrowY = 258f;
-        private const float SelectorArrowOffsetX = 74f;
-        private const float SelectorArrowSize = 36f;
-        private const float PreviewScaleFactor = 0.56f;
-        private const float PreviewShadowYOffset = 24f;
-        private const float PreviewShadowScale = 0.42f;
-        private const float PreviewArmatureYOffset = -24f;
-        private const float PreviewArmatureScale = 0.82f;
-        private const float NativeUiAspect = mlpConstants.DisplayW / (float)mlpConstants.DisplayH;
-        private const float MenuLogoCenterY = 96f;
-        private const float MenuLogoMaxWidth = 280f;
-        private const float MenuLogoMaxHeight = 188f;
-        private const float TournamentBoardX = mlpConstants.Width2;
-        private const float TournamentBoardY = 250f;
-        private const float TournamentBoardScale = 0.92f;
-        private const float TournamentEntrantBadgeX = 252f;
-        private const float TournamentEntrantNameX = 282f;
-        private const float TournamentEntrantBadgeScale = 0.32f;
-        private const float TournamentEntrantGlowScale = 0.38f;
-        private const float TournamentEntrantPortraitPixels = 36f;
-        private const float TournamentMatchPanelScale = 0.87f;
-        private const float TournamentMatchWidth = 132f * TournamentMatchPanelScale;
-        private const float TournamentMatchHeight = 102f * TournamentMatchPanelScale;
-        private const float TournamentMatchHalfWidth = TournamentMatchWidth * 0.5f;
-        private const float TournamentSemiPanelX = 383f;
-        private const float TournamentSemiTopY = 184f;
-        private const float TournamentSemiBottomY = 314f;
-        private const float TournamentFinalPanelX = 521f;
-        private const float TournamentFinalPanelY = 249f;
-        private const float TournamentMatchRowOffset = 16f;
-        private const float TournamentConnectorThickness = 6f;
-        private const float TournamentSummaryY = 402f;
-        private const float TournamentStandingsBoardX = 236f;
-        private const float TournamentStandingsBoardY = 226f;
-        private const float TournamentStandingsBoardScale = 0.72f;
-        private const float TournamentStandingsTitleY = 121f;
-        private const float TournamentStandingsTableX = TournamentStandingsBoardX;
-        private const float TournamentStandingsHeaderY = 154f;
-        private const float TournamentStandingsHeaderHeight = 24f;
-        private const float TournamentStandingsRowStartY = 186f;
-        private const float TournamentStandingsRowSpacing = 34f;
-        private const float TournamentStandingsRowHeight = 30f;
-        private const float TournamentStandingsTableWidth = 248f;
-        private const float TournamentStandingsIndexWidth = 22f;
-        private const float TournamentStandingsTeamWidth = 100f;
-        private const float TournamentStandingsWinsWidth = 32f;
-        private const float TournamentStandingsLossesWidth = 32f;
-        private const float TournamentStandingsPctWidth = 62f;
-        private const float TournamentStandingsBadgeScale = 0.22f;
-        private const float TournamentStandingsGlowScale = 0.28f;
-        private const float TournamentStandingsPortraitPixels = 28f;
-        private const float TournamentFinalsTitleX = 574f;
-        private const float TournamentFinalsTitleY = 120f;
-        private const float TournamentBracketPanelScale = 0.9f;
-        private const float TournamentBracketPanelWidth = 132f * TournamentBracketPanelScale;
-        private const float TournamentBracketPanelHeight = 102f * TournamentBracketPanelScale;
-        private const float TournamentBracketFinalX = 574f;
-        private const float TournamentBracketFinalY = 172f;
-        private const float TournamentBracketSemiLeftX = 450f;
-        private const float TournamentBracketSemiRightX = 698f;
-        private const float TournamentBracketSemiY = 244f;
-        private const float TournamentBracketPlacementX = 574f;
-        private const float TournamentBracketPlacementY = 332f;
-        private const float TournamentBracketRowOffset = 18f;
-        private const float TournamentBracketBadgeScale = 0.2f;
-        private const float TournamentBracketGlowScale = 0.26f;
-        private const float TournamentBracketPortraitPixels = 24f;
-        private const float TournamentAwardsShowcaseY = 244f;
-        private const float TournamentAwardsShowcaseWidth = 560f;
-        private const float TournamentAwardsShowcaseHeight = 322f;
-        private const float TournamentAwardsPlaqueY = 132f;
-        private const float TournamentAwardsPodiumY = 376f;
-        private const float TournamentAwardsPodiumWidth = 428f;
-        private const float TournamentAwardsPodiumHeight = 170f;
-        private const float TournamentAwardsChampionX = mlpConstants.Width2;
-        private const float TournamentAwardsChampionY = 296f;
-        private const float TournamentAwardsLeftX = mlpConstants.Width2 - 114f;
-        private const float TournamentAwardsLeftY = 314f;
-        private const float TournamentAwardsRightX = mlpConstants.Width2 + 114f;
-        private const float TournamentAwardsRightY = 320f;
-        private const float TournamentAwardsChampionScale = 0.82f;
-        private const float TournamentAwardsSideScale = 0.78f;
-        private const float TournamentAwardsArmatureScale = 0.82f;
-        private const float TournamentAwardsArmatureYOffset = -18f;
-        private const float TournamentAwardsCelebrationDelay = 0.66f;
-        private const float MenuTopButtonY = 44f;
-        private const float MenuMusicButtonX = 770f;
-        private const float MenuHelpButtonX = 706f;
-        private const float MenuTopButtonSize = 60f;
-        private const float MenuTopIconPixels = 58f;
-        private const float QuickTestMenuLabelX = 666f;
-        private const float QuickTestMenuControlY = 442f;
-        private const float QuickTestMenuToggleX = 706f;
-        private const float QuickTestMenuToggleWidth = 58f;
-        private const float QuickTestMenuToggleHeight = 34f;
-        private const float QuickTestMenuInfoButtonX = 758f;
-        private const float QuickTestMenuInfoButtonSize = 32f;
-        private const float QuickTestMenuInfoPanelX = 666f;
-        private const float QuickTestMenuInfoPanelY = 356f;
-        private const float QuickTestMenuInfoPanelWidth = 220f;
-        private const float QuickTestMenuInfoPanelHeight = 94f;
-        private const float AdventureMapPanelX = 306f;
-        private const float AdventureMapPanelY = 238f;
-        private const float AdventureMapPanelWidth = 574f;
-        private const float AdventureMapPanelHeight = 348f;
-        private const float AdventureMechanicInfoY = 421f;
-        private const float AdventureMechanicInfoWidth = 540f;
-        private const float AdventureMechanicInfoHeight = 18f;
-        private const float AdventurePosterX = 702f;
-        private const float AdventurePosterY = 270f;
-        private const float AdventurePosterWidth = 184f;
-        private const float AdventurePosterHeight = 292f;
-        private const float AdventureNodeWidth = 68f;
-        private const float AdventureNodeHeight = 78f;
-        private const float SinglePlayerModeCardY = 300f;
-        private const float SinglePlayerModeCardWidth = 318f;
-        private const float SinglePlayerModeCardHeight = 254f;
-        private const float SinglePlayerModeLeftCardX = 232f;
-        private const float SinglePlayerModeRightCardX = 568f;
-        private const float StoryPanelX = mlpConstants.Width2;
-        private const float StoryPanelY = 260f;
-        private const float StoryPanelWidth = 610f;
-        private const float StoryPanelHeight = 264f;
-        private const float StoryCinematicWidth = mlpConstants.Width;
-        private const float StoryCinematicHeight = 480f;
-        private const float StoryCinematicPageSeconds = 3.0f;
-        private const float StoryCinematicFadeSeconds = 0.42f;
-        private const float StoryCinematicPanPixels = 14f;
-        private const float StoryCinematicZoomAmount = 0.035f;
-        private const float StoryIntroTitleY = 28f;
-        private const float StoryIntroCaptionY = 466f;
-        private const float StoryIntroPauseX = 54f;
-        private const float StoryIntroPauseY = 456f;
-        private const float StoryIntroSkipX = 748f;
-        private const float StoryIntroSkipY = 456f;
-        private const float StoryIntroLoreButtonX = 776f;
-        private const float StoryIntroLoreButtonY = 234f;
-        private const float StoryIntroLoreOpenButtonX = StoryIntroLorePanelX;
-        private const float StoryIntroLoreOpenButtonY = StoryIntroLorePanelY + 108f;
-        private const float StoryIntroLoreButtonHitWidth = 112f;
-        private const float StoryIntroLoreButtonHitHeight = 80f;
-        private const float StoryIntroLoreIconOffsetX = 0f;
-        private const float StoryIntroLoreIconOffsetY = -18f;
-        private const float StoryIntroLoreLabelOffsetX = 0f;
-        private const float StoryIntroLoreLabelOffsetY = 18f;
-        private const float StoryIntroLoreOpenLabelOffsetX = 0f;
-        private const float StoryIntroLoreOpenLabelOffsetY = 0f;
-        private const float StoryIntroLoreIconSize = 42f;
-        private const float StoryIntroLorePanelX = 638f;
-        private const float StoryIntroLorePanelY = 236f;
-        private const float StoryIntroLorePanelWidth = 228f;
-        private const float StoryIntroLorePanelHeight = 304f;
-        private static readonly Color StoryIntroLoreClosedLabelColor = new Color(0.98f, 0.95f, 0.86f, 0.98f);
-        private static readonly Color StoryIntroLoreOpenLabelColor = new Color32(0x72, 0x43, 0x1B, 0xFF);
-        private static readonly Color StoryIntroLorePageTagColor = new Color32(0x8B, 0x5B, 0x2B, 0xFF);
-        private const float LegacyMenuBackgroundWidth = 1398f;
-        private const float LegacyMenuBackgroundHeight = 480f;
-        private const float LegacyTintPanelSourcePixels = 10f;
-        private const float OptionBallHeaderY = 208f;
-        private const float OptionBallPreviewY = 232f;
-        private const float OptionBallLabelY = 260f;
-        private const float BallSelectorArrowOffsetX = 68f;
-        private const float BallSelectorArrowSize = 34f;
-        private const float BallPreviewPixels = 50f;
-        private const float TwoPlayerBallPanelY = 360f;
-        private const float TwoPlayerBallHeaderY = 320f;
-        private const float TwoPlayerBallPreviewY = 356f;
-        private const float TwoPlayerBallLabelY = 394f;
-        private const float TwoPlayerBallPanelWidth = 168f;
-        private const float TwoPlayerBallPanelHeight = 148f;
-        private Transform runtimeRoot;
-        private mlpGameCore gameCore;
-        private Camera mainCamera;
-        private mlpFixedResolutionPresenter fixedResolutionPresenter;
-        private mlpBootstrapScreen currentScreen;
-        private mlpParticipantMode pendingParticipantMode = mlpParticipantMode.OnePlayer;
-        private int quickCharacterId;
-        private int trainingCharacterId;
-        private int tournamentCharacterId;
-        private int versusLeftCharacterId;
-        private int versusRightCharacterId;
-        private mlpBallSelection quickBallSelection;
-        private mlpBallSelection trainingBallSelection;
-        private mlpBallSelection tournamentBallSelection;
-        private mlpBallSelection versusBallSelection;
-        private float awardsElapsed;
-        private bool awardsCelebrationTriggered;
-        private DBLiteArmature awardsCelebrationPlayer;
-        private string awardsCelebrationCupAnimation;
-        private mlpIconButton menuMusicButton;
-        private mlpIconButton menuHelpButton;
-        private mlpMenuButton quickTestMenuToggleButton;
-        private mlpMenuButton quickTestMenuInfoButton;
-        private GameObject quickTestMenuInfoRoot;
-        private bool quickTestMenuInfoVisible;
-        private mlpNativeMenuTextLayer nativeMenuTextLayer;
-        private bool usingNativeUiPresentation;
-        private int viewportScreenWidth = -1;
-        private int viewportScreenHeight = -1;
-        private mlpSinglePlayerNarrativeMode storyIntroMode = mlpSinglePlayerNarrativeMode.Adventure;
-        private int storyIntroPanelIndex;
-        private System.Action storyIntroContinueAction;
-        private System.Action storyIntroCancelAction;
-        private mlpMenuButton storyIntroPauseButton;
-        private mlpMenuButton storyIntroLoreButton;
-        private bool storyIntroPaused;
-        private bool storyIntroLoreOpen;
-        private bool storyIntroPauseBeforeLore;
-        private float storyIntroElapsed;
-        private GameObject storyIntroImageObject;
-        private Vector3 storyIntroImageBaseScale;
-        private SpriteRenderer storyIntroImageRenderer;
-        private Color storyIntroAccentColor = Color.white;
-        private GameObject storyIntroLoreRoot;
-        private GameObject storyIntroLoreArtRoot;
-        private GameObject storyIntroLoreLabelObject;
-        private SpriteRenderer storyIntroLoreIconRenderer;
-        private readonly System.Collections.Generic.List<GameObject> storyIntroLoreTextObjects = new System.Collections.Generic.List<GameObject>();
-        private int adventureSelectedLevelIndex;
-        private Texture2D adventureTreasureMapTexture;
+
+        // === 角色/球选择器布局常量 ===
+        private const float SelectorHeaderY = 126f;          // 选择器标题的 Y 坐标
+        private const float SelectorArrowY = 258f;           // 左右箭头的 Y 坐标
+        private const float SelectorArrowOffsetX = 74f;      // 箭头距离中心的 X 偏移
+        private const float SelectorArrowSize = 36f;         // 箭头大小
+
+        // === 角色预览布局常量 ===
+        private const float PreviewScaleFactor = 0.56f;      // 预览角色整体缩放
+        private const float PreviewShadowYOffset = 24f;      // 阴影的 Y 偏移
+        private const float PreviewShadowScale = 0.42f;      // 阴影缩放
+        private const float PreviewArmatureYOffset = -24f;   // 骨骼动画的 Y 偏移
+        private const float PreviewArmatureScale = 0.82f;    // 骨骼动画缩放
+
+        // === 菜单通用布局常量 ===
+        private const float NativeUiAspect = mlpConstants.DisplayW / (float)mlpConstants.DisplayH; // 原生 UI 宽高比
+        private const float MenuLogoCenterY = 96f;           // 菜单 Logo 中心 Y 坐标
+        private const float MenuLogoMaxWidth = 280f;         // Logo 最大宽度
+        private const float MenuLogoMaxHeight = 188f;        // Logo 最大高度
+        // === 锦标赛对阵图——面板布局 ===
+        private const float TournamentBoardX = mlpConstants.Width2; // 对阵图面板中心 X
+        private const float TournamentBoardY = 250f;           // 对阵图面板中心 Y
+        private const float TournamentBoardScale = 0.92f;      // 对阵图整体缩放
+
+        // === 锦标赛对阵图——参赛者条目 ===
+        private const float TournamentEntrantBadgeX = 252f;    // 参赛者徽章 X 坐标
+        private const float TournamentEntrantNameX = 282f;     // 参赛者名字 X 坐标
+        private const float TournamentEntrantBadgeScale = 0.32f; // 徽章缩放
+        private const float TournamentEntrantGlowScale = 0.38f;  // 发光效果缩放
+        private const float TournamentEntrantPortraitPixels = 36f; // 头像像素大小
+
+        // === 锦标赛对阵图——比赛面板 ===
+        private const float TournamentMatchPanelScale = 0.87f; // 比赛面板缩放
+        private const float TournamentMatchWidth = 132f * TournamentMatchPanelScale;  // 比赛面板宽度
+        private const float TournamentMatchHeight = 102f * TournamentMatchPanelScale; // 比赛面板高度
+        private const float TournamentMatchHalfWidth = TournamentMatchWidth * 0.5f;   // 比赛面板半宽
+        private const float TournamentSemiPanelX = 383f;       // 半决赛面板 X
+        private const float TournamentSemiTopY = 184f;        // 上半区半决赛 Y
+        private const float TournamentSemiBottomY = 314f;     // 下半区半决赛 Y
+        private const float TournamentFinalPanelX = 521f;     // 决赛面板 X
+        private const float TournamentFinalPanelY = 249f;     // 决赛面板 Y
+        private const float TournamentMatchRowOffset = 16f;   // 比赛面板内行偏移
+        private const float TournamentConnectorThickness = 6f; // 连接线粗细
+
+        // === 锦标赛——战绩汇总 ===
+        private const float TournamentSummaryY = 402f;         // 汇总区域 Y 坐标
+
+        // === 锦标赛——积分榜 ===
+        private const float TournamentStandingsBoardX = 236f;  // 积分榜面板 X
+        private const float TournamentStandingsBoardY = 226f;  // 积分榜面板 Y
+        private const float TournamentStandingsBoardScale = 0.72f; // 积分榜缩放
+        private const float TournamentStandingsTitleY = 121f;  // 积分榜标题 Y
+        private const float TournamentStandingsTableX = TournamentStandingsBoardX; // 表格 X
+        private const float TournamentStandingsHeaderY = 154f; // 表头 Y
+        private const float TournamentStandingsHeaderHeight = 24f; // 表头高度
+        private const float TournamentStandingsRowStartY = 186f; // 第一行 Y
+        private const float TournamentStandingsRowSpacing = 34f; // 行间距
+        private const float TournamentStandingsRowHeight = 30f; // 行高
+        private const float TournamentStandingsTableWidth = 248f; // 表格总宽度
+        private const float TournamentStandingsIndexWidth = 22f; // 排名列宽
+        private const float TournamentStandingsTeamWidth = 100f; // 队名列宽
+        private const float TournamentStandingsWinsWidth = 32f; // 胜场列宽
+        private const float TournamentStandingsLossesWidth = 32f; // 负场列宽
+        private const float TournamentStandingsPctWidth = 62f; // 胜率列宽
+        private const float TournamentStandingsBadgeScale = 0.22f; // 积分榜徽章缩放
+        private const float TournamentStandingsGlowScale = 0.28f; // 积分榜发光缩放
+        private const float TournamentStandingsPortraitPixels = 28f; // 积分榜头像像素
+
+        // === 锦标赛——淘汰赛对阵图 ===
+        private const float TournamentFinalsTitleX = 574f;     // 淘汰赛标题 X
+        private const float TournamentFinalsTitleY = 120f;     // 淘汰赛标题 Y
+        private const float TournamentBracketPanelScale = 0.9f; // 淘汰赛面板缩放
+        private const float TournamentBracketPanelWidth = 132f * TournamentBracketPanelScale;  // 面板宽
+        private const float TournamentBracketPanelHeight = 102f * TournamentBracketPanelScale; // 面板高
+        private const float TournamentBracketFinalX = 574f;    // 决赛位置 X
+        private const float TournamentBracketFinalY = 172f;    // 决赛位置 Y
+        private const float TournamentBracketSemiLeftX = 450f; // 左半区半决赛 X
+        private const float TournamentBracketSemiRightX = 698f; // 右半区半决赛 X
+        private const float TournamentBracketSemiY = 244f;    // 半决赛 Y
+        private const float TournamentBracketPlacementX = 574f; // 排名显示 X
+        private const float TournamentBracketPlacementY = 332f; // 排名显示 Y
+        private const float TournamentBracketRowOffset = 18f;  // 行偏移
+        private const float TournamentBracketBadgeScale = 0.2f; // 淘汰赛徽章缩放
+        private const float TournamentBracketGlowScale = 0.26f; // 淘汰赛发光缩放
+        private const float TournamentBracketPortraitPixels = 24f; // 淘汰赛头像像素
+
+        // === 锦标赛颁奖典礼布局 ===
+        private const float TournamentAwardsShowcaseY = 244f;  // 展示区 Y
+        private const float TournamentAwardsShowcaseWidth = 560f; // 展示区宽
+        private const float TournamentAwardsShowcaseHeight = 322f; // 展示区高
+        private const float TournamentAwardsPlaqueY = 132f;    // 奖牌匾 Y
+        private const float TournamentAwardsPodiumY = 376f;    // 领奖台 Y
+        private const float TournamentAwardsPodiumWidth = 428f; // 领奖台宽
+        private const float TournamentAwardsPodiumHeight = 170f; // 领奖台高
+        private const float TournamentAwardsChampionX = mlpConstants.Width2; // 冠军 X
+        private const float TournamentAwardsChampionY = 296f;  // 冠军 Y
+        private const float TournamentAwardsLeftX = mlpConstants.Width2 - 114f; // 左侧选手 X
+        private const float TournamentAwardsLeftY = 314f;     // 左侧选手 Y
+        private const float TournamentAwardsRightX = mlpConstants.Width2 + 114f; // 右侧选手 X
+        private const float TournamentAwardsRightY = 320f;    // 右侧选手 Y
+        private const float TournamentAwardsChampionScale = 0.82f; // 冠军缩放
+        private const float TournamentAwardsSideScale = 0.78f; // 两侧选手缩放
+        private const float TournamentAwardsArmatureScale = 0.82f; // 颁奖骨骼动画缩放
+        private const float TournamentAwardsArmatureYOffset = -18f; // 颁奖骨骼 Y 偏移
+        private const float TournamentAwardsCelebrationDelay = 0.66f; // 庆祝动画延迟
+        // === 菜单顶部按钮（音乐、帮助） ===
+        private const float MenuTopButtonY = 44f;             // 顶部按钮 Y 坐标
+        private const float MenuMusicButtonX = 770f;          // 音乐按钮 X
+        private const float MenuHelpButtonX = 706f;           // 帮助按钮 X
+        private const float MenuTopButtonSize = 60f;          // 顶部按钮大小
+        private const float MenuTopIconPixels = 58f;          // 顶部图标像素大小
+
+        // === 快速测试菜单（开发调试用） ===
+        private const float QuickTestMenuLabelX = 666f;       // 测试菜单标签 X
+        private const float QuickTestMenuControlY = 442f;     // 测试菜单控件 Y
+        private const float QuickTestMenuToggleX = 706f;      // 测试开关 X
+        private const float QuickTestMenuToggleWidth = 58f;   // 测试开关宽
+        private const float QuickTestMenuToggleHeight = 34f;  // 测试开关高
+        private const float QuickTestMenuInfoButtonX = 758f;  // 测试信息按钮 X
+        private const float QuickTestMenuInfoButtonSize = 32f; // 测试信息按钮大小
+        private const float QuickTestMenuInfoPanelX = 666f;   // 测试信息面板 X
+        private const float QuickTestMenuInfoPanelY = 356f;   // 测试信息面板 Y
+        private const float QuickTestMenuInfoPanelWidth = 220f; // 测试信息面板宽
+        private const float QuickTestMenuInfoPanelHeight = 94f; // 测试信息面板高
+        // === 冒险模式——地图面板 ===
+        private const float AdventureMapPanelX = 306f;        // 地图面板 X
+        private const float AdventureMapPanelY = 238f;        // 地图面板 Y
+        private const float AdventureMapPanelWidth = 574f;    // 地图面板宽
+        private const float AdventureMapPanelHeight = 348f;   // 地图面板高
+        private const float AdventureMechanicInfoY = 421f;    // 玩法说明 Y
+        private const float AdventureMechanicInfoWidth = 540f; // 玩法说明宽
+        private const float AdventureMechanicInfoHeight = 18f; // 玩法说明高
+
+        // === 冒险模式——关卡海报 ===
+        private const float AdventurePosterX = 702f;          // 海报 X
+        private const float AdventurePosterY = 270f;          // 海报 Y
+        private const float AdventurePosterWidth = 184f;      // 海报宽
+        private const float AdventurePosterHeight = 292f;     // 海报高
+
+        // === 冒险模式——路线节点 ===
+        private const float AdventureNodeWidth = 68f;         // 节点宽
+        private const float AdventureNodeHeight = 78f;        // 节点高
+
+        // === 单人模式卡片选择（冒险/锦标赛两张卡片） ===
+        private const float SinglePlayerModeCardY = 300f;     // 卡片 Y
+        private const float SinglePlayerModeCardWidth = 318f;  // 卡片宽
+        private const float SinglePlayerModeCardHeight = 254f; // 卡片高
+        private const float SinglePlayerModeLeftCardX = 232f;  // 左卡片 X（冒险）
+        private const float SinglePlayerModeRightCardX = 568f; // 右卡片 X（锦标赛）
+
+        // === 故事漫画面板 ===
+        private const float StoryPanelX = mlpConstants.Width2; // 漫画面板中心 X
+        private const float StoryPanelY = 260f;               // 漫画面板 Y
+        private const float StoryPanelWidth = 610f;           // 漫画面板宽
+        private const float StoryPanelHeight = 264f;          // 漫画面板高
+
+        // === 故事漫画动画（电影式播放效果） ===
+        private const float StoryCinematicWidth = mlpConstants.Width; // 影院模式宽
+        private const float StoryCinematicHeight = 480f;      // 影院模式高
+        private const float StoryCinematicPageSeconds = 3.0f;  // 每页停留秒数
+        private const float StoryCinematicFadeSeconds = 0.42f; // 翻页淡入淡出秒数
+        private const float StoryCinematicPanPixels = 14f;     // 平移像素量
+        private const float StoryCinematicZoomAmount = 0.035f; // 缩放量
+
+        // === 故事漫画过场 UI 元素 ===
+        private const float StoryIntroTitleY = 28f;           // 标题 Y
+        private const float StoryIntroCaptionY = 466f;        // 字幕 Y
+        private const float StoryIntroPauseX = 54f;           // 暂停按钮 X
+        private const float StoryIntroPauseY = 456f;          // 暂停按钮 Y
+        private const float StoryIntroSkipX = 748f;           // 跳过按钮 X
+        private const float StoryIntroSkipY = 456f;           // 跳过按钮 Y
+
+        // === 故事传说面板按钮 ===
+        private const float StoryIntroLoreButtonX = 776f;     // 传说按钮 X
+        private const float StoryIntroLoreButtonY = 234f;     // 传说按钮 Y
+        private const float StoryIntroLoreOpenButtonX = StoryIntroLorePanelX;   // 打开后按钮 X
+        private const float StoryIntroLoreOpenButtonY = StoryIntroLorePanelY + 108f; // 打开后按钮 Y
+        private const float StoryIntroLoreButtonHitWidth = 112f;  // 按钮点击区域宽
+        private const float StoryIntroLoreButtonHitHeight = 80f;  // 按钮点击区域高
+        private const float StoryIntroLoreIconOffsetX = 0f;   // 图标 X 偏移
+        private const float StoryIntroLoreIconOffsetY = -18f;  // 图标 Y 偏移
+        private const float StoryIntroLoreLabelOffsetX = 0f;  // 标签 X 偏移
+        private const float StoryIntroLoreLabelOffsetY = 18f;  // 标签 Y 偏移
+        private const float StoryIntroLoreOpenLabelOffsetX = 0f;  // 打开后标签 X 偏移
+        private const float StoryIntroLoreOpenLabelOffsetY = 0f;  // 打开后标签 Y 偏移
+        private const float StoryIntroLoreIconSize = 42f;     // 图标大小
+
+        // === 故事传说面板布局 ===
+        private const float StoryIntroLorePanelX = 638f;      // 传说面板 X
+        private const float StoryIntroLorePanelY = 236f;      // 传说面板 Y
+        private const float StoryIntroLorePanelWidth = 228f;  // 传说面板宽
+        private const float StoryIntroLorePanelHeight = 304f; // 传说面板高
+
+        // === 故事传说面板颜色 ===
+        private static readonly Color StoryIntroLoreClosedLabelColor = new Color(0.98f, 0.95f, 0.86f, 0.98f); // 关闭时标签颜色
+        private static readonly Color StoryIntroLoreOpenLabelColor = new Color32(0x72, 0x43, 0x1B, 0xFF);     // 打开时标签颜色
+        private static readonly Color StoryIntroLorePageTagColor = new Color32(0x8B, 0x5B, 0x2B, 0xFF);      // 页码标签颜色
+
+        // === 旧版菜单背景 ===
+        private const float LegacyMenuBackgroundWidth = 1398f; // 旧背景宽
+        private const float LegacyMenuBackgroundHeight = 480f; // 旧背景高
+        private const float LegacyTintPanelSourcePixels = 10f; // 旧着色面板源像素
+
+        // === 球皮肤选择器布局 ===
+        private const float OptionBallHeaderY = 208f;         // 球选项标题 Y
+        private const float OptionBallPreviewY = 232f;        // 球预览 Y
+        private const float OptionBallLabelY = 260f;          // 球名称标签 Y
+        private const float BallSelectorArrowOffsetX = 68f;   // 球选择箭头 X 偏移
+        private const float BallSelectorArrowSize = 34f;      // 球选择箭头大小
+        private const float BallPreviewPixels = 50f;          // 球预览像素大小
+
+        // === 双人模式球面板 ===
+        private const float TwoPlayerBallPanelY = 360f;       // 双人球面板 Y
+        private const float TwoPlayerBallHeaderY = 320f;      // 双人球标题 Y
+        private const float TwoPlayerBallPreviewY = 356f;     // 双人球预览 Y
+        private const float TwoPlayerBallLabelY = 394f;       // 双人球标签 Y
+        private const float TwoPlayerBallPanelWidth = 168f;   // 双人球面板宽
+        private const float TwoPlayerBallPanelHeight = 148f;  // 双人球面板高
+
+        // === 运行时核心对象 ===
+        private Transform runtimeRoot;                       // 当前界面的根节点（切换界面时销毁重建）
+        private mlpGameCore gameCore;                        // 比赛核心控制器（比赛开始时创建，结束时销毁）
+        private Camera mainCamera;                           // 主摄像机
+        private mlpFixedResolutionPresenter fixedResolutionPresenter; // 固定分辨率管理器
+        private mlpBootstrapScreen currentScreen;            // 当前所处的屏幕状态
+
+        // === 玩家选择状态 ===
+        private mlpParticipantMode pendingParticipantMode = mlpParticipantMode.OnePlayer; // 待确认的玩家模式
+        private int quickCharacterId;                        // 快速比赛选的角色 ID
+        private int trainingCharacterId;                     // 训练模式选的角色 ID
+        private int tournamentCharacterId;                   // 锦标赛选的角色 ID
+        private int versusLeftCharacterId;                   // 双人模式左侧玩家角色 ID
+        private int versusRightCharacterId;                  // 双人模式右侧玩家角色 ID
+        private mlpBallSelection quickBallSelection;         // 快速比赛选的球皮肤
+        private mlpBallSelection trainingBallSelection;      // 训练模式选的球皮肤
+        private mlpBallSelection tournamentBallSelection;    // 锦标赛选的球皮肤
+        private mlpBallSelection versusBallSelection;        // 双人模式选的球皮肤
+
+        // === 颁奖典礼动画状态 ===
+        private float awardsElapsed;                         // 颁奖动画已播放时间
+        private bool awardsCelebrationTriggered;             // 庆祝动画是否已触发
+        private DBLiteArmature awardsCelebrationPlayer;      // 庆祝动画的角色骨骼
+        private string awardsCelebrationCupAnimation;        // 奖杯动画名称
+
+        // === 菜单顶部按钮 ===
+        private mlpIconButton menuMusicButton;               // 音乐开关按钮
+        private mlpIconButton menuHelpButton;                // 帮助按钮
+
+        // === 快速测试菜单（开发调试用） ===
+        private mlpMenuButton quickTestMenuToggleButton;     // 测试模式开关
+        private mlpMenuButton quickTestMenuInfoButton;       // 测试信息按钮
+        private GameObject quickTestMenuInfoRoot;            // 测试信息面板根对象
+        private bool quickTestMenuInfoVisible;               // 测试信息面板是否可见
+
+        // === 原生 UI 和视口 ===
+        private mlpNativeMenuTextLayer nativeMenuTextLayer;  // 原生菜单文字层
+        private bool usingNativeUiPresentation;              // 是否使用原生 UI 渲染
+        private int viewportScreenWidth = -1;                // 视口宽度缓存
+        private int viewportScreenHeight = -1;               // 视口高度缓存
+
+        // === 故事漫画过场状态 ===
+        private mlpSinglePlayerNarrativeMode storyIntroMode = mlpSinglePlayerNarrativeMode.Adventure; // 当前故事类型
+        private int storyIntroPanelIndex;                    // 当前漫画页码
+        private System.Action storyIntroContinueAction;      // 漫画结束后的继续回调
+        private System.Action storyIntroCancelAction;        // 漫画取消时的回调
+        private mlpMenuButton storyIntroPauseButton;         // 漫画暂停按钮
+        private mlpMenuButton storyIntroLoreButton;          // 传说面板按钮
+        private bool storyIntroPaused;                       // 漫画是否暂停
+        private bool storyIntroLoreOpen;                     // 传说面板是否打开
+        private bool storyIntroPauseBeforeLore;              // 打开传说前是否已暂停
+        private float storyIntroElapsed;                     // 漫画已播放时间
+        private GameObject storyIntroImageObject;            // 当前漫画图片对象
+        private Vector3 storyIntroImageBaseScale;            // 漫画图片原始缩放
+        private SpriteRenderer storyIntroImageRenderer;      // 漫画图片渲染器
+        private Color storyIntroAccentColor = Color.white;   // 漫画强调色
+        private GameObject storyIntroLoreRoot;               // 传说面板根对象
+        private GameObject storyIntroLoreArtRoot;            // 传说插画根对象
+        private GameObject storyIntroLoreLabelObject;        // 传说按钮标签对象
+        private SpriteRenderer storyIntroLoreIconRenderer;   // 传说按钮图标渲染器
+        private readonly System.Collections.Generic.List<GameObject> storyIntroLoreTextObjects = new System.Collections.Generic.List<GameObject>(); // 传说文字对象列表
+
+        // === 冒险模式状态 ===
+        private int adventureSelectedLevelIndex;             // 当前选中的冒险关卡索引
+        private Texture2D adventureTreasureMapTexture;       // 藏宝地图纹理缓存
+
+        /// <summary>
+        /// 游戏启动时设置摄像机、音频系统并显示主菜单。
+        /// </summary>
+        // ═══════════════════════════════════════════════════════════════
+        // 第 2 块：生命周期方法
+        // Awake 初始化摄像机/音频/存档，Update 每帧调度比赛和菜单逻辑
+        // ═══════════════════════════════════════════════════════════════
 
         /// <summary>
         /// 游戏启动时设置摄像机、音频系统并显示主菜单。
@@ -322,8 +406,8 @@ namespace mlp
             }
 
             // 2. 设置摄像机为正交模式（2D 游戏），调整大小以适配像素分辨率
-            mainCamera.orthographic = true;
-            mainCamera.orthographicSize = mlpConstants.GameH / (2f * mlpConstants.PixelsPerUnit);
+            mainCamera.orthographic = true;     //正交模式，没有近大远小的透视效果
+            mainCamera.orthographicSize = mlpConstants.GameH / (2f * mlpConstants.PixelsPerUnit);       //根据游戏设计分辨率算出摄像机能看到多大的范围。
             mainCamera.transform.position = new Vector3(0f, 0f, -10f);
             mainCamera.backgroundColor = Color.black;
 
@@ -356,13 +440,23 @@ namespace mlp
             ShowPlayerCountMenu();
         }
 
+        /// <summary>
+        /// Unity 生命周期回调：当此 GameObject 被销毁时自动调用。
+        /// 负责清理全局单例引用，防止其他代码访问已销毁的对象（野指针）；
+        /// 同时释放冒险模式运行时生成的藏宝地图纹理，避免 GPU 内存泄漏。
+        /// </summary>
         private void OnDestroy()
         {
+            // 清除单例引用：只有当销毁的确实是当前活跃实例时才置空，
+            // 避免新的实例已经替换进来后被误清。
             if (activeInstance == this)
             {
                 activeInstance = null;
             }
 
+            // 释放冒险模式的藏宝地图纹理。
+            // 该纹理是运行时动态生成的（不是项目资源文件），不会随场景自动回收，
+            // 必须手动调用 Destroy 释放 GPU 显存，否则会内存泄漏。
             if (adventureTreasureMapTexture != null)
             {
                 Destroy(adventureTreasureMapTexture);
@@ -370,60 +464,91 @@ namespace mlp
             }
         }
 
+        /// <summary>
+        /// 从帮助面板启动教程的静态入口方法。
+        /// 其他脚本（如帮助面板的"开始教程"按钮）不需要持有 mlpGameBootstrap 的引用，
+        /// 直接调用这个静态方法即可触发教程流程。
+        /// </summary>
+        /// <returns>成功启动教程返回 true，找不到 bootstrap 实例返回 false。</returns>
         public static bool TryStartTutorialFromHelp()
         {
+            // 优先使用缓存的单例引用；如果为空（比如场景重建了），
+            // 则通过 FindObjectOfType 在场景中搜索，作为兜底方案。
             var bootstrap = activeInstance != null ? activeInstance : FindObjectOfType<mlpGameBootstrap>();
             if (bootstrap == null)
             {
                 return false;
             }
 
+            // 调用实例方法，实际执行从帮助面板进入教程的逻辑。
             bootstrap.StartTutorialFromHelpPanel();
             return true;
         }
 
         /// <summary>
-        /// 每帧执行：如果有比赛正在进行则更新游戏，否则处理菜单输入。
+        /// Unity 生命周期回调：每帧自动调用一次。
+        /// 这是整个游戏的"大调度器"——根据当前游戏状态（比赛中 / 菜单 / 过场动画）
+        /// 分发不同的处理逻辑。整体分三层判断：
+        ///   第一层：比赛是否在进行？ → 委托给 gameCore 更新比赛逻辑
+        ///   第二层：帮助面板是否打开？ → 暂停菜单交互，只保留帮助面板
+        ///   第三层：正常菜单/过场 → 更新按钮交互、动画、按键响应
         /// </summary>
         private void Update()
         {
-            // 1. 如果比赛正在进行，更新游戏逻辑
+            // =====================================================================
+            // 第一层判断：比赛是否在进行？
+            // gameCore 不为 null 说明有一场比赛正在进行（快速比赛/锦标赛/冒险/训练等）
+            // =====================================================================
             if (gameCore != null)
-            {
+                {
+                // 将更新委托给 gameCore，它会处理物理、AI、计时、得分等比赛核心逻辑。
+                // Time.deltaTime 是上一帧到这一帧经过的秒数，用于帧率无关的计时。
                 gameCore.Update(Time.deltaTime);
 
-                // 2. 比赛结束，需要推进流程：冒险模式显示结果，锦标赛显示对阵图
+                // --- 检查比赛是否自然结束（时间到/分出胜负） ---
+                // AdvanceFlowRequested 是 gameCore 在比赛结束时设置的标志位。
                 if (gameCore.AdvanceFlowRequested)
                 {
                     var inventory = mlpInventory.Instance;
+
+                    // 冒险模式：清除比赛场景，更新冒险进度（赢了推进关卡，输了重试），
+                    // 然后显示本关的结果界面。
                     if (inventory.IsAdventureActive)
                     {
-                        var playerWon = inventory.MatchData.WhoWins() < 0;
-                        ClearRuntime();
-                        inventory.AdvanceAdventure(playerWon);
-                        ShowAdventureResult(playerWon);
+                        var playerWon = inventory.MatchData.WhoWins() < 0; // < 0 表示玩家赢
+                        ClearRuntime();                           // 销毁比赛场景的所有运行时对象
+                        inventory.AdvanceAdventure(playerWon);    // 更新冒险存档（推进/重试）
+                        ShowAdventureResult(playerWon);           // 显示"胜利/失败"结果界面
                         return;
                     }
 
+                    // 锦标赛模式：清除比赛场景，推进锦标赛对阵图，
+                    // 然后显示下一轮的对阵图界面。
                     ClearRuntime();
-                    inventory.AdvanceTournament();
-                    ShowTournamentBracket();
+                    inventory.AdvanceTournament();                 // 推进锦标赛到下一轮
+                    ShowTournamentBracket();                       // 显示对阵图
                     return;
                 }
 
-                // 3. 玩家请求返回菜单：根据之前所在模式返回对应界面
+                // --- 检查玩家是否主动按了返回键退出比赛 ---
+                // ReturnToMenuRequested 是 gameCore 在玩家请求退出时设置的标志位。
                 if (gameCore.ReturnToMenuRequested)
                 {
                     var inventory = mlpInventory.Instance;
+                    // 先记住之前在什么模式，因为 ClearRuntime 会销毁 gameCore，
+                    // 之后就无法再查询这些状态了。
                     var tournamentWasActive = inventory.IsTournamentActive;
                     var adventureWasActive = inventory.IsAdventureActive;
-                    ClearRuntime();
+                    ClearRuntime(); // 销毁比赛场景
+
+                    // 冒险模式中途退出 → 回到冒险地图（可以选择其他关卡）
                     if (adventureWasActive)
                     {
                         ShowAdventureMap();
                         return;
                     }
 
+                    // 锦标赛中途退出 → 放弃整个锦标赛，回到主菜单
                     if (tournamentWasActive)
                     {
                         inventory.AbandonTournament();
@@ -431,48 +556,69 @@ namespace mlp
                         return;
                     }
 
+                    // 训练/教程模式退出 → 检查是否有待处理的教程动作
                     if (HandlePendingTutorialAction())
                     {
                         return;
                     }
 
+                    // 普通比赛（快速比赛/双人）退出 → 回到主菜单
                     ShowPlayerCountMenu();
                 }
 
+                // 比赛还在进行中，或者刚处理完退出逻辑，不执行下面的菜单逻辑
                 return;
             }
 
+            // 第二层判断：帮助面板是否打开？
+            // 帮助面板是模态对话框，打开时暂停所有菜单交互，防止误操作。
             var helpVisible = mlpHelpPanel.IsAnyOpen;
+            // 帮助面板打开时隐藏原生文字层，避免文字重叠
             nativeMenuTextLayer?.SetVisible(!helpVisible);
 
             if (helpVisible)
             {
-                return;
+                return; // 帮助面板打开期间，不处理任何菜单输入
             }
 
+            // 第三层判断：正常菜单/过场动画更新
+
+            // 更新锦标赛颁奖典礼的动画序列（角色庆祝、奖杯动画等）
             UpdateTournamentAwardsSequence(Time.deltaTime);
+            // 刷新原生菜单文字层的视口尺寸，适配窗口大小变化
             RefreshNativeMenuViewport();
 
+            // 如果当前在故事漫画过场界面，更新漫画动画（翻页、淡入淡出等）。
+            // UpdateStoryIntroCinematic 返回 true 表示漫画还在播放中，跳过后续菜单逻辑。
             if (currentScreen == mlpBootstrapScreen.StoryIntro && UpdateStoryIntroCinematic(Time.deltaTime))
             {
                 return;
             }
 
+            // --- 更新当前界面所有菜单按钮的交互（悬停高亮、点击响应等） ---
+            // menuButtons 是当前界面所有可交互按钮的列表。
+            // 每个按钮的 Update 会检测鼠标位置和点击状态。
             for (var i = 0; i < menuButtons.Count; i++)
             {
-                var screenRoot = runtimeRoot;
+                var screenRoot = runtimeRoot; // 记录更新前的根节点
                 menuButtons[i].Update(mainCamera);
+                // 如果按钮点击导致了界面切换（runtimeRoot 被重建），立即停止遍历，
+                // 防止继续更新已经不存在的旧按钮而报错。
                 if (screenRoot != runtimeRoot)
                 {
                     break;
                 }
             }
 
+            // --- 更新右上角的固定按钮（音乐开关、帮助按钮） ---
+            // 这些按钮不属于某个具体界面，始终显示在右上角（故事漫画界面除外）。
             if (runtimeRoot != null && currentScreen != mlpBootstrapScreen.StoryIntro)
             {
+                // 根据当前音乐播放状态切换音乐按钮的图标（播放/暂停）
                 menuMusicButton?.SetActiveIconIndex(GetMusicIconIndex());
                 var iconScreenRoot = runtimeRoot;
                 menuMusicButton?.Update(mainCamera);
+                // 同样检查界面是否因按钮点击而切换
                 if (iconScreenRoot != runtimeRoot)
                 {
                     return;
@@ -485,11 +631,15 @@ namespace mlp
                 }
             }
 
+            // --- 全局按键：Escape 键返回上一界面 ---
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 HandleMenuEscape();
             }
         }
+
+
+//第三块：菜单导航    总的来说这部分负责屏幕之间的跳转
 
         /// <summary>
         /// 在各菜单界面处理 Escape 键。返回上一界面或取消当前操作。
@@ -540,6 +690,11 @@ namespace mlp
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 第 3 块：主菜单和快速测试控件
+        // ShowPlayerCountMenu 显示 1人/2人/教程/训练 四个入口按钮
+        // ═══════════════════════════════════════════════════════════════
+
         /// <summary>
         /// 显示主菜单，包含单人、双人、教程和训练模式的按钮。
         /// </summary>
@@ -554,11 +709,12 @@ namespace mlp
 
             // 3. 添加四个菜单按钮：1 人模式、2 人模式、教程、训练
             var inventory = mlpInventory.Instance;
+            // 创建"1 PLAYER"按钮：文字、X居中、Y=246、宽228、高52，点击后执行lambda回调
             menuButtons.Add(new mlpMenuButton("1 PLAYER", mlpConstants.Width2, 246f, 228f, 52f, () =>
             {
-                pendingParticipantMode = mlpParticipantMode.OnePlayer;
-                inventory.SetParticipantMode(pendingParticipantMode);
-                ShowSinglePlayerCharacterSetup();
+                pendingParticipantMode = mlpParticipantMode.OnePlayer; // 设置为单人模式
+                inventory.SetParticipantMode(pendingParticipantMode);   // 将单人模式应用到库存系统
+                ShowSinglePlayerCharacterSetup();                       // 显示单人角色选择界面
             }, runtimeRoot));
 
             menuButtons.Add(new mlpMenuButton("2 PLAYER", mlpConstants.Width2, 306f, 228f, 52f, () =>
@@ -575,6 +731,7 @@ namespace mlp
             CreateQuickTestMenuControls();
         }
 
+        // 在主菜单底部创建"快速测试"开关和信息按钮（开发者调试用）
         private void CreateQuickTestMenuControls()
         {
             CreateMenuText(
@@ -616,22 +773,26 @@ namespace mlp
             SetQuickTestMenuInfoVisible(false);
         }
 
+        // 切换快速测试模式的开关状态并刷新按钮文字
         private void ToggleQuickTestModeFromMenu()
         {
             mlpQuickTestSettings.Enabled = !mlpQuickTestSettings.Enabled;
             RefreshQuickTestMenuToggle();
         }
 
+        // 切换快速测试信息面板的显示/隐藏
         private void ToggleQuickTestInfoFromMenu()
         {
             SetQuickTestMenuInfoVisible(!quickTestMenuInfoVisible);
         }
 
+        // 刷新快速测试开关按钮的文字（ON/OFF）
         private void RefreshQuickTestMenuToggle()
         {
             quickTestMenuToggleButton?.SetText(QuickTestMenuToggleLabel());
         }
 
+        // 设置快速测试信息面板的可见性
         private void SetQuickTestMenuInfoVisible(bool visible)
         {
             quickTestMenuInfoVisible = visible;
@@ -641,6 +802,7 @@ namespace mlp
             }
         }
 
+        // 构建快速测试信息面板的 UI（标题 + 说明文字）
         private void BuildQuickTestInfoPanel()
         {
             quickTestMenuInfoRoot = new GameObject("QuickTestMenuInfoPanel");
@@ -678,11 +840,18 @@ namespace mlp
                 mlpTextStyle.TournamentBody);
         }
 
+        // 返回快速测试开关的当前文字标签
         private static string QuickTestMenuToggleLabel()
         {
             return mlpQuickTestSettings.Enabled ? "ON" : "OFF";
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 第 4 块：角色选择和模式选择
+        // 选角色 → 选模式（冒险/锦标赛），或直接进入快速比赛/训练/双人
+        // ═══════════════════════════════════════════════════════════════
+
+        // 显示单人模式角色选择界面（左右箭头切换角色，点 NEXT 确认）
         private void ShowSinglePlayerCharacterSetup()
         {
             // 1. 设置当前界面为单人角色选择
@@ -713,10 +882,14 @@ namespace mlp
                 3.85f,
                 398f);
 
+            //back button
             menuButtons.Add(new mlpMenuButton("BACK", 312f, 452f, 150f, 42f, ShowPlayerCountMenu, runtimeRoot));
+
+            //next button
             menuButtons.Add(new mlpMenuButton("NEXT", 488f, 452f, 150f, 42f, ConfirmSinglePlayerCharacter, runtimeRoot));
         }
 
+        // 确认单人角色选择，保存到存档后进入模式选择界面
         private void ConfirmSinglePlayerCharacter()
         {
             tournamentCharacterId = quickCharacterId;
@@ -767,11 +940,20 @@ namespace mlp
             menuButtons.Add(new mlpMenuButton("BACK", mlpConstants.Width2, 442f, 180f, 42f, ShowSinglePlayerCharacterSetup, runtimeRoot));
         }
 
+
+
+        // ═══════════════════════════════════════════════════════════════
+        // 第 5 块：故事漫画过场
+        // 进入冒险/锦标赛前播放漫画，支持翻页、暂停、传说面板和跳过
+        // ═══════════════════════════════════════════════════════════════
+
+        // 显示冒险模式的开场故事漫画
         private void ShowAdventureStoryIntro()
         {
             ShowSinglePlayerStoryIntro(mlpSinglePlayerNarrativeMode.Adventure, ShowAdventureMap);
         }
 
+        // 显示锦标赛模式的开场故事漫画
         private void ShowTournamentStoryIntro()
         {
             ShowSinglePlayerStoryIntro(mlpSinglePlayerNarrativeMode.Tournament, StartTournamentFlow);
@@ -795,6 +977,7 @@ namespace mlp
             ShowSinglePlayerStoryIntroPanel();
         }
 
+        // 显示故事漫画的当前页（图片、标题、字幕、暂停/跳过按钮）
         private void ShowSinglePlayerStoryIntroPanel()
         {
             // 1. 获取当前模式的开场漫画面板列表，没有则直接跳过
@@ -894,6 +1077,7 @@ namespace mlp
             CreatePanel("StoryIntroSkipUnderline", StoryIntroSkipX, StoryIntroSkipY + 13f, 31f, 2f, 24, accentColor);
         }
 
+        // 尝试从 Resources 加载漫画贴图并显示，加载失败返回 false
         private bool CreateStoryIntroComicImage(mlpStoryPanelDefinition panel)
         {
             // 1. 验证面板数据和图片键是否有效
@@ -941,6 +1125,7 @@ namespace mlp
             return true;
         }
 
+        // 漫画贴图加载失败时，用纯色面板和文字作为替代显示
         private void CreateStoryIntroFallbackPanel(mlpStoryPanelDefinition panel, Color accentColor)
         {
             CreatePanel("StoryIntroBackdrop", StoryPanelX, StoryPanelY, StoryPanelWidth, StoryPanelHeight, 8, new Color(0.03f, 0.05f, 0.08f, 0.86f));
@@ -958,40 +1143,62 @@ namespace mlp
                 mlpTextStyle.TournamentBody);
         }
 
+        // 每帧更新漫画的电影式播放效果（平移、缩放、淡入），到时间自动翻页。
+        // 由 Update() 在 currentScreen == StoryIntro 时调用。
+        // 返回 true 表示本页已播完并触发了翻页（调用方应跳过后续菜单逻辑），false 表示仍在播放中或已暂停。
         private bool UpdateStoryIntroCinematic(float deltaTime)
         {
-            // 1. 暂停状态下不更新计时器
+            // 1. 暂停状态下不更新计时器，画面静止在当前帧。
+            //    用户点击 pause 按钮或打开传说面板时 storyIntroPaused 会被设为 true。
             if (storyIntroPaused)
             {
                 return false;
             }
 
-            // 2. 累加经过时间，计算归一化进度和缓动值
+            // 2. 累加经过时间（Mathf.Max 防御负值 deltaTime，例如窗口失焦恢复时）。
             storyIntroElapsed += Mathf.Max(0f, deltaTime);
+
+            //    normalized：当前页的播放进度，0→1 线性映射，受 StoryCinematicPageSeconds（3.0s）控制。
             var normalized = Mathf.Clamp01(storyIntroElapsed / StoryCinematicPageSeconds);
+
+            //    eased：对 normalized 做 SmoothStep 缓动（先慢后慢、中间快），用于平移和缩放，
+            //    使 Ken Burns 效果的起止更柔和，避免突然启停。
             var eased = Mathf.SmoothStep(0f, 1f, normalized);
+
+            //    fade：淡入进度，用更短的 StoryCinematicFadeSeconds（0.42s）让图片快速出现，
+            //    而非等完整 3 秒才完全不透明。
             var fade = Mathf.Clamp01(storyIntroElapsed / StoryCinematicFadeSeconds);
-            // 3. 更新漫画图片的位置（平移）和缩放（缓慢放大），并渐入显示
+
+            // 3. 更新漫画图片的视觉表现。
             if (storyIntroImageObject != null)
             {
+                //    位置（平移）和缩放（缓慢放大）由 eased 驱动：
+                //    - 平移方向由页码奇偶决定（偶数向右、奇数向左），幅度 ±StoryCinematicPanPixels(14px)
+                //    - 缩放从 1.0 缓慢增长到 1.0 + StoryCinematicZoomAmount(0.035)，即放大 3.5%
+                //    两者共同营造 Ken Burns 纪录片式的镜头缓慢推拉感。
                 SetStoryIntroImageTransform(eased, 1f + StoryCinematicZoomAmount * eased);
 
+                //    透明度由 fade 驱动 SmoothStep 淡入：前 0.42 秒从全透明平滑过渡到完全不透明，
+                //    避免翻页时图片硬切出现。
                 if (storyIntroImageRenderer != null)
                 {
                     storyIntroImageRenderer.color = new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, fade));
                 }
             }
 
-            // 4. 播放时间到，自动切换到下一帧漫画
+            // 4. 停留时间耗尽（3.0 秒），自动翻到下一页。
+            //    AdvanceSinglePlayerStoryIntro() 会判断：还有后续页则显示下一页，
+            //    已经是最后一页则执行完成回调（进入冒险地图或锦标赛设置）。
             if (storyIntroElapsed >= StoryCinematicPageSeconds)
             {
                 AdvanceSinglePlayerStoryIntro();
-                return true;
+                return true;  // 告诉调用方已翻页，本帧跳过菜单按钮更新
             }
 
-            return false;
+            return false;  // 还在播放中，调用方继续执行菜单按钮交互逻辑
         }
 
+        // 切换漫画的暂停/继续状态
         private void ToggleStoryIntroPause()
         {
             if (storyIntroLoreOpen)
@@ -1004,6 +1211,7 @@ namespace mlp
             RefreshStoryIntroPauseButtonLabel();
         }
 
+        // 设置漫画图片的位置（左右平移+上下浮动）和缩放
         private void SetStoryIntroImageTransform(float normalized, float zoom)
         {
             // 1. 没有图片对象则跳过
@@ -1030,6 +1238,7 @@ namespace mlp
                 1f);
         }
 
+        // 漫画翻到上一页，已经是第一页则取消漫画
         private void BackSinglePlayerStoryIntro()
         {
             if (storyIntroPanelIndex > 0)
@@ -1042,6 +1251,7 @@ namespace mlp
             CancelSinglePlayerStoryIntro();
         }
 
+        // 漫画翻到下一页，已经是最后一页则继续后续流程
         private void AdvanceSinglePlayerStoryIntro()
         {
             var mode = mlpSinglePlayerNarrative.GetMode(storyIntroMode);
@@ -1056,6 +1266,7 @@ namespace mlp
             ContinueSinglePlayerStoryIntro();
         }
 
+        // 漫画播完后执行后续回调（进入冒险地图或锦标赛设置）
         private void ContinueSinglePlayerStoryIntro()
         {
             var continueAction = storyIntroContinueAction;
@@ -1070,6 +1281,7 @@ namespace mlp
             ShowMatchTypeMenu();
         }
 
+        // 取消漫画播放，执行取消回调（默认回到模式选择）
         private void CancelSinglePlayerStoryIntro()
         {
             var cancelAction = storyIntroCancelAction;
@@ -1084,21 +1296,27 @@ namespace mlp
             ShowMatchTypeMenu();
         }
 
+        // 重播冒险模式的开场漫画
         private void ShowAdventureComicReplay()
         {
             ShowSinglePlayerStoryIntro(mlpSinglePlayerNarrativeMode.Adventure, ShowAdventureMap, ShowAdventureMap);
         }
 
+        // 重播锦标赛的开场漫画（从设置界面触发）
         private void ShowTournamentSetupComicReplay()
         {
             ShowSinglePlayerStoryIntro(mlpSinglePlayerNarrativeMode.Tournament, ShowTournamentSetup, ShowTournamentSetup);
         }
 
+        // 重播锦标赛的开场漫画（从对阵图界面触发）
         private void ShowTournamentBracketComicReplay()
         {
             ShowSinglePlayerStoryIntro(mlpSinglePlayerNarrativeMode.Tournament, ShowTournamentBracket, ShowTournamentBracket);
         }
 
+        
+        
+        //冒险预告页
         private void ShowAdventurePreview()
         {
             // 1. 设置当前界面为冒险预览，设为单人模式
@@ -1159,6 +1377,12 @@ namespace mlp
             menuButtons.Add(new mlpMenuButton("QUICK DUEL", 580f, 452f, 200f, 42f, ShowSinglePlayerSetup, runtimeRoot));
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 第 6 块：冒险模式
+        // 藏宝地图、关卡节点、路线连接、关卡海报、难度选择和结算界面
+        // ═══════════════════════════════════════════════════════════════
+
+        // 显示冒险模式的藏宝地图界面（关卡节点、路线、海报、难度选择）
         private void ShowAdventureMap()
         {
             // 1. 设置当前界面为冒险地图
@@ -1204,6 +1428,7 @@ namespace mlp
             menuButtons.Add(new mlpMenuButton("PLAY LEVEL", 656f, 452f, 188f, 42f, StartAdventureLevelFlow, runtimeRoot));
         }
 
+        // 绘制藏宝地图的外框（阴影、铜色边框、地图贴图、印章文字）
         private void CreateAdventureTreasureMapFrame()
         {
             // 1. 绘制地图面板的阴影层（营造立体感）
@@ -1272,6 +1497,7 @@ namespace mlp
                 mlpTextStyle.TournamentAccent);
         }
 
+        // 在地图底部显示当前关卡的机制说明文字（如"Warden duels"）
         private void CreateAdventureMechanicInfo(int selectedLevelIndex)
         {
             var level = mlpAdventureCatalog.GetLevel(selectedLevelIndex);
@@ -1304,6 +1530,7 @@ namespace mlp
                 mlpTextStyle.TournamentBody);
         }
 
+        // 获取藏宝地图贴图：优先用资源文件，没有则运行时程序化生成一张旧纸纹理
         private Texture2D GetAdventureTreasureMapTexture()
         {
             var assetTexture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.AdventureTreasureMapBg));
@@ -1377,6 +1604,7 @@ namespace mlp
             return adventureTreasureMapTexture;
         }
 
+        // 创建冒险模式的路线节点和连接线（画出关卡之间的路线）
         private void CreateAdventureRouteMap(mlpAdventureData adventure)
         {
             // 1. 绘制相邻节点之间的连接线（路线）
@@ -1415,6 +1643,7 @@ namespace mlp
             }
         }
 
+        // 绘制单个冒险关卡节点（头像、边框、发光、锁定遮罩）
         private void CreateAdventureRouteNode(
             mlpAdventureLevelDefinition level,
             int index,
@@ -1472,6 +1701,7 @@ namespace mlp
             }
         }
 
+        // 获取冒险关卡节点在地图上的坐标位置
         private static Vector2 GetAdventureNodePosition(int index)
         {
             if (index < 0 || index >= mlpAdventureCatalog.LevelCount)
@@ -1483,12 +1713,14 @@ namespace mlp
             return new Vector2(level.MapX, level.MapY);
         }
 
+        // 获取冒险节点的路线连接锚点（略微下移，视觉上更自然）
         private static Vector2 GetAdventureNodeRouteAnchor(int index)
         {
             var nodePosition = GetAdventureNodePosition(index);
             return new Vector2(nodePosition.x, nodePosition.y - 2f);
         }
 
+        // 绘制两个冒险节点之间的连接线（阴影+路线+圆点）
         private void CreateAdventureConnector(int index, float startX, float startY, float endX, float endY, bool unlocked)
         {
             CreateAdventureTrailSegment($"AdventureTrailShadow_{index}", startX, startY, endX, endY, 14f, new Color(0.1f, 0.05f, 0.02f, 0.28f), 10);
@@ -1504,6 +1736,7 @@ namespace mlp
             CreateAdventureTrailDots(index, startX, startY, endX, endY, unlocked);
         }
 
+        // 绘制一段倾斜的矩形线段（用于连接两个节点）
         private void CreateAdventureTrailSegment(string name, float startX, float startY, float endX, float endY, float thickness, Color color, int sortingOrder)
         {
             var dx = endX - startX;
@@ -1518,6 +1751,7 @@ namespace mlp
             segment.transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(-dy, dx) * Mathf.Rad2Deg);
         }
 
+        // 在连接线上绘制等距圆点装饰
         private void CreateAdventureTrailDots(int index, float startX, float startY, float endX, float endY, bool unlocked)
         {
             var dotColor = unlocked
@@ -1532,6 +1766,7 @@ namespace mlp
             }
         }
 
+        // 绘制冒险关卡的详情海报（守卫头像、状态标签、球皮肤、难度选择）
         private void CreateAdventureLevelPoster(mlpAdventureData adventure, int selectedLevelIndex)
         {
             // 1. 获取关卡数据，判断解锁、完成和当前关卡状态
@@ -1628,6 +1863,7 @@ namespace mlp
             CreateAdventureDifficultySelector();
         }
 
+        // 在冒险海报底部创建难度切换按钮
         private void CreateAdventureDifficultySelector()
         {
             menuButtons.Add(new mlpMenuButton(mlpInventory.Instance.DifficultyLabel, AdventurePosterX, 380f, 154f, 42f, () =>
@@ -1637,19 +1873,26 @@ namespace mlp
             }, runtimeRoot));
         }
 
+        // 开始冒险关卡：保存选择，初始化关卡数据，进入比赛
         private void StartAdventureLevelFlow()
         {
+            // 获取背包/库存单例
             var inventory = mlpInventory.Instance;
+            // 将当前选择的角色保存为快捷选择
             inventory.SetQuickSelection(quickCharacterId);
+            // 尝试启动冒险关卡（校验关卡是否解锁、角色是否可用等）
             if (!inventory.StartAdventureLevel(adventureSelectedLevelIndex, quickCharacterId))
             {
+                // 关卡无法开始，退回冒险地图界面
                 ShowAdventureMap();
                 return;
             }
 
+            // 关卡启动成功，进入游戏玩法
             StartGameplay();
         }
 
+        // 重试当前冒险关卡（失败后点击 RETRY 按钮触发）
         private void RetryAdventureLevelFlow()
         {
             var inventory = mlpInventory.Instance;
@@ -1662,7 +1905,9 @@ namespace mlp
             StartGameplay();
         }
 
+        // 显示冒险关卡的结算界面（守卫台词、胜负结果、继续/重试按钮）
         private void ShowAdventureResult(bool playerWon)
+
         {
             // 1. 获取刚才结算的关卡数据和结果台词
             var adventure = mlpInventory.Instance.Adventure;
@@ -1733,6 +1978,7 @@ namespace mlp
             }
         }
 
+        // 给冒险结果台词加上引号并自动换行
         private static string FormatAdventureResultSpeech(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -1743,6 +1989,7 @@ namespace mlp
             return "\"" + WrapMenuText(text.Trim(), 32) + "\"";
         }
 
+        // 按单词边界自动换行，每行不超过 maxLineLength 个字符
         private static string WrapMenuText(string text, int maxLineLength)
         {
             if (string.IsNullOrWhiteSpace(text) || text.Length <= maxLineLength)
@@ -1783,6 +2030,7 @@ namespace mlp
             return builder.ToString();
         }
 
+        // 返回冒险区域的简短名称（用于空间有限的 UI）
         private static string ShortAdventureAreaName(string areaName)
         {
             if (string.IsNullOrEmpty(areaName))
@@ -1812,6 +2060,11 @@ namespace mlp
                     return areaName;
             }
         }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 第 7 块：比赛设置界面
+        // 快速比赛/训练/双人/锦标赛的赛前设置（角色、球皮肤、难度）
+        // ═══════════════════════════════════════════════════════════════
 
         private void CreateSinglePlayerModeCard(
             string key,
@@ -2206,6 +2459,11 @@ namespace mlp
         }
 
         /// <summary>
+        // ═══════════════════════════════════════════════════════════════
+        // 第 8 块：比赛启动流程
+        // 将菜单选择保存到存档，然后调用 StartGameplay 创建比赛场景
+        // ═══════════════════════════════════════════════════════════════
+
         /// 保存快速比赛的选择并启动比赛。
         /// </summary>
         private void StartQuickMatchFlow()
@@ -2246,6 +2504,7 @@ namespace mlp
             StartGameplay();
         }
 
+        // 从帮助面板启动教程（如果有进行中的锦标赛/冒险，先放弃）
         private void StartTutorialFromHelpPanel()
         {
             if (mlpInventory.Instance.IsTournamentActive)
@@ -2346,6 +2605,11 @@ namespace mlp
         }
 
         /// <summary>
+        // ═══════════════════════════════════════════════════════════════
+        // 第 9 块：锦标赛对阵图和颁奖
+        // 常规赛排名表、季后赛对阵图、颁奖典礼动画和积分榜
+        // ═══════════════════════════════════════════════════════════════
+
         /// 显示锦标赛对阵图界面，包含所有当前比赛和排名。
         /// </summary>
         private void ShowTournamentBracket()
@@ -2455,6 +2719,11 @@ namespace mlp
         }
 
         /// <summary>
+        // ═══════════════════════════════════════════════════════════════
+        // 第 10 块：比赛场景构建和摄像机模式切换
+        // StartGameplay 创建比赛，BeginMenuScreen 初始化菜单界面
+        // ═══════════════════════════════════════════════════════════════
+
         /// 清除菜单场景并创建新的比赛游戏对象。
         /// </summary>
         private void StartGameplay()
@@ -2643,6 +2912,10 @@ namespace mlp
             mainCamera.rect = new Rect(0f, (1f - normalizedHeight) * 0.5f, 1f, normalizedHeight);
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 11 块：UI 基础组件（文字、面板、按钮创建方法）
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// 在菜单界面顶部放置大标题标签。
         /// </summary>
@@ -2705,6 +2978,7 @@ namespace mlp
             mlpRender.Text(name, text, x, y, fontSize, color, anchor, sortingOrder, resolvedParent, style);
         }
 
+        // 创建可在传说面板中切换显示/隐藏的文字对象
         private GameObject CreateToggleableStoryIntroText(
             string name,
             string text,
@@ -2739,6 +3013,7 @@ namespace mlp
             return textObject;
         }
 
+        // 创建传说面板按钮上的文字标签
         private GameObject CreateStoryIntroLoreButtonLabel(string text, float x, float y)
         {
             // 1. 优先使用原生文字层创建传说按钮标签
@@ -2771,6 +3046,7 @@ namespace mlp
             return legacyText != null ? legacyText.gameObject : null;
         }
 
+        // 更新传说按钮标签的文字内容（兼容原生TMP和旧版TextMesh）
         private void SetStoryIntroLoreButtonLabelText(string text)
         {
             if (storyIntroLoreLabelObject == null)
@@ -2792,6 +3068,7 @@ namespace mlp
             }
         }
 
+        // 更新传说按钮标签的文字颜色
         private void SetStoryIntroLoreButtonLabelColor(Color color)
         {
             if (storyIntroLoreLabelObject == null)
@@ -2813,6 +3090,7 @@ namespace mlp
             }
         }
 
+        // 传说面板打开/关闭时，更新按钮和美术元素的位置
         private void RefreshStoryIntroLoreButtonLayout(bool isVisible)
         {
             // 1. 根据传说面板是否打开，选择对应的位置和偏移值
@@ -2832,6 +3110,7 @@ namespace mlp
                 buttonY - StoryIntroLoreButtonY);
         }
 
+        // 设置传说按钮标签的屏幕位置
         private void SetStoryIntroLoreLabelPosition(float x, float y)
         {
             // 1. 没有标签对象则跳过
@@ -2855,6 +3134,7 @@ namespace mlp
                 storyIntroLoreLabelObject.transform.position.z);
         }
 
+        // 设置传说面板美术元素的偏移量（跟随按钮移动）
         private void SetStoryIntroLoreArtOffset(float pixelOffsetX, float pixelOffsetY)
         {
             // 1. 没有美术根节点则跳过
@@ -2912,6 +3192,7 @@ namespace mlp
             return panel;
         }
 
+        // 尝试用独立贴图作为菜单背景（画质更好），失败返回 false
         private bool TryCreateStandaloneMenuBackground(string backgroundFrame)
         {
             // 1. 将背景帧名称解析为对应的贴图资源键
@@ -2946,6 +3227,7 @@ namespace mlp
             return true;
         }
 
+        // 将背景帧名称映射为对应的独立贴图资源键
         private static string ResolveStandaloneMenuBackgroundImage(string backgroundFrame)
         {
             return backgroundFrame switch
@@ -2956,6 +3238,7 @@ namespace mlp
             };
         }
 
+        // 尝试用独立的圆角面板贴图创建面板（画质更好），失败返回 null
         private static GameObject TryCreateStandaloneTintPanel(string name, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
             // 1. 加载圆角面板贴图，加载失败则返回 null
@@ -3063,6 +3346,10 @@ namespace mlp
                 mlpTextStyle.TournamentAccent);
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 12 块：角色/球选择器和预览
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// 显示角色头像、左右箭头和名称标签，用于选择格斗角色。
         /// </summary>
@@ -3121,6 +3408,7 @@ namespace mlp
                 mlpTextStyle.TournamentBody);
         }
 
+        // 绘制角色技能图标（光球背景 + 技能图标叠加）
         private void CreateCharacterSkillIcon(string name, mlpCharacterSkillDefinition skillDefinition, float x, float y, int sortingOrder)
         {
             const float orbPixels = 52f;
@@ -3217,6 +3505,10 @@ namespace mlp
             mlpPlayersData.ApplyCharacter(armature, characterId);
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 13 块：锦标赛对阵图（常规赛排名 + 季后赛对阵）
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// 绘制完整的锦标赛对阵图，包含赛季横幅和季后赛轮次。
         /// </summary>
@@ -3234,6 +3526,7 @@ namespace mlp
             CreateTournamentSummaryPanel(tournament);
         }
 
+        // 在对阵图顶部显示当前赛事阶段的横幅标题（如"FINAL FOUR"、"GRAND FINAL"）
         private void CreateTournamentSeasonBanner(mlpTournamentData tournament)
         {
             // 1. 获取当前赛事阶段的标题文字
@@ -3832,6 +4125,10 @@ namespace mlp
                 17);
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 14 块：锦标赛工具方法（头像、徽章、摘要面板）
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// 在对阵图上绘制小型标签徽章（如胜利、失败、种子排名）。
         /// </summary>
@@ -3929,6 +4226,10 @@ namespace mlp
 
             return $"{CharacterNameOrTbd(match.LeftCharacterId)} VS {CharacterNameOrTbd(match.RightCharacterId)}";
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 15 块：锦标赛颁奖典礼
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// 构建完整的颁奖典礼界面，包含领奖台、奖杯和横幅。
@@ -4473,6 +4774,7 @@ namespace mlp
             }
         }
 
+        // 根据排名返回对应的强调色（金/银/铜）
         private static Color GetTournamentAwardsAccentColor(int placement)
         {
             switch (placement)
@@ -4488,6 +4790,7 @@ namespace mlp
             }
         }
 
+        // 根据排名和是否为玩家返回领奖台铭牌的颜色
         private static Color GetTournamentAwardsPlateTint(TournamentAwardsPlacement placement, bool champion)
         {
             if (placement.IsPlayer)
@@ -4622,6 +4925,7 @@ namespace mlp
             return panel;
         }
 
+        // 尝试用独立贴图创建带边框的面板，失败返回 null（回退到图集精灵）
         private static GameObject TryCreateStandaloneFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Color tint, Transform parent)
         {
             // 1. 将边框名称解析为对应的纹理资源键
@@ -4684,6 +4988,7 @@ namespace mlp
             return image;
         }
 
+        // 将边框名称映射为对应的独立贴图资源键
         private static string ResolveStandaloneFrameImage(string frame)
         {
             return frame switch
@@ -4696,6 +5001,11 @@ namespace mlp
             };
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 16 块：故事传说面板和漫画过场辅助
+        // ═══════════════════════════════════════════════════════════════════
+
+        // 创建故事漫画的传说面板（卷轴样式、木杆装饰、标题和正文文字）
         private void CreateStoryIntroLorePanel(mlpStoryPanelDefinition panel)
         {
             // 1. 检查面板是否有效且包含传说内容，无效则跳过
@@ -4917,11 +5227,13 @@ namespace mlp
             SetStoryIntroLoreVisibility(false);
         }
 
+        // 切换传说面板的打开/关闭
         private void ToggleStoryIntroLore()
         {
             SetStoryIntroLoreVisibility(!storyIntroLoreOpen);
         }
 
+        // 切换传说面板的显示/隐藏，同步更新按钮位置、标签和动画暂停状态
         private void SetStoryIntroLoreVisibility(bool isVisible)
         {
             // 1. 打开时保存并暂停动画，关闭时恢复之前的暂停状态
@@ -4973,6 +5285,7 @@ namespace mlp
             RefreshStoryIntroPauseButtonLabel();
         }
 
+        // 根据当前状态更新暂停按钮文字（pause/resume/close）
         private void RefreshStoryIntroPauseButtonLabel()
         {
             if (storyIntroPauseButton == null)
@@ -4982,6 +5295,10 @@ namespace mlp
 
             storyIntroPauseButton.SetText(storyIntroLoreOpen ? "close" : storyIntroPaused ? "resume" : "pause");
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 17 块：连接线绘制（锦标赛对阵图的连接线段）
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// 绘制连接两个对阵位置的水平线段。
@@ -5087,6 +5404,10 @@ namespace mlp
             // 3. 初始化右侧玩家角色，确保与左侧不同
             versusRightCharacterId = mlpPlayersData.SanitizeCharacterId(match.CharacterIds[1], mlpPlayersData.StepCharacterId(versusLeftCharacterId, 1));
         }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // 第 18 块：清理和杂项工具方法
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// 销毁所有菜单和游戏对象，重置整个场景。

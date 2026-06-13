@@ -103,6 +103,29 @@ namespace mlp
     {
         private const float ArenaLogicalWidth = 1398f;
         private const float ArenaLogicalHeight = 480f;
+        private const string FogWindArmatureName = "dbanims/backwind_01";
+        private static readonly Vector2[] FogWindLayerPositions =
+        {
+            new Vector2(168f, 172f),
+            new Vector2(408f, 136f),
+            new Vector2(652f, 184f)
+        };
+        private static readonly float[] FogWindLayerScales = { 1.12f, 1.3f, 1.06f };
+        private static readonly int[] FogWindLayerSortingOrders = { 1, 2, 3 };
+        private static readonly float[] FogWindLayerAlphaBiases = { 0.82f, 1f, 0.9f };
+
+        private sealed class FogWindLayer
+        {
+            public Vector2 BasePosition;
+            public GameObject Root;
+            public DBLiteArmature Armature;
+            public float BaseScale;
+            public int SortingOrder;
+            public float AlphaBias;
+        }
+
+        private readonly GameObject fogWindFxRoot;
+        private readonly FogWindLayer[] fogWindLayers = new FogWindLayer[FogWindLayerPositions.Length];
 
         public GameObject Graphic { get; }
 
@@ -133,6 +156,40 @@ namespace mlp
 
             // 5. 按逻辑比赛尺寸（1398×480）缩放，使高清素材与旧版图集帧保持一致
             ApplyArenaLogicalScale(Graphic.transform, renderer.sprite);
+
+            fogWindFxRoot = new GameObject("ArenaFogWindFx");
+            fogWindFxRoot.transform.SetParent(parent, false);
+            fogWindFxRoot.SetActive(false);
+            CreateFogWindLayers();
+        }
+
+        internal void UpdateFogWindFx(bool active, float signedWave, float gustStrength)
+        {
+            if (fogWindFxRoot == null)
+            {
+                return;
+            }
+
+            if (!active)
+            {
+                if (fogWindFxRoot.activeSelf)
+                {
+                    fogWindFxRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            if (!fogWindFxRoot.activeSelf)
+            {
+                fogWindFxRoot.SetActive(true);
+            }
+
+            var clampedStrength = Mathf.Clamp01(gustStrength);
+            for (var i = 0; i < fogWindLayers.Length; i++)
+            {
+                ApplyFogWindLayer(fogWindLayers[i], i, signedWave, clampedStrength);
+            }
         }
 
         /// <summary>
@@ -152,6 +209,113 @@ namespace mlp
                 baseScale * ArenaLogicalWidth / sprite.rect.width,
                 baseScale * ArenaLogicalHeight / sprite.rect.height,
                 1f);
+        }
+
+        private void CreateFogWindLayers()
+        {
+            for (var i = 0; i < fogWindLayers.Length; i++)
+            {
+                var layer = new FogWindLayer
+                {
+                    BasePosition = FogWindLayerPositions[i],
+                    BaseScale = FogWindLayerScales[i],
+                    SortingOrder = FogWindLayerSortingOrders[i],
+                    AlphaBias = FogWindLayerAlphaBiases[i]
+                };
+
+                layer.Root = new GameObject($"FogWindLayer_{i}");
+                layer.Root.transform.SetParent(fogWindFxRoot.transform, false);
+                mlpRender.ApplyPixelTransform(layer.Root.transform, layer.BasePosition.x, layer.BasePosition.y, 0.01f + i * 0.001f);
+
+                layer.Armature = DBLiteFactory.Instance.BuildArmature(FogWindArmatureName, $"FogWindArmature_{i}");
+                if (layer.Armature != null)
+                {
+                    layer.Armature.transform.SetParent(layer.Root.transform, false);
+                    layer.Armature.transform.localPosition = Vector3.zero;
+                    layer.Armature.transform.localScale = new Vector3(
+                        mlpConstants.PixelPerfectCharacterScale * layer.BaseScale,
+                        mlpConstants.PixelPerfectCharacterScale * layer.BaseScale,
+                        1f);
+                }
+
+                fogWindLayers[i] = layer;
+            }
+        }
+
+        private static void ApplyFogWindLayer(FogWindLayer layer, int layerIndex, float signedWave, float gustStrength)
+        {
+            if (layer?.Root == null)
+            {
+                return;
+            }
+
+            var direction = signedWave >= 0f ? 1f : -1f;
+            var waveAbs = Mathf.Abs(signedWave);
+            var swayX = signedWave * (16f + layerIndex * 4f);
+            var swayY = Mathf.Sin(Time.time * (1.9f + layerIndex * 0.21f) + layerIndex * 0.7f) * (2f + gustStrength * 4f);
+            mlpRender.ApplyPixelTransform(
+                layer.Root.transform,
+                layer.BasePosition.x + swayX,
+                layer.BasePosition.y + swayY,
+                0.01f + layerIndex * 0.001f);
+
+            if (layer.Armature == null)
+            {
+                return;
+            }
+
+            var widthPulse = 0.94f + gustStrength * 0.18f + waveAbs * 0.06f;
+            var heightPulse = 0.9f + gustStrength * 0.12f;
+            layer.Armature.transform.localScale = new Vector3(
+                mlpConstants.PixelPerfectCharacterScale * layer.BaseScale * widthPulse * direction,
+                mlpConstants.PixelPerfectCharacterScale * layer.BaseScale * heightPulse,
+                1f);
+
+            ApplyFogWindRenderers(layer.Armature, layer.SortingOrder, (0.2f + gustStrength * 0.42f + waveAbs * 0.08f) * layer.AlphaBias);
+        }
+
+        private static void ApplyFogWindRenderers(DBLiteArmature armature, int sortingOrderBase, float alpha)
+        {
+            if (armature == null)
+            {
+                return;
+            }
+
+            var renderers = armature.GetComponentsInChildren<SpriteRenderer>(true);
+            if (renderers == null || renderers.Length == 0)
+            {
+                return;
+            }
+
+            var minSortingOrder = int.MaxValue;
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer != null && renderer.sortingOrder < minSortingOrder)
+                {
+                    minSortingOrder = renderer.sortingOrder;
+                }
+            }
+
+            if (minSortingOrder == int.MaxValue)
+            {
+                minSortingOrder = sortingOrderBase;
+            }
+
+            var sortingOffset = sortingOrderBase - minSortingOrder;
+            var tint = new Color(0.84f, 0.95f, 1f, Mathf.Clamp01(alpha));
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                renderer.sortingOrder += sortingOffset;
+                renderer.color = tint;
+                renderer.enabled = tint.a > 0.001f;
+            }
         }
     }
 
