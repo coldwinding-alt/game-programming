@@ -12,23 +12,41 @@ namespace mlp
     /// </summary>
     public interface IBLPlayerController
     {
+        /// <summary>-1 左移 / 0 不动 / +1 右移</summary>
         int CurrentMove { get; }
+        /// <summary>是否跳跃</summary>
         bool CurrentJump { get; }
+        /// <summary>投篮（持球时）或抢断（防守时）</summary>
         bool CurrentAction { get; }
+        /// <summary>盖帽或假动作</summary>
         bool CurrentBlockOrPump { get; }
+        /// <summary>释放大招</summary>
         bool CurrentSuper { get; }
+        /// <summary>冲刺方向（-1 左 / +1 右 / 0 无）</summary>
         int CurrentDash { get; }
+        /// <summary>每帧调用：读取输入或运行AI决策，更新6个输出属性</summary>
         void UpdateController(float dt);
+        /// <summary>己方拿到球：切换到进攻模式</summary>
         void BallInOwnHands(int holderPlayerNo);
+        /// <summary>对方拿到球：切换到防守模式</summary>
         void BallInOpponentsHands(int holderPlayerNo);
+        /// <summary>己方投篮出手：切换到进攻篮板模式</summary>
         void BallOwnShoot(int shooterPlayerNo);
+        /// <summary>对方投篮出手：切换到防守篮板模式</summary>
         void BallOpponentShoot(int shooterPlayerNo);
+        /// <summary>球无人控制（争抢/弹跳中）：切换到争球模式</summary>
         void BallOthers();
+        /// <summary>是否准备好执行动作（键盘松键防连发，AI始终true）</summary>
         bool ReadyForAction();
+        /// <summary>是否松开盖帽键/计时器到期，结束盖帽动画</summary>
         bool ReleaseBlockOrPump(float dt);
+        /// <summary>新回合开始：重置所有状态</summary>
         void Restart(int startSide);
+        /// <summary>角色落地：处理虚晃重置、快速起跳</summary>
         void PlayerOnGround();
+        /// <summary>冲刺结束：调整攻击点、清理冲刺缓冲</summary>
         void PlayerOnDashEnd();
+        /// <summary>盖帽完成：重置盖帽状态，启动冷却计时</summary>
         void PlayerOnBlock();
     }
 
@@ -37,19 +55,32 @@ namespace mlp
     /// </summary>
     public sealed class mlpKeyboardController : IBLPlayerController
     {
+        // 当前控制器的按键配置（WASD 或方向键）
         private readonly mlpControlProfile controls;
+        // 上一次按下左键的时间，初始为 -10 防止开局误触发
         private float lastLeftDown = -10f;
+        // 上一次按下右键的时间
         private float lastRightDown = -10f;
+        // 上一次松开左键的时间（用于双击松开-按下检测）
         private float lastLeftUp = -10f;
+        // 上一次松开右键的时间
         private float lastRightUp = -10f;
+        // 排队中的冲刺方向：-1 左冲，+1 右冲，0 无
         private int pendingDashDirection;
+        // 冲刺缓冲计时器，大于 0 时持续输出冲刺信号
         private float pendingDashTimer;
 
+        // 当前移动方向输出：-1 左移，0 静止，+1 右移
         public int CurrentMove { get; private set; }
+        // 当前跳跃输出
         public bool CurrentJump { get; private set; }
+        // 当前动作输出：持球时投篮，防守时抢断
         public bool CurrentAction { get; private set; }
+        // 当前盖帽/假动作输出
         public bool CurrentBlockOrPump { get; private set; }
+        // 当前大招输出
         public bool CurrentSuper { get; private set; }
+        // 当前冲刺方向输出：-1 左冲，0 无，+1 右冲
         public int CurrentDash { get; private set; }
 
         /// <summary>
@@ -143,6 +174,7 @@ namespace mlp
             CurrentSuper = Input.GetKey(controls.SuperKey);
         }
 
+        // 将冲刺指令排入缓冲：设置方向和缓冲计时，让冲刺信号持续几帧而非瞬发
         private void QueueDash(int direction)
         {
             pendingDashDirection = direction;
@@ -359,60 +391,111 @@ namespace mlp
     /// </summary>
     public abstract class mlpBaseAIController : IBLPlayerController
     {
+        // 所属的玩家对象引用
         protected readonly mlpPlayerObject player;
+        // 当前比赛难度（Easy/Normal/Hard/Hell）
         protected readonly mlpAiDifficulty difficulty;
+        // 难度调校参数（防守距离、抢断距离、冲刺范围等）
         protected readonly mlpAIDifficultyTuningProfile tuning;
 
+        // 比赛中的球对象引用
         protected mlpBallObject ball;
+        // 对手玩家列表
         protected List<mlpPlayerObject> opponents;
+        // 当前锁定的主要对手
         protected mlpPlayerObject opponent;
+        // AI 技能配置（概率和反应节奏参数）
         protected readonly mlpAISkillProfile profile;
 
+        // 跳球延迟计时器：控制跳球时的起跳时机
         protected readonly NegativeDelay jumpBall;
+        // 攻击延迟计时器：控制投篮出手时机（结合范围和固定延迟）
         protected readonly FullDelay attack;
+        // 快速起跳延迟计时器：落地后立即起跳的延迟
         protected readonly SimpleDelay attackJumpDelay;
+        // 抢断延迟计时器：控制抢断冷却和使用时长
         protected readonly AIUseDelay stealDelay;
+        // 防守延迟计时器：控制防守干扰起跳的时机
         protected readonly SimpleDelay defenceDelay;
+        // 盖帽延迟计时器：盖帽动作的冷却时间
         protected readonly FullDelay blockDelay;
+        // 篮板延迟计时器：起跳抢篮板的时机控制
         protected readonly FullDelay reboundDelay;
+        // 移动延迟计时器：控制移动决策的频率（不每帧都决策）
         protected readonly FullDelay moveDelay;
+        // 冲刺决策延迟计时器：冲刺使用的冷却控制
         protected readonly AIUseDelay dashDecisionDelay;
+        // 超级扣篮延迟计时器：大招扣篮的使用时机
         protected readonly FullDelay megaDunkDelay;
+        // 超级冲刺延迟计时器：大招冲刺的使用时机
         protected readonly FullDelay superDashDelay;
 
+        // 当前策略编号：0=防守，1=争球，2=进攻，3=跳球，4=篮板，5=激进防守
         protected int strategy;
+        // 攻击目标 X 坐标（投篮释放位置）
         protected float attackPoint;
+        // 起跳点 X 坐标（到达后起跳向攻击点）
         protected float jumpPoint;
+        // 当前篮板争抢目标 X 坐标
         protected float reboundPoint;
+        // 进攻时的篮板位置
         protected float reboundPointInAttack;
+        // 防守时的篮板位置
         protected float reboundPointInDefence;
+        // 防守终点基准位置（根据球员编号分配）
         protected float baseEndPoint;
+        // 当前防守终点位置（可能因长时间不动而动态调整）
         protected float endPoint;
+        // 防守站位点 X 坐标
         protected float defensePoint;
+        // 无动作累计时间：超过阈值时重置防守边界，防止消极防守
         protected float deltaDownTime;
+        // 投篮飞行方向：-1 向左飞，+1 向右飞
         protected float directionToFly;
+        // 是否已到达起跳点，可以起跳投篮
         protected bool attackJump;
+        // 是否通过跳跃躲避抢断
         protected bool avoidStealJump;
+        // 躲避抢断时的侧移方向：-1 左，0 无，+1 右
         protected int avoidStealMove;
+        // 是否被对手假动作骗到（被晃飞）
         protected bool isPumped;
+        // 本回合被假动作骗到的次数（上限 3 次）
         protected int pumpCount;
+        // 是否排队了篮板起跳（对手投篮时提前准备）
         protected bool queuedReboundJump;
+        // 玩家编号：0=主力，1=辅助
         protected int playerNo;
+        // 是否已完成首次运行时引用获取
         protected bool initialized;
+        // 进攻区域起始 X 坐标
         protected float attackZoneStart;
+        // 进攻区域结束 X 坐标
         protected float attackZoneEnd;
+        // 冲刺区域起始 X 坐标
         protected float dashZoneStart;
+        // 冲刺区域结束 X 坐标
         protected float dashZoneEnd;
+        // 落地后是否立即起跳投篮（接球或落地瞬间）
         protected bool willAttackAtOnce;
+        // 是否排队了大招输入（下一帧生效）
         protected bool queuedSuperInput;
+        // 移动判定的死区距离：与目标距离小于此值时视为已到达
         protected const float DeltaDistance = 20f;
+        // 无动作超时阈值：超过此秒数重置防守边界
         protected const float DownTime = 5f;
 
+        // 当前移动方向输出：-1 左移，0 静止，+1 右移
         public int CurrentMove { get; protected set; }
+        // 当前跳跃输出
         public bool CurrentJump { get; protected set; }
+        // 当前动作输出：持球时投篮，防守时抢断
         public bool CurrentAction { get; protected set; }
+        // 当前盖帽/假动作输出
         public bool CurrentBlockOrPump { get; protected set; }
+        // 当前大招输出
         public bool CurrentSuper { get; protected set; }
+        // 当前冲刺方向输出：-1 左冲，0 无，+1 右冲
         public int CurrentDash { get; protected set; }
 
         /// <summary>

@@ -8,14 +8,14 @@ namespace mlp
     /// </summary>
     public sealed class mlpMatchProcessor
     {
-        private bool canScore = true;
-        private bool upperSensorPassed;
-        private int shotSide;
-        private bool isHuman;
-        private int throwType;
-        private int shotPlayerNo = -1;
-        private int blockSide;
-        private bool blockIsHuman;
+        private bool canScore = true;          // 开关：本轮是否还能判定得分（防止重复判定）
+        private bool upperSensorPassed;        // 开关：球是否已经经过篮筐上方传感器
+        private int shotSide;                  // 投篮方所在半场：-1 左半场，1 右半场
+        private bool isHuman;                  // 投篮的(或盖帽后归属方)是否为玩家
+        private int throwType;                 // 投篮类型：0=远投三分，正数=普通投篮，负数=特殊投篮
+        private int shotPlayerNo = -1;         // 投篮球员编号，-1 表示未设定
+        private int blockSide;                 // 盖帽方所在半场：0=没人盖帽，-1/1 为盖帽方
+        private bool blockIsHuman;             // 盖帽的是否为玩家
 
         public int ThrowType => throwType;
         public int ShotSide => shotSide;
@@ -95,7 +95,7 @@ namespace mlp
             return false;
         }
 
-        /// <summary>
+        /// <summary> 算分
         /// 计算一次成功进球的得分。被盖帽后仍进的球始终计 2 分；远距离投篮计 3 分；其他情况使用默认分值。
         /// </summary>
         /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>

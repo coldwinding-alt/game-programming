@@ -50,59 +50,59 @@ namespace mlp
     /// </summary>
     public sealed class mlpHelpPanel : MonoBehaviour
     {
-        private const string PrefabResourcePath = "mlp/Prefabs/UI/MlpHelpPanel";
-        private const int WitchCharacterId = 6;
-        private const int WitchSortingOrderBase = 920;
-        private const float DemoRepeatMove = 999f;
-        private const float DemoRepeatJump = 0.72f;
-        private const float DemoRepeatShoot = 0.9f;
-        private const float DemoRepeatPump = 0.5f;
-        private const float DemoRepeatDash = 0.55f;
-        private const float DemoRepeatSteal = 0.82f;
-        private const float DemoRepeatBlock = 0.55f;
+        private const string PrefabResourcePath = "mlp/Prefabs/UI/MlpHelpPanel"; // 帮助面板预制体资源路径
+        private const int WitchCharacterId = 6; // 女巫角色ID
+        private const int WitchSortingOrderBase = 920; // 女巫渲染排序层级基数
+        private const float DemoRepeatMove = 999f; // 移动演示重复间隔（秒）
+        private const float DemoRepeatJump = 0.72f; // 跳跃演示重复间隔（秒）
+        private const float DemoRepeatShoot = 0.9f; // 投篮演示重复间隔（秒）
+        private const float DemoRepeatPump = 0.5f; // 假动作演示重复间隔（秒）
+        private const float DemoRepeatDash = 0.55f; // 冲刺演示重复间隔（秒）
+        private const float DemoRepeatSteal = 0.82f; // 抢断演示重复间隔（秒）
+        private const float DemoRepeatBlock = 0.55f; // 盖帽演示重复间隔（秒）
 #if UNITY_EDITOR
-        private const string EditorWitchPreviewName = "WitchEditorPreview";
+        private const string EditorWitchPreviewName = "WitchEditorPreview"; // 编辑器女巫预览对象名称
 #endif
 
-        private static mlpHelpPanel activePanel;
+        private static mlpHelpPanel activePanel; // 当前活动的帮助面板实例
 
-        [SerializeField] private GameObject panelRoot;
-        [SerializeField] private GameObject keyboardPageRoot;
-        [SerializeField] private GameObject rulesPageRoot;
-        [SerializeField] private mlpHelpButton[] buttons;
-        [SerializeField] private SpriteRenderer keyboardTabPlate;
-        [SerializeField] private SpriteRenderer rulesTabPlate;
-        [SerializeField] private TMP_Text keyboardTabText;
-        [SerializeField] private TMP_Text rulesTabText;
-        [SerializeField] private SpriteRenderer[] demoRowPlates;
-        [SerializeField] private TMP_Text demoTitleText;
-        [SerializeField] private TMP_Text demoDescriptionText;
-        [SerializeField] private TMP_Text demoCoachText;
-        [SerializeField] private Transform witchMount;
-        [SerializeField] private SpriteRenderer witchSpotlight;
-        [SerializeField] private mlpHelpButton quickTestToggleButton;
-        [SerializeField] private SpriteRenderer quickTestTogglePlate;
-        [SerializeField] private TMP_Text quickTestToggleText;
-        [SerializeField] private mlpHelpButton quickTestInfoButton;
-        [SerializeField] private GameObject quickTestInfoRoot;
-        [SerializeField] private TMP_Text quickTestInfoText;
+        [SerializeField] private GameObject panelRoot; // 面板根节点
+        [SerializeField] private GameObject keyboardPageRoot; // 键盘操作页面根节点
+        [SerializeField] private GameObject rulesPageRoot; // 游戏规则页面根节点
+        [SerializeField] private mlpHelpButton[] buttons; // 面板上所有按钮的数组
+        [SerializeField] private SpriteRenderer keyboardTabPlate; // 键盘标签页底板精灵
+        [SerializeField] private SpriteRenderer rulesTabPlate; // 规则标签页底板精灵
+        [SerializeField] private TMP_Text keyboardTabText; // 键盘标签页文字
+        [SerializeField] private TMP_Text rulesTabText; // 规则标签页文字
+        [SerializeField] private SpriteRenderer[] demoRowPlates; // 演示行背景底板精灵数组
+        [SerializeField] private TMP_Text demoTitleText; // 演示标题文字
+        [SerializeField] private TMP_Text demoDescriptionText; // 演示描述文字
+        [SerializeField] private TMP_Text demoCoachText; // 演示教练提示文字
+        [SerializeField] private Transform witchMount; // 女巫模型挂载点
+        [SerializeField] private SpriteRenderer witchSpotlight; // 女巫聚光灯精灵
+        [SerializeField] private mlpHelpButton quickTestToggleButton; // 快速测试开关按钮
+        [SerializeField] private SpriteRenderer quickTestTogglePlate; // 快速测试开关底板精灵
+        [SerializeField] private TMP_Text quickTestToggleText; // 快速测试开关文字
+        [SerializeField] private mlpHelpButton quickTestInfoButton; // 快速测试信息按钮
+        [SerializeField] private GameObject quickTestInfoRoot; // 快速测试信息面板根节点
+        [SerializeField] private TMP_Text quickTestInfoText; // 快速测试信息文字
 
-        private DBLiteArmature witchArmature;
-        private mlpHelpPage currentPage = mlpHelpPage.Keyboard;
-        private mlpHelpDemo currentDemo = mlpHelpDemo.Block;
-        private bool initialized;
-        private bool visible;
-        private float panelTime;
-        private float demoTimer;
-        private bool demoToggle;
-        private bool quickTestInfoVisible;
+        private DBLiteArmature witchArmature; // 女巫骨骼动画实例
+        private mlpHelpPage currentPage = mlpHelpPage.Keyboard; // 当前显示的页面类型
+        private mlpHelpDemo currentDemo = mlpHelpDemo.Block; // 当前选中的演示动作
+        private bool initialized; // 是否已完成初始化
+        private bool visible; // 面板是否可见
+        private float panelTime; // 面板打开累计时间（用于入场动画）
+        private float demoTimer; // 演示动画计时器
+        private bool demoToggle; // 演示动画交替标记（用于两段式动画切换）
+        private bool quickTestInfoVisible; // 快速测试信息面板是否可见
 #if UNITY_EDITOR
-        private GameObject editorWitchPreviewRoot;
+        private GameObject editorWitchPreviewRoot; // 编辑器女巫预览对象根节点
 #endif
 
-        public bool IsVisible => visible;
+        public bool IsVisible => visible; // 面板是否可见（公开只读）
 
-        public static bool IsAnyOpen
+        public static bool IsAnyOpen // 是否有任何帮助面板处于打开状态
         {
             get
             {

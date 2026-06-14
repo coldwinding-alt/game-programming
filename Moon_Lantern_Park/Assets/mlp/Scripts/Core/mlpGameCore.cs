@@ -33,7 +33,7 @@ namespace mlp
         private const float AdventureDoubleRimCycle = 12f;                            // 冒险模式"双倍篮筐"机制的完整周期（秒）
         private const float AdventureDoubleRimActiveTime = 6f;                        // 冒险模式"双倍篮筐"每周期内生效的时长（秒）
         private const float AdventureBloodMoonTimeScale = 1.14f;                      // 冒险模式"血月"机制的游戏速度倍率（加速 14%）
-        private const float AdventureFogWindForce = 60f;
+        private const float AdventureFogWindForce = 120f;
         private const float AdventureFogWindMinMultiplier = 0.7f;
         private const float AdventureFogWindMaxMultiplier = 1f;
         private const float AdventureFogWindPhaseOffset = 0.7f;

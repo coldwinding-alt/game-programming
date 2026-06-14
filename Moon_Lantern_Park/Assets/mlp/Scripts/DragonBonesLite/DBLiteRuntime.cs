@@ -11,11 +11,11 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteFactory
     {
-        private static DBLiteFactory instance;
+        private static DBLiteFactory instance; // 单例实例
 
-        private readonly Dictionary<string, DBLiteSkeleton> skeletons = new Dictionary<string, DBLiteSkeleton>();
-        private readonly Dictionary<string, DBLiteTextureAtlas> textureAtlases = new Dictionary<string, DBLiteTextureAtlas>();
-        private readonly Dictionary<string, DBLiteArmatureData> armatures = new Dictionary<string, DBLiteArmatureData>();
+        private readonly Dictionary<string, DBLiteSkeleton> skeletons = new Dictionary<string, DBLiteSkeleton>(); // 已加载的骨架数据缓存，键为骨架名称
+        private readonly Dictionary<string, DBLiteTextureAtlas> textureAtlases = new Dictionary<string, DBLiteTextureAtlas>(); // 已加载的纹理图集缓存，键为图集名称
+        private readonly Dictionary<string, DBLiteArmatureData> armatures = new Dictionary<string, DBLiteArmatureData>(); // 已加载的骨架定义缓存，键为骨架名称
 
         public static DBLiteFactory Instance => instance ?? (instance = new DBLiteFactory());
 
@@ -109,23 +109,23 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteArmature : MonoBehaviour
     {
-        private const float SlotDepthStep = 0.001f;
-        private const string BallSlotName = "ball";
-        private const string BallFrontSlotName = "ball_front";
-        private DBLiteFactory factory;
-        private DBLiteArmatureData data;
-        private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>();
-        private readonly HashSet<string> hiddenSlots = new HashSet<string>();
-        private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>();
-        private DBLiteAnimationData currentAnimation;
-        private float elapsedFrames;
-        private bool animationCompleteSent;
-        private bool playing = true;
+        private const float SlotDepthStep = 0.001f; // 插槽之间的 Z 轴深度步长，值越小插槽越紧密排列
+        private const string BallSlotName = "ball"; // 球体骨骼名称
+        private const string BallFrontSlotName = "ball_front"; // 球体前层骨骼名称
+        private DBLiteFactory factory; // 骨骼动画工厂引用，用于创建子骨架和获取纹理
+        private DBLiteArmatureData data; // 当前骨架的定义数据，包含骨骼、插槽和动画信息
+        private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>(); // 插槽实例字典，键为插槽名称，管理每个身体部件的显示
+        private readonly HashSet<string> hiddenSlots = new HashSet<string>(); // 被手动隐藏的插槽名称集合
+        private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>(); // 骨骼变换字典，键为骨骼名称，用于控制骨骼位置旋转缩放
+        private DBLiteAnimationData currentAnimation; // 当前正在播放的动画数据
+        private float elapsedFrames; // 当前动画已播放的累计帧数
+        private bool animationCompleteSent; // 是否已发送动画完成事件，防止重复发送
+        private bool playing = true; // 是否正在播放动画
 
-        public string ArmatureName => data != null ? data.Name : string.Empty;
-        public float PlaybackSpeed { get; set; } = 1f;
-        public event Action<string> AnimationComplete;
-        public event Action<string, string> FrameEvent;
+        public string ArmatureName => data != null ? data.Name : string.Empty; // 当前骨架的名称
+        public float PlaybackSpeed { get; set; } = 1f; // 动画播放速度倍率，1为正常速度
+        public event Action<string> AnimationComplete; // 动画播放完成事件，参数为动画名称
+        public event Action<string, string> FrameEvent; // 帧事件回调，参数为动画名称和事件名称
 
         /// <summary>
         /// 使用数据初始化骨架，构建骨骼层级，并播放第一个动画。
@@ -514,10 +514,10 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteTextureAtlas
     {
-        private readonly Texture2D texture;
-        private readonly float pixelsPerUnit;
-        private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>();
-        private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+        private readonly Texture2D texture; // 纹理图集的大图纹理
+        private readonly float pixelsPerUnit; // 每单位像素数，控制精灵在世界空间中的显示大小
+        private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>(); // 子纹理字典，键为名称，记录每张小图在大图中的位置和尺寸
+        private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // 已创建的精灵缓存，键为名称，避免重复裁剪
 
         /// <summary>
         /// 使用给定的纹理和每单位像素比例创建纹理图集。
@@ -605,7 +605,7 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteSkeleton
     {
-        public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>();
+        public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>(); // 骨架定义字典，键为骨架名称，一个骨骼文件可包含多个骨架
 
         /// <summary>
         /// 解析 DragonBones 骨架文件，提取所有骨架定义。
@@ -642,14 +642,14 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteArmatureData
     {
-        public string Name;
-        public int FrameRate;
-        public readonly List<DBLiteBoneData> Bones = new List<DBLiteBoneData>();
-        public readonly List<DBLiteSlotData> Slots = new List<DBLiteSlotData>();
-        public readonly Dictionary<string, List<DBLiteDisplayData>> DisplaysBySlot = new Dictionary<string, List<DBLiteDisplayData>>();
-        public readonly Dictionary<string, DBLiteAnimationData> Animations = new Dictionary<string, DBLiteAnimationData>();
-        public DBLiteTextureAtlas TextureAtlas;
-        public string FirstAnimationName;
+        public string Name; // 骨架名称
+        public int FrameRate; // 动画帧率（每秒帧数）
+        public readonly List<DBLiteBoneData> Bones = new List<DBLiteBoneData>(); // 骨骼列表，定义骨架的层级结构
+        public readonly List<DBLiteSlotData> Slots = new List<DBLiteSlotData>(); // 插槽列表，每个插槽挂在一根骨骼上用于显示图片
+        public readonly Dictionary<string, List<DBLiteDisplayData>> DisplaysBySlot = new Dictionary<string, List<DBLiteDisplayData>>(); // 每个插槽可显示的图片/子骨架列表，键为插槽名称
+        public readonly Dictionary<string, DBLiteAnimationData> Animations = new Dictionary<string, DBLiteAnimationData>(); // 动画字典，键为动画名称
+        public DBLiteTextureAtlas TextureAtlas; // 该骨架使用的纹理图集引用
+        public string FirstAnimationName; // 骨架的第一个动画名称，用于初始化时自动播放
 
         /// <summary>
         /// 返回指定插槽的显示条目列表，若不存在则返回 null。
@@ -809,12 +809,12 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteAnimationData
     {
-        public string Name;
-        public int Duration = 1;
-        public bool Loops;
-        public readonly Dictionary<string, DBLiteBoneTrack> BoneTracks = new Dictionary<string, DBLiteBoneTrack>();
-        public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>();
-        public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>();
+        public string Name; // 动画名称
+        public int Duration = 1; // 动画总帧数（以帧为单位，非秒）
+        public bool Loops; // 是否循环播放（true为循环，false为播放一次后停止）
+        public readonly Dictionary<string, DBLiteBoneTrack> BoneTracks = new Dictionary<string, DBLiteBoneTrack>(); // 骨骼轨道字典，键为骨骼名称，控制每根骨骼的位移动画
+        public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>(); // 插槽轨道字典，键为插槽名称，控制插槽的显示切换和透明度
+        public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>(); // 帧事件列表，在特定帧触发音效或特效
 
         /// <summary>
         /// 解析包含骨骼轨道、插槽轨道和帧事件的动画定义。
@@ -898,8 +898,8 @@ namespace mlp
     /// </summary>
     public struct DBLiteAnimationFrameEvent
     {
-        public float Frame;
-        public string EventName;
+        public float Frame; // 事件触发的帧号
+        public string EventName; // 事件名称（如音效名、特效名）
     }
 
     /// <summary>
@@ -907,9 +907,9 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteBoneTrack
     {
-        private readonly List<DBLiteTimedTransform> translate = new List<DBLiteTimedTransform>();
-        private readonly List<DBLiteTimedTransform> rotate = new List<DBLiteTimedTransform>();
-        private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>();
+        private readonly List<DBLiteTimedTransform> translate = new List<DBLiteTimedTransform>(); // 平移动画关键帧列表
+        private readonly List<DBLiteTimedTransform> rotate = new List<DBLiteTimedTransform>(); // 旋转动画关键帧列表
+        private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>(); // 缩放动画关键帧列表
 
         /// <summary>
         /// 从 JSON 解析骨骼轨道的平移、旋转和缩放关键帧。
@@ -1065,8 +1065,8 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteSlotTrack
     {
-        private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>();
-        private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>();
+        private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>(); // 显示切换关键帧列表，控制插槽在不同时间显示哪个图片
+        private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>(); // 颜色/透明度关键帧列表，控制插槽的淡入淡出
 
         /// <summary>
         /// 从 JSON 解析插槽轨道的显示和颜色关键帧。
@@ -1175,15 +1175,15 @@ namespace mlp
     /// </summary>
     public sealed class DBLiteSlotInstance
     {
-        private readonly DBLiteSlotData slotData;
-        private readonly List<DBLiteDisplayData> displays;
-        private readonly Transform slotTransform;
-        private readonly DBLiteFactory factory;
-        private GameObject currentDisplayObject;
-        private int currentDisplay = int.MinValue;
-        private float currentAlpha = 1f;
+        private readonly DBLiteSlotData slotData; // 插槽配置数据，记录名称、父骨骼和显示顺序
+        private readonly List<DBLiteDisplayData> displays; // 该插槽可显示的所有元素列表（图片或子骨架）
+        private readonly Transform slotTransform; // 插槽游戏对象的 Transform，作为显示元素的挂载点
+        private readonly DBLiteFactory factory; // 骨骼动画工厂引用，用于创建子骨架和获取纹理精灵
+        private GameObject currentDisplayObject; // 当前显示的 GameObject（图片精灵对象或子骨架对象）
+        private int currentDisplay = int.MinValue; // 当前显示的索引，int.MinValue 表示未设置
+        private float currentAlpha = 1f; // 当前透明度（0为完全透明，1为完全不透明）
 
-        public DBLiteArmature ChildArmature { get; private set; }
+        public DBLiteArmature ChildArmature { get; private set; } // 当显示类型为子骨架时，引用其骨骼动画组件
 
         /// <summary>
         /// 创建管理当前显示对象和子骨架的插槽实例。
@@ -1365,36 +1365,36 @@ namespace mlp
     /// <summary>骨骼数据：存储一根骨骼的名称、父骨骼名称和初始变换（位置、旋转）。</summary>
     public sealed class DBLiteBoneData
     {
-        public string Name;
-        public string Parent;
-        public DBLiteTransform Transform;
+        public string Name; // 骨骼名称
+        public string Parent; // 父骨骼名称，为空表示根骨骼
+        public DBLiteTransform Transform; // 骨骼的初始变换（位置、旋转、缩放）
     }
 
     /// <summary>插槽数据：存储一个插槽的名称、父骨骼名称、当前显示索引和渲染顺序。</summary>
     public sealed class DBLiteSlotData
     {
-        public string Name;
-        public string Parent;
-        public int DisplayIndex;
-        public int Order;
+        public string Name; // 插槽名称
+        public string Parent; // 挂载的父骨骼名称
+        public int DisplayIndex; // 默认显示的图片/子骨架索引
+        public int Order; // 渲染排序值，值越大越靠前显示
     }
 
     /// <summary>显示数据：存储插槽中一个可显示元素的名称、类型和初始变换。</summary>
     public sealed class DBLiteDisplayData
     {
-        public string Name;
-        public string Type;
-        public DBLiteTransform Transform;
+        public string Name; // 显示元素的名称（图片名或子骨架名）
+        public string Type; // 显示类型："image" 为图片精灵，"armature" 为子骨架
+        public DBLiteTransform Transform; // 显示元素相对于插槽的偏移变换
     }
 
     /// <summary>变换数据：存储位置（X/Y）和旋转角度，用于骨骼和插槽的空间变换计算。</summary>
     public struct DBLiteTransform
     {
-        public float X;
-        public float Y;
-        public float Rotation;
-        public float ScaleX;
-        public float ScaleY;
+        public float X; // 水平位置
+        public float Y; // 垂直位置
+        public float Rotation; // 旋转角度（度数）
+        public float ScaleX; // 水平缩放（1为原始大小）
+        public float ScaleY; // 垂直缩放（1为原始大小）
 
         public static DBLiteTransform Identity => new DBLiteTransform
         {
@@ -1467,43 +1467,43 @@ namespace mlp
     /// <summary>带时间的变换关键帧：记录某个时间点的变换值和是否使用补间动画。</summary>
     public struct DBLiteTimedTransform
     {
-        public float Start;
-        public float Duration;
-        public bool Tween;
-        public DBLiteTransform Transform;
+        public float Start; // 关键帧的起始帧号
+        public float Duration; // 关键帧持续帧数
+        public bool Tween; // 是否使用补间动画（true为平滑过渡，false为瞬间切换）
+        public DBLiteTransform Transform; // 该关键帧的变换值
     }
 
     /// <summary>显示切换关键帧：记录在什么时间点切换到哪个显示元素。</summary>
     public struct DBLiteDisplayFrame
     {
-        public float Start;
-        public float Duration;
-        public int Value;
+        public float Start; // 关键帧起始帧号
+        public float Duration; // 关键帧持续帧数
+        public int Value; // 要切换到的显示元素索引（对应 DisplaysBySlot 列表中的序号）
     }
 
     /// <summary>颜色关键帧：记录在什么时间点的透明度变化，用于淡入淡出效果。</summary>
     public struct DBLiteColorFrame
     {
-        public float Start;
-        public float Duration;
-        public float Alpha;
+        public float Start; // 关键帧起始帧号
+        public float Duration; // 关键帧持续帧数
+        public float Alpha; // 透明度乘数（0为完全透明，1为完全不透明）
     }
 
     /// <summary>子纹理数据：记录图集中一张小图的名称、位置（X/Y）和尺寸（宽/高）。</summary>
     public struct DBLiteSubTexture
     {
-        public string Name;
-        public float X;
-        public float Y;
-        public float Width;
-        public float Height;
+        public string Name; // 子纹理名称（对应图片名）
+        public float X; // 在大图中的水平像素坐标
+        public float Y; // 在大图中的垂直像素坐标
+        public float Width; // 子纹理宽度（像素）
+        public float Height; // 子纹理高度（像素）
     }
 
     /// <summary>关键帧类型：标识动画帧是骨骼变换帧、插槽显示帧还是颜色帧。</summary>
     public enum FrameKind
     {
-        Translate,
-        Rotate,
-        Scale
+        Translate, // 平移动画关键帧
+        Rotate, // 旋转动画关键帧
+        Scale // 缩放动画关键帧
     }
 }

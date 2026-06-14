@@ -46,94 +46,94 @@ namespace mlp
             Finish
         }
 
-        private const int TotalSteps = 10;
-        private const float FullIntroDuration = 0.78f;
-        private const float RetryIntroDuration = 0.45f;
-        private const float SuccessPauseDuration = 1.18f;
-        private const float StepSettleDuration = 0.68f;
-        private const float HintFeedbackDuration = 1.28f;
-        private const float RetryFeedbackDuration = 1.25f;
-        private const float ActionFeedbackDuration = 1.08f;
-        private const float FreePlayReminderDelay = 6.8f;
-        private const float FreePlayScoreOutroDelay = 1.25f;
-        private const float SuperCompletionDelay = 0.32f;
-        private const float SuperFallbackCompletionDelay = 1.1f;
-        private const float ShotRetryWindow = 4.4f;
-        private const float ShotIdleRetryWindow = 6.8f;
-        private const float PumpFinishWindow = 4.8f;
-        private const float DunkRetryWindow = 3.7f;
-        private const float DunkIdleRetryWindow = 6.2f;
-        private const float StealCompletionMinDelay = 0.68f;
-        private const float StealCompletionMaxDelay = 1.08f;
-        private const float BlockDrillPlayerX = 360f;
-        private const float BlockDrillOpponentX = 430f;
-        private const float BlockDrillJumpDelay = 0.72f;
-        private const float BlockDrillRetryWindow = 4.2f;
-        private const float BlockDrillOpponentAirTimeScale = 0.5f;
-        private const float BlockShotCueVelocityY = -135f;
-        private const float BlockForcedShotDelay = 1.15f;
-        private const float BlockObserveDuration = 1.25f;
-        private const float BlockRetryDelay = 0.52f;
-        private const float PutbackRetryWindow = 3.7f;
-        private const float PutbackIdleRetryWindow = 6.2f;
-        private const float PutbackLooseBallPickupLock = 0.92f;
+        private const int TotalSteps = 10; // 总步骤数
+        private const float FullIntroDuration = 0.78f; // 完整介绍冻结时间
+        private const float RetryIntroDuration = 0.45f; // 重试介绍冻结时间
+        private const float SuccessPauseDuration = 1.18f; // 成功暂停持续时间
+        private const float StepSettleDuration = 0.68f; // 步骤结算等待时间
+        private const float HintFeedbackDuration = 1.28f; // 提示反馈显示时间
+        private const float RetryFeedbackDuration = 1.25f; // 重试反馈显示时间
+        private const float ActionFeedbackDuration = 1.08f; // 操作反馈显示时间
+        private const float FreePlayReminderDelay = 6.8f; // 自由对战提醒延迟
+        private const float FreePlayScoreOutroDelay = 1.25f; // 自由对战得分后结束延迟
+        private const float SuperCompletionDelay = 0.32f; // 大招完成最短延迟
+        private const float SuperFallbackCompletionDelay = 1.1f; // 大招完成兜底延迟
+        private const float ShotRetryWindow = 4.4f; // 投篮重试窗口
+        private const float ShotIdleRetryWindow = 6.8f; // 投篮空闲重试窗口
+        private const float PumpFinishWindow = 4.8f; // 假动作完成窗口
+        private const float DunkRetryWindow = 3.7f; // 扣篮重试窗口
+        private const float DunkIdleRetryWindow = 6.2f; // 扣篮空闲重试窗口
+        private const float StealCompletionMinDelay = 0.68f; // 抢断完成最小延迟
+        private const float StealCompletionMaxDelay = 1.08f; // 抢断完成最大延迟
+        private const float BlockDrillPlayerX = 360f; // 盖帽练习玩家X坐标
+        private const float BlockDrillOpponentX = 430f; // 盖帽练习对手X坐标
+        private const float BlockDrillJumpDelay = 0.72f; // 盖帽练习对手起跳延迟
+        private const float BlockDrillRetryWindow = 4.2f; // 盖帽练习重试窗口
+        private const float BlockDrillOpponentAirTimeScale = 0.5f; // 盖帽练习对手空中时间缩放
+        private const float BlockShotCueVelocityY = -135f; // 盖帽投篮提示Y速度阈值
+        private const float BlockForcedShotDelay = 1.15f; // 盖帽强制投篮延迟
+        private const float BlockObserveDuration = 1.25f; // 盖帽成功后观察时间
+        private const float BlockRetryDelay = 0.52f; // 盖帽重试延迟
+        private const float PutbackRetryWindow = 3.7f; // 补扣重试窗口
+        private const float PutbackIdleRetryWindow = 6.2f; // 补扣空闲重试窗口
+        private const float PutbackLooseBallPickupLock = 0.92f; // 补扣散球拾取锁定时间
 
-        private readonly mlpGameCore core;
-        private readonly mlpTutorialOverlay overlay;
-        private readonly mlpInventory inventory;
+        private readonly mlpGameCore core; // 游戏核心引用
+        private readonly mlpTutorialOverlay overlay; // 教程覆盖层引用
+        private readonly mlpInventory inventory; // 背包存档引用
 
-        private mlpPlayerObject player;
-        private mlpPlayerObject opponent;
-        private mlpTutorialOpponentController opponentController;
-        private TutorialPhase phase;
-        private TutorialStep currentStep;
-        private ShotStage shotStage;
-        private PumpStage pumpStage;
-        private float phaseTimer;
-        private float activeTimer;
-        private bool stepHintShown;
-        private bool stepRetryHintShown;
-        private float moveStartX;
-        private bool movedLeft;
-        private bool movedRight;
-        private bool moveCompletionPending;
-        private float moveCompletedAt;
-        private bool dashCompletionPending;
-        private float dashCompletedAt;
-        private bool shotAttempted;
-        private float shotAttemptStartedAt;
-        private bool shotPeakValid;
-        private bool shotScored;
-        private bool pumpTriggered;
-        private float pumpTriggeredAt;
-        private bool pumpShotAttempted;
-        private float pumpShotStartedAt;
-        private bool pumpBitePending;
-        private bool pumpJumpIssued;
-        private bool dunkJumped;
-        private bool dunkAttempted;
-        private float dunkAttemptStartedAt;
-        private bool dunkScored;
-        private bool stealSuccessPending;
-        private float stealSuccessAt;
-        private bool blockJumpIssued;
-        private bool blockShotIssued;
-        private float blockShotIssuedAt;
-        private bool blockJumpPromptShown;
-        private bool blockReleasePromptShown;
-        private bool blockSuccessPending;
-        private float blockSuccessAt;
-        private bool blockRetryPending;
-        private float blockRetryAt;
-        private bool putbackJumped;
-        private bool putbackWindowOpened;
-        private bool putbackAttempted;
-        private float putbackAttemptStartedAt;
-        private bool putbackScored;
-        private bool superTriggered;
-        private float superTriggeredAt;
-        private bool freePlayReadyToEnd;
-        private float freePlayScoredAt;
+        private mlpPlayerObject player; // 玩家对象
+        private mlpPlayerObject opponent; // 对手对象
+        private mlpTutorialOpponentController opponentController; // 对手教程控制器
+        private TutorialPhase phase; // 当前阶段
+        private TutorialStep currentStep; // 当前步骤
+        private ShotStage shotStage; // 投篮子阶段
+        private PumpStage pumpStage; // 假动作子阶段
+        private float phaseTimer; // 阶段计时器
+        private float activeTimer; // 操作阶段计时器
+        private bool stepHintShown; // 步骤提示已显示
+        private bool stepRetryHintShown; // 步骤重试提示已显示
+        private float moveStartX; // 移动练习起始X坐标
+        private bool movedLeft; // 已向左移动
+        private bool movedRight; // 已向右移动
+        private bool moveCompletionPending; // 移动完成待确认
+        private float moveCompletedAt; // 移动完成时间
+        private bool dashCompletionPending; // 冲刺完成待确认
+        private float dashCompletedAt; // 冲刺完成时间
+        private bool shotAttempted; // 已尝试投篮
+        private float shotAttemptStartedAt; // 投篮尝试开始时间
+        private bool shotPeakValid; // 投篮最高点有效
+        private bool shotScored; // 投篮得分
+        private bool pumpTriggered; // 假动作已触发
+        private float pumpTriggeredAt; // 假动作触发时间
+        private bool pumpShotAttempted; // 假动作后已投篮
+        private float pumpShotStartedAt; // 假动作后投篮开始时间
+        private bool pumpBitePending; // 对手被骗起跳待处理
+        private bool pumpJumpIssued; // 对手已被骗起跳
+        private bool dunkJumped; // 已起跳
+        private bool dunkAttempted; // 已尝试扣篮
+        private float dunkAttemptStartedAt; // 扣篮尝试开始时间
+        private bool dunkScored; // 扣篮得分
+        private bool stealSuccessPending; // 抢断成功待确认
+        private float stealSuccessAt; // 抢断成功时间
+        private bool blockJumpIssued; // 对手已起跳
+        private bool blockShotIssued; // 对手已出手投篮
+        private float blockShotIssuedAt; // 对手出手时间
+        private bool blockJumpPromptShown; // 起跳提示已显示
+        private bool blockReleasePromptShown; // 出手提示已显示
+        private bool blockSuccessPending; // 盖帽成功待确认
+        private float blockSuccessAt; // 盖帽成功时间
+        private bool blockRetryPending; // 盖帽重试待确认
+        private float blockRetryAt; // 盖帽重试时间
+        private bool putbackJumped; // 已起跳
+        private bool putbackWindowOpened; // 补扣窗口已打开
+        private bool putbackAttempted; // 已尝试补扣
+        private float putbackAttemptStartedAt; // 补扣尝试开始时间
+        private bool putbackScored; // 补扣得分
+        private bool superTriggered; // 大招已触发
+        private float superTriggeredAt; // 大招触发时间
+        private bool freePlayReadyToEnd; // 自由对战准备结束
+        private float freePlayScoredAt; // 自由对战得分时间
 
         /// <summary>
         /// 初始化教程流程，传入游戏核心的引用。

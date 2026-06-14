@@ -136,7 +136,7 @@ namespace mlp.EditorTools
         {
             const float simulateDuration = 0.6f;
             const float simulateStep = 0.02f;
-            const float windDisplacementThreshold = 8f;
+            const float windDisplacementThreshold = 16f;
             const float shooterX = 172f;
             const float shotX = 228f;
             const float shotY = 218f;

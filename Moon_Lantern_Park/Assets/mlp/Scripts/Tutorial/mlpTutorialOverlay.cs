@@ -1,4 +1,4 @@
-// 教程界面覆盖层
+// 教程界面覆盖层 提示文字/箭头/UI覆盖
 // 在教程模式下覆盖在游戏画面上方，显示操作提示、进度点、女巫角色讲解、技能演示动画和按键提示。教程完成后的结算界面也在这里管理。
 
 using System.Collections.Generic;
@@ -25,84 +25,84 @@ namespace mlp
     /// </summary>
     public sealed class mlpTutorialOverlay : MonoBehaviour
     {
-        private const int WitchCharacterId = 6;
-        private const int CanvasSortingOrder = 1400;
-        private const int WitchSortingOrderBase = 1425;
-        private const int ReferenceWidth = 800;
-        private const int ReferenceHeight = 480;
-        private const float GuideLeft = 122f;
-        private const float GuideTop = 14f;
-        private const float GuideWidth = 476f;
-        private const float GuideHeight = 100f;
-        private const float KeyChipWidth = 76f;
-        private const float KeyChipHeight = 32f;
-        private const float KeyChipGap = 8f;
-        private const int ProgressDotCount = 10;
+        private const int WitchCharacterId = 6; // 女巫角色ID
+        private const int CanvasSortingOrder = 1400; // 画布渲染排序层级
+        private const int WitchSortingOrderBase = 1425; // 女巫精灵排序层级基准
+        private const int ReferenceWidth = 800; // 参考分辨率宽度
+        private const int ReferenceHeight = 480; // 参考分辨率高度
+        private const float GuideLeft = 122f; // 引导卡片左边界
+        private const float GuideTop = 14f; // 引导卡片上边界
+        private const float GuideWidth = 476f; // 引导卡片宽度
+        private const float GuideHeight = 100f; // 引导卡片高度
+        private const float KeyChipWidth = 76f; // 按键标签宽度
+        private const float KeyChipHeight = 32f; // 按键标签高度
+        private const float KeyChipGap = 8f; // 按键标签间距
+        private const int ProgressDotCount = 10; // 进度点数量
 
-        private static mlpTutorialOverlay activeOverlay;
-        private static Sprite solidSprite;
-        private static Sprite circleSprite;
-        private static Sprite ringSprite;
-        private static Sprite witchPortraitSprite;
+        private static mlpTutorialOverlay activeOverlay; // 当前活动覆盖层单例
+        private static Sprite solidSprite; // 纯色精灵缓存
+        private static Sprite circleSprite; // 圆形精灵缓存
+        private static Sprite ringSprite; // 环形精灵缓存
+        private static Sprite witchPortraitSprite; // 女巫头像精灵缓存
 
-        private Canvas canvas;
-        private RectTransform overlayRoot;
-        private RectTransform maskTop;
-        private RectTransform maskBottom;
-        private RectTransform maskLeft;
-        private RectTransform maskRight;
-        private RectTransform focusFrame;
-        private RectTransform focusGlow;
-        private RectTransform targetZone;
-        private RectTransform targetGlow;
-        private RectTransform apexRing;
-        private RectTransform energyPulse;
-        private RectTransform trajectoryRoot;
-        private GameObject scoringGuideRoot;
-        private Image scoringLeftFill;
-        private Image scoringRightFill;
-        private TextMeshProUGUI scoringLeftLabel;
-        private TextMeshProUGUI scoringRightLabel;
-        private TextMeshProUGUI scoringLineLabel;
-        private readonly List<Image> trajectoryDots = new List<Image>();
-        private readonly List<Image> progressDots = new List<Image>();
-        private readonly List<GameObject> keyChipRoots = new List<GameObject>();
-        private readonly List<TextMeshProUGUI> keyChipLabels = new List<TextMeshProUGUI>();
+        private Canvas canvas; // 画布
+        private RectTransform overlayRoot; // 覆盖层根节点
+        private RectTransform maskTop; // 顶部暗角遮罩
+        private RectTransform maskBottom; // 底部暗角遮罩
+        private RectTransform maskLeft; // 左侧暗角遮罩
+        private RectTransform maskRight; // 右侧暗角遮罩
+        private RectTransform focusFrame; // 聚焦金色边框
+        private RectTransform focusGlow; // 聚焦外围发光
+        private RectTransform targetZone; // 目标区域填充
+        private RectTransform targetGlow; // 目标区域发光
+        private RectTransform apexRing; // 投篮最高点脉冲环
+        private RectTransform energyPulse; // 能量脉冲光效
+        private RectTransform trajectoryRoot; // 轨迹圆点根节点
+        private GameObject scoringGuideRoot; // 得分引导根节点
+        private Image scoringLeftFill; // 得分区左侧填充
+        private Image scoringRightFill; // 得分区右侧填充
+        private TextMeshProUGUI scoringLeftLabel; // 得分区左侧标签
+        private TextMeshProUGUI scoringRightLabel; // 得分区右侧标签
+        private TextMeshProUGUI scoringLineLabel; // 得分分界线标签
+        private readonly List<Image> trajectoryDots = new List<Image>(); // 轨迹圆点列表
+        private readonly List<Image> progressDots = new List<Image>(); // 进度圆点列表
+        private readonly List<GameObject> keyChipRoots = new List<GameObject>(); // 按键标签根节点列表
+        private readonly List<TextMeshProUGUI> keyChipLabels = new List<TextMeshProUGUI>(); // 按键标签文字列表
 
-        private GameObject headerRoot;
-        private GameObject narratorRoot;
-        private GameObject outroRoot;
-        private TextMeshProUGUI stepText;
-        private TextMeshProUGUI titleText;
-        private TextMeshProUGUI subtitleText;
-        private TextMeshProUGUI goalText;
-        private TextMeshProUGUI narratorText;
-        private TextMeshProUGUI feedbackText;
-        private TextMeshProUGUI outroTitleText;
-        private TextMeshProUGUI outroBodyText;
-        private Image narratorOrb;
-        private Image headerGlow;
-        private Image targetFill;
-        private Image targetGlowImage;
-        private Image energyPulseImage;
-        private Image apexRingImage;
-        private Button replayButton;
-        private Button trainingButton;
-        private Button quickMatchButton;
-        private Button skipButton;
+        private GameObject headerRoot; // 标题栏根节点
+        private GameObject narratorRoot; // 讲解员面板根节点
+        private GameObject outroRoot; // 结束画面根节点
+        private TextMeshProUGUI stepText; // 步骤编号文字
+        private TextMeshProUGUI titleText; // 标题文字
+        private TextMeshProUGUI subtitleText; // 副标题文字
+        private TextMeshProUGUI goalText; // 目标说明文字
+        private TextMeshProUGUI narratorText; // 讲解文字
+        private TextMeshProUGUI feedbackText; // 反馈提示文字
+        private TextMeshProUGUI outroTitleText; // 结束画面标题文字
+        private TextMeshProUGUI outroBodyText; // 结束画面正文文字
+        private Image narratorOrb; // 讲解员光球
+        private Image headerGlow; // 标题栏发光
+        private Image targetFill; // 目标区域填充图
+        private Image targetGlowImage; // 目标发光图片
+        private Image energyPulseImage; // 能量脉冲图片
+        private Image apexRingImage; // 最高点环图片
+        private Button replayButton; // 重玩按钮
+        private Button trainingButton; // 训练按钮
+        private Button quickMatchButton; // 快速比赛按钮（主菜单）
+        private Button skipButton; // 跳过按钮
 
-        private DBLiteArmature witchArmature;
-        private GameObject witchFallbackRoot;
-        private RectTransform witchFallbackRect;
-        private Vector3 witchBaseLocalPosition;
-        private Vector3 witchBaseLocalScale = Vector3.one;
-        private Vector2 witchFallbackBasePosition;
-        private bool initialized;
-        private bool visible;
-        private float feedbackTimer;
-        private float visibleTime;
-        private float effectTime;
-        private mlpTutorialOverlayCommand pendingCommand;
+        private DBLiteArmature witchArmature; // 女巫骨骼动画实例
+        private GameObject witchFallbackRoot; // 女巫静态头像根节点
+        private RectTransform witchFallbackRect; // 女巫静态头像矩形
+        private Vector3 witchBaseLocalPosition; // 女巫动画基础位置
+        private Vector3 witchBaseLocalScale = Vector3.one; // 女巫动画基础缩放
+        private Vector2 witchFallbackBasePosition; // 女巫静态头像基础位置
+        private bool initialized; // 是否已初始化
+        private bool visible; // 是否可见
+        private float feedbackTimer; // 反馈文字剩余时间
+        private float visibleTime; // 可见累计时间
+        private float effectTime; // 特效累计时间
+        private mlpTutorialOverlayCommand pendingCommand; // 待处理的按钮指令
 
         public static mlpTutorialOverlay Active => FindOrCreate();
 

@@ -1,6 +1,17 @@
 ﻿// 文件作用：游戏场景物体管理（球场、篮筐、篮球、传送特效、护盾、技能特效）
 // 概括：创建和管理比赛中所有可见的游戏物体：球场背景和灯光、篮筐和篮网、篮球及其物理运动、传送门特效、护盾特效、技能激活特效。这个文件非常大，涵盖了比赛中大部分视觉元素的创建和更新逻辑。
 
+// 类名                说明
+// ──────────────────────────────────────────────
+// mlpArenaObject       球场对象 — 管理场地视觉、雾风效果 (FogWind)、边界碰撞
+// mlpBasketObject      篮筐对象 — 篮筐动画、网兜摆动、传感器碰撞(进球检测)
+// mlpBallObject        篮球对象 — 投篮飞行、弹跳、被抢断/被盖帽后的物理、入篮检测
+// mlpTeleportFx        传送特效 — 瞬移类技能的视觉粒子效果
+// mlpShieldObject      护盾对象 — 篮筐护盾技能，可阻挡飞来的篮球
+// mlpPlayerSkillFx     技能光效 — 球员技能的发光/粒子视觉反馈
+// mlpPlayerObject      球员对象 — 核心类，管理球员全部状态（移动、跳跃、投篮、扣篮、抢断、盖帽、AI、技能等）
+
+
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +22,7 @@ namespace mlp
     /// </summary>
     public static class mlpGameplaySpriteLoader
     {
+        // 精灵缓存：按资源路径和锚点缓存已创建的 Sprite，避免重复加载。
         private static readonly Dictionary<string, Sprite> SpriteCache = new Dictionary<string, Sprite>();
 
         /// <summary>
@@ -101,32 +113,48 @@ namespace mlp
     /// </summary>
     public sealed class mlpArenaObject
     {
+        // 球场逻辑宽度：用于把背景图缩放到比赛使用的逻辑尺寸。
         private const float ArenaLogicalWidth = 1398f;
+        // 球场逻辑高度：用于把背景图缩放到比赛使用的逻辑尺寸。
         private const float ArenaLogicalHeight = 480f;
+        // 背景风雾骨骼动画资源名。
         private const string FogWindArmatureName = "dbanims/backwind_01";
+        // 三层风雾特效的基础位置。
         private static readonly Vector2[] FogWindLayerPositions =
         {
             new Vector2(168f, 172f),
             new Vector2(408f, 136f),
             new Vector2(652f, 184f)
         };
+        // 三层风雾特效的基础缩放。
         private static readonly float[] FogWindLayerScales = { 1.12f, 1.3f, 1.06f };
+        // 三层风雾特效的渲染层级。
         private static readonly int[] FogWindLayerSortingOrders = { 1, 2, 3 };
+        // 三层风雾特效的透明度偏移。
         private static readonly float[] FogWindLayerAlphaBiases = { 0.82f, 1f, 0.9f };
 
         private sealed class FogWindLayer
         {
+            // 该层风雾的基础位置。
             public Vector2 BasePosition;
+            // 该层风雾的根节点。
             public GameObject Root;
+            // 该层风雾的骨骼动画对象。
             public DBLiteArmature Armature;
+            // 该层风雾的基础缩放。
             public float BaseScale;
+            // 该层风雾的渲染顺序基准。
             public int SortingOrder;
+            // 该层风雾的透明度偏移。
             public float AlphaBias;
         }
 
+        // 风雾特效根节点。
         private readonly GameObject fogWindFxRoot;
+        // 三层风雾实例数组。
         private readonly FogWindLayer[] fogWindLayers = new FogWindLayer[FogWindLayerPositions.Length];
 
+        // 球场根对象，外部可直接挂接到场景中。
         public GameObject Graphic { get; }
 
         /// <summary>
@@ -324,14 +352,22 @@ namespace mlp
     /// </summary>
     public sealed class mlpBasketObject
     {
+        // 篮网线条集合，用于模拟篮网摆动。
         private readonly List<LineRenderer> netLines = new List<LineRenderer>();
+        // 篮筐所在球场侧，-1 表示左侧，1 表示右侧。
         private readonly int side;
+        // 篮筐根节点。
         private GameObject graphic;
+        // 篮筐前沿遮挡层，用来挡住扣篮时的篮球。
         private GameObject frontEar;
+        // 篮网摆动脉冲强度。
         private float netPulse;
 
+        // 球场侧，-1 左侧，1 右侧。
         public int Side => side;
+        // 篮筐中心 X 坐标。
         public float Center { get; }
+        // 篮筐高度，直接读取场景数据。
         public float Height => mlpObjectsData.BasketHeight;
 
         /// <summary>
@@ -519,36 +555,65 @@ namespace mlp
     /// </summary>
     public sealed class mlpBallObject
     {
+        // 单次物理子步允许的最大移动距离，避免篮球高速穿透碰撞体。
         private const float MaxSubstepTravel = 8f;
+        // 每帧最多拆分成的物理子步数量。
         private const int MaxSubsteps = 8;
+        // 篮圈碰撞反弹系数。
         private const float RimRestitution = 0.78f;
+        // 篮板碰撞反弹系数。
         private const float BackboardRestitution = 0.82f;
+        // 碰撞音效冷却时间，避免连续播放过于密集。
         private const float CollisionSoundCooldownDuration = 0.04f;
+        // 保障扣篮得分时额外放宽的 X 容差。
         private const float GuaranteedDunkScoreExtraX = 6f;
 
+        // 篮球视觉节点。
         private readonly GameObject graphic;
+        // 篮球阴影节点。
         private readonly GameObject shadow;
+        // 游戏核心引用，用于通知计分、抢断等全局逻辑。
         private readonly mlpGameCore gameCore;
+        // 上一帧的球位置。
         private Vector2 previousPosition;
+        // 下一帧是否仍保持可见。
         private bool visibleNextFrame;
+        // 当前是否允许进入得分判定流程。
         private bool canScore;
+        // 是否已经穿过上方得分传感器。
         private bool upperSensorPassed;
+        // 是否启用必进扣篮得分判定。
         private bool guaranteedDunkScore;
+        // 教程中的必进得分标记。
         private bool tutorialGuaranteedScore;
+        // 当前已经激活得分判定的进攻方。
         private int scoreArmedSide;
+        // 拾球锁定倒计时。
         private float pickupLockTimer;
+        // 碰撞音效冷却计时。
         private float collisionSoundCooldown;
+        // 是否已从物理系统中移除。
         private bool physicsRemoved;
+        // 空接关联的球员对象。
         private mlpPlayerObject alleyOopPlayer;
 
+        // 球的位置。
         public Vector2 Position;
+        // 球的速度。
         public Vector2 Velocity;
+        // 球所属的场地侧。
         public int Side;
+        // 球当前状态字符串，例如 up、inHands、shooting。
         public string State = "up";
+        // 最近一次出手时记录的 X 坐标。
         public float LastShotX;
+        // 上一帧位置，只读暴露给外部使用。
         public Vector2 PreviousPosition => previousPosition;
+        // 是否仍处于比赛物理流程中。
         public bool IsInGame => State != "inHands" && !physicsRemoved;
+        // 是否处于可被盖帽的飞行状态。
         public bool IsBlockable => State == "shooting";
+        // 是否允许被球员捡起或接住。
         public bool CanBeTakenInHands =>
             pickupLockTimer <= 0f &&
             !physicsRemoved &&
@@ -1696,23 +1761,40 @@ namespace mlp
             WhiteFlash
         }
 
+        // 黑色扩展阶段持续时间。
         private const float BlackExpandDuration = 0.06f;
+        // 黑色收缩阶段持续时间。
         private const float BlackCollapseDuration = 0.07f;
+        // 黑色收缩时的缩放过渡时长。
         private const float BlackCollapseScaleDuration = 0.08f;
+        // 白色闪光第一段时长。
         private const float WhiteFlashDuration1 = 0.03f;
+        // 白色闪光第二段时长。
         private const float WhiteFlashDuration2 = 0.03f;
+        // 白色闪光第三段时长。
         private const float WhiteFlashDuration3 = 0.024f;
+        // 传送动画播放帧率。
         private const float AnimationFps = 30f;
 
+        // 传送特效根节点。
         private readonly GameObject graphic;
+        // 黑色扩展圆环节点。
         private readonly Transform blackNode;
+        // 黑色扩展圆环渲染器。
         private readonly SpriteRenderer blackRenderer;
+        // 中心圆点渲染器。
         private readonly SpriteRenderer centerRenderer;
+        // 白色闪光层渲染器。
         private readonly SpriteRenderer whiteRenderer;
+        // 传送动画帧渲染器。
         private readonly SpriteRenderer animRenderer;
+        // 传送动画帧数组。
         private readonly Sprite[] frames;
+        // 对应角色的技能定义，用于切换特效主题。
         private readonly mlpCharacterSkillDefinition skillDefinition;
+        // 当前特效阶段。
         private TeleportPhase phase = TeleportPhase.Hidden;
+        // 当前阶段已用时间。
         private float phaseTime;
 
         /// <summary>
@@ -1948,34 +2030,61 @@ namespace mlp
             Fading
         }
 
+        // 护盾入场总时长。
         private const float IntroTime = 0.14f;
+        // 护盾下落入场持续时间。
         private const float IntroDropTime = 0.12f;
+        // 护盾入场时的初始下落偏移。
         private const float IntroDropOffsetY = -600f;
+        // 入场模糊层的横向缩放。
         private const float IntroBlurScaleX = 1.08f;
+        // 入场模糊层的纵向缩放。
         private const float IntroBlurScaleY = 1.16f;
+        // 护盾展示停留时间。
         private const float ShowTime = 3f;
+        // 护盾渐隐时间。
         private const float FadeTime = 0.5f;
+        // 动画播放帧率。
         private const float AnimationFps = 30f;
+        // 护盾图形的 X 偏移。
         private const float GraphicXOffset = 23f;
+        // 护盾图形的 Y 偏移。
         private const float GraphicYOffset = -62f;
+        // 碰撞矩形顶部位置。
         private const float CollisionRectTop = 30f;
+        // 碰撞矩形宽度。
         private const float CollisionRectWidth = 70f;
+        // 碰撞矩形高度。
         private const float CollisionRectHeight = 10f;
+        // 左侧篮筐对应的碰撞矩形左边界偏移。
         private const float CollisionRectLeftLeftSide = -23f;
+        // 右侧篮筐对应的碰撞矩形左边界偏移。
         private const float CollisionRectLeftRightSide = -49f;
+        // 起始提示精灵的局部 X 偏移。
         private const float StartSpriteLocalX = 1f;
 
+        // 球场侧，-1 左侧，1 右侧。
         private readonly int side;
+        // 关联的篮筐对象，用于碰撞检测。
         private readonly mlpBasketObject basket;
+        // 护盾根节点。
         private readonly GameObject graphic;
+        // 模糊层渲染器。
         private readonly SpriteRenderer blurRenderer;
+        // 起始提示渲染器。
         private readonly SpriteRenderer startRenderer;
+        // 动画帧渲染器。
         private readonly SpriteRenderer animRenderer;
+        // 护盾动画帧数组。
         private readonly Sprite[] frames;
+        // 对应角色的技能定义，用于切换护盾主题。
         private readonly mlpCharacterSkillDefinition skillDefinition;
 
+        // 当前护盾阶段。
         private ShieldPhase phase = ShieldPhase.Hidden;
+        // 当前阶段已用时间。
         private float phaseTime;
+        // 当前护盾透明度。
         private float alpha = 1f;
 
         /// <summary>
@@ -2367,14 +2476,23 @@ namespace mlp
             Dash
         }
 
+        // 技能特效根节点。
         private readonly GameObject root;
+        // 外圈发光渲染器。
         private readonly SpriteRenderer glowRenderer;
+        // 核心渲染器。
         private readonly SpriteRenderer coreRenderer;
+        // 强调色渲染器。
         private readonly SpriteRenderer accentRenderer;
+        // 基础技能定义，用于恢复默认主题。
         private readonly mlpCharacterSkillDefinition baseSkillDefinition;
+        // 当前生效的技能定义。
         private mlpCharacterSkillDefinition skillDefinition;
+        // 当前特效模式。
         private FxMode mode = FxMode.Hidden;
+        // 当前特效已运行时间。
         private float timer;
+        // 当前特效持续时间。
         private float duration;
 
         public mlpPlayerSkillFx(Transform parent, mlpCharacterSkillDefinition skillDefinition)
@@ -2731,27 +2849,49 @@ namespace mlp
     /// </summary>
     public sealed class mlpPlayerObject
     {
+        // 地面碰撞时用于按质量比例推开的球员质量。
         private const float GroundCollisionMass = 3f;
+        // 地面盖帽碰撞时使用的较大虚拟质量。
         private const float GroundBlockCollisionMass = 6f;
+        // 地面碰撞速度阈值，低于该值时视作静止处理。
         private const float GroundCollisionSpeedEpsilon = 5f;
+        // 球员主图形的基础渲染深度。
         private const float GraphicDepthBase = 0.12f;
+        // 球员阴影的基础渲染深度。
         private const float ShadowDepthBase = 0.02f;
+        // 同队不同球员之间的渲染深度步长。
         private const float TeamDepthStep = 0.01f;
+        // 同队内不同球员编号之间的细微渲染深度步长。
         private const float PlayerDepthStep = 0.0025f;
+        // 阴影渲染深度偏移的缩放系数。
         private const float ShadowDepthBiasScale = 0.25f;
+        // 教程补扣的接球 X 容差范围。
         private const float TutorialPutbackCatchWindowX = 190f;
+        // 教程补扣的接球 Y 容差范围。
         private const float TutorialPutbackCatchWindowY = 230f;
+        // 教程补扣允许扣篮的额外 Y 高度。
         private const float TutorialPutbackDunkYBonus = 96f;
+        // 教程补扣要求的篮球最低高度。
         private const float TutorialPutbackMinBallY = mlpObjectsData.BasketHeight + 22f;
+        // 教程补扣要求的篮球最高竖直速度。
         private const float TutorialPutbackMaxBallVelocityY = 560f;
+        // 教程补扣默认成功率。
         private const float TutorialPutbackCompletionChance = 1f;
+        // 篮板磁铁的默认持续时间。
         private const float ReboundMagnetDefaultDuration = 1.55f;
+        // 篮板磁铁的水平吸附距离。
         private const float ReboundMagnetCatchDistanceX = 52f;
+        // 篮板磁铁的垂直吸附距离。
         private const float ReboundMagnetCatchDistanceY = 72f;
+        // 篮板磁铁吸球所需的最小速度。
         private const float ReboundMagnetMinSpeed = 560f;
+        // 篮板磁铁吸球的最大速度上限。
         private const float ReboundMagnetMaxSpeed = 920f;
+        // 必定盖帽后的悬停持续时间。
         private const float GuaranteedBlockHoldDuration = 0.22f;
+        // 必定盖帽时角色位置的水平偏移。
         private const float GuaranteedBlockHorizontalOffset = 20f;
+        // 必定盖帽时手部碰撞点的垂直偏移。
         private const float GuaranteedBlockHandsOffsetY = 64f;
 
         private enum BlockPumpPhase
@@ -2773,146 +2913,286 @@ namespace mlp
             GuaranteedBlockHold
         }
 
+        // 球员主视觉根节点。
         private readonly GameObject graphic;
+        // 球员阴影根节点。
         private readonly GameObject shadow;
+        // 球员阴影渲染器。
         private readonly SpriteRenderer shadowRenderer;
+        // 默认阴影精灵。
         private readonly Sprite defaultShadowSprite;
+        // 技能激活时使用的阴影精灵。
         private readonly Sprite activeSkillShadowSprite;
+        // 球员骨骼动画对象。
         private readonly DBLiteArmature armature;
+        // 球员控制器接口。
         private readonly IBLPlayerController controller;
+        // 所属队伍索引。
         private readonly int teamIndex;
+        // 角色 ID。
         private readonly int characterId;
+        // 队内球员编号。
         private readonly int playerNo;
+        // 渲染深度偏移，用于同队球员错层显示。
         private readonly float renderDepthBias;
+        // 技能等级。
         private readonly int skillLevel;
+        // 角色技能定义。
         private readonly mlpCharacterSkillDefinition skillDefinition;
+        // 超能力 ID。
         private readonly int superId;
+        // AI 难度槽位。
         private readonly int brainSlot;
+        // AI 难度调参配置。
         private readonly mlpAIDifficultyTuningProfile aiDifficultyTuning;
+        // 是否为地狱难度强化 AI。
         private readonly bool hellEnhanced;
+        // 投篮精度基础值。
         private readonly float accuracy;
+        // 扣篮成功率基础值。
         private readonly float chanceToCompleteDunk;
+        // 超能力冷却时间。
         private readonly float superCoolDown;
+        // 超级扣篮的目标 X 坐标。
         private readonly float superDunkX;
+        // 超级扣篮落地结束时的 X 坐标。
         private readonly float superDunkEndX;
+        // 超级扣篮落地结束时的 Y 坐标。
         private readonly float superDunkEndY;
+        // 超级冲刺的两个目标 X 坐标。
         private readonly float[] superDashTargets = new float[2];
+        // 冲刺输入/冷却延迟控制器。
         private readonly UseDelay dashDelay;
+        // 能量条 UI 视图。
         private readonly mlpEnergyBarView energyBar;
+        // 传送特效对象。
         private readonly mlpTeleportFx teleportFx;
+        // 护盾特效对象。
         private readonly mlpShieldObject shield;
+        // 技能特效对象。
         private readonly mlpPlayerSkillFx skillFx;
+        // 地狱难度下超冲刺的额外冷却时长。
         private readonly float hellBonusSuperDashCooldownDuration;
+        // 地狱难度下护盾的额外冷却时长。
         private readonly float hellBonusShieldCooldownDuration;
+        // 超级冲刺过程中已命中的对手编号集合。
         private readonly HashSet<int> superDashHits = new HashSet<int>();
+        // 操作锁定计时器。
         private float actionLatch;
+        // 当前动画状态名。
         private string visualState = "";
+        // 冲刺计时器。
         private float dashTimer;
+        // 当前冲刺方向。
         private int dashDirection;
+        // 缓存的冲刺方向。
         private int bufferedDashDirection;
+        // 冲刺输入缓冲计时器。
         private float dashBufferTimer;
+        // 是否准备好发起冲刺。
         private bool readyForDash;
+        // 是否允许执行普通动作。
         private bool canDoAction;
+        // 是否存在待执行的地面出手。
         private bool pendingGroundThrow;
+        // 是否存在待执行的抢断动作。
         private bool pendingStealAction;
+        // 抢断动画是否正在播放。
         private bool stealAnimationActive;
+        // 空接是否等待出手。
         private bool alleyOopPendingThrow;
+        // 是否处于扣篮状态。
         private bool isDunking;
+        // 扣篮球是否已释放。
         private bool dunkReleased;
+        // 扣篮计时器。
         private float dunkTimer;
+        // 扣篮总时长。
         private float dunkDuration;
+        // 扣篮球释放时刻。
         private float dunkReleaseTime;
+        // 扣篮时是否隐藏持球插槽。
         private bool dunkBallSlotsHidden;
+        // 扣篮起始位置。
         private Vector2 dunkStartPosition;
+        // 扣篮目标位置。
         private Vector2 dunkTargetPosition;
+        // 盖帽/假动作当前阶段。
         private BlockPumpPhase blockPumpPhase;
+        // 当前动作是否是假动作而不是盖帽。
         private bool blockPumpIsPump;
+        // 盖帽/假动作阶段计时器。
         private float blockPumpTimer;
+        // 起始动画是否已准备好切换阶段。
         private bool blockPumpStartReady;
+        // 结束动画是否已准备好切换阶段。
         private bool blockPumpEndReady;
+        // 抢断判定倒计时。
         private float stealAttemptTimer = -1f;
+        // 抢断动画剩余时间。
         private float stealAnimationTimer = -1f;
+        // 眩晕剩余时间。
         private float stunTimer;
+        // 当前面向方向。
         private float facingDirection;
+        // 抢断开始时锁定的面向方向。
         private float stealFacingDirection;
+        // 是否允许接球/捡球。
         private bool canTakeInHands;
+        // 是否允许出手投篮。
         private bool canThrow;
+        // 是否处于持球起跳攻击状态。
         private bool attackJump;
+        // 最近一次出手位置 X。
         private float pointOfThrow;
+        // 是否启用跳跃盖帽判定。
         private bool jumpBlockActive;
+        // 当前是否需要准备盖帽。
         private bool needBlock;
+        // 超能力是否已经准备好。
         private bool readyForSuper;
+        // 是否正在执行超级技能。
         private bool isSuperShot;
+        // 是否已暂时移出比赛。
         private bool removedFromPlay;
+        // 当前超能充能时间。
         private float superChargeTime;
+        // 地狱额外超冲刺冷却计时。
         private float hellBonusSuperDashCooldownTimer;
+        // 地狱额外护盾冷却计时。
         private float hellBonusShieldCooldownTimer;
+        // 主视觉缩放倍数。
         private float graphicScaleMultiplier = 1f;
+        // 当前超能力阶段。
         private SuperPhase superPhase;
+        // 超能力阶段计时器。
         private float superTimer;
+        // 超能力阶段总时长。
         private float superDuration;
+        // 超能力移动起点。
         private Vector2 superStartPosition;
+        // 超能力移动目标点。
         private Vector2 superTargetPosition;
+        // 超级冲刺方向是否向右。
         private bool dashToRight;
+        // 超级冲刺后是否还要处理队友接球。
         private bool dashTeammatePending;
+        // 当前队友引用。
         private mlpPlayerObject teamMate;
+        // 地狱难度开局充能是否已发放。
         private bool hellOpeningChargeApplied;
+        // 是否等待返还原生超级能量。
         private bool hellNativeSuperRefundPending;
+        // 必定盖帽后是否暂时锁定拾球。
         private bool guaranteedBlockPickupLocked;
+        // 得分升级是否已激活。
         private bool scoreUpgradeActive;
+        // 得分升级是否等待当前出手结算。
         private bool scoreUpgradePendingShot;
+        // 教程完美投篮是否已预备。
         private bool tutorialPerfectShotPrimed;
+        // 教程完美扣篮是否已预备。
         private bool tutorialPerfectDunkPrimed;
+        // 教程补扣是否已预备。
         private bool tutorialPutbackDunkPrimed;
+        // 教程扣篮成功率覆盖值。
         private float tutorialDunkCompletionChanceOverride = -1f;
+        // 教程空中运动时间倍率。
         private float tutorialAirMotionTimeScale = 1f;
+        // 教程跳跃盖帽辅助是否开启。
         private bool tutorialJumpBlockAssist;
+        // 固定得分加成剩余时间。
         private float flatScoreBonusTimer;
+        // 固定得分加成点数。
         private int flatScoreBonusPoints;
+        // 移动增益剩余时间。
         private float moveBuffTimer;
+        // 移动增益是否仍可提供额外得分奖励。
         private bool moveBuffScoreBonusAvailable;
+        // 待返还的超级能量比例。
         private float pendingScoreRefundFraction;
+        // 得分返还倒计时。
         private float pendingScoreRefundTimer;
+        // 篮板磁铁剩余时间。
         private float reboundMagnetTimer;
 
+        // 游戏核心引用。
         public mlpGameCore GameCore { get; }
+        // 球员当前位置。
         public Vector2 Position;
+        // 球员当前速度。
         public Vector2 Velocity;
+        // 球员所在场地侧。
         public int Side { get; }
+        // 当前是否持球。
         public bool WithBall { get; private set; }
+        // 是否为人类玩家。
         public bool IsHuman { get; }
+        // 当前是否在地面上。
         public bool IsGrounded { get; private set; } = true;
+        // 当前进攻目标 X 坐标。
         public float AttackTargetX => Side == -1 ? mlpObjectsData.BasketCenter2 : mlpObjectsData.BasketCenter;
+        // 是否正在冲刺。
         public bool IsDashing => dashTimer > 0f;
+        // 是否处于盖帽保持阶段。
         public bool IsBlocking => blockPumpPhase == BlockPumpPhase.Holding && !blockPumpIsPump;
+        // 是否具备地面盖帽碰撞体。
         public bool HasGroundBlockBody => IsBlocking && IsGrounded && !removedFromPlay && !isSuperShot && stunTimer <= 0f;
+        // 是否处于假动作阶段。
         public bool IsPumping => blockPumpPhase != BlockPumpPhase.None && blockPumpIsPump;
+        // 是否正在移动。
         public bool IsMoving => Mathf.Abs(Velocity.x) > 20f;
+        // 是否正在扣篮。
         public bool IsDunking => isDunking;
+        // 当前面向方向。
         public float FacingDirection => facingDirection;
+        // 是否允许接球/捡球。
         public bool CanTakeInHands => canTakeInHands && !WithBall && !removedFromPlay;
+        // 是否允许执行一般动作。
         public bool CanAct => actionLatch <= 0f && stunTimer <= 0f && !stealAnimationActive && !isDunking && !isSuperShot;
+        // 是否满足结算地面盖帽的条件。
         public bool CanResolveGroundBlock => IsGrounded && !removedFromPlay && !isSuperShot && !isDunking && stunTimer <= 0f && !stealAnimationActive;
+        // 是否准备好冲刺。
         public bool ReadyForDash => readyForDash && dashTimer <= 0f && !isSuperShot;
+        // 队内球员编号。
         public int PlayerNo => playerNo;
+        // 技能等级。
         public int SkillLevel => skillLevel;
+        // 超能力 ID。
         public int SuperId => superId;
+        // 角色 ID。
         public int CharacterId => characterId;
+        // 技能类型。
         public mlpCharacterSkillType SkillType => skillDefinition.SkillType;
+        // 是否使用控球类技能。
         public bool UsesPossessionSkill => skillDefinition.UsesPossessionSkill;
+        // 是否使用冲刺类技能。
         public bool UsesDashSkill => skillDefinition.UsesDashSkill;
+        // 是否使用护盾类技能。
         public bool UsesShieldSkill => skillDefinition.UsesBasketShield;
+        // 是否使用冻结类技能。
         public bool UsesFreezeSkill => skillDefinition.UsesFreezeSkill;
+        // 是否使用篮板磁铁技能。
         public bool UsesReboundMagnetSkill => skillDefinition.UsesReboundMagnetSkill;
+        // 是否使用必定盖帽技能。
         public bool UsesGuaranteedBlockSkill => skillDefinition.UsesGuaranteedBlockSkill;
+        // 是否准备好释放超能力。
         public bool ReadyForSuper => !isSuperShot && (readyForSuper || mlpQuickTestSettings.Enabled);
+        // 是否还能使用地狱额外超冲刺。
         public bool CanUseHellBonusSuperDash => hellEnhanced && (mlpQuickTestSettings.Enabled || hellBonusSuperDashCooldownTimer <= 0f);
+        // 是否还能使用地狱额外护盾。
         public bool CanUseHellBonusShield => hellEnhanced && shield != null && (mlpQuickTestSettings.Enabled || hellBonusShieldCooldownTimer <= 0f) && shield.CanActivate;
+        // 是否正在执行超能出手。
         public bool IsSuperShot => isSuperShot;
+        // 当前是否需要防守盖帽。
         public bool NeedBlock => needBlock;
+        // 是否允许出手。
         public bool CanThrow => canThrow;
+        // 球员控制器引用。
         public IBLPlayerController Controller => controller;
+        // 是否使用高亮技能阴影。
         private bool UsesHighlightedSkillShadow => skillDefinition.SkillType == mlpCharacterSkillType.CarnivalJackpot && (scoreUpgradeActive || scoreUpgradePendingShot);
+        // 实际生效的超能力冷却时间。
         private float EffectiveSuperCoolDown => mlpQuickTestSettings.Enabled ? 0f : superCoolDown;
 
         public void ApplyBonusSuperCharge(float amount)
@@ -5038,7 +5318,7 @@ namespace mlp
                 stealAttemptTimer -= dt;
                 if (stealAttemptTimer <= 0f)
                 {
-                    ResolveStealAttempt();
+                    ResolveStealAttempt();          //判定触发点
                 }
             }
 

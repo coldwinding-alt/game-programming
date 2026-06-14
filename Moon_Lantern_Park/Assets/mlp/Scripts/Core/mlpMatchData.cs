@@ -210,14 +210,14 @@ namespace mlp
     /// </summary>
     public sealed class mlpMatchData
     {
-        public bool Restarted;
-        public int FirstCharacterId;
-        public int MatchMode;
-        public mlpBallTheme BallTheme;
-        public int[] CharacterIds = new int[2];
-        public string[][] Pb = { new string[0], new string[0] };
-        public int[][] Skills = { new int[0], new int[0] };
-        public int[] MatchScore = { 0, 0 };
+        public bool Restarted;                          // 是否重新开始
+        public int FirstCharacterId;                    // 玩家控制的角色id
+        public int MatchMode;                           // 比赛模式
+        public mlpBallTheme BallTheme;                  // 球皮主题
+        public int[] CharacterIds = new int[2];         // 双方角色ID [0]=玩家1, [1]=玩家2
+        public string[][] Pb = { new string[0], new string[0] };  // 双方操控类型，P（Player）— 人类玩家控制    B（Bot）— AI/电脑控制   T（Tutorial）— 教程模式
+        public int[][] Skills = { new int[0], new int[0] };       // 双方难度等级
+        public int[] MatchScore = { 0, 0 };             // 双方比分
 
         /// <summary>
         /// 创建比赛数据，默认初始化角色 ID 和随机球皮主题。
@@ -282,6 +282,9 @@ namespace mlp
             MatchScore = new[] { 0, 0 };
         }
 
+///XCLF:Start* 方法都遵循相同模式：ResetAll → 设置角色 → 设置脑控制 → 设置技能。
+
+
         /// <summary>
         /// 配置一场快速比赛：随机选取对手，设置人机对战的脑字符串，并解析球皮主题。
         /// </summary>
@@ -300,7 +303,7 @@ namespace mlp
             // 3. 根据难度获取对手的 AI 技能等级
             var opponentSkill = GetQuickMatchOpponentSkill(difficulty);
 
-            // 4. 配置双方角色、脑控制方式和技能等级
+            // 4. 配置双方角色、脑控制方式和技能
             CharacterIds = new[] { playerId, opponentId };
             Pb = new[] { new[] { "P0" }, new[] { "B0" } };
             Skills = new[] { new[] { 0 }, new[] { opponentSkill } };
@@ -551,37 +554,53 @@ namespace mlp
         }
     }
 
-    /// <summary>
-    /// 全局物品清单（单例）：保存玩家的所有选择和进度——当前游戏模式、选中的角色和篮球皮肤、难度、冒险/锦标赛的进行状态。是整个游戏状态的中央存储。
-    /// </summary>
+    // 全局物品清单（单例）：保存玩家的所有选择和进度——当前游戏模式、选中的角色和篮球皮肤、难度、冒险/锦标赛的进行状态。是整个游戏状态的中央存储。
     public sealed class mlpInventory
     {
+        // 单例实例的私有静态引用，存储唯一全局实例。
         private static mlpInventory instance;
 
+        // 公开静态访问点：首次调用时通过 ?? 运算符懒加载创建实例，后续调用直接返回已有实例，确保全局唯一。
         public static mlpInventory Instance => instance ?? (instance = new mlpInventory());
 
+        // 游戏模式ID：1=随机快速赛, 2=快速比赛, 3=训练, 4=双人对战, 5=教程。
         public int GameMode;
+        // 当前比赛的详细数据，包含参赛角色、比分、计时等信息。
         public mlpMatchData MatchData;
+        // 冒险模式的进度与关卡数据，管理关卡解锁与胜负记录。
         public mlpAdventureData Adventure;
+        // 锦标赛的对阵表与赛程数据，管理淘汰赛阶段与对手。
         public mlpTournamentData Tournament;
+        // 游戏是否首次启动，用于控制首次启动引导流程。
         public bool FirstRun = true;
+        // 教程是否首次运行，用于控制教程内的引导提示。
         public bool FirstRun2 = true;
+        // 比赛数据是否已配置完毕，为true时场景可直接加载开赛。
         public bool MatchPrepared;
+        // AI 难度等级：Easy=简单, Normal=普通, Hard=困难, Hell=地狱。
         public mlpAiDifficulty Difficulty;
+        // 参与模式：OnePlayer=单人, TwoPlayers=双人, Training=训练, Tutorial=教程。
         public mlpParticipantMode ParticipantMode;
+        // 当前会话类型：None=无, QuickMatch=快速比赛, Adventure=冒险, Tournament=锦标赛, Training=训练, Tutorial=教程。
         public mlpSessionMode SessionMode;
+        // 教程结束后待执行的下一步操作：None=无, ReplayTutorial=重玩教程, StartTraining=进入训练, StartQuickMatch=开始快速匹配。
         public mlpTutorialNextAction PendingTutorialNextAction;
+        // 快速比赛模式下玩家选中的角色ID。
         public int SelectedQuickCharacterId;
+        // 锦标赛模式下玩家选中的角色ID。
         public int SelectedTournamentCharacterId;
+        // 训练模式下玩家选中的角色ID。
         public int SelectedTrainingCharacterId;
+        // 快速比赛模式下选中的球皮主题：ClassicOriginal=经典原版, GhoulGreen=幽灵绿, PumpkinEmber=南瓜余烬, MoonlitViolet=月光紫, JackOLantern=南瓜灯, EvilEye=邪眼, Cursed8Ball=诅咒8号球, CandySwirl=糖果漩涡。
         public mlpBallSelection SelectedQuickBallSelection;
+        // 锦标赛模式下选中的球皮主题。
         public mlpBallSelection SelectedTournamentBallSelection;
+        // 训练模式下选中的球皮主题。
         public mlpBallSelection SelectedTrainingBallSelection;
+        // 双人对战模式下选中的球皮主题。
         public mlpBallSelection SelectedVersusBallSelection;
 
-        /// <summary>
-        /// 初始化全局物品栏，设置默认的游戏模式、难度、角色选择和球皮选择。
-        /// </summary>
+        // 初始化全局物品栏，设置默认的游戏模式、难度、角色选择和球皮选择。
         private mlpInventory()
         {
             // 1. 设置默认游戏模式和参与模式
@@ -618,9 +637,7 @@ namespace mlp
         public bool IsTournamentActive => SessionMode == mlpSessionMode.Tournament && Tournament.Active;
         public bool IsAdventureActive => SessionMode == mlpSessionMode.Adventure && Adventure.Active;
 
-        /// <summary>
-        /// 按顺序循环切换难度等级：简单 -> 普通 -> 困难 -> 地狱 -> 简单。
-        /// </summary>
+        // 按顺序循环切换难度等级：简单 -> 普通 -> 困难 -> 地狱 -> 简单。
         public void ToggleDifficulty()
         {
             Difficulty = Difficulty switch
