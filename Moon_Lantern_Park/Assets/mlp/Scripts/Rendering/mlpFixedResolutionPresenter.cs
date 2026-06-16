@@ -1,4 +1,4 @@
-// 固定分辨率画面适配器 / 让游戏始终保持 800x480 的像素风格画面，不管窗口或屏幕多大。自动计算黑边区域和缩放比例，保证画面不变形、不模糊，同时正确转换鼠标坐标到游戏内的像素位置。
+// Fixed Resolution Graphics Adapter / Allows games to always maintain an 800x480 pixel style graphics, no matter the size of the window or screen. Automatically calculate the black border area and scaling ratio to ensure that the picture is not deformed or blurred, and at the same time, the mouse coordinates are correctly converted to the pixel position in the game.
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace mlp
 {
     /// <summary>
-    /// 固定分辨率画面适配器：让游戏始终保持 800x480 的像素风格画面，不管窗口多大。自动计算黑边和缩放，保证画面不变形。
+    /// Fixed resolution graphics adapter: Let the game always maintain an 800x480 pixel style graphics, no matter how big the window is. Automatically calculate black borders and zoom to ensure the picture is not deformed.
     /// </summary>
     public sealed class mlpFixedResolutionPresenter : MonoBehaviour
     {
@@ -32,47 +32,55 @@ namespace mlp
         public static bool HasActivePresenter => activePresenter != null && activePresenter.configured;
 
         /// <summary>
-        /// 接入源相机，使其输出以固定分辨率渲染。
+        /// Plug in a source camera so that its output is rendered at a fixed resolution.
+
         /// </summary>
         public void Attach(Camera camera)
         {
-            // 1. 如果传入的相机为空，直接退出
+            // 1. If the incoming camera is empty, exit directly
+
             if (camera == null)
             {
                 return;
             }
 
-            // 2. 如果已经接入了同一个相机，只需刷新布局即可
+            // 2. If the same camera is already connected, just refresh the layout
+
             if (sourceCamera == camera && configured)
             {
                 RefreshLayout(force: true);
                 return;
             }
 
-            // 3. 断开之前连接的相机（如果有的话）
+            // 3. Disconnect the previously connected camera (if any)
+
             DetachCurrentCamera();
-            // 4. 保存源相机引用，关闭 HDR 和 MSAA（像素风格不需要这些特性）
+            // 4. Save the source camera reference and turn off HDR and MSAA (these features are not required for Pixel Style)
+
             sourceCamera = camera;
             originalAllowHdr = sourceCamera.allowHDR;
             originalAllowMsaa = sourceCamera.allowMSAA;
             sourceCamera.allowHDR = false;
             sourceCamera.allowMSAA = false;
 
-            // 5. 创建输出相机（用来在画面上方渲染 UI 画布）、UI 画布和渲染纹理
+            // 5. Create an output camera (used to render the UI canvas on top of the screen), UI canvas and rendering texture
             EnsureOutputCamera();
             EnsureCanvas();
             EnsureRenderTexture();
-            // 6. 显示呈现器，将源相机的渲染目标设为固定分辨率的渲染纹理
+            // 6. Display the renderer and set the source camera’s render target to a fixed-resolution render texture.
+
             SetPresenterVisible(true);
             sourceCamera.targetTexture = renderTexture;
-            // 7. 标记为已配置，注册为全局活跃呈现器，强制刷新一次布局
+            // 7. Mark as configured, register as a global active renderer, and force a layout refresh
+
             configured = true;
             activePresenter = this;
             RefreshLayout(force: true);
         }
 
         /// <summary>
-        /// 断开当前源相机并隐藏呈现器。
+        /// Disconnects the current source camera and hides the renderer.
+
         /// </summary>
         public void Detach()
         {
@@ -85,7 +93,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将屏幕空间坐标转换为游戏固定分辨率的像素坐标。
+        /// Convert screen space coordinates to pixel coordinates at the game's fixed resolution.
+
         /// </summary>
         public static bool TryMapScreenToGamePixel(Vector2 screenPosition, out Vector2 gamePixel)
         {
@@ -99,7 +108,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧刷新布局，以防屏幕尺寸发生变化。
+        /// Refresh the layout every frame in case the screen size changes.
+
         /// </summary>
         private void LateUpdate()
         {
@@ -112,13 +122,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 组件销毁时清理渲染纹理、画布和输出相机。
+        /// Clean up the render texture, canvas, and output camera when the component is destroyed.
+
         /// </summary>
         private void OnDestroy()
         {
-            // 1. 恢复源相机的原始设置并断开连接
+            // 1. Restore the original settings of the source camera and disconnect
+
             DetachCurrentCamera();
-            // 2. 释放并销毁渲染纹理（释放 GPU 内存）
+            // 2. Release and destroy rendering textures (release GPU memory)
+
             if (renderTexture != null)
             {
                 if (renderTexture.IsCreated())
@@ -130,21 +143,24 @@ namespace mlp
                 renderTexture = null;
             }
 
-            // 3. 销毁 UI 画布
+            // 3. Destroy the UI canvas
+
             if (canvas != null)
             {
                 Destroy(canvas.gameObject);
                 canvas = null;
             }
 
-            // 4. 销毁输出相机
+            // 4. Destroy the output camera
+
             if (outputCamera != null)
             {
                 Destroy(outputCamera.gameObject);
                 outputCamera = null;
             }
 
-            // 5. 清除全局活跃呈现器引用
+            // 5. Clear global active renderer references
+
             if (activePresenter == this)
             {
                 activePresenter = null;
@@ -152,7 +168,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 如果尚未创建，则构建 UI 画布、背景和输出 RawImage。
+        /// Builds the UI canvas, background, and output RawImage if not already created.
         /// </summary>
         private void EnsureCanvas()
         {
@@ -204,22 +220,26 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建正交相机，用于在游戏画面上方渲染 UI 画布。
+        /// Create an orthographic camera that renders the UI canvas above the game screen.
+
         /// </summary>
         private void EnsureOutputCamera()
         {
-            // 1. 如果输出相机已创建，直接返回
+            // 1. If the output camera has been created, return directly
+
             if (outputCamera != null)
             {
                 return;
             }
 
-            // 2. 创建相机 GameObject，设置为 UI 层
+            // 2. Create a camera GameObject and set it as the UI layer
+
             var cameraObject = new GameObject(CameraName);
             cameraObject.transform.SetParent(transform, false);
             ApplyPresenterLayer(cameraObject.transform);
 
-            // 3. 配置为正交相机，只渲染 UI 层，深度最高确保在最上层
+            // 3. Configure it as an orthographic camera, which only renders the UI layer. The highest depth must be on the top layer.
+
             outputCamera = cameraObject.AddComponent<Camera>();
             outputCamera.orthographic = true;
             outputCamera.orthographicSize = 1f;
@@ -229,24 +249,28 @@ namespace mlp
             outputCamera.backgroundColor = Color.black;
             outputCamera.cullingMask = 1 << LayerMask.NameToLayer("UI");
             outputCamera.depth = short.MaxValue - 1;
-            // 4. 关闭 HDR 和 MSAA（像素风格不需要这些特性）
+            // 4. Turn off HDR and MSAA (these features are not required for pixel style)
+
             outputCamera.allowHDR = false;
             outputCamera.allowMSAA = false;
             outputCamera.transform.localPosition = new Vector3(0f, 0f, -5f);
         }
 
         /// <summary>
-        /// 以游戏固定分辨率和点过滤模式创建渲染纹理。
+        /// Create render textures at game fixed resolution and point filtering mode.
+
         /// </summary>
         private void EnsureRenderTexture()
         {
-            // 1. 如果渲染纹理已创建，直接返回
+            // 1. If the rendering texture has been created, return directly
+
             if (renderTexture != null)
             {
                 return;
             }
 
-            // 2. 创建固定分辨率（800x480）的渲染纹理，使用点过滤保持像素清晰
+            // 2. Create a fixed resolution (800x480) rendering texture and use point filtering to keep the pixels clear
+
             renderTexture = new RenderTexture(mlpConstants.DisplayW, mlpConstants.DisplayH, 24, RenderTextureFormat.ARGB32)
             {
                 name = "mlpFixedResolutionRT",
@@ -257,16 +281,19 @@ namespace mlp
                 antiAliasing = 1
             };
             renderTexture.Create();
-            // 3. 将渲染纹理赋给输出 UI 的 RawImage 显示
+            // 3. Assign the rendering texture to the RawImage display of the output UI
+
             outputImage.texture = renderTexture;
         }
 
         /// <summary>
-        /// 重新计算输出尺寸和屏幕矩形，使其适配窗口并保持宽高比。
+        /// Recalculate the output size and screen rectangle so that it fits the window and maintains the aspect ratio.
+
         /// </summary>
         private void RefreshLayout(bool force)
         {
-            // 1. 获取当前屏幕尺寸，如果和上次相同且非强制刷新则跳过
+            // 1. Get the current screen size, skip if it is the same as last time and there is no forced refresh
+
             var screenWidth = Mathf.Max(1, Screen.width);
             var screenHeight = Mathf.Max(1, Screen.height);
             if (!force && screenWidth == lastScreenWidth && screenHeight == lastScreenHeight)
@@ -274,20 +301,25 @@ namespace mlp
                 return;
             }
 
-            // 2. 记录当前屏幕尺寸，用于下次比较
+            // 2. Record the current screen size for next comparison
+
             lastScreenWidth = screenWidth;
             lastScreenHeight = screenHeight;
 
-            // 3. 计算缩放比例：取宽高中较小的那个，确保游戏画面完整显示且不变形
+            // 3. Calculate the scaling ratio: Take the smaller one of width and height to ensure that the game screen is fully displayed and not deformed.
+
             var scale = Mathf.Min(
                 screenWidth / (float)mlpConstants.DisplayW,
                 screenHeight / (float)mlpConstants.DisplayH);
-            // 4. 计算输出区域的实际像素大小（按缩放后的整数像素对齐）
+            // 4. Calculate the actual pixel size of the output area (aligned by scaled integer pixels)
+
             var width = Mathf.Round(mlpConstants.DisplayW * scale);
             var height = Mathf.Round(mlpConstants.DisplayH * scale);
-            // 5. 设置输出 UI 元素的大小
+            // 5. Set the size of output UI elements
+
             outputRect.sizeDelta = new Vector2(width, height);
-            // 6. 计算输出区域在屏幕上的矩形位置（居中显示，多余部分为黑边）
+            // 6. Calculate the rectangular position of the output area on the screen (displayed in the center, and the excess part is a black border)
+
             outputScreenRect = new Rect(
                 (screenWidth - width) * 0.5f,
                 (screenHeight - height) * 0.5f,
@@ -296,7 +328,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 递归地将 Transform 的所有子物体设置到 UI 层。
+        /// Recursively sets all children of the Transform to the UI layer.
+
         /// </summary>
         private static void ApplyPresenterLayer(Transform root)
         {
@@ -314,28 +347,34 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将源相机恢复到原始设置并清除引用。
+        /// Restore the source camera to its original settings and clear references.
+
         /// </summary>
         private void DetachCurrentCamera()
         {
-            // 1. 如果没有连接的源相机，直接返回
+            // 1. If there is no connected source camera, return directly
+
             if (sourceCamera == null)
             {
                 return;
             }
 
-            // 2. 清除源相机的渲染目标（不再输出到渲染纹理）
+            // 2. Clear the render target of the source camera (no longer output to the render texture)
+
             sourceCamera.targetTexture = null;
-            // 3. 恢复 HDR 和 MSAA 设置为连接前的原始值
+            // 3. Restore HDR and MSAA settings to their original values before connection
+
             sourceCamera.allowHDR = originalAllowHdr;
             sourceCamera.allowMSAA = originalAllowMsaa;
-            // 4. 清除引用，标记为未配置
+            // 4. Clear the reference and mark it as unconfigured
+
             sourceCamera = null;
             configured = false;
         }
 
         /// <summary>
-        /// 显示或隐藏呈现器画布和输出相机。
+        /// Show or hide the render canvas and output camera.
+
         /// </summary>
         private void SetPresenterVisible(bool visible)
         {
@@ -351,28 +390,30 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将屏幕坐标映射到游戏像素，如果位置在输出区域外则返回 false。
+        /// Maps screen coordinates to game pixels, returning false if the position is outside the output area.
         /// </summary>
         private bool TryMapScreenToGamePixelInternal(Vector2 screenPosition, out Vector2 gamePixel)
         {
-            // 1. 检查呈现器是否已配置，输出区域是否有效
+            // 1. Check whether the renderer has been configured and whether the output area is valid
+
             if (!configured || outputRect == null || outputScreenRect.width <= 0f || outputScreenRect.height <= 0f)
             {
                 gamePixel = default;
                 return false;
             }
 
-            // 2. 如果鼠标在输出区域（游戏画面）之外，返回 false（在黑边上）
+            // 2. If the mouse is outside the output area (game screen), return false (on the black border)
+
             if (!outputScreenRect.Contains(screenPosition))
             {
                 gamePixel = default;
                 return false;
             }
 
-            // 3. 将屏幕坐标归一化到 0-1 范围
+            // 3. Normalize screen coordinates to the 0-1 range
             var normalizedX = Mathf.Clamp01((screenPosition.x - outputScreenRect.xMin) / outputScreenRect.width);
             var normalizedY = Mathf.Clamp01((screenPosition.y - outputScreenRect.yMin) / outputScreenRect.height);
-            // 4. 转换为游戏逻辑像素坐标（Y 轴需要翻转，因为屏幕 Y 向上而游戏 Y 向下）
+            // 4. Convert to game logical pixel coordinates (Y axis needs to be flipped because screen Y is up and game Y is down)
             var logicalHeight = mlpConstants.GameH / mlpConstants.RenderScale;
             gamePixel = new Vector2(
                 normalizedX * mlpConstants.Width,

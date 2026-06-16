@@ -1,12 +1,13 @@
-// 比赛中的 HUD 界面（抬头显示）
-// 包括比分板、计时器、暂停菜单、赛后结算画面、倒计时和各种弹出提示。
+// In-match HUD interface (heads-up display)
+
+// Including scoreboard, timer, pause menu, post-match settlement screen, countdown and various pop-up prompts.
 
 using TMPro;
 using UnityEngine;
 
 namespace mlp
 {
-    /// <summary>暂停命令类型：无操作、切换暂停、恢复比赛、返回菜单。</summary>
+    /// <summary>Pause command type: no operation, switch pause, resume game, return to menu. </summary>
     public enum mlpPauseCommand
     {
         None,
@@ -16,7 +17,8 @@ namespace mlp
     }
 
     /// <summary>
-    /// 比赛 HUD 界面：管理比赛中所有抬头显示元素——比分板、计时器、暂停菜单、赛后结算、倒计时和各种弹出提示。
+    /// Game HUD Interface: Manage all heads-up display elements in the game - scoreboard, timer, pause menu, post-game settlement, countdown and various pop-up prompts.
+
     /// </summary>
     public sealed class mlpHudView
     {
@@ -151,18 +153,20 @@ namespace mlp
         public bool IsPauseOverlayVisible { get; private set; }
 
         /// <summary>
-        /// 构建整个 HUD 界面：比分板、暂停覆盖层、赛后结果卡片、倒计时和弹出消息。
+        /// Build the entire HUD interface: scoreboard, timeout overlay, post-match results card, countdown and pop-up messages.
         /// </summary>
         public mlpHudView(Transform parent, mlpMatchData matchData)
         {
-            // 1. 判断当前游戏模式（教程、训练、普通比赛）和角色名称
+            // 1. Determine the current game mode (tutorial, training, normal competition) and character name
+
             var gameMode = mlpInventory.Instance.GameMode;
             isTutorial = gameMode == mlpGameModeIds.Tutorial;
             isTraining = gameMode == mlpGameModeIds.Training || gameMode == mlpGameModeIds.Tutorial;
             leftCharacterLabel = mlpPlayersData.GetCharacterName(matchData.CharacterIds[0]);
             rightCharacterLabel = mlpPlayersData.GetCharacterName(matchData.CharacterIds[1]);
 
-            // 2. 创建比分板（背景图 + 左右角色头像 + 名字 + 分数 + 计时器）
+            // 2. Create a scoreboard (background image + left and right character avatars + name + score + timer)
+
             scoreboardRoot = CreateHudRoot("ScoreboardRoot", parent);
             CreateScoreboardBackdrop(scoreboardRoot.transform);
             CreatePortraitAura("LeftPortraitAura", ScoreboardCenterX - PortraitOffsetX, PortraitBaseY, 0.34f, 80, scoreboardRoot.transform);
@@ -229,7 +233,8 @@ namespace mlp
                 mlpTextStyle.HudTimer);
             SetScoreboardVisible(true);
 
-            // 3. 创建右上角功能按钮（暂停、音乐开关、帮助）
+            // 3. Create function buttons in the upper right corner (pause, music switch, help)
+
             pauseButton = new mlpMenuButton(string.Empty, PauseButtonX, TopRightButtonY, TopRightButtonSize, TopRightButtonSize, () => pendingPauseCommand = mlpPauseCommand.Toggle, parent);
             pauseButton.SetBackgroundVisible(false);
             pauseButton.SetLabelVisible(false);
@@ -259,7 +264,8 @@ namespace mlp
                 TopRightIconPixels,
                 mlpAssets.Images.ResourcePath(mlpAssets.Images.HelpButton));
 
-            // 4. 创建倒计时显示（数字脉冲动画 + 标题文字，如 "RESUMING IN"）
+            // 4. Create a countdown display (digital pulse animation + title text, such as "RESUMING IN")
+
             countdownCaptionText = mlpRender.Text(
                 "CountdownCaption",
                 string.Empty,
@@ -284,7 +290,8 @@ namespace mlp
                 mlpTextStyle.HudPopup);
             countdownBaseScale = countdownText.transform.localScale;
 
-            // 5. 创建屏幕中央的弹出消息（如 "GO!!!"、"BASKET"、"3 POINT"）
+            // 5. Create pop-up messages in the center of the screen (e.g. "GO!!!", "BASKET", "3 POINT")
+
             messageRoot = CreateHudAnchor("MessageRoot", mlpConstants.Width2, PopupCenterY, parent);
             messageBackdrop = CreatePopupBackdrop(parent);
             if (messageBackdrop != null)
@@ -306,7 +313,7 @@ namespace mlp
             messageText.transform.SetParent(messageRoot.transform, true);
             messageRoot.SetActive(false);
 
-            // 6. 创建右上角加分提示（如 "HELL DASH!"）
+            // 6. Create a bonus point prompt in the upper right corner (such as "HELL DASH!")
             bonusNoticeRoot = CreateHudAnchor("BonusNoticeRoot", BonusNoticeX, BonusNoticeY, parent);
             bonusNoticeText = mlpRender.Text(
                 "BonusNotice",
@@ -322,7 +329,8 @@ namespace mlp
             bonusNoticeText.transform.SetParent(bonusNoticeRoot.transform, true);
             bonusNoticeRoot.SetActive(false);
 
-            // 7. 创建赛后结果卡片（暗色遮罩 + 卡片面板 + 角色头像 + 比分 + 胜者标签 + 提示文字）
+            // 7. Create post-match result card (dark mask + card panel + character avatar + score + winner label + prompt text)
+
             postMatchOverlayRoot = CreateHudRoot("PostMatchOverlayRoot", parent);
             CreatePausePanel("PostMatchShade", mlpConstants.Width2, ScreenCenterY, 800f, 480f, 128, postMatchOverlayRoot.transform, new Color(0.02f, 0.04f, 0.06f, 0.68f));
             postMatchTopGlow = CreatePausePanel("PostMatchTopGlow", mlpConstants.Width2, 120f, 760f, 92f, 129, postMatchOverlayRoot.transform, new Color(0.34f, 0.86f, 0.92f, 0.08f));
@@ -533,7 +541,8 @@ namespace mlp
             postMatchLeftPortraitBaseScale = postMatchLeftPortrait != null ? postMatchLeftPortrait.transform.localScale : Vector3.one;
             postMatchRightPortraitBaseScale = postMatchRightPortrait != null ? postMatchRightPortrait.transform.localScale : Vector3.one;
 
-            // 8. 创建暂停画面（半透明遮罩 + 面板 + 角色头像 + 比分 + 菜单/恢复按钮）
+            // 8. Create pause screen (semi-transparent mask + panel + character avatar + score + menu/resume button)
+
             pauseOverlayRoot = CreateHudRoot("PauseOverlayRoot", parent);
             pauseShade = CreatePausePanel("PauseShade", mlpConstants.Width2, ScreenCenterY, 800f, 480f, 140, pauseOverlayRoot.transform, new Color(0.01f, 0.03f, 0.05f, 0.78f));
             CreatePausePanel("PauseTopGlow", mlpConstants.Width2, 96f, 760f, 104f, 141, pauseOverlayRoot.transform, new Color(0.22f, 0.86f, 0.94f, 0.12f));
@@ -659,7 +668,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新比分板和暂停画面上的比分数字。
+        /// Updated score numbers on the scoreboard and timeout screen.
+
         /// </summary>
         public void UpdateScore(int left, int right)
         {
@@ -670,15 +680,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新计时器显示，并在暂停画面上显示冻结时间。
+        /// Update timer display and display freeze time on pause screen.
+
         /// </summary>
         public void UpdateTimer(float secondsLeft)
         {
-            // 1. 将剩余秒数格式化为 "1:00" 或 "04.2" 的显示文本
+            // 1. Format remaining seconds as display text of "1:00" or "04.2"
+
             var timeText = FormatTime(secondsLeft);
-            // 2. 更新比分板上的计时器文字
+            // 2. Update the timer text on the scoreboard
+
             SetText(timerText, timeText);
-            // 3. 如果不是训练模式，同步更新暂停画面上的冻结时间显示
+            // 3. If it is not training mode, the freeze time display on the pause screen will be updated simultaneously.
+
             if (!isTraining)
             {
                 SetText(pauseScoreText, $"TIME FROZEN / {timeText}");
@@ -686,7 +700,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏比赛计时器。
+        /// Show or hide the match timer.
+
         /// </summary>
         public void SetTimerVisible(bool visible)
         {
@@ -694,7 +709,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 读取并清除待处理的暂停指令（切换、恢复或返回菜单）。
+        /// Read and clear pending pause commands (toggle, resume or return to menu).
+
         /// </summary>
         public mlpPauseCommand ConsumePauseCommand()
         {
@@ -704,7 +720,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换暂停画面的显示或隐藏。
+        /// Toggles the display or hiding of the pause screen.
+
         /// </summary>
         public void TogglePauseOverlay()
         {
@@ -719,18 +736,21 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示暂停画面并隐藏其他 HUD 元素。
+        /// Shows the pause screen and hides other HUD elements.
+
         /// </summary>
         public void ShowPauseOverlay()
         {
-            // 1. 隐藏屏幕上的弹出消息、加分提示和倒计时（暂停时不需要这些）
+            // 1. Hide on-screen pop-up messages, extra score tips, and countdowns (you don’t need these when paused)
             HideMessage();
             HideBonusNotice();
             HideCountdown();
-            // 2. 标记暂停状态并显示暂停画面（遮罩 + 面板 + 按钮）
+            // 2. Mark the pause state and display the pause screen (mask + panel + button)
+
             IsPauseOverlayVisible = true;
             SetPauseOverlayVisible(true);
-            // 3. 隐藏右上角的暂停、音乐和帮助按钮（暂停画面有自己的按钮）
+            // 3. Hide the pause, music and help buttons in the upper right corner (the pause screen has its own button)
+
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
             musicButton?.SetVisible(false);
@@ -738,14 +758,17 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏暂停画面并恢复右上角按钮。
+        /// Hide the pause screen and restore the upper right button.
+
         /// </summary>
         public void HidePauseOverlay()
         {
-            // 1. 清除暂停状态并隐藏暂停画面
+            // 1. Clear pause status and hide pause screen
+
             IsPauseOverlayVisible = false;
             SetPauseOverlayVisible(false);
-            // 2. 重新显示右上角的暂停、音乐和帮助按钮
+            // 2. Redisplay the pause, music and help buttons in the upper right corner
+
             pauseButton.SetVisible(true);
             SetGameObjectVisible(pauseButtonIcon, true);
             musicButton?.SetVisible(true);
@@ -753,24 +776,29 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏暂停画面并开始"即将恢复"倒计时。
+        /// Hide the pause screen and start the "Resume soon" countdown.
+
         /// </summary>
         public void BeginResumeCountdown(float duration)
         {
-            // 1. 清除暂停状态并隐藏暂停画面
+            // 1. Clear pause status and hide pause screen
+
             IsPauseOverlayVisible = false;
             SetPauseOverlayVisible(false);
-            // 2. 隐藏所有右上角按钮（倒计时期间不允许操作）
+            // 2. Hide all buttons in the upper right corner (no operations allowed during countdown)
+
             pauseButton.SetVisible(false);
             SetGameObjectVisible(pauseButtonIcon, false);
             musicButton?.SetVisible(false);
             helpButton?.SetVisible(false);
-            // 3. 启动 3-2-1 倒计时，标题显示 "RESUMING IN"
+            // 3. Start the 3-2-1 countdown, and the title will display "RESUMING IN"
+
             StartCountdown(duration, "RESUMING IN");
         }
 
         /// <summary>
-        /// 恢复倒计时结束后重新显示右上角按钮。
+        /// The button in the upper right corner will reappear after the recovery countdown is over.
+
         /// </summary>
         public void EndResumeCountdown()
         {
@@ -781,11 +809,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在屏幕中央显示大型弹出消息（例如"GO!!!"、"BASKET"）。
+        /// Display a large pop-up message in the center of the screen (e.g. "GO!!!", "BASKET").
+
         /// </summary>
         public void ShowMessage(string message, float duration = 1.2f, bool showBackdrop = true)
         {
-            // 1. 如果消息根节点不存在（UI 未构建），只设置文字和计时器
+            // 1. If the message root node does not exist (UI is not built), only set text and timer
+
             if (messageRoot == null)
             {
                 SetText(messageText, message);
@@ -794,15 +824,19 @@ namespace mlp
                 return;
             }
 
-            // 2. 根据消息内容选择合适的文字颜色（如 "GO!!!" 为绿色，"BASKET" 为金色）
+            // 2. Choose the appropriate text color according to the message content (for example, "GO!!!" is green, "BASKET" is gold)
+
             ApplyMessageTheme(message);
-            // 3. 设置消息文字和持续时间
+            // 3. Set message text and duration
+
             SetText(messageText, message);
             messageDuration = Mathf.Max(0.01f, duration);
             messageTime = messageDuration;
-            // 4. 对较长的文字适当缩小，防止超出屏幕
+            // 4. Reduce long text appropriately to prevent it from exceeding the screen.
+
             messageVisualScale = ResolveMessageScale(message);
-            // 5. 设置背景是否显示，定位到屏幕中央，以较小的初始缩放显示（后续帧会播放弹入动画）
+            // 5. Set whether the background is displayed, position it in the center of the screen, and display it with a small initial zoom (the pop-in animation will be played in subsequent frames)
+
             SetGameObjectVisible(messageBackdrop, showBackdrop);
             messageRoot.transform.position = mlpConstants.PixelToWorldSnapped(mlpConstants.Width2, PopupCenterY);
             messageRoot.transform.localScale = Vector3.one * (0.78f * messageVisualScale);
@@ -810,30 +844,36 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在右上角显示小型加分提示（例如"HELL DASH!"）。
+        /// Display a small bonus point prompt in the upper right corner (e.g. "HELL DASH!").
+
         /// </summary>
         public void ShowBonusNotice(string message, float duration = 0.9f)
         {
-            // 1. 如果加分提示的根节点不存在，直接返回
+            // 1. If the root node of the bonus point tip does not exist, return directly
+
             if (bonusNoticeRoot == null)
             {
                 return;
             }
 
-            // 2. 根据消息内容选择合适的文字颜色
+            // 2. Choose the appropriate text color according to the message content
+
             ApplyBonusNoticeTheme(message);
-            // 3. 设置文字内容和显示持续时间
+            // 3. Set text content and display duration
+
             SetText(bonusNoticeText, message);
             bonusNoticeDuration = Mathf.Max(0.01f, duration);
             bonusNoticeTime = bonusNoticeDuration;
-            // 4. 定位到右上角指定位置，以较小的初始缩放显示（后续帧会播放弹入动画）
+            // 4. Locate to the specified position in the upper right corner and display it with a smaller initial zoom (the pop-in animation will be played in subsequent frames)
+
             bonusNoticeRoot.transform.position = mlpConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY);
             bonusNoticeRoot.transform.localScale = Vector3.one * 0.72f;
             bonusNoticeRoot.SetActive(true);
         }
 
         /// <summary>
-        /// 隐藏弹出消息。
+        /// Hide pop-up messages.
+
         /// </summary>
         public void HideMessage()
         {
@@ -852,7 +892,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏加分提示。
+        /// Hide extra points tips.
+
         /// </summary>
         public void HideBonusNotice()
         {
@@ -868,7 +909,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏倒计时显示并重置其状态。
+        /// Hide the countdown display and reset its state.
+
         /// </summary>
         public void HideCountdown()
         {
@@ -882,7 +924,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 启动无标题文字的倒计时。
+        /// Start countdown of untitled text.
         /// </summary>
         public void StartCountdown(float duration)
         {
@@ -890,7 +932,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 启动倒计时，数字上方可显示可选的标题文字。
+        /// Starts a countdown with optional title text displayed above the number.
         /// </summary>
         public void StartCountdown(float duration, string caption)
         {
@@ -908,7 +950,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧更新倒计时。倒计时仍在运行时返回 true。
+        /// Countdown is updated every frame. Returns true while the countdown is still running.
         /// </summary>
         public bool UpdateCountdown(float dt)
         {
@@ -946,17 +988,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// 主更新循环：处理按钮、消息、加分提示、倒计时和赛后动画的每帧更新。
+        /// Main update loop: handles frame-by-frame updates for buttons, messages, bonus point prompts, countdowns, and post-match animations.
         /// </summary>
         public void Update(float dt)
         {
-            // 1. 如果帮助面板打开，暂停 HUD 的所有更新
+            // 1. If the help panel is open, pause all updates to the HUD
+
             if (mlpHelpPanel.IsAnyOpen)
             {
                 return;
             }
 
-            // 2. 如果暂停画面可见，只更新暂停画面上的按钮和音乐图标
+            // 2. If the pause screen is visible, only the buttons and music icons on the pause screen are updated.
+
             if (IsPauseOverlayVisible)
             {
                 musicButton?.SetActiveIconIndex(GetMusicIconIndex());
@@ -965,7 +1009,7 @@ namespace mlp
                 return;
             }
 
-            // 3. 更新右上角的暂停、音乐和帮助按钮的鼠标悬停/点击检测
+            // 3. Update mouseover/click detection for pause, music and help buttons in the upper right corner
             pauseButton.Update(Camera.main);
             musicButton?.SetActiveIconIndex(GetMusicIconIndex());
             musicButton?.Update(Camera.main);
@@ -1025,11 +1069,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示赛后结果卡片，包含胜者、比分和角色头像。
+        /// Displays the post-match result card, including the winner, score, and character portrait.
+
         /// </summary>
         public void ShowPostMatch(int winner, int leftScoreValue, int rightScoreValue)
         {
-            // 1. 获取游戏存档信息，判断当前是哪种游戏模式（锦标赛、冒险、快速匹配等）
+            // 1. Obtain game archive information and determine which game mode is currently (tournament, adventure, quick match, etc.)
+
             var inventory = mlpInventory.Instance;
             var isPlayerFacingMode = inventory.IsTournamentActive ||
                                      inventory.IsAdventureActive ||
@@ -1048,7 +1094,8 @@ namespace mlp
                 SetText(postMatchTitleText, postMatchWinnerSide == -1 ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
             }
 
-            // 2. 设置标题文字颜色（胜利用暖色/金色，失败用冷色/银色）
+            // 2. Set the title text color (warm/gold for victory, cool/silver for failure)
+
             postMatchTitleText.color = titleUsesWarmAccent
                 ? new Color32(0xFF, 0xC7, 0x56, 0xFF)
                 : new Color32(0xDB, 0xE4, 0xF1, 0xFF);
@@ -1090,7 +1137,8 @@ namespace mlp
                 postMatchCardRoot.transform.localScale = Vector3.one * 0.96f;
             }
 
-            // 3. 隐藏比赛中的比分板和右上角按钮，显示赛后结果卡片
+            // 3. Hide the scoreboard and the button in the upper right corner during the game and display the post-match result card
+
             SetScoreboardVisible(false);
             SetGameObjectVisible(postMatchOverlayRoot, true);
             pauseButton.SetVisible(false);
@@ -1118,7 +1166,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏赛后结果卡片并恢复比分板。
+        /// Hide the post-match results card and restore the scoreboard.
+
         /// </summary>
         public void HidePostMatch()
         {
@@ -1177,16 +1226,18 @@ namespace mlp
         }
 
         /// <summary>
-        /// 播放赛后卡片入场滑动动画和胜者头像脉冲效果。
+        /// Play the post-game card entry sliding animation and winner avatar pulse effect.
         /// </summary>
         private void UpdatePostMatchVisual(float dt)
         {
-            // 1. 累加动画时间，计算入场进度（0→1）和持续脉冲值
+            // 1. Accumulate animation time, calculate entry progress (0→1) and continuous pulse value
+
             postMatchAnimTime += dt;
             var intro = Mathf.Clamp01(postMatchAnimTime / 0.34f);
             var eased = 1f - Mathf.Pow(1f - intro, 3f);
             var pulse = 0.5f + (0.5f * Mathf.Sin(postMatchAnimTime * 2.4f));
-            // 2. 卡片从略低位置滑入到最终位置，同时从 0.96 倍放大到 1 倍
+            // 2. Slide the card from a slightly lower position to the final position, while simultaneously zooming in from 0.96x to 1x
+
             if (postMatchCardRoot != null)
             {
                 postMatchCardRoot.transform.position = mlpConstants.PixelToWorldSnapped(
@@ -1195,7 +1246,8 @@ namespace mlp
                 postMatchCardRoot.transform.localScale = Vector3.one * Mathf.Lerp(0.96f, 1f, eased);
             }
 
-            // 3. 胜者头像和光环持续脉冲放大，败者保持缩小状态
+            // 3. The winner's avatar and halo continue to pulse and enlarge, while the loser remains in a reduced state.
+
             var winnerAuraScale = 1f + (0.035f * pulse);
             var loserAuraScale = 0.92f;
             var winnerPortraitScale = 1f + (0.014f * pulse);
@@ -1220,7 +1272,8 @@ namespace mlp
                 postMatchRightPortrait.transform.localScale = postMatchRightPortraitBaseScale * (postMatchWinnerSide == 1 ? winnerPortraitScale : loserPortraitScale);
             }
 
-            // 4. 提示文字和发光效果跟随脉冲值变化，营造呼吸灯效果
+            // 4. The prompt text and luminous effect follow the change of pulse value to create a breathing light effect.
+
             postMatchPromptText.color = new Color(0.93f, 0.96f, 0.84f, Mathf.Lerp(0.72f, 1f, pulse));
             SetSpriteTint(
                 postMatchPromptFrame,
@@ -1234,19 +1287,23 @@ namespace mlp
         }
 
         /// <summary>
-        /// 播放弹出消息的弹入缩放动画并略微向上漂移。
+        /// Play the pop-up zoom animation of the pop-up message and drift upward slightly.
+
         /// </summary>
         private void UpdateMessageVisual()
         {
-            // 1. 如果消息根节点不存在或未激活，跳过动画
+            // 1. If the message root node does not exist or is not activated, skip the animation
+
             if (messageRoot == null || !messageRoot.activeSelf)
             {
                 return;
             }
 
-            // 2. 计算动画进度（0 = 刚出现，1 = 即将消失）
+            // 2. Calculate animation progress (0 = just appeared, 1 = about to disappear)
+
             var progress = 1f - Mathf.Clamp01(messageTime / Mathf.Max(0.01f, messageDuration));
-            // 3. 弹入动画：先从 0.78 放大到 1.08（过冲），再弹回到 1.0
+            // 3. Pop-in animation: first zoom in from 0.78 to 1.08 (overshoot), then bounce back to 1.0
+
             float scale;
             if (progress < 0.2f)
             {
@@ -1261,49 +1318,58 @@ namespace mlp
                 scale = 1f;
             }
 
-            // 4. 即将消失时略微缩小，营造退场感
+            // 4. Slightly shrink when it is about to disappear to create a sense of exit.
+
             if (messageTime < MessageExitWindow)
             {
                 scale *= Mathf.Lerp(0.92f, 1f, messageTime / MessageExitWindow);
             }
 
-            // 5. 消息出现时从下方微微上浮，然后停在中央
+            // 5. When the message appears, it will float slightly from the bottom and then stop in the center.
+
             var lift = Mathf.Lerp(5f, 0f, Mathf.Clamp01(progress * 1.2f));
             messageRoot.transform.position = mlpConstants.PixelToWorldSnapped(mlpConstants.Width2, PopupCenterY - lift);
             messageRoot.transform.localScale = Vector3.one * (scale * messageVisualScale);
         }
 
         /// <summary>
-        /// 播放加分提示的缩放进入动画并缓缓向上漂移。
+        /// The zoom that plays the bonus point prompt enters the animation and slowly drifts upward.
+
         /// </summary>
         private void UpdateBonusNoticeVisual()
         {
-            // 1. 如果加分提示根节点不存在或未激活，跳过动画
+            // 1. If the extra point prompt root node does not exist or is not activated, skip the animation.
             if (bonusNoticeRoot == null || !bonusNoticeRoot.activeSelf)
             {
                 return;
             }
 
-            // 2. 计算动画进度（0 = 刚出现，1 = 即将消失）
+            // 2. Calculate animation progress (0 = just appeared, 1 = about to disappear)
+
             var progress = 1f - Mathf.Clamp01(bonusNoticeTime / Mathf.Max(0.01f, bonusNoticeDuration));
-            // 3. 缩放动画：先从 0.62 弹入到 0.8，再缓缓缩小到 0.72
+            // 3. Zoom animation: first bounce from 0.62 to 0.8, and then slowly shrink to 0.72
+
             var scale = progress < 0.2f
                 ? Mathf.Lerp(0.62f, 0.8f, progress / 0.2f)
                 : Mathf.Lerp(0.8f, 0.72f, (progress - 0.2f) / 0.8f);
-            // 4. 缓缓向上漂移，营造轻盈感
+            // 4. Drift upward slowly to create a sense of lightness
+
             var drift = Mathf.Lerp(4f, 0f, Mathf.Clamp01(progress * 1.1f));
             bonusNoticeRoot.transform.position = mlpConstants.PixelToWorldSnapped(BonusNoticeX, BonusNoticeY - drift);
             bonusNoticeRoot.transform.localScale = Vector3.one * scale;
         }
 
         /// <summary>
-        /// 播放倒计时数字的脉冲（先放大后缩小）动画效果。
+        /// Play the pulse (first zoom in and then zoom out) animation effect of the countdown number.
+
         /// </summary>
         private void UpdateCountdownVisual()
         {
-            // 1. 计算脉冲动画进度（0 = 刚触发，1 = 动画结束）
+            // 1. Calculate pulse animation progress (0 = just triggered, 1 = animation end)
+
             var progress = 1f - Mathf.Clamp01(countdownPulseTime / CountdownPulseDuration);
-            // 2. 先从 0.72 快速放大到 1.16（弹出感），再缓慢回到 1.0（稳定）
+            // 2. First quickly zoom in from 0.72 to 1.16 (pop-up feeling), and then slowly return to 1.0 (stable)
+
             float scale;
             if (progress < 0.24f)
             {
@@ -1314,50 +1380,58 @@ namespace mlp
                 scale = Mathf.Lerp(1.16f, 1f, (progress - 0.24f) / 0.76f);
             }
 
-            // 3. 应用缩放到倒计时文字上
+            // 3. Apply zoom to the countdown text
+
             countdownText.transform.localScale = countdownBaseScale * scale;
         }
 
         /// <summary>
-        /// 根据弹出消息的内容选择文字颜色（例如"GO!!!"为绿色）。
+        /// Choose the text color based on the content of the pop-up message (e.g. "GO!!!" is green).
+
         /// </summary>
         private void ApplyMessageTheme(string message)
         {
-            // 1. 根据消息内容匹配不同的主题颜色
+            // 1. Match different theme colors according to message content
+
             switch (message)
             {
-                // 2. 三分球：橙色
+                // 2. Three-pointers: Orange
+
                 case "3 POINT":
                     messageText.color = new Color32(0xFF, 0x98, 0x10, 0xFF);
                     break;
-                // 3. 投篮得分：金色
+                // 3. Field goal: gold
+
                 case "BASKET":
                     messageText.color = new Color32(0xFF, 0xC5, 0x57, 0xFF);
                     break;
-                // 4. 比赛开始：绿色
+                // 4. Game starts: green
+
                 case "GO!!!":
                     messageText.color = new Color32(0x9C, 0xFF, 0x4A, 0xFF);
                     break;
-                // 5. 时间到：暖黄色
+                // 5. Time’s up: warm yellow
                 case "TIME!!!":
                     messageText.color = new Color32(0xFF, 0xBA, 0x40, 0xFF);
                     break;
-                // 6. 加时赛：青色
+                // 6. Overtime: Cyan
+
                 case "OVERTIME":
                     messageText.color = new Color32(0x42, 0xFF, 0xEA, 0xFF);
                     break;
-                // 7. 地狱冲刺：橙红色
+                // 7. Hell Rush: Orange-Red
+
                 case "HELL DASH!":
                     messageText.color = new Color32(0xFF, 0x62, 0x32, 0xFF);
                     break;
-                // 8. 地狱护盾：粉红色
+                // 8. Hell Shield: Pink
                 case "HELL SHIELD!":
                     messageText.color = new Color32(0xFF, 0x52, 0x92, 0xFF);
                     break;
                 case "FOG WIND ACTIVE":
                     messageText.color = new Color32(0xA8, 0xF7, 0xFF, 0xFF);
                     break;
-                // 9. 其他消息：紫色（默认）
+                // 9. Other messages: purple (default)
                 default:
                     messageText.color = new Color32(0x8B, 0x2D, 0xFF, 0xFF);
                     break;
@@ -1365,7 +1439,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据加分提示的内容选择文字颜色。
+        /// Choose the text color according to the content of the extra points prompt.
         /// </summary>
         private void ApplyBonusNoticeTheme(string message)
         {
@@ -1384,7 +1458,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 缩小较长的消息使其适应屏幕。返回缩放倍数。
+        /// Shrink longer messages to fit the screen. Returns the zoom factor.
         /// </summary>
         private static float ResolveMessageScale(string message)
         {
@@ -1402,7 +1476,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为赛后卡片上较长的角色名称选择较小的字号。
+        /// Choose a smaller font size for the longer character names on the post-game cards.
+
         /// </summary>
         private static int ResolvePostMatchNameFontSize(string characterName)
         {
@@ -1420,7 +1495,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建用于暂停/赛后背景的纯色矩形面板。
+        /// Create a solid color rectangular panel for pause/post-game background.
+
         /// </summary>
         private static GameObject CreatePausePanel(string name, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
@@ -1440,7 +1516,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建用于暂停/赛后卡片轮廓的带边框面板。
+        /// Create a bordered panel for pause/post-game card outlines.
+
         /// </summary>
         private static GameObject CreatePauseFrame(string name, string frame, float x, float y, float width, float height, int sortingOrder, Transform parent, Color tint)
         {
@@ -1518,7 +1595,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 安全地显示或隐藏 GameObject（对象为空时不做任何操作）。
+        /// Safely show or hide the GameObject (does nothing if the object is empty).
+
         /// </summary>
         private static void SetGameObjectVisible(GameObject target, bool visible)
         {
@@ -1529,7 +1607,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新 TextMesh 标签并请求字体纹理刷新。
+        /// Update the TextMesh tag and request a font texture refresh.
+
         /// </summary>
         private static void SetText(TextMesh target, string value)
         {
@@ -1543,7 +1622,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏整个暂停覆盖层，包括菜单和恢复按钮。
+        /// Show or hide the entire pause overlay, including the menu and resume button.
         /// </summary>
         private void SetPauseOverlayVisible(bool visible)
         {
@@ -1553,7 +1632,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏游戏内比分板（教程模式下始终隐藏）。
+        /// Show or hide the in-game scoreboard (always hidden in tutorial mode).
+
         /// </summary>
         private void SetScoreboardVisible(bool visible)
         {
@@ -1561,7 +1641,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建屏幕右上角的暂停按钮图标。
+        /// Create a pause button icon in the upper right corner of the screen.
+
         /// </summary>
         private GameObject CreatePauseButtonIcon(Transform parent)
         {
@@ -1578,7 +1659,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换背景音乐的开关。
+        /// Toggle the background music switch.
+
         /// </summary>
         private static void ToggleBackgroundMusic()
         {
@@ -1586,14 +1668,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 空占位回调，不执行任何操作。
+        /// Empty stub callback, does not perform any operation.
+
         /// </summary>
         private static void NoOpAction()
         {
         }
 
         /// <summary>
-        /// 音乐播放时返回 0，静音时返回 1（用于选择正确的按钮图标）。
+        /// Returns 0 when music is playing and 1 when muted (used to select the correct button icon).
+
         /// </summary>
         private static int GetMusicIconIndex()
         {
@@ -1601,7 +1685,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建比分板背景图片（资源缺失时回退到图集精灵）。
+        /// Create a scoreboard background image (fallback to the album wizard when resources are missing).
+
         /// </summary>
         private static void CreateScoreboardBackdrop(Transform parent)
         {
@@ -1615,17 +1700,17 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建弹出消息背景（当前未使用——消息不再需要边框即可渲染）。
+        /// Create popup message background (currently not used - messages no longer need a border to render).
         /// </summary>
         private static GameObject CreatePopupBackdrop(Transform parent)
         {
-            // 弹出边框已从 HUD 中移除。消息文字现在独立渲染，
-            // 所以这个素材不会再出现了。
+            // Pop-up borders have been removed from the HUD. Message text is now rendered independently,
+            // So this material will not appear again.
             return null;
         }
 
         /// <summary>
-        /// 从 Resources 加载纹理并创建按目标宽度缩放的精灵。未找到时返回 null。
+        /// Loads a texture from Resources and creates a sprite scaled to the target width. Returns null if not found.
         /// </summary>
         private static GameObject CreateHudImage(string name, string resourcePath, float x, float y, float targetWidth, int sortingOrder, Transform parent)
         {
@@ -1641,7 +1726,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建一个空的根 GameObject 并将其挂载到指定的 Transform 下。
+        /// Create an empty root GameObject and mount it under the specified Transform.
+
         /// </summary>
         private static GameObject CreateHudRoot(string name, Transform parent)
         {
@@ -1655,7 +1741,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建一个位于指定像素坐标的空 GameObject。
+        /// Creates an empty GameObject located at the specified pixel coordinates.
+
         /// </summary>
         private static GameObject CreateHudAnchor(string name, float x, float y, Transform parent)
         {
@@ -1670,7 +1757,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建位于角色头像后方的发光光环。
+        /// Create a glowing halo behind your character's portrait.
         /// </summary>
         private static GameObject CreatePortraitAura(string name, float x, float y, float scale, int sortingOrder, Transform parent)
         {
@@ -1689,7 +1776,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建按指定像素位置缩放和定位的角色头像精灵。
+        /// Creates a character avatar sprite scaled and positioned at a specified pixel position.
+
         /// </summary>
         private static GameObject CreateCharacterPortrait(string name, int characterId, float x, float y, float targetPixels, int sortingOrder, Transform parent)
         {
@@ -1714,7 +1802,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 设置 GameObject 的 SpriteRenderer 颜色色调（为空时不做任何操作）。
+        /// Sets the GameObject's SpriteRenderer color tint (does nothing when empty).
+
         /// </summary>
         private static void SetSpriteTint(GameObject target, Color tint)
         {
@@ -1731,7 +1820,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将秒数转换为类似"1:00"或"04.2"的显示字符串。
+        /// Convert seconds to a display string like "1:00" or "04.2".
+
         /// </summary>
         private static string FormatTime(float secondsLeft)
         {
@@ -1749,26 +1839,40 @@ namespace mlp
     }
 
     /// <summary>
-    /// 菜单按钮：暂停菜单中的可点击按钮，支持鼠标悬停高亮和点击回调。
+    /// Menu button: A clickable button in the pause menu that supports mouseover highlighting and click callbacks.
+
     /// </summary>
     public sealed class mlpMenuButton
     {
-        private Rect rect;                              // 按钮的矩形区域（用于鼠标碰撞检测）
-        private readonly System.Action action;           // 点击时执行的回调函数
-        private readonly GameObject sprite;              // 按钮背景的 GameObject
-        private readonly TextMesh label;                 // 按钮文字（旧版 Unity 文字系统）
-        private readonly TMP_Text nativeLabel;           // 按钮文字（TextMeshPro 文字系统）
-        private readonly Transform labelTransform;       // 文字的 Transform 组件
-        private readonly Vector3 baseScale;              // 背景精灵的基础缩放值
-        private readonly Vector3 labelBaseScale;         // 文字的基础缩放值
-        private bool visible = true;                     // 按钮整体是否可见
-        private bool backgroundVisible = true;           // 背景精灵是否可见
-        private bool labelVisible = true;                // 文字标签是否可见
-        private bool pressed;                            // 当前是否处于按下状态
-        public GameObject Root => sprite;                // 公开访问背景 GameObject 的属性
+        private Rect rect;                              // The rectangular area of the button (used for mouse collision detection)
+
+        private readonly System.Action action;           // callback function executed when clicked
+
+        private readonly GameObject sprite;              // GameObject for the button background
+
+        private readonly TextMesh label;                 // Button text (old Unity text system)
+
+        private readonly TMP_Text nativeLabel;           // Button text (TextMeshPro text system)
+
+        private readonly Transform labelTransform;       // Text Transform component
+
+        private readonly Vector3 baseScale;              // The base scaling value of the background sprite
+
+        private readonly Vector3 labelBaseScale;         // The base scaling value of the text
+        private bool visible = true;                     // Is the entire button visible?
+
+        private bool backgroundVisible = true;           // Is the background sprite visible?
+
+        private bool labelVisible = true;                // Is the text label visible?
+
+        private bool pressed;                            // Whether it is currently pressed
+
+        public GameObject Root => sprite;                // Publicly access properties of the background GameObject
+
 
         /// <summary>
-        /// 创建一个带背景精灵和文字标签的可点击菜单按钮。
+        /// Create a clickable menu button with a background sprite and text label.
+
         /// </summary>
         public mlpMenuButton(
             string text,
@@ -1781,10 +1885,12 @@ namespace mlp
             int sortingOrder = 50,
             mlpTextStyle labelStyle = mlpTextStyle.ButtonLabel)
         {
-            // 1. 保存点击回调函数，计算按钮在屏幕上的碰撞矩形
+            // 1. Save the click callback function and calculate the collision rectangle of the button on the screen
+
             this.action = action;
             rect = new Rect(x - width * 0.5f, y - height * 0.5f, width, height);
-            // 2. 加载按钮背景纹理（优先使用独立纹理，否则回退到图集精灵）
+            // 2. Load the button background texture (use independent texture first, otherwise fall back to the atlas sprite)
+
             var buttonTexture = Resources.Load<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.MenuButtonPlate));
             float sourceWidth;
             float sourceHeight;
@@ -1802,15 +1908,18 @@ namespace mlp
                 sourceHeight = frame != null ? Mathf.Max(1f, frame.H) : 1f;
             }
 
-            // 3. 将背景精灵缩放到指定的像素尺寸
+            // 3. Scale the background sprite to the specified pixel size
+
             sprite.transform.localScale = new Vector3(
                 mlpConstants.UnitsPerPixel * width / sourceWidth,
                 mlpConstants.UnitsPerPixel * height / sourceHeight,
                 1f);
 
-            // 4. 记录基础缩放值（悬停时会在此基础上放大）
+            // 4. Record the basic zoom value (it will zoom in on this basis when hovering)
+
             baseScale = sprite.transform.localScale;
-            // 5. 根据按钮高度计算字号，创建文字标签（优先使用原生文字层，否则用 TextMesh）
+            // 5. Calculate the font size based on the button height and create a text label (preferably use the native text layer, otherwise use TextMesh)
+
             var fontSize = Mathf.Clamp(Mathf.RoundToInt(height * 0.55f), 18, 32);
             if (mlpNativeMenuTextLayer.Active != null && mlpNativeMenuTextLayer.Active.Owns(parent))
             {
@@ -1841,16 +1950,17 @@ namespace mlp
                 labelTransform = label.transform;
             }
 
-            // 6. 记录标签的基础缩放值
+            // 6. Record the base scaling value of the label
             labelBaseScale = labelTransform != null ? labelTransform.localScale : Vector3.one;
         }
 
         /// <summary>
-        /// 每帧检测鼠标悬停和点击。悬停时高亮显示，点击时触发动作。
+        /// Detect mouseovers and clicks every frame. Highlight on hover and trigger action on click.
         /// </summary>
         public void Update(Camera camera)
         {
-            // 1. 按钮不可见或没有相机时，重置按下状态并跳过
+            // 1. When the button is invisible or there is no camera, reset the pressed state and skip
+
             if (!visible)
             {
                 pressed = false;
@@ -1863,7 +1973,7 @@ namespace mlp
                 return;
             }
 
-            // 2. 获取鼠标位置，转换为游戏像素坐标，判断是否在按钮区域内
+            // 2. Get the mouse position, convert it to game pixel coordinates, and determine whether it is within the button area.
             var mouse = Input.mousePosition;
             Vector2 pixel;
             bool inside;
@@ -1887,14 +1997,16 @@ namespace mlp
                 }
             }
 
-            // 3. 悬停时按钮和标签略微放大（1.035 倍），否则恢复原始大小
+            // 3. Buttons and labels are slightly enlarged (1.035x) on hover, otherwise restored to original size
+
             sprite.transform.localScale = inside ? baseScale * 1.035f : baseScale;
             if (labelTransform != null)
             {
                 labelTransform.localScale = inside ? labelBaseScale * 1.035f : labelBaseScale;
             }
 
-            // 4. 悬停时文字变为金黄色，否则为白色
+            // 4. The text turns golden when hovered, otherwise it is white
+
             var labelColor = inside ? new Color(1f, 0.92f, 0.25f) : Color.white;
             if (label != null)
             {
@@ -1905,13 +2017,14 @@ namespace mlp
                 nativeLabel.color = labelColor;
             }
 
-            // 5. 鼠标按下时记录"已按下"状态
+            // 5. Record the "pressed" state when the mouse is pressed
             if (inside && Input.GetMouseButtonDown(0))
             {
                 pressed = true;
             }
 
-            // 6. 鼠标松开时：如果之前按下了且仍在按钮区域内，播放音效并执行回调
+            // 6. When the mouse is released: If it was previously pressed and is still within the button area, play the sound effect and execute the callback
+
             if (pressed && Input.GetMouseButtonUp(0))
             {
                 pressed = false;
@@ -1924,7 +2037,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更改按钮的标签文字。
+        /// Change the button's label text.
+
         /// </summary>
         public void SetText(string text)
         {
@@ -1939,7 +2053,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏整个按钮（背景和标签）。
+        /// Show or hide the entire button (background and label).
+
         /// </summary>
         public void SetVisible(bool isVisible)
         {
@@ -1967,7 +2082,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 仅显示或隐藏按钮背景（保持标签可见）。
+        /// Show or hide only the button background (keeping the label visible).
+
         /// </summary>
         public void SetBackgroundVisible(bool isVisible)
         {
@@ -1976,7 +2092,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 仅显示或隐藏按钮标签文字（保持背景可见）。
+        /// Show or hide only the button label text (keeping the background visible).
+
         /// </summary>
         public void SetLabelVisible(bool isVisible)
         {
@@ -2010,7 +2127,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 图标按钮：小型图标样式的可点击按钮，用于 HUD 上的功能按钮（如帮助、音效开关）。
+    /// Icon button: A small icon-style clickable button used for function buttons on the HUD (such as help, sound effects switches).
     /// </summary>
     public sealed class mlpIconButton
     {
@@ -2020,7 +2137,8 @@ namespace mlp
         private int activeIconIndex;
 
         /// <summary>
-        /// 创建一个可在多个图标图片之间切换的按钮（例如音乐开/关）。
+        /// Create a button that toggles between multiple icon images (e.g. music on/off).
+
         /// </summary>
         public mlpIconButton(
             string name,
@@ -2048,7 +2166,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将鼠标输入处理转发给内部菜单按钮。
+        /// Forward mouse input handling to internal menu buttons.
+
         /// </summary>
         public void Update(Camera camera)
         {
@@ -2056,7 +2175,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏图标按钮及其当前图标。
+        /// Shows or hides the icon button and its current icon.
+
         /// </summary>
         public void SetVisible(bool isVisible)
         {
@@ -2066,7 +2186,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换当前显示的图标图片。
+        /// Switch the currently displayed icon image.
+
         /// </summary>
         public void SetActiveIconIndex(int iconIndex)
         {
@@ -2075,7 +2196,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 加载纹理并在指定位置创建缩放后的精灵图标。
+        /// Loads a texture and creates a scaled sprite icon at the specified location.
+
         /// </summary>
         public static GameObject CreateImageIcon(string name, string resourcePath, float x, float y, int sortingOrder, float targetPixels, Transform parent)
         {
@@ -2092,7 +2214,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 仅显示当前激活的图标，隐藏其余所有图标。
+        /// Shows only the currently active icons and hides all other icons.
+
         /// </summary>
         private void RefreshIcons()
         {
@@ -2107,7 +2230,8 @@ namespace mlp
     }
 
     /// <summary>
-    /// 能量条视图：显示角色大招充能进度的条形 UI，充满后可以释放大招。
+    /// Energy bar view: A bar UI that displays the charging progress of the character's ultimate move. Once full, the ultimate move can be released.
+
     /// </summary>
     public sealed class mlpEnergyBarView
     {
@@ -2119,11 +2243,13 @@ namespace mlp
         private readonly mlpRadialIconMesh overlay;
 
         /// <summary>
-        /// 为玩家槽位构建能量/技能充能条 UI。
+        /// Build energy/skill charge bar UI for player slots.
+
         /// </summary>
         public mlpEnergyBarView(Transform parent, int controllerSlot, mlpCharacterSkillDefinition skillDefinition, float fullTime)
         {
-            // 1. 获取玩家控制器配置，根据玩家槽位确定能量条位置
+            // 1. Obtain the player controller configuration and determine the energy bar position according to the player slot.
+
             var profile = mlpControlsData.ProfileForSlot(controllerSlot);
             var x = SoloEnergyX;
             var y = EnergyY;
@@ -2137,7 +2263,8 @@ namespace mlp
                 y = PlayerTwoEnergyY;
             }
 
-            // 2. 创建能量条背景（优先使用独立纹理，否则回退到图集精灵）
+            // 2. Create an energy bar background (prioritize using independent textures, otherwise fall back to the atlas sprite)
+
             const float legacyEnergyBgWidth = 95f;
             const float legacyEnergyBgHeight = 89f;
             const float standaloneEnergyIconPixels = 76f;
@@ -2157,7 +2284,8 @@ namespace mlp
                 bg.transform.localScale *= 1.1f;
             }
 
-            // 3. 加载技能图标的基础图和径向遮罩图
+            // 3. Load the base image and radial mask image of the skill icon
+
             var baseResourcePath = skillDefinition.HasStandaloneIconArt
                 ? mlpAssets.Images.ResourcePath(skillDefinition.IconImageKey)
                 : null;
@@ -2167,7 +2295,7 @@ namespace mlp
             var baseTexture = !string.IsNullOrEmpty(baseResourcePath) ? Resources.Load<Texture2D>(baseResourcePath) : null;
             var maskTexture = !string.IsNullOrEmpty(maskResourcePath) ? Resources.Load<Texture2D>(maskResourcePath) : null;
 
-            // 4. 创建技能图标层和径向填充遮罩层（遮罩层用于显示充能进度）
+            // 4. Create a skill icon layer and a radial fill mask layer (the mask layer is used to show charging progress)
             if (baseTexture != null && maskTexture != null)
             {
                 mlpIconButton.CreateImageIcon($"EnergyBase_{controllerSlot}", baseResourcePath, x, y, 84, standaloneEnergyIconPixels, parent);
@@ -2190,7 +2318,8 @@ namespace mlp
                 }
             }
 
-            // 5. 创建按键提示背景和提示文字（如 "E" 键释放大招）
+            // 5. Create key prompt background and prompt text (such as the "E" key to release the ultimate move)
+
             mlpRender.Sprite($"EnergyHintBg_{controllerSlot}", mlpAtlasCache.Instance.Gameplay, "key_hint0000", x - 30f, y + 30f, 0.5f, 0.5f, 86, parent);
             mlpRender.Text(
                 $"EnergyHint_{controllerSlot}",
@@ -2204,12 +2333,14 @@ namespace mlp
                 parent,
                 mlpTextStyle.TournamentBody);
 
-            // 6. 设置初始充能状态（充能时间为 0 则直接充满，否则从 0 开始）
+            // 6. Set the initial charging state (if the charging time is 0, it will be fully charged directly, otherwise it will start from 0)
+
             SetCharge(fullTime <= 0f ? 1f : 0f);
         }
 
         /// <summary>
-        /// 更新能量条的径向填充，显示技能距离完全充能还有多近。
+        /// Updated the radial fill of the energy bar to show how close the ability is to being fully charged.
+
         /// </summary>
         public void SetCharge(float progress)
         {
@@ -2217,7 +2348,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 离开比赛时清理能量条的网格资源。
+        /// Cleans up the energy bar's grid resource when leaving a match.
+
         /// </summary>
         public void ReleaseRuntimeResources()
         {
@@ -2226,7 +2358,8 @@ namespace mlp
     }
 
     /// <summary>
-    /// 径向图标网格：用扇形网格来显示技能图标的部分填充效果，表示技能冷却或充能进度。
+    /// Radial icon grid: Use a fan-shaped grid to display the partial filling effect of skill icons, indicating skill cooling or charging progress.
+
     /// </summary>
     public sealed class mlpRadialIconMesh
     {
@@ -2240,7 +2373,7 @@ namespace mlp
         private readonly Vector2 uvMax;
 
         /// <summary>
-        /// 使用图集中的精灵创建径向填充图标。
+        /// Create a radial fill icon using sprites from the gallery.
         /// </summary>
         public mlpRadialIconMesh(string name, mlpAtlas atlas, string frameName, float x, float y, int sortingOrder, Transform parent)
         {
@@ -2269,7 +2402,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 使用独立纹理创建径向填充图标。
+        /// Create a radial fill icon using an independent texture.
         /// </summary>
         public mlpRadialIconMesh(string name, Texture2D texture, float x, float y, int sortingOrder, Transform parent, float targetPixels)
         {
@@ -2296,7 +2429,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新径向图标的可见程度。0 = 空，1 = 完全填充。
+        /// Update the visibility of the radial icon. 0 = empty, 1 = completely filled.
         /// </summary>
         public void SetProgress(float progress)
         {
@@ -2313,34 +2446,40 @@ namespace mlp
         }
 
         /// <summary>
-        /// 重建网格三角形以显示指定度数的扇形区域。
+        /// Rebuilds the mesh triangles to reveal a sector of the specified degree.
         /// </summary>
         private void BuildSector(float degrees)
         {
-            // 1. 根据角度计算需要多少个三角形分段（最多 36 段 = 360 度）
+            // 1. Calculate how many triangle segments are needed based on the angle (max 36 segments = 360 degrees)
+
             var segmentCount = Mathf.Max(1, Mathf.CeilToInt(RadialSteps * Mathf.Clamp01(degrees / 360f)));
             var radius = Mathf.Min(width, height) * 0.5f;
-            // 2. 分配顶点、UV 和三角形索引数组（顶点数 = 中心点 + 扇形边缘点）
+            // 2. Allocate vertex, UV and triangle index arrays (number of vertices = center point + sector edge point)
+
             var vertices = new Vector3[segmentCount + 2];
             var uvs = new Vector2[segmentCount + 2];
             var triangles = new int[segmentCount * 3];
-            // 3. 中心顶点位于原点，UV 设为纹理中心
+            // 3. The center vertex is located at the origin, and the UV is set to the texture center.
             vertices[0] = Vector3.zero;
             uvs[0] = new Vector2((uvMin.x + uvMax.x) * 0.5f, (uvMin.y + uvMax.y) * 0.5f);
 
-            // 4. 从 12 点钟方向顺时针生成扇形边缘顶点
+            // 4. Generate scalloped edge vertices clockwise from the 12 o'clock direction
+
             for (var i = 0; i <= segmentCount; i++)
             {
                 var t = segmentCount == 0 ? 0f : i / (float)segmentCount;
                 var angle = (90f - degrees * t) * Mathf.Deg2Rad;
                 var point = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                // 5. 设置顶点位置
+                // 5. Set the vertex position
+
                 vertices[i + 1] = new Vector3(point.x, point.y, 0f);
-                // 6. 将顶点位置映射到纹理 UV 坐标（实现扇形裁剪纹理效果）
+                // 6. Map vertex positions to texture UV coordinates (to achieve fan-shaped clipping texture effect)
+
                 var uvX = Mathf.Lerp(uvMin.x, uvMax.x, point.x / width + 0.5f);
                 var uvY = Mathf.Lerp(uvMin.y, uvMax.y, point.y / height + 0.5f);
                 uvs[i + 1] = new Vector2(uvX, uvY);
-                // 7. 为每个分段创建一个三角形（中心点 → 当前边缘点 → 下一个边缘点）
+                // 7. Create a triangle for each segment (center point → current edge point → next edge point)
+
                 if (i == segmentCount)
                 {
                     continue;
@@ -2352,7 +2491,8 @@ namespace mlp
                 triangles[tri + 2] = i + 2;
             }
 
-            // 8. 将计算好的数据上传到网格
+            // 8. Upload the calculated data to the grid
+
             mesh.Clear();
             mesh.vertices = vertices;
             mesh.uv = uvs;
@@ -2361,7 +2501,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 销毁网格以释放内存，当图标不再需要时调用。
+        /// Destroy the grid to free up memory, called when the icon is no longer needed.
         /// </summary>
         public void ReleaseRuntimeResources()
         {

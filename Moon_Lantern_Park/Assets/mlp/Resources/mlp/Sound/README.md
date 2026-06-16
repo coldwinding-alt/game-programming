@@ -4,6 +4,8 @@
 
 所有音效通过 `mlpAudio.cs` 单例管理器播放，音效键常量定义在 `mlpAssets.Sounds` 中。
 
+版权和来源说明见：`DOCS/AUDIO_COPYRIGHT.md` 与 `ASSET_CREDITS.md`。
+
 ---
 
 ## 背景音乐

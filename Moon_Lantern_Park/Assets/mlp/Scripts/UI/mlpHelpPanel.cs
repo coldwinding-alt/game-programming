@@ -1,20 +1,22 @@
-// 帮助面板（按键说明和游戏规则）
-// 玩家按帮助按钮后弹出，有键盘操作和游戏规则两个页面。
-// 键盘页面可以点选不同动作，女巫角色会播放对应的演示动画。
+// Help panel (key descriptions and game rules)
+
+// After the player presses the help button, a pop-up will appear with two pages: keyboard operation and game rules.
+
+// You can click on different actions on the keyboard page, and the witch character will play the corresponding demonstration animation.
 
 using TMPro;
 using UnityEngine;
 
 namespace mlp
 {
-    /// <summary>帮助面板页面类型：键盘操作页面或游戏规则页面。</summary>
+    /// <summary>Help panel page type: keyboard operation page or game rules page. </summary>
     public enum mlpHelpPage
     {
         Keyboard,
         Rules
     }
 
-    /// <summary>帮助面板演示动作类型：移动、跳跃、投篮、假动作、扣篮、抢断、盖帽等可演示的操作。</summary>
+    /// <summary>The help panel demonstrates action types: moving, jumping, shooting, fake action, dunking, stealing, blocking and other demonstrable operations. </summary>
     public enum mlpHelpDemo
     {
         Move,
@@ -26,7 +28,7 @@ namespace mlp
         Block
     }
 
-    /// <summary>帮助面板按钮动作：切换页面、选择演示、关闭面板等按钮可执行的操作。</summary>
+    /// <summary>Help panel button actions: Switch pages, select demos, close panels, etc. The operations that buttons can perform. </summary>
     public enum mlpHelpButtonAction
     {
         Close,
@@ -46,63 +48,101 @@ namespace mlp
 
     [ExecuteAlways]
     /// <summary>
-    /// 帮助面板：按帮助按钮后弹出的界面，有键盘操作和游戏规则两个页面，可以点选不同动作查看女巫角色的演示动画。
+    /// Help panel: The interface that pops up after pressing the help button has two pages: keyboard operation and game rules. You can click on different actions to view the demonstration animation of the witch character.
+
     /// </summary>
     public sealed class mlpHelpPanel : MonoBehaviour
     {
-        private const string PrefabResourcePath = "mlp/Prefabs/UI/MlpHelpPanel"; // 帮助面板预制体资源路径
-        private const int WitchCharacterId = 6; // 女巫角色ID
-        private const int WitchSortingOrderBase = 920; // 女巫渲染排序层级基数
-        private const float DemoRepeatMove = 999f; // 移动演示重复间隔（秒）
-        private const float DemoRepeatJump = 0.72f; // 跳跃演示重复间隔（秒）
-        private const float DemoRepeatShoot = 0.9f; // 投篮演示重复间隔（秒）
-        private const float DemoRepeatPump = 0.5f; // 假动作演示重复间隔（秒）
-        private const float DemoRepeatDash = 0.55f; // 冲刺演示重复间隔（秒）
-        private const float DemoRepeatSteal = 0.82f; // 抢断演示重复间隔（秒）
-        private const float DemoRepeatBlock = 0.55f; // 盖帽演示重复间隔（秒）
+        private const string PrefabResourcePath = "mlp/Prefabs/UI/MlpHelpPanel"; // Help panel prefab resource path
+
+        private const int WitchCharacterId = 6; // Witch character ID
+
+        private const int WitchSortingOrderBase = 920; // Witch rendering sorting level base
+        private const float DemoRepeatMove = 999f; // Mobile demo repeat interval (seconds)
+
+        private const float DemoRepeatJump = 0.72f; // Jump presentation repeat interval (seconds)
+
+        private const float DemoRepeatShoot = 0.9f; // Shooting demonstration repetition interval (seconds)
+
+        private const float DemoRepeatPump = 0.5f; // Fake action demonstration repeat interval (seconds)
+
+        private const float DemoRepeatDash = 0.55f; // Sprint demo repeat interval (seconds)
+
+        private const float DemoRepeatSteal = 0.82f; // Tackle demo repeat interval (seconds)
+        private const float DemoRepeatBlock = 0.55f; // Block demonstration repeat interval (seconds)
+
 #if UNITY_EDITOR
-        private const string EditorWitchPreviewName = "WitchEditorPreview"; // 编辑器女巫预览对象名称
+        private const string EditorWitchPreviewName = "WitchEditorPreview"; // Editor witch preview object name
+
 #endif
 
-        private static mlpHelpPanel activePanel; // 当前活动的帮助面板实例
+        private static mlpHelpPanel activePanel; // The currently active help panel instance
 
-        [SerializeField] private GameObject panelRoot; // 面板根节点
-        [SerializeField] private GameObject keyboardPageRoot; // 键盘操作页面根节点
-        [SerializeField] private GameObject rulesPageRoot; // 游戏规则页面根节点
-        [SerializeField] private mlpHelpButton[] buttons; // 面板上所有按钮的数组
-        [SerializeField] private SpriteRenderer keyboardTabPlate; // 键盘标签页底板精灵
-        [SerializeField] private SpriteRenderer rulesTabPlate; // 规则标签页底板精灵
-        [SerializeField] private TMP_Text keyboardTabText; // 键盘标签页文字
-        [SerializeField] private TMP_Text rulesTabText; // 规则标签页文字
-        [SerializeField] private SpriteRenderer[] demoRowPlates; // 演示行背景底板精灵数组
-        [SerializeField] private TMP_Text demoTitleText; // 演示标题文字
-        [SerializeField] private TMP_Text demoDescriptionText; // 演示描述文字
-        [SerializeField] private TMP_Text demoCoachText; // 演示教练提示文字
-        [SerializeField] private Transform witchMount; // 女巫模型挂载点
-        [SerializeField] private SpriteRenderer witchSpotlight; // 女巫聚光灯精灵
-        [SerializeField] private mlpHelpButton quickTestToggleButton; // 快速测试开关按钮
-        [SerializeField] private SpriteRenderer quickTestTogglePlate; // 快速测试开关底板精灵
-        [SerializeField] private TMP_Text quickTestToggleText; // 快速测试开关文字
-        [SerializeField] private mlpHelpButton quickTestInfoButton; // 快速测试信息按钮
-        [SerializeField] private GameObject quickTestInfoRoot; // 快速测试信息面板根节点
-        [SerializeField] private TMP_Text quickTestInfoText; // 快速测试信息文字
 
-        private DBLiteArmature witchArmature; // 女巫骨骼动画实例
-        private mlpHelpPage currentPage = mlpHelpPage.Keyboard; // 当前显示的页面类型
-        private mlpHelpDemo currentDemo = mlpHelpDemo.Block; // 当前选中的演示动作
-        private bool initialized; // 是否已完成初始化
-        private bool visible; // 面板是否可见
-        private float panelTime; // 面板打开累计时间（用于入场动画）
-        private float demoTimer; // 演示动画计时器
-        private bool demoToggle; // 演示动画交替标记（用于两段式动画切换）
-        private bool quickTestInfoVisible; // 快速测试信息面板是否可见
+        [SerializeField] private GameObject panelRoot; // Panel root node
+
+        [SerializeField] private GameObject keyboardPageRoot; // Keyboard operation page root node
+
+        [SerializeField] private GameObject rulesPageRoot; // Game rules page root node
+
+        [SerializeField] private mlpHelpButton[] buttons; // Array of all buttons on the panel
+
+        [SerializeField] private SpriteRenderer keyboardTabPlate; // Keyboard tab base wizard
+
+        [SerializeField] private SpriteRenderer rulesTabPlate; // Rules tab floor wizard
+
+        [SerializeField] private TMP_Text keyboardTabText; // Keyboard tab text
+
+        [SerializeField] private TMP_Text rulesTabText; // Rules tab text
+
+        [SerializeField] private SpriteRenderer[] demoRowPlates; // Demo row background floor sprite array
+        [SerializeField] private TMP_Text demoTitleText; // Demo title text
+
+        [SerializeField] private TMP_Text demoDescriptionText; // Demo description text
+
+        [SerializeField] private TMP_Text demoCoachText; // Presentation Coach Prompt Text
+
+        [SerializeField] private Transform witchMount; // Witch model mount point
+
+        [SerializeField] private SpriteRenderer witchSpotlight; // witch spotlight elf
+
+        [SerializeField] private mlpHelpButton quickTestToggleButton; // Quick test switch button
+
+        [SerializeField] private SpriteRenderer quickTestTogglePlate; // Quick test switch backplane wizard
+
+        [SerializeField] private TMP_Text quickTestToggleText; // Quick test switch text
+
+        [SerializeField] private mlpHelpButton quickTestInfoButton; // Quick test information button
+
+        [SerializeField] private GameObject quickTestInfoRoot; // Quickly test the information panel root node
+
+        [SerializeField] private TMP_Text quickTestInfoText; // Quick test message text
+
+
+        private DBLiteArmature witchArmature; // Witch skeleton animation example
+
+        private mlpHelpPage currentPage = mlpHelpPage.Keyboard; // The type of page currently displayed
+        private mlpHelpDemo currentDemo = mlpHelpDemo.Block; // Currently selected demonstration action
+
+        private bool initialized; // Has initialization been completed?
+
+        private bool visible; // Is the panel visible?
+
+        private float panelTime; // Cumulative time of panel opening (used for entrance animation)
+
+        private float demoTimer; // Presentation animation timer
+
+        private bool demoToggle; // Demonstration animation alternation mark (for two-stage animation switching)
+        private bool quickTestInfoVisible; // Quickly test whether the information panel is visible
+
 #if UNITY_EDITOR
-        private GameObject editorWitchPreviewRoot; // 编辑器女巫预览对象根节点
+        private GameObject editorWitchPreviewRoot; // Editor witch preview object root node
+
 #endif
 
-        public bool IsVisible => visible; // 面板是否可见（公开只读）
+        public bool IsVisible => visible; // Whether the panel is visible (public read-only)
 
-        public static bool IsAnyOpen // 是否有任何帮助面板处于打开状态
+        public static bool IsAnyOpen // Are there any help panels open?
         {
             get
             {
@@ -112,13 +152,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// 打开帮助面板的键盘操作页面。如果没有面板则创建一个。
+        /// Open the keyboard operation page of the help panel. If there is no panel, create one.
         /// </summary>
         public static void ShowKeyboardPage()
         {
-            // 1. 查找已有的帮助面板实例，如果没有则从预制体创建一个新的
+            // 1. Find an existing help panel instance, if not create a new one from the prefab
             var panel = FindActivePanel(createFallback: true);
-            // 2. 如果找到了面板，显示键盘操作页面
+            // 2. If the panel is found, display the keyboard operation page
+
             if (panel != null)
             {
                 panel.Show(mlpHelpPage.Keyboard);
@@ -126,7 +167,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 关闭当前打开的帮助面板。
+        /// Close the currently open help panel.
+
         /// </summary>
         public static void HideActive()
         {
@@ -138,7 +180,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 游戏启动时将此面板记录为活动面板。
+        /// This panel is recorded as the active panel when the game starts.
+
         /// </summary>
         private void Awake()
         {
@@ -163,7 +206,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 组件启用时更新编辑器预览。
+        /// Updates the editor preview when the component is enabled.
+
         /// </summary>
         private void OnEnable()
         {
@@ -177,7 +221,8 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// Inspector 中的值改变时刷新编辑器预览。
+        /// Refresh the editor preview when the value in the Inspector changes.
+
         /// </summary>
         private void OnValidate()
         {
@@ -192,7 +237,8 @@ namespace mlp
 #endif
 
         /// <summary>
-        /// 对象销毁时清除活动面板引用。
+        /// The active panel reference is cleared when the object is destroyed.
+
         /// </summary>
         private void OnDestroy()
         {
@@ -203,7 +249,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧执行：面板动画、按钮检测、演示更新，以及 Escape 键关闭处理。
+        /// Performed per frame: panel animation, button detection, presentation updates, and Escape key close handling.
+
         /// </summary>
         private void Update()
         {
@@ -214,22 +261,27 @@ namespace mlp
                 return;
             }
 #endif
-            // 1. 面板未打开时跳过所有更新
+            // 1. Skip all updates when the panel is not open
+
             if (!visible)
             {
                 return;
             }
 
-            // 2. 累计面板打开时间，用于播放入场动画
+            // 2. The accumulated panel opening time is used to play the entrance animation.
+
             panelTime += Time.unscaledDeltaTime;
-            // 3. 更新面板的缩放入场动画和女巫聚光灯脉冲效果
+            // 3. Update the panel’s zoom entrance animation and witch spotlight pulse effect
+
             UpdatePanelEntrance();
-            // 4. 检测所有按钮的鼠标悬停和点击
+            // 4. Detect mouseovers and clicks on all buttons
+
             UpdateButtons();
-            // 5. 更新女巫演示动画（计时器到期时重新播放）
+            // 5. Update the witch demonstration animation (replay when the timer expires)
             UpdateDemo(Time.unscaledDeltaTime);
 
-            // 6. 按 Escape 键关闭帮助面板
+            // 6. Press the Escape key to close the help panel
+
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Hide();
@@ -237,7 +289,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 确保女巫角色始终渲染在其他精灵之上。
+        /// Make sure the witch character always renders on top of other sprites.
+
         /// </summary>
         private void LateUpdate()
         {
@@ -257,34 +310,39 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示帮助面板页面。
+        /// Display the help panel page.
+
         /// </summary>
         public void Show(mlpHelpPage page)
         {
-            // 1. 如果面板根节点未指定，使用当前 GameObject
+            // 1. If the panel root node is not specified, use the current GameObject
+
             if (panelRoot == null)
             {
                 panelRoot = gameObject;
             }
 
-            // 2. 标记面板为可见，激活面板根节点
+            // 2. Mark the panel as visible and activate the panel root node
+
             visible = true;
             panelRoot.SetActive(true);
-            // 3. 重置面板计时器（用于入场动画），设置略微缩小的初始缩放
+            // 3. Reset the panel timer (used for the entrance animation) and set a slightly smaller initial zoom
             panelTime = 0f;
             transform.localScale = Vector3.one * 0.985f;
 
-            // 4. 首次打开时构建女巫模型和 UI（后续调用会跳过）
+            // 4. Build the witch model and UI when opening for the first time (will be skipped in subsequent calls)
+
             EnsureInitialized();
-            // 5. 设置为键盘操作页面，隐藏信息面板
+            // 5. Set as keyboard operation page and hide the information panel
+
             SetPage(mlpHelpPage.Keyboard);
             SetQuickTestInfoVisible(false);
-            // 6. 默认选中盖帽演示并重新播放动画
+            // 6. The block demo is selected by default and the animation is replayed
             SelectDemo(mlpHelpDemo.Block, forceRestart: true);
         }
 
         /// <summary>
-        /// 隐藏帮助面板。默认播放按钮音效。
+        /// Hide the help panel. Play button sound by default.
         /// </summary>
         public void Hide(bool playSound = true)
         {
@@ -306,7 +364,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 立即隐藏面板，不播放任何音效（用于启动时）。
+        /// Immediately hides the panel without playing any sound effects (for use on startup).
+
         /// </summary>
         private void HideImmediate()
         {
@@ -318,35 +377,43 @@ namespace mlp
         }
 
         /// <summary>
-        /// 首次显示面板时设置女巫模型和页面。
+        /// Set up the witch model and page when the panel is first shown.
         /// </summary>
         private void EnsureInitialized()
         {
-            // 1. 如果已经初始化过，直接返回
+            // 1. If it has been initialized, return directly
+
             if (initialized)
             {
                 return;
             }
 
-            // 2. 标记为已初始化
+            // 2. Mark as initialized
+
             initialized = true;
-            // 3. 隐藏旧版标签页（现在只用键盘操作页面）
+            // 3. Hide the old tab page (now only use the keyboard to operate the page)
+
             HideLegacyTabs();
-            // 4. 隐藏开发测试控件（普通玩家不需要看到）
+            // 4. Hide development and testing controls (ordinary players don’t need to see them)
+
             HideQuickTestControls();
-            // 5. 创建女巫角色模型，用于播放动作演示动画
+            // 5. Create a witch character model for playing action demonstration animations
+
             BuildWitchPreview();
-            // 6. 设置当前页面和选中的演示动作
+            // 6. Set the current page and selected demonstration action
+
             SetPage(currentPage);
             SelectDemo(currentDemo, forceRestart: true);
         }
 
         /// <summary>
-        /// 创建女巫角色模型以便播放演示动画。
+        /// Create a witch character model to play the demo animation.
+
         /// </summary>
         private void BuildWitchPreview()
         {
-            // 1. 如果挂载点不存在或已创建过女巫模型，直接返回
+            // 1. If the mount point does not exist or the witch model has been created, return directly
+
             if (witchMount == null || witchArmature != null)
             {
                 return;
@@ -358,14 +425,16 @@ namespace mlp
                 DestroyEditorWitchPreview();
             }
 #endif
-            // 2. 创建女巫角色的骨骼动画模型
+            // 2. Create a skeletal animation model of the witch character
+
             witchArmature = mlpPlayersData.BuildGameplayArmature("HelpWitchPreview");
             if (witchArmature == null)
             {
                 return;
             }
 
-            // 3. 将模型挂载到面板上的指定位置，设置合适的缩放比例
+            // 3. Mount the model to the specified position on the panel and set the appropriate scaling ratio
+
             witchArmature.transform.SetParent(witchMount, false);
             witchArmature.transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
                 witchMount,
@@ -374,25 +443,31 @@ namespace mlp
                 mlpConstants.PixelPerfectCharacterScale * 1.22f,
                 mlpConstants.PixelPerfectCharacterScale * 1.22f,
                 1f);
-            // 4. 应用女巫角色的外观（颜色、服装等），隐藏手中的篮球
+            // 4. Apply the appearance of the witch character (color, clothing, etc.) to hide the basketball in your hand
+
             mlpPlayersData.ApplyCharacter(witchArmature, WitchCharacterId);
             HidePreviewBall(witchArmature);
-            // 5. 提升女巫的渲染层级，确保她显示在面板背景之上
+            // 5. Increase the rendering level of the witch to ensure that she appears above the panel background
+
             ApplyWitchSortingOrder();
         }
 
         /// <summary>
-        /// 面板打开动画，带有快速缩放弹跳和微妙的聚光灯脉冲效果。
+        /// Panel opening animation with quick zoom bounce and subtle spotlight pulsing effect.
+
         /// </summary>
         private void UpdatePanelEntrance()
         {
-            // 1. 计算入场动画进度（0→1），使用缓出曲线（三次方）
+            // 1. Calculate the progress of the entry animation (0→1), using the ease-out curve (cubic)
+
             var t = Mathf.Clamp01(panelTime / 0.12f);
             var eased = 1f - Mathf.Pow(1f - t, 3f);
-            // 2. 面板从 0.985 倍缩放弹入到 1.0 倍
+            // 2. The panel pops up from 0.985x zoom to 1.0x
+
             transform.localScale = Vector3.one * Mathf.Lerp(0.985f, 1f, eased);
 
-            // 3. 女巫聚光灯持续做微弱的呼吸脉冲动画
+            // 3. The witch spotlight continues to do weak breathing pulse animations
+
             if (witchSpotlight != null)
             {
                 var pulse = Mathf.Sin(Time.unscaledTime * 2.3f) * 0.025f;
@@ -401,42 +476,49 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧检测所有按钮的鼠标点击，并将命中路由到 HandleButton。
+        /// Detect mouse clicks on all buttons every frame and route hits to HandleButton.
+
         /// </summary>
         private void UpdateButtons()
         {
-            // 1. 获取主相机（用于鼠标坐标转换）
+            // 1. Get the main camera (for mouse coordinate conversion)
+
             var camera = Camera.main;
             if (buttons == null)
             {
                 return;
             }
 
-            // 2. 遍历所有按钮，检测鼠标悬停和点击
+            // 2. Traverse all buttons and detect mouse hovers and clicks
+
             for (var i = 0; i < buttons.Length; i++)
             {
                 var button = buttons[i];
-                // 3. Tick 返回 true 表示玩家完成了一次有效点击
+                // 3. Tick returns true indicating that the player has completed a valid click
+
                 if (button == null || !button.Tick(camera))
                 {
                     continue;
                 }
 
-                // 4. 播放按钮音效，将点击事件路由到对应的操作
+                // 4. Play the button sound effect and route the click event to the corresponding operation
+
                 mlpAudio.Instance?.Play(mlpAssets.Sounds.Button, 0.75f);
                 HandleButton(button.Action);
             }
         }
 
         /// <summary>
-        /// 将按钮点击路由到正确的操作（关闭、切换标签页、选择演示等）。
+        /// Route button clicks to the correct action (close, switch tabs, select demo, etc.).
+
         /// </summary>
         private void HandleButton(mlpHelpButtonAction action)
         {
-            // 1. 根据按钮动作类型执行对应操作
+            // 1. Perform corresponding operations according to the button action type
+
             switch (action)
             {
-                // 2. 关闭帮助面板（不播放额外音效，因为按钮音效已播放）
+                // 2. Close the help panel (no additional sound effects are played because the button sound effects are already played)
                 case mlpHelpButtonAction.Close:
                     Hide(playSound: false);
                     break;
@@ -494,13 +576,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将帮助面板保持在单一操作说明页面。
+        /// Keep help panels to a single page of instructions.
+
         /// </summary>
         private void SetPage(mlpHelpPage page)
         {
-            // 1. 固定使用键盘操作页面（规则页面已废弃）
+            // 1. Fixed use of keyboard operation page (the rules page has been abandoned)
+
             currentPage = mlpHelpPage.Keyboard;
-            // 2. 显示键盘操作页面，隐藏游戏规则页面
+            // 2. Display the keyboard operation page and hide the game rules page
+
             if (keyboardPageRoot != null)
             {
                 keyboardPageRoot.SetActive(true);
@@ -511,11 +596,13 @@ namespace mlp
                 rulesPageRoot.SetActive(false);
             }
 
-            // 3. 隐藏旧版标签页按钮，刷新测试开关状态
+            // 3. Hide the old tab button and refresh the test switch status
+
             HideLegacyTabs();
             RefreshQuickTestToggle();
 
-            // 4. 更新所有按钮的选中高亮状态（演示按钮、测试开关等）
+            // 4. Update the selected and highlighted status of all buttons (demo button, test switch, etc.)
+
             if (buttons != null)
             {
                 for (var i = 0; i < buttons.Length; i++)
@@ -535,7 +622,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通过改变标签页的底板和文字颜色来高亮选中的标签页。
+        /// Highlight the selected tab by changing the tab's background and text color.
+
         /// </summary>
         private static void SetTabVisual(SpriteRenderer plate, TMP_Text label, bool selected)
         {
@@ -582,13 +670,15 @@ namespace mlp
 
         private void EnsureQuickTestToggle()
         {
-            // 1. 非运行时或面板不存在时跳过
+            // 1. Skip when not running or when the panel does not exist
+
             if (panelRoot == null || !Application.isPlaying)
             {
                 return;
             }
 
-            // 2. 加载标签页和卡片精灵资源（用于创建按钮背景）
+            // 2. Load tab and card sprite resources (used to create button backgrounds)
+
             var tab = Resources.Load<Sprite>("mlp/Help/help_tab");
             var card = Resources.Load<Sprite>("mlp/Help/help_card");
             if (quickTestToggleButton == null)
@@ -770,44 +860,55 @@ namespace mlp
         }
 
         /// <summary>
-        /// 选择要演示的动作（移动、跳跃、投篮、虚晃、冲刺、抢断、盖帽）。
+        /// Select the action you want to demonstrate (move, jump, shoot, feint, sprint, steal, block).
+
         /// </summary>
         private void SelectDemo(mlpHelpDemo demo, bool forceRestart = false)
         {
-            // 1. 如果点击的是已选中的演示，只重新播放动画即可
+            // 1. If you click on the selected demo, just replay the animation.
+
             if (!forceRestart && currentDemo == demo)
             {
                 RestartDemoAnimation();
                 return;
             }
 
-            // 2. 设置当前选中的演示类型
+            // 2. Set the currently selected presentation type
+
             currentDemo = demo;
-            // 3. 重置演示计时器和交替播放标记（用于盖帽和假动作的两段式动画）
+            // 3. Reset demo timer and alternate play markers (two-part animation for blocks and feints)
+
             demoTimer = 999f;
             demoToggle = false;
-            // 4. 更新标题、描述和教练提示文字
+            // 4. Update title, description and coaching prompt text
+
             UpdateDemoCopy();
-            // 5. 高亮当前选中的演示按钮行
+            // 5. Highlight the currently selected demo button row
+
             UpdateDemoSelections();
-            // 6. 播放女巫的对应动作动画
+            // 6. Play the corresponding action animation of the witch
+
             RestartDemoAnimation();
         }
 
         /// <summary>
-        /// 计时器到期时重新开始演示动画。
+        /// Restarts the presentation animation when the timer expires.
+
         /// </summary>
         private void UpdateDemo(float dt)
         {
-            // 1. 如果没有女巫模型或不在键盘页面，跳过
+            // 1. If there is no witch model or not on the keyboard page, skip
+
             if (witchArmature == null || currentPage != mlpHelpPage.Keyboard)
             {
                 return;
             }
 
-            // 2. 累加演示计时器
+            // 2. Cumulative presentation timer
+
             demoTimer += dt;
-            // 3. 获取当前演示动画的重复间隔（秒），到期则重新播放
+            // 3. Get the repetition interval (seconds) of the current demonstration animation, and replay it when it expires.
+
             var repeat = DemoRepeatFor(currentDemo);
             if (demoTimer >= repeat)
             {
@@ -816,19 +917,23 @@ namespace mlp
         }
 
         /// <summary>
-        /// 播放当前选中演示对应的女巫动画。
+        /// Play the witch animation corresponding to the currently selected demo.
+
         /// </summary>
         private void RestartDemoAnimation()
         {
-            // 1. 如果没有女巫模型则跳过
+            // 1. Skip if there is no witch model
+
             if (witchArmature == null)
             {
                 return;
             }
 
-            // 2. 重置演示计时器，开始计时
+            // 2. Reset the demo timer and start counting
+
             demoTimer = 0f;
-            // 3. 根据选中的演示类型播放对应的骨骼动画
+            // 3. Play the corresponding skeletal animation according to the selected demonstration type
+
             switch (currentDemo)
             {
                 case mlpHelpDemo.Move:
@@ -840,7 +945,7 @@ namespace mlp
                 case mlpHelpDemo.Shoot:
                     witchArmature.Play("throw_land");
                     break;
-                // 4. 假动作和盖帽使用两段交替动画（前摇 + 收招）
+                // 4. Use two alternating animations for feints and blocks (forward + closing)
                 case mlpHelpDemo.Pump:
                     witchArmature.Play(demoToggle ? "pumpEnd" : "pumpStart");
                     demoToggle = !demoToggle;
@@ -857,13 +962,15 @@ namespace mlp
                     break;
             }
 
-            // 5. 隐藏女巫手中的篮球，提升渲染层级确保显示在面板之上
+            // 5. Hide the basketball in the witch’s hand and increase the rendering level to ensure it is displayed on the panel.
+
             HidePreviewBall(witchArmature);
             ApplyWitchSortingOrder();
         }
 
         /// <summary>
-        /// 返回每个演示动画重复前的持续时间（秒）。
+        /// Returns the duration in seconds before each presentation animation repeats.
+
         /// </summary>
         private static float DemoRepeatFor(mlpHelpDemo demo)
         {
@@ -887,7 +994,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新所选演示的标题、描述和教练提示文字。
+        /// Updates the selected demo's title, description, and coach tip text.
+
         /// </summary>
         private void UpdateDemoCopy()
         {
@@ -897,7 +1005,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回每种演示类型的显示标题（如 "MOVE"、"JUMP"）。
+        /// Returns the display title for each demo type (e.g. "MOVE", "JUMP").
+
         /// </summary>
         private static string DemoTitle(mlpHelpDemo demo)
         {
@@ -921,7 +1030,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回每种演示类型的按键操作说明。
+        /// Returns keystroke instructions for each presentation type.
+
         /// </summary>
         private static string DemoDescription(mlpHelpDemo demo)
         {
@@ -945,7 +1055,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回每种演示类型的简短教练提示。
+        /// Returns brief coaching tips for each presentation type.
+
         /// </summary>
         private static string DemoCoachNote(mlpHelpDemo demo)
         {
@@ -969,11 +1080,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 高亮当前选中演示的按钮和行。
+        /// Highlight the buttons and rows of the currently selected demo.
+
         /// </summary>
         private void UpdateDemoSelections()
         {
-            // 1. 高亮当前选中的演示行背景（绿色 = 选中，深色 = 未选中）
+            // 1. Highlight the background of the currently selected demo row (green = selected, dark = unselected)
+
             if (demoRowPlates != null)
             {
                 for (var i = 0; i < demoRowPlates.Length; i++)
@@ -991,7 +1104,8 @@ namespace mlp
                 }
             }
 
-            // 2. 更新所有按钮的选中状态（演示按钮和测试开关按钮）
+            // 2. Update the selected status of all buttons (demo button and test switch button)
+
             if (buttons == null)
             {
                 return;
@@ -1011,7 +1125,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 检查按钮是否与当前选中的演示匹配。
+        /// Checks if the button matches the currently selected demo.
+
         /// </summary>
         private bool IsDemoButtonSelected(mlpHelpButtonAction action)
         {
@@ -1025,7 +1140,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 提升女巫的排序层使其渲染在面板背景之前。
+        /// Raise the witch's sorting layer so that it renders in front of the panel background.
+
         /// </summary>
         private void ApplyWitchSortingOrder()
         {
@@ -1033,7 +1149,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 提升给定骨骼动画上所有精灵的排序层，使其绘制在其他 UI 之上。
+        /// Raise the ordering layer of all sprites on the given skeletal animation so that they are drawn on top of other UI.
+
         /// </summary>
         private static void ApplyWitchSortingOrder(DBLiteArmature armature)
         {
@@ -1054,7 +1171,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏女巫预览中的球精灵，只显示角色本身。
+        /// Hides the ball sprite in the Witch preview, showing only the character itself.
+
         /// </summary>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
@@ -1068,7 +1186,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 安全地设置 TextMeshPro 标签的文字（优雅处理 null）。
+        /// Safely set the text of a TextMeshPro label (handles null gracefully).
+
         /// </summary>
         private static void SetText(TMP_Text textMesh, string value)
         {
@@ -1082,24 +1201,28 @@ namespace mlp
         }
 
         /// <summary>
-        /// 查找活动的帮助面板，如果 createFallback 为 true 则从预制体生成一个。
+        /// Finds the active help panel and generates one from a prefab if createFallback is true.
+
         /// </summary>
         private static mlpHelpPanel FindActivePanel(bool createFallback)
         {
-            // 1. 如果已有缓存的活动面板，直接返回
+            // 1. If there is already a cached active panel, return directly
+
             if (activePanel != null)
             {
                 return activePanel;
             }
 
-            // 2. 尝试在当前场景中查找已存在的帮助面板
+            // 2. Try to find an existing help panel in the current scene
+
             activePanel = FindScenePanel();
             if (activePanel != null || !createFallback)
             {
                 return activePanel;
             }
 
-            // 3. 场景中没有面板，且允许创建回退实例：从预制体加载
+            // 3. There are no panels in the scene and fallback instances are allowed to be created: Load from prefab
+
             var prefab = Resources.Load<mlpHelpPanel>(PrefabResourcePath);
             if (prefab == null)
             {
@@ -1107,14 +1230,16 @@ namespace mlp
                 return null;
             }
 
-            // 4. 实例化预制体作为运行时回退面板
+            // 4. Instantiate the prefab as a runtime fallback panel
+
             activePanel = Object.Instantiate(prefab);
             activePanel.name = "MlpHelpPanel_RuntimeFallback";
             return activePanel;
         }
 
         /// <summary>
-        /// 查找当前场景中已存在的帮助面板。
+        /// Find help panels that already exist in the current scene.
+
         /// </summary>
         private static mlpHelpPanel FindScenePanel()
         {
@@ -1133,7 +1258,8 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// 从预制体构建器连接所有序列化引用（仅编辑器）。
+        /// Wire all serialization references from the prefab builder (Editor only).
+
         /// </summary>
         public void EditorConfigure(
             GameObject panelRootObject,
@@ -1180,7 +1306,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在 Unity 编辑器中显示面板的实时预览（非运行时）。
+        /// Shows a live preview of the panel in the Unity Editor (not runtime).
+
         /// </summary>
         private void ApplyEditorPreviewState()
         {
@@ -1223,7 +1350,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为编辑器场景视图创建或复用女巫预览。
+        /// Create or reuse witch previews for editor scene views.
+
         /// </summary>
         private void EnsureEditorWitchPreview()
         {
@@ -1274,7 +1402,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 移除仅编辑器使用的女巫预览对象。
+        /// Removed witch preview object used only by editor.
         /// </summary>
         private void DestroyEditorWitchPreview()
         {
@@ -1306,7 +1434,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 标记编辑器预览对象，使其不会被保存到场景或构建中。
+        /// Flag the editor preview object so that it will not be saved to the scene or build.
+
         /// </summary>
         private static void SetEditorPreviewHideFlags(GameObject root)
         {

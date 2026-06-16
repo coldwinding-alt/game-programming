@@ -1,5 +1,5 @@
-// 文件作用：玩家输入控制器（键盘和 AI）
-// 概括：定义玩家用什么方式控制角色：键盘玩家 1 用 WASD 控制，键盘玩家 2 用方向键控制，AI 由电脑自动控制。每帧读取按键状态，告诉角色往哪移动、是否跳跃、是否投篮。
+// File function: Player input controller (keyboard and AI)
+// Summary: Define how the player controls the character: keyboard player 1 uses WASD, keyboard player 2 uses the arrow keys, and the AI ​​is automatically controlled by the computer. The key status is read every frame and tells the character where to move, whether to jump, and whether to shoot.
 
 using System;
 using System.Collections.Generic;
@@ -8,101 +8,131 @@ using UnityEngine;
 namespace mlp
 {
     /// <summary>
-    /// 玩家控制器接口：定义控制角色的统一方式（移动、跳跃、投篮、防守、大招）。键盘和 AI 都实现这个接口。
+    /// Player Controller Interface: Defines a unified way to control the character (movement, jumping, shooting, defense, ultimate move). Both the keyboard and the AI ​​implement this interface.
     /// </summary>
     public interface IBLPlayerController
     {
-        /// <summary>-1 左移 / 0 不动 / +1 右移</summary>
+        /// <summary>-1 move left / 0 stay still / +1 move right</summary>
+
         int CurrentMove { get; }
-        /// <summary>是否跳跃</summary>
+        /// <summary>Whether to jump</summary>
         bool CurrentJump { get; }
-        /// <summary>投篮（持球时）或抢断（防守时）</summary>
+        /// <summary>Shoot (when holding the ball) or steal (when defending)</summary>
+
         bool CurrentAction { get; }
-        /// <summary>盖帽或假动作</summary>
+        /// <summary>Block or feint</summary>
+
         bool CurrentBlockOrPump { get; }
-        /// <summary>释放大招</summary>
+        /// <summary>Unleash the ultimate move</summary>
         bool CurrentSuper { get; }
-        /// <summary>冲刺方向（-1 左 / +1 右 / 0 无）</summary>
+        /// <summary>Sprint direction (-1 left / +1 right / 0 none)</summary>
+
         int CurrentDash { get; }
-        /// <summary>每帧调用：读取输入或运行AI决策，更新6个输出属性</summary>
+        /// <summary>Called every frame: read input or run AI decision, update 6 output attributes</summary>
+
         void UpdateController(float dt);
-        /// <summary>己方拿到球：切换到进攻模式</summary>
+        /// <summary>Our team gets the ball: switch to attack mode</summary>
+
         void BallInOwnHands(int holderPlayerNo);
-        /// <summary>对方拿到球：切换到防守模式</summary>
+        /// <summary>The opponent gets the ball: switch to defensive mode</summary>
+
         void BallInOpponentsHands(int holderPlayerNo);
-        /// <summary>己方投篮出手：切换到进攻篮板模式</summary>
+        /// <summary>Your own shot: switch to offensive rebounding mode</summary>
+
         void BallOwnShoot(int shooterPlayerNo);
-        /// <summary>对方投篮出手：切换到防守篮板模式</summary>
+        /// <summary>Opponent's shot: switch to defensive rebounding mode</summary>
         void BallOpponentShoot(int shooterPlayerNo);
-        /// <summary>球无人控制（争抢/弹跳中）：切换到争球模式</summary>
+        /// <summary>The ball is uncontrolled (in contention/bouncing): switch to contention mode</summary>
+
         void BallOthers();
-        /// <summary>是否准备好执行动作（键盘松键防连发，AI始终true）</summary>
+        /// <summary>Are you ready to perform actions (keyboard release to prevent bursts, AI is always true)</summary>
+
         bool ReadyForAction();
-        /// <summary>是否松开盖帽键/计时器到期，结束盖帽动画</summary>
+        /// <summary>Whether to release the cap key/timer expires and end the cap animation</summary>
+
         bool ReleaseBlockOrPump(float dt);
-        /// <summary>新回合开始：重置所有状态</summary>
+        /// <summary>New round starts: reset all status</summary>
+
         void Restart(int startSide);
-        /// <summary>角色落地：处理虚晃重置、快速起跳</summary>
+        /// <summary>Character landing: handling feint reset and quick take-off</summary>
+
         void PlayerOnGround();
-        /// <summary>冲刺结束：调整攻击点、清理冲刺缓冲</summary>
+        /// <summary>End of sprint: adjust attack point, clear sprint buffer</summary>
         void PlayerOnDashEnd();
-        /// <summary>盖帽完成：重置盖帽状态，启动冷却计时</summary>
+        /// <summary>Block completed: reset the blocking status and start the cooling timer</summary>
         void PlayerOnBlock();
     }
 
     /// <summary>
-    /// 键盘控制器：读取键盘按键输入来控制角色。根据配置的按键映射，每帧检测按键状态并转换为角色动作。
+    /// Keyboard controller: Read keyboard key input to control the character. According to the configured key mapping, the key status is detected every frame and converted into character actions.
     /// </summary>
     public sealed class mlpKeyboardController : IBLPlayerController
     {
-        // 当前控制器的按键配置（WASD 或方向键）
+        // Current controller button configuration (WASD or direction keys)
         private readonly mlpControlProfile controls;
-        // 上一次按下左键的时间，初始为 -10 防止开局误触发
+        // The time when the left button was last pressed, initially -10 to prevent false triggering at the start of the game
+
         private float lastLeftDown = -10f;
-        // 上一次按下右键的时间
+        // The time when the right button was last pressed
+
         private float lastRightDown = -10f;
-        // 上一次松开左键的时间（用于双击松开-按下检测）
+        // The time when the left button was last released (for double-click release-press detection)
         private float lastLeftUp = -10f;
-        // 上一次松开右键的时间
+        // The time when the right button was last released
+
         private float lastRightUp = -10f;
-        // 排队中的冲刺方向：-1 左冲，+1 右冲，0 无
+        // Sprint direction in queue: -1 for left dash, +1 for right dash, 0 for none
+
         private int pendingDashDirection;
-        // 冲刺缓冲计时器，大于 0 时持续输出冲刺信号
+        // Sprint buffer timer, when it is greater than 0, the sprint signal will continue to be output.
+
         private float pendingDashTimer;
 
-        // 当前移动方向输出：-1 左移，0 静止，+1 右移
+        // Current moving direction output: -1 for left movement, 0 for stationary, +1 for right movement
+
         public int CurrentMove { get; private set; }
-        // 当前跳跃输出
+        // Current jump output
+
         public bool CurrentJump { get; private set; }
-        // 当前动作输出：持球时投篮，防守时抢断
+        // Current action output: shooting when holding the ball, stealing when defending
+
         public bool CurrentAction { get; private set; }
-        // 当前盖帽/假动作输出
+        // Current block/fake output
+
         public bool CurrentBlockOrPump { get; private set; }
-        // 当前大招输出
+        // Current ultimate output
+
         public bool CurrentSuper { get; private set; }
-        // 当前冲刺方向输出：-1 左冲，0 无，+1 右冲
+        // Current sprint direction output: -1 for left dash, 0 for none, +1 for right dash
+
         public int CurrentDash { get; private set; }
 
         /// <summary>
-        /// 创建一个键盘控制器，从给定的控制配置中读取按键。
+        /// Creates a keyboard controller that reads keystrokes from the given control configuration.
+
         /// </summary>
-        /// <param name="brain">控制器标识字符串</param>
+        /// <param name="brain">Controller identification string</param>
+
         public mlpKeyboardController(string brain)
         {
-            // 1. 根据控制器标识（如 "KB1" 或 "KB2"）加载对应的按键配置（WASD 或方向键）
+            // 1. Load the corresponding button configuration (WASD or direction keys) according to the controller identification (such as "KB1" or "KB2")
             controls = mlpControlsData.ProfileForBrain(brain);
         }
 
         /// <summary>
-        /// 每帧读取键盘输入：移动、跳跃、投篮、盖帽、必杀技和冲刺双击。
+        /// Keyboard input is read every frame: move, jump, shoot, block, special move, and sprint double tap.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         public void UpdateController(float dt)
         {
-            // 1. 重置移动和冲刺状态
+            // 1. Reset movement and sprint status
+
             CurrentMove = 0;
             CurrentDash = 0;
-            // 2. 如果有正在缓冲的冲刺指令，递减计时器并在有效期内执行冲刺
+            // 2. If there are sprint instructions being buffered, decrement the timer and execute the sprint within the validity period
+
             if (pendingDashTimer > 0f)
             {
                 pendingDashTimer = Mathf.Max(0f, pendingDashTimer - dt);
@@ -116,12 +146,14 @@ namespace mlp
                 }
             }
 
-            // 3. 读取配置中的左移和右移按键
+            // 3. Read the left and right keys in the configuration
+
             var leftDown = controls.MoveLeftKey;
             var rightDown = controls.MoveRightKey;
             var currentTime = Time.time;
 
-            // 4. 记录按键松开的时间（用于双击冲刺检测）
+            // 4. Record the time when the key is released (for double-click sprint detection)
+
             if (Input.GetKeyUp(leftDown))
             {
                 lastLeftUp = currentTime;
@@ -132,7 +164,8 @@ namespace mlp
                 lastRightUp = currentTime;
             }
 
-            // 5. 检测左移键按下：如果在短时间内连按了两次（按下-按下 或 松开-按下），触发向左冲刺
+            // 5. Detect left shift key press: If pressed twice in a short period of time (press-press or release-press), trigger left sprint
+
             if (Input.GetKeyDown(leftDown))
             {
                 if (currentTime - lastLeftDown <= mlpObjectsData.DashDoubleTapWindow
@@ -144,7 +177,8 @@ namespace mlp
                 lastLeftDown = currentTime;
             }
 
-            // 6. 检测右移键按下：同理，双击触发向右冲刺
+            // 6. Detect when the right shift key is pressed: In the same way, double-click to trigger a sprint to the right.
+
             if (Input.GetKeyDown(rightDown))
             {
                 if (currentTime - lastRightDown <= mlpObjectsData.DashDoubleTapWindow
@@ -156,7 +190,8 @@ namespace mlp
                 lastRightDown = currentTime;
             }
 
-            // 7. 按住左移键时移动方向 -1，按住右移键时 +1（可叠加，同时按时为 0）
+            // 7. When holding down the left shift key, the movement direction is -1, and when holding down the right shift key, the movement direction is +1 (can be superimposed, and pressed simultaneously is 0)
+
             if (Input.GetKey(leftDown))
             {
                 CurrentMove--;
@@ -167,14 +202,16 @@ namespace mlp
                 CurrentMove++;
             }
 
-            // 8. 读取跳跃、动作（投篮/抢断）、防守/假动作、大招按键的当前状态
+            // 8. Read the current status of jump, action (shooting/stealing), defense/feint, and ultimate button
+
             CurrentJump = Input.GetKey(controls.JumpKey);
             CurrentAction = Input.GetKey(controls.ActionKey);
             CurrentBlockOrPump = Input.GetKey(controls.BlockKey);
             CurrentSuper = Input.GetKey(controls.SuperKey);
         }
 
-        // 将冲刺指令排入缓冲：设置方向和缓冲计时，让冲刺信号持续几帧而非瞬发
+        // Buffer the sprint command: Set the direction and buffer timing so that the sprint signal lasts for a few frames instead of being instantaneous
+
         private void QueueDash(int direction)
         {
             pendingDashDirection = direction;
@@ -183,67 +220,77 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当动作键释放时返回 true，防止按住时重复投篮。
+        /// Returns true when the action key is released, preventing repeated shots while held down.
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         public bool ReadyForAction()
         {
             return !Input.GetKey(controls.ActionKey);
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
-        /// <param name="holderPlayerNo">当前持球者的玩家编号</param>
+        /// <param name="holderPlayerNo">The player number of the current ball holder</param>
         public void BallInOwnHands(int holderPlayerNo)
         {
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
-        /// <param name="holderPlayerNo">当前持球者的玩家编号</param>
+        /// <param name="holderPlayerNo">The player number of the current ball holder</param>
         public void BallInOpponentsHands(int holderPlayerNo)
         {
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
-        /// <param name="shooterPlayerNo">投篮者的玩家编号</param>
+        /// <param name="shooterPlayerNo">The player number of the shooter</param>
+
         public void BallOwnShoot(int shooterPlayerNo)
         {
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
-        /// <param name="shooterPlayerNo">投篮者的玩家编号</param>
+        /// <param name="shooterPlayerNo">The player number of the shooter</param>
+
         public void BallOpponentShoot(int shooterPlayerNo)
         {
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
         public void BallOthers()
         {
         }
 
         /// <summary>
-        /// 当盖帽键释放时返回 true，结束盖帽/虚晃动画。
+        /// Returns true when the cap key is released, ending the cap/feint animation.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         public bool ReleaseBlockOrPump(float dt)
         {
             return !Input.GetKey(controls.BlockKey);
         }
 
         /// <summary>
-        /// 重置所有输入状态和双击计时器，准备新回合。
+        /// Reset all input states and double-click timers to prepare for a new round.
         /// </summary>
-        /// <param name="startSide">重置后玩家的初始位置方向</param>
+        /// <param name="startSide">The player's initial position and direction after reset</param>
+
         public void Restart(int startSide)
         {
             lastLeftDown = -10f;
@@ -261,14 +308,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
         public void PlayerOnGround()
         {
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
         public void PlayerOnDashEnd()
         {
@@ -277,7 +326,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 键盘控制器无需操作；输入每帧都会读取。
+        /// No action is required from the keyboard controller; input is read every frame.
+
         /// </summary>
         public void PlayerOnBlock()
         {
@@ -285,27 +335,29 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 控制器（基础版）：让电脑自动控制角色，根据比赛情况决定移动、投篮、防守等行为。
+    /// AI Controller (Basic Edition): Let the computer automatically control the character and decide movement, shooting, defense and other behaviors according to the game situation.
+
     /// </summary>
     public class mlpAIController : mlpBaseAIController
     {
         /// <summary>
-        /// 创建一个具有默认防守行为的 AI 控制器。
+        /// Create an AI controller with default defensive behavior.
         /// </summary>
-        /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
+        /// <param name="player">The player object it belongs to</param>
+        /// <param name="skillLevel">AI four-level skill index (0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell). </param>
         public mlpAIController(mlpPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
         }
 
         /// <summary>
-        /// 工厂方法，根据控制器标识返回正确的 AI 控制器变体。
+        /// Factory method that returns the correct AI controller variant based on the controller ID.
         /// </summary>
-        /// <param name="player">所属的玩家对象</param>
-        /// <param name="brain">控制器标识字符串</param>
-        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
-        /// <returns>创建的控制器实例。</returns>
+        /// <param name="player">The player object it belongs to</param>
+        /// <param name="brain">Controller identification string</param>
+
+        /// <param name="skillLevel">AI four-level skill index (0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell). </param>
+        /// <returns>The controller instance created. </returns>
         public static IBLPlayerController CreateForBrain(mlpPlayerObject player, string brain, int skillLevel)
         {
             var index = ParseBrainIndex(brain);
@@ -313,20 +365,22 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回 false；默认 AI 不使用替代防守风格。
+        /// Returns false; the default AI does not use alternative defensive styles.
+
         /// </summary>
-        /// <param name="holder">待测试的持球者</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="holder">Ball carrier to be tested</param>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected override bool UseDefence2(mlpPlayerObject holder)
         {
             return false;
         }
 
         /// <summary>
-        /// 从类似 'B1' 或 'B2' 的控制器标识字符串中提取数字变体索引。
+        /// Extracts the numeric variant index from the controller identification string like 'B1' or 'B2'.
         /// </summary>
-        /// <param name="brain">控制器标识字符串</param>
-        /// <returns>解析出的索引数值。</returns>
+        /// <param name="brain">Controller identification string</param>
+
+        /// <returns>The parsed index value. </returns>
         private static int ParseBrainIndex(string brain)
         {
             if (string.IsNullOrEmpty(brain) || brain.Length < 2 || !brain.StartsWith("B", StringComparison.OrdinalIgnoreCase))
@@ -339,34 +393,38 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 控制器（高级版）：比基础版更聪明的 AI，用于教程模式的对手，有更复杂的行为决策。
+    /// AI Controller (Premium): Smarter AI than the base version, used for tutorial mode opponents, with more complex behavioral decisions.
     /// </summary>
     public sealed class mlpAIController2 : mlpBaseAIController
     {
         /// <summary>
-        /// 创建一个使用主动抢断防守风格的 AI 控制器变体。
+        /// Create an AI controller variant that uses an active tackling defensive style.
+
         /// </summary>
-        /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
+        /// <param name="player">The player object it belongs to</param>
+        /// <param name="skillLevel">AI four-level skill index (0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell). </param>
         public mlpAIController2(mlpPlayerObject player, int skillLevel)
             : base(player, skillLevel)
         {
         }
 
         /// <summary>
-        /// 当持球者是对手时返回 true，启用替代防守策略。
+        /// Returns true when the ball carrier is the opponent, enabling alternative defensive strategies.
+
         /// </summary>
-        /// <param name="holder">待测试的持球者</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="holder">Ball carrier to be tested</param>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected override bool UseDefence2(mlpPlayerObject holder)
         {
             return holder != null && holder.PlayerNo != player.PlayerNo;
         }
 
         /// <summary>
-        /// 以抢断时机追逐持球者，并在近距离起跳干扰投篮。
+        /// Chasing the ball handler with steal timing and taking off from close range to interfere with shots.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected override void StrategyDefence2(float dt)
         {
             if (opponent == null)
@@ -387,132 +445,186 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 控制器基类：实现 AI 共有的行为逻辑（如计时器管理、状态判断），具体决策由子类实现。
+    /// AI controller base class: implements common behavioral logic of AI (such as timer management, status judgment), and specific decisions are implemented by subclasses.
+
     /// </summary>
     public abstract class mlpBaseAIController : IBLPlayerController
     {
-        // 所属的玩家对象引用
+        // The player object reference to which it belongs
+
         protected readonly mlpPlayerObject player;
-        // 当前比赛难度（Easy/Normal/Hard/Hell）
+        // Current game difficulty (Easy/Normal/Hard/Hell)
         protected readonly mlpAiDifficulty difficulty;
-        // 难度调校参数（防守距离、抢断距离、冲刺范围等）
+        // Difficulty adjustment parameters (defensive distance, tackling distance, sprint range, etc.)
+
         protected readonly mlpAIDifficultyTuningProfile tuning;
 
-        // 比赛中的球对象引用
+        // Ball object reference in game
+
         protected mlpBallObject ball;
-        // 对手玩家列表
+        // Opponent player list
+
         protected List<mlpPlayerObject> opponents;
-        // 当前锁定的主要对手
+        // Main opponents currently targeted
+
         protected mlpPlayerObject opponent;
-        // AI 技能配置（概率和反应节奏参数）
+        // AI skill configuration (probability and reaction rhythm parameters)
+
         protected readonly mlpAISkillProfile profile;
 
-        // 跳球延迟计时器：控制跳球时的起跳时机
+        // Jump ball delay timer: control the timing of the jump ball
+
         protected readonly NegativeDelay jumpBall;
-        // 攻击延迟计时器：控制投篮出手时机（结合范围和固定延迟）
+        // Attack Delay Timer: Controls shot release timing (combines range and fixed delay)
+
         protected readonly FullDelay attack;
-        // 快速起跳延迟计时器：落地后立即起跳的延迟
+        // Quick takeoff delay timer: Delay for taking off immediately after landing
+
         protected readonly SimpleDelay attackJumpDelay;
-        // 抢断延迟计时器：控制抢断冷却和使用时长
+        // Steal delay timer: controls steal cooldown and usage time
+
         protected readonly AIUseDelay stealDelay;
-        // 防守延迟计时器：控制防守干扰起跳的时机
+        // Defense delay timer: Control the timing of defense interference when taking off
+
         protected readonly SimpleDelay defenceDelay;
-        // 盖帽延迟计时器：盖帽动作的冷却时间
+        // Block delay timer: the cooldown time of the block action
+
         protected readonly FullDelay blockDelay;
-        // 篮板延迟计时器：起跳抢篮板的时机控制
+        // Rebound delay timer: Timing control when jumping to grab rebounds
         protected readonly FullDelay reboundDelay;
-        // 移动延迟计时器：控制移动决策的频率（不每帧都决策）
+        // Movement delay timer: controls the frequency of movement decisions (not decisions every frame)
+
         protected readonly FullDelay moveDelay;
-        // 冲刺决策延迟计时器：冲刺使用的冷却控制
+        // Sprint Decision Delay Timer: Cooldown Control Used by Sprints
+
         protected readonly AIUseDelay dashDecisionDelay;
-        // 超级扣篮延迟计时器：大招扣篮的使用时机
+        // Super dunk delay timer: when to use the ultimate dunk
+
         protected readonly FullDelay megaDunkDelay;
-        // 超级冲刺延迟计时器：大招冲刺的使用时机
+        // Super Sprint Delay Timer: When to use the ultimate sprint
+
         protected readonly FullDelay superDashDelay;
 
-        // 当前策略编号：0=防守，1=争球，2=进攻，3=跳球，4=篮板，5=激进防守
+        // Current strategy number: 0=defense, 1=scramble, 2=offense, 3=jump ball, 4=rebound, 5=aggressive defense
+
         protected int strategy;
-        // 攻击目标 X 坐标（投篮释放位置）
+        // Attack target X coordinate (shooting release position)
+
         protected float attackPoint;
-        // 起跳点 X 坐标（到达后起跳向攻击点）
+        // X coordinate of the starting point (jump towards the attack point after arriving)
+
         protected float jumpPoint;
-        // 当前篮板争抢目标 X 坐标
+        // Current rebound target X coordinate
+
         protected float reboundPoint;
-        // 进攻时的篮板位置
+        // Offensive rebound position
+
         protected float reboundPointInAttack;
-        // 防守时的篮板位置
+        // Defensive rebound position
+
         protected float reboundPointInDefence;
-        // 防守终点基准位置（根据球员编号分配）
+        // Defensive end base position (assigned based on player number)
+
         protected float baseEndPoint;
-        // 当前防守终点位置（可能因长时间不动而动态调整）
+        // Current defensive end position (may be dynamically adjusted due to long periods of immobility)
+
         protected float endPoint;
-        // 防守站位点 X 坐标
+        // Defensive station point X coordinate
+
         protected float defensePoint;
-        // 无动作累计时间：超过阈值时重置防守边界，防止消极防守
+        // Accumulated time of no action: reset the defensive boundary when exceeding the threshold to prevent passive defense
+
         protected float deltaDownTime;
-        // 投篮飞行方向：-1 向左飞，+1 向右飞
+        // Shooting direction: -1 to fly left, +1 to fly right
+
         protected float directionToFly;
-        // 是否已到达起跳点，可以起跳投篮
+        // Whether you have reached the starting point and can take off for shooting
+
         protected bool attackJump;
-        // 是否通过跳跃躲避抢断
+        // Whether to jump to avoid tackles
+
         protected bool avoidStealJump;
-        // 躲避抢断时的侧移方向：-1 左，0 无，+1 右
+        // Side movement direction when avoiding a tackle: -1 left, 0 none, +1 right
+
         protected int avoidStealMove;
-        // 是否被对手假动作骗到（被晃飞）
+        // Was he deceived by his opponent's fake moves (being swayed away)?
+
         protected bool isPumped;
-        // 本回合被假动作骗到的次数（上限 3 次）
+        // The number of times you were deceived by feints this round (maximum 3 times)
+
         protected int pumpCount;
-        // 是否排队了篮板起跳（对手投篮时提前准备）
+        // Whether you have lined up a rebound to take off (prepare in advance when the opponent shoots)
+
         protected bool queuedReboundJump;
-        // 玩家编号：0=主力，1=辅助
+        // Player number: 0=main player, 1=auxiliary
+
         protected int playerNo;
-        // 是否已完成首次运行时引用获取
+        // Whether the first run-time reference acquisition has been completed
+
         protected bool initialized;
-        // 进攻区域起始 X 坐标
+        // Attack area starting X coordinate
         protected float attackZoneStart;
-        // 进攻区域结束 X 坐标
+        // Attack area end X coordinate
+
         protected float attackZoneEnd;
-        // 冲刺区域起始 X 坐标
+        // Start X coordinate of sprint area
+
         protected float dashZoneStart;
-        // 冲刺区域结束 X 坐标
+        // Sprint area end X coordinate
+
         protected float dashZoneEnd;
-        // 落地后是否立即起跳投篮（接球或落地瞬间）
+        // Whether to take off and shoot immediately after landing (at the moment of catching the ball or landing)
+
         protected bool willAttackAtOnce;
-        // 是否排队了大招输入（下一帧生效）
+        // Whether the ultimate move input is queued (effective in the next frame)
+
         protected bool queuedSuperInput;
-        // 移动判定的死区距离：与目标距离小于此值时视为已到达
+        // Dead zone distance for movement determination: When the distance to the target is less than this value, it is deemed to have been reached.
+
         protected const float DeltaDistance = 20f;
-        // 无动作超时阈值：超过此秒数重置防守边界
+        // No action timeout threshold: Reset the defensive boundary after this number of seconds
+
         protected const float DownTime = 5f;
 
-        // 当前移动方向输出：-1 左移，0 静止，+1 右移
+        // Current moving direction output: -1 for left movement, 0 for stationary, +1 for right movement
+
         public int CurrentMove { get; protected set; }
-        // 当前跳跃输出
+        // Current jump output
+
         public bool CurrentJump { get; protected set; }
-        // 当前动作输出：持球时投篮，防守时抢断
+        // Current action output: shooting when holding the ball, stealing when defending
+
         public bool CurrentAction { get; protected set; }
-        // 当前盖帽/假动作输出
+        // Current block/fake output
+
         public bool CurrentBlockOrPump { get; protected set; }
-        // 当前大招输出
+        // Current ultimate output
+
         public bool CurrentSuper { get; protected set; }
-        // 当前冲刺方向输出：-1 左冲，0 无，+1 右冲
+        // Current sprint direction output: -1 for left dash, 0 for none, +1 for right dash
+
         public int CurrentDash { get; protected set; }
 
         /// <summary>
-        /// 初始化共享的 AI 状态：难度配置、决策计时器和进攻/防守区域。
+        /// Initialize shared AI state: difficulty configuration, decision timer, and attack/defense zones.
+
         /// </summary>
-        /// <param name="player">所属的玩家对象</param>
-        /// <param name="skillLevel">AI 四档技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。</param>
+        /// <param name="player">The player object it belongs to</param>
+        /// <param name="skillLevel">AI four-level skill index (0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell). </param>
         protected mlpBaseAIController(mlpPlayerObject player, int skillLevel)
         {
-            // 1. 保存玩家对象引用和编号
+            // 1. Save player object reference and number
+
             this.player = player;
-            // 2. 读取当前难度设置（简单/普通/困难/地狱）和对应的调校参数
+            // 2. Read the current difficulty setting (easy/normal/hard/hell) and the corresponding adjustment parameters
+
             difficulty = mlpInventory.Instance.Difficulty;
             tuning = mlpAIDifficultyTuning.Get(difficulty);
-            // 3. 根据四档技能索引加载 AI 技能配置（控制投篮时机、抢断概率等）
+            // 3. Load AI skill configuration according to the four-level skill index (control shooting timing, steal probability, etc.)
+
             profile = mlpAISkillsData.Get(skillLevel);
-            // 4. 初始化各种决策延迟计时器（控制 AI 不要每帧都做决策，模拟人类反应时间）
+            // 4. Initialize various decision delay timers (control AI not to make decisions every frame, simulate human reaction time)
+
             jumpBall = new NegativeDelay(mlpObjectsData.IdealJumpBallJump, profile.JumpBall);
             attack = new FullDelay(mlpObjectsData.IdealAttackJump, profile.Attack);
             attackJumpDelay = new SimpleDelay(profile.AttackAtOnce);
@@ -524,28 +636,35 @@ namespace mlp
             dashDecisionDelay = new AIUseDelay(0.1f, profile.DelayDash);
             megaDunkDelay = new FullDelay(0.5f, 0.5f);
             superDashDelay = new FullDelay(0.5f, 0.5f);
-            // 5. 记录玩家编号，订阅游戏信号（对手跳跃、抢断、虚晃等事件）
+            // 5. Record player numbers and subscribe to game signals (opponent jumps, steals, feints, etc.)
+
             playerNo = player.PlayerNo;
             player.GameCore.PlayerSignals.OnSignal += ProcessPlayerSignal;
-            // 6. 计算进攻/防守/篮板位置区域，重置所有状态
+            // 6. Calculate the offensive/defensive/rebounding position areas and reset all states
+
             InitZones();
             ResetForRestart();
         }
 
         /// <summary>
-        /// 运行完整的 AI 决策循环：根据球的状态选择策略，然后调用对应的策略方法。
+        /// Run a complete AI decision loop: select a strategy based on the state of the ball, and then call the corresponding strategy method.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         public virtual void UpdateController(float dt)
         {
-            // 1. 首次运行时获取球和对手的引用
+            // 1. Get references to ball and opponent on first run
+
             EnsureRuntimeLinks();
-            // 2. 重置冲刺，应用上一帧排队的大招输入
+            // 2. Reset sprint and apply the ultimate input queued in the previous frame
+
             CurrentDash = 0;
             CurrentSuper = queuedSuperInput;
             queuedSuperInput = false;
 
-            // 3. 如果球或对手引用丢失，清空所有输入
+            // 3. If ball or opponent reference is lost, clear all inputs
+
             if (ball == null || opponents == null || opponents.Count == 0)
             {
                 CurrentMove = 0;
@@ -555,20 +674,23 @@ namespace mlp
                 return;
             }
 
-            // 4. 处理"快速起跳"延迟计时器——用于落地后立即起跳投篮的场景
+            // 4. Handle the "quick takeoff" delay timer - used in scenarios where you take off and shoot immediately after landing.
+
             var delayedJump = attackJumpDelay.Update(dt);
             if (delayedJump >= 0)
             {
                 if (delayedJump == 1)
                 {
-                    // 计时器到期：执行跳跃
+                    // Timer expires: Execute jump
+
                     CurrentMove = 0;
                     CurrentJump = true;
                     CurrentAction = false;
                 }
                 else
                 {
-                    // 计时器未到期：保持躲避抢断的移动和跳跃状态
+                    // The timer has not expired: keep moving and jumping to avoid tackles
+
                     CurrentMove = avoidStealMove;
                     CurrentJump = avoidStealJump;
                 }
@@ -576,11 +698,13 @@ namespace mlp
                 return;
             }
 
-            // 5. 根据球的状态选择 AI 策略
+            // 5. Choose AI strategy based on the state of the ball
+
             var holder = player.GameCore.FindBallHolder();
             if (player.WithBall)
             {
-                // 5a. 自己持球 → 进攻策略：向投篮点移动，在合适时机起跳投篮
+                // 5a. Hold the ball by yourself → Offensive strategy: move towards the shooting point and take off to shoot at the right time
+
                 if (strategy != 2)
                 {
                     HandleBallInOwnHands();
@@ -590,7 +714,7 @@ namespace mlp
             }
             else if (holder != null && holder.Side != player.Side)
             {
-                // 5b. 对手持球 → 防守策略：跟随对手，尝试抢断或干扰投篮
+                // 5b. The opponent has the ball → Defensive strategy: follow the opponent and try to steal or interfere with the shot
                 opponent = holder;
                 if (UseDefence2(holder))
                 {
@@ -609,11 +733,13 @@ namespace mlp
             }
             else
             {
-                // 5c. 无人持球
+                // 5c. No one has the ball
+
                 var shotInFlight = ball.State == "shooting" || ball.State == "basket";
                 if (shotInFlight)
                 {
-                    // 球在空中（投篮/打板）→ 篮板策略：抢占篮板位置
+                    // The ball is in the air (shooting/rebounding) → Rebounding strategy: Seize the rebounding position
+
                     if (strategy != 4)
                     {
                         if (ball.Side == player.Side)
@@ -630,7 +756,8 @@ namespace mlp
                 }
                 else
                 {
-                    // 球在地上弹跳 → 争球策略：追逐球并尝试捡起
+                    // The ball bounces on the ground → Faceoff Strategy: Chase the ball and try to pick it up
+
                     if (strategy != 1)
                     {
                         HandleBallOthers();
@@ -642,9 +769,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换到进攻模式，可选激活超级扣篮延迟。
+        /// Switch to offensive mode and optionally activate Super Dunk Delay.
+
         /// </summary>
-        /// <param name="holderPlayerNo">当前持球者的玩家编号</param>
+        /// <param name="holderPlayerNo">The player number of the current ball holder</param>
         public virtual void BallInOwnHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -657,9 +785,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换到防守模式，当对手靠近时可选使用冰冻必杀。
+        /// Switch to defensive mode and optionally use Freezing Kill when the opponent is close.
+
         /// </summary>
-        /// <param name="holderPlayerNo">当前持球者的玩家编号</param>
+        /// <param name="holderPlayerNo">The player number of the current ball holder</param>
         public virtual void BallInOpponentsHands(int holderPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -673,9 +802,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 队友投篮后切换到篮板模式，为进攻篮板做好位置准备。
+        /// After a teammate shoots, switch to rebounding mode and prepare your position for the offensive rebound.
         /// </summary>
-        /// <param name="shooterPlayerNo">投篮者的玩家编号</param>
+        /// <param name="shooterPlayerNo">The player number of the shooter</param>
+
         public virtual void BallOwnShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -687,9 +817,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// 对手投篮后切换到篮板模式；可选激活护盾必杀。
+        /// Switch to rebounding mode after the opponent shoots; optionally activate the shield to kill.
+
         /// </summary>
-        /// <param name="shooterPlayerNo">投篮者的玩家编号</param>
+        /// <param name="shooterPlayerNo">The player number of the shooter</param>
+
         public virtual void BallOpponentShoot(int shooterPlayerNo)
         {
             EnsureRuntimeLinks();
@@ -711,7 +843,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 切换到争夺球模式，追逐球并尝试捡起。
+        /// Switch to scramble ball mode, chase the ball and try to pick it up.
+
         /// </summary>
         public virtual void BallOthers()
         {
@@ -720,35 +853,39 @@ namespace mlp
         }
 
         /// <summary>
-        /// 始终返回 true；AI 控制器随时准备执行动作。
+        /// Always returns true; the AI ​​controller is ready to perform actions.
         /// </summary>
-        /// <returns>始终返回 true。</returns>
+        /// <returns>Always returns true. </returns>
         public virtual bool ReadyForAction()
         {
             return true;
         }
 
         /// <summary>
-        /// 当盖帽计时器到期时返回 true，结束 AI 的盖帽尝试。
+        /// Returns true when the block timer expires, ending the AI's block attempt.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         public virtual bool ReleaseBlockOrPump(float dt)
         {
             return blockDelay.Update(dt) == 1;
         }
 
         /// <summary>
-        /// 为新回合重置所有 AI 状态。
+        /// Reset all AI states for the new turn.
         /// </summary>
-        /// <param name="startSide">重置后玩家的初始位置方向</param>
+        /// <param name="startSide">The player's initial position and direction after reset</param>
+
         public virtual void Restart(int startSide)
         {
             ResetForRestart();
         }
 
         /// <summary>
-        /// 重置虚晃状态，如果持球则可选立即排队攻击跳跃。
+        /// Reset the feint state. If you hold the ball, you can choose to immediately queue up to attack and jump.
+
         /// </summary>
         public virtual void PlayerOnGround()
         {
@@ -762,7 +899,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 如果冲刺超过目标位置，调整攻击点。
+        /// If the sprint exceeds the target position, adjust the attack point.
+
         /// </summary>
         public virtual void PlayerOnDashEnd()
         {
@@ -773,7 +911,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 清除盖帽输入并启动盖帽冷却计时器。
+        /// Clears the cap input and starts the cap cooldown timer.
+
         /// </summary>
         public virtual void PlayerOnBlock()
         {
@@ -782,51 +921,60 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回 false；子类可重写此方法以启用替代防守策略。
+        /// Returns false; subclasses can override this method to enable alternative defensive strategies.
+
         /// </summary>
-        /// <param name="holder">待测试的持球者</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="holder">Ball carrier to be tested</param>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected virtual bool UseDefence2(mlpPlayerObject holder)
         {
             return false;
         }
 
         /// <summary>
-        /// 跟随持球者，在近距离尝试抢断，并用定时跳跃干扰投篮。
+        /// Follow the ball handler, attempt steals at close range, and disrupt shots with timed jumps.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyDefence(float dt)
         {
-            // 1. 如果没有对手信息，直接退出
+            // 1. If there is no opponent information, exit directly
+
             if (opponent == null)
             {
                 return;
             }
 
-            // 2. 尝试使用超级冲刺拦截持球对手，如果成功则本帧不再做其他操作
+            // 2. Try to use super sprint to intercept the opponent holding the ball. If successful, no other operations will be performed in this frame.
+
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashAgainstHolder()))
             {
                 return;
             }
 
-            // 3. 更新抢断和移动延迟计时器
+            // 3. Updated tackling and movement delay timers
+
             var stealState = stealDelay.Update(dt);
             var moveState = moveDelay.Update(dt);
-            // 4. 如果被假动作骗到（"被晃飞"），则停下不动
+            // 4. If you are fooled by a fake move ("swayed"), stop still.
+
             if (isPumped)
             {
                 CurrentMove = 0;
             }
             else
             {
-                // 5. 计算防守目标位置：如果对手超出防守边界就守住边界，否则紧跟对手身后一段距离
+                // 5. Calculate the defensive target position: if the opponent exceeds the defensive boundary, hold the boundary, otherwise follow the opponent a certain distance behind
+
                 var target = (opponent.Position.x - endPoint) * player.Side < 0f
                     ? endPoint
                     : opponent.IsGrounded
                         ? opponent.Position.x + player.Side * mlpObjectsData.OpponentDelta
                         : opponent.Position.x + player.Side * (mlpObjectsData.OpponentDelta - 10f);
 
-                // 6. 站在地上时按移动延迟节奏跟防，跳起时则直接跟踪对手
+                // 6. When standing on the ground, follow the movement delay rhythm and follow the opponent directly when jumping.
+
                 if (player.IsGrounded)
                 {
                     if (moveState == -1)
@@ -840,18 +988,21 @@ namespace mlp
                     CurrentMove = MoveTo(opponent.Position.x + player.Side * (mlpObjectsData.OpponentDelta - 10f));
                 }
 
-                // 7. 当抢断计时器到期时，尝试抢断
+                // 7. When the steal timer expires, attempt a steal
                 if (stealState == -1)
                 {
                     TryToSteal();
                 }
             }
 
-            // 8. 当盖帽计时器到期且对手在身边时起跳干扰投篮
+            // 8. When the block timer expires and the opponent is nearby, jump to interfere with the shot.
+
             CurrentJump = defenceDelay.Update(dt) == 1 && IsOpponentCloseAbs(GetDefenceContestDistance());
-            // 9. 抢断计时器激活时执行抢断动作
+            // 9. Perform a steal when the steal timer is activated.
+
             CurrentAction = stealState == 1;
-            // 10. 如果长时间没有动作（站着不动），将防守边界重置到场地另一侧，防止消极防守
+            // 10. If there is no action for a long time (standing still), reset the defensive boundary to the other side of the field to prevent passive defense
+
             if (!CurrentAction && !CurrentJump && CurrentMove == 0)
             {
                 deltaDownTime += dt;
@@ -868,38 +1019,46 @@ namespace mlp
         }
 
         /// <summary>
-        /// 委托给默认防守策略；子类可重写以实现自定义行为。
+        /// Delegate to the default defense strategy; subclasses can override to implement custom behavior.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyDefence2(float dt)
         {
             StrategyDefence(dt);
         }
 
         /// <summary>
-        /// 追逐自由球，当球靠近篮筐时起跳争抢篮板。
+        /// Chase the free ball and jump for rebounds as the ball approaches the basket.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyBallFight(float dt)
         {
-            // 1. 获取自由球的目标 X 坐标（地狱难度会预测落点），并向球的方向移动（带一点偏移避免撞到球）
+            // 1. Get the target X coordinate of the free ball (Hell difficulty will predict the landing point), and move in the direction of the ball (with a little offset to avoid hitting the ball)
+
             var ballX = GetTechnicalLooseBallTargetX();
             var offset = ballX - player.Position.x >= 0f ? 10f : -10f;
             CurrentMove = MoveTo(ballX + offset);
             CurrentJump = false;
 
-            // 2. 如果球在空中且距离够远，尝试使用超级冲刺抢先捡球
+            // 2. If the ball is in the air and far enough away, try to use super sprint to pick it up first
+
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashForBall()))
             {
                 return;
             }
 
-            // 3. 根据球的状态决定是否起跳
+            // 3. Determine whether to take off based on the state of the ball
+
             if (ball.State != "bounce" && ball.State != "shooting")
             {
                 if (ball.State == "basket")
                 {
-                    // 3a. 球在篮筐附近弹跳 → 争抢篮板：使用篮板延迟计时器，在篮板区域起跳
+                    // 3a. The ball bounces near the basket → Fight for rebounds: Use the rebound delay timer and take off in the rebound area
+
                     var reboundState = reboundDelay.Update(dt);
                     if (reboundState == -1 && IsBallInReboundZone())
                     {
@@ -912,41 +1071,49 @@ namespace mlp
                 }
                 else
                 {
-                    // 3b. 球在其他状态（如抢断中）→ 水平距离近且垂直距离远时起跳
+                    // 3b. The ball is in other states (such as stealing) → takes off when the horizontal distance is short and the vertical distance is long.
+
                     CurrentJump = Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f;
                 }
             }
 
-            // 4. 争球状态下不执行投篮/抢断等动作
+            // 4. Do not perform shooting/stealing and other actions while scrambling for the ball.
+
             CurrentAction = false;
         }
 
         /// <summary>
-        /// 向攻击点移动，把握投篮起跳时机，并对附近的防守者做出反应。
+        /// Move toward the point of attack, time your shot and react to nearby defenders.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyAttack(float dt)
         {
-            // 1. 如果没有持球，直接退出
+            // 1. If you don’t have the ball, exit directly
+
             if (!player.WithBall)
             {
                 return;
             }
 
-            // 2. 如果拥有扣篮类大招且计时器到期，触发大招投篮
+            // 2. If you have a dunk-type ultimate move and the timer expires, trigger the ultimate move to shoot.
+
             if (player.UsesPossessionSkill && megaDunkDelay.Update(dt) == 1)
             {
                 TriggerSuperInput();
                 return;
             }
 
-            // 3. 尝试使用超级冲刺甩开防守者
+            // 3. Try to use super sprint to throw off the defender
+
             if (TryUseDelayedSuperDash(dt, ShouldUseSuperDashInAttack()))
             {
                 return;
             }
 
-            // 4. 如果正在执行躲避抢断的动作（跳起或侧移），优先完成躲避
+            // 4. If you are performing an action to dodge a tackle (jumping or moving sideways), give priority to completing the dodge.
+
             if (avoidStealJump || avoidStealMove != 0)
             {
                 CurrentMove = avoidStealMove;
@@ -954,23 +1121,28 @@ namespace mlp
                 return;
             }
 
-            // 5. 站在地面上时的进攻逻辑
+            // 5. Offensive logic when standing on the ground
+
             if (player.IsGrounded)
             {
-                // 5a. 移动延迟计时器到期时做一次决策
+                // 5a. Make a decision when the movement delay timer expires
+
                 if (moveDelay.Update(dt) == -1)
                 {
-                    // 5b. 向跳跃点/攻击点移动，并判断是否应该起跳投篮
+                    // 5b. Move towards the jump point/attack point and determine whether you should take off and shoot.
+
                     var move = MoveInAttack();
                     if (attackJump)
                     {
-                        // 5c. 到达跳跃点 → 起跳投篮
+                        // 5c. Reach the jumping point → take off and shoot
+
                         CurrentJump = true;
                         CurrentMove = move;
                     }
                     else if (IsAICloserForBasket())
                     {
-                        // 5d. AI 比对手更靠近篮筐 → 可以直接上篮
+                        // 5d. AI is closer to the basket than the opponent → can lay up directly
+
                         if (move == -player.Side)
                         {
                             CurrentMove = -player.Side;
@@ -984,15 +1156,17 @@ namespace mlp
                     }
                     else
                     {
-                        // 5e. 对手挡在前面 → 处理各种被防守的情况
+                        // 5e. Opponent blocks in front → Handle various defensive situations
+
                         CurrentJump = false;
                         CurrentDash = 0;
                         if (IsOpponentCloseBehind())
                         {
-                            // 5f. 对手从后面追上来施压
+                            // 5f. The opponent catches up from behind and applies pressure.
+
                             if (IsUnderOwnBasket())
                             {
-                                // 5g. 在自家篮筐下 → 用冲刺甩开（非简单难度）
+                                // 5g. Under your own basket → Use sprint to get rid of it (not easy difficulty)
                                 if (player.ReadyForDash && difficulty != mlpAiDifficulty.Easy)
                                 {
                                     CurrentDash = -player.Side;
@@ -1006,7 +1180,8 @@ namespace mlp
                             }
                             else if (UnityEngine.Random.value <= profile.ReactOnOpponent)
                             {
-                                // 5h. 有一定概率对背后防守做出反应
+                                // 5h. There is a certain probability of reacting to the defense behind
+
                                 CurrentJump = false;
                                 if (player.ReadyForDash && InDashingZone() && UnityEngine.Random.value <= profile.MakeDash && difficulty != mlpAiDifficulty.Easy)
                                 {
@@ -1020,19 +1195,22 @@ namespace mlp
                             }
                             else
                             {
-                                // 5i. 没反应过来 → 继续向篮筐方向移动
+                                // 5i. Didn’t react → Continue moving towards the basket
+
                                 CurrentMove = -player.Side;
                                 moveDelay.Activate();
                             }
                         }
                         else
                         {
-                            // 5j. 对手不在后面 → 安全地向篮筐推进
+                            // 5j. Opponent not behind → Safely advance to basket
+
                             CurrentMove = -player.Side;
                         }
                     }
 
-                    // 5k. 如果已决定起跳投篮，激活攻击计时器并计算飞行方向
+                    // 5k. If a jump shot has been decided, activate the attack timer and calculate the flight direction
+
                     if (attackJump)
                     {
                         attack.Activate();
@@ -1042,7 +1220,8 @@ namespace mlp
             }
             else
             {
-                // 6. 在空中时：保持飞行方向，攻击计时器到期时执行投篮
+                // 6. While in the air: maintain flight direction and shoot when the attack timer expires
+
                 CurrentMove = (player.Position.x - attackPoint) * directionToFly > 0f ? Mathf.RoundToInt(directionToFly) : 0;
                 CurrentJump = false;
                 CurrentAction = attack.Update(dt) == 1;
@@ -1050,9 +1229,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// 站定不动，根据跳球延迟配置把握起跳时机。
+        /// Stand still and grasp the timing of the jump according to the jump ball delay configuration.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyJumpBall(float dt)
         {
             CurrentMove = 0;
@@ -1061,60 +1242,73 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为篮板调整位置，当球进入篮板区域时起跳。
+        /// Position the backboard to take off when the ball enters the backboard area.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
         protected virtual void StrategyRebound(float dt)
         {
-            // 1. 如果拥有"必定盖帽"大招且对手投出可盖帽的球，触发大招
+            // 1. If you have the "guaranteed block" ultimate move and the opponent throws a ball that can be blocked, the ultimate move will be triggered.
+
             if (player.UsesGuaranteedBlockSkill && player.ReadyForSuper && ball != null && ball.IsBlockable && ball.Side != player.Side)
             {
                 TriggerSuperInput();
                 return;
             }
 
-            // 2. 如果拥有"篮板磁铁"大招且球在篮筐附近弹跳，触发大招
+            // 2. If you have the "Backboard Magnet" ultimate move and the ball bounces near the basket, the ultimate move will be triggered
+
             if (player.UsesReboundMagnetSkill && player.ReadyForSuper && ball != null && ball.State == "basket")
             {
                 TriggerSuperInput();
                 return;
             }
 
-            // 3. 如果球在篮筐附近弹跳，尝试超级冲刺抢占篮板位置
+            // 3. If the ball bounces near the rim, try to super sprint to get on the rebound
+
             if (TryUseDelayedSuperDash(dt, ball != null && ball.State == "basket" && ShouldUseSuperDashForBall()))
             {
                 return;
             }
 
-            // 4. 处理"提前排队的起跳"指令（比如对手投篮时提前起跳干扰）
+            // 4. Process the "queued jump in advance" command (such as early jump interference when the opponent shoots)
+
             var contestJump = queuedReboundJump && player.IsGrounded;
             if (contestJump)
             {
                 queuedReboundJump = false;
             }
 
-            // 5. 当球在身边（水平近、垂直远）或者有排队起跳时才起跳
+            // 5. Only take off when the ball is around you (horizontally close, vertically far) or there is a queue to take off.
+
             CurrentJump = contestJump || (Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f);
-            // 6. 地狱难度使用弹道预测落点，其他难度用固定篮板位置
+            // 6. Hell difficulty uses ballistics to predict the impact point, other difficulties use fixed rebound positions.
+
             var targetReboundPoint = ShouldUseTechnicalPrediction() ? GetTechnicalReboundTargetX() : reboundPoint;
-            // 7. 起跳时不动，落地后向篮板位置移动
+            // 7. Stay still when taking off, then move toward the backboard after landing.
+
             CurrentMove = CurrentJump ? 0 : player.IsGrounded ? MoveTo(targetReboundPoint) : 0;
-            // 8. 篮板阶段不执行投篮/抢断动作
+            // 8. Do not perform shooting/stealing actions during the rebound phase
+
             CurrentAction = false;
         }
 
         /// <summary>
-        /// 根据距离和难度配置，在靠近对手时进行抢断判定。
+        /// According to the distance and difficulty configuration, steal judgment is made when approaching the opponent.
+
         /// </summary>
         protected void TryToSteal()
         {
-            // 1. 简单难度不抢断；对手为空或在空中时也不抢断
+            // 1. No steals on easy difficulty; no steals when the opponent is empty or in the air
+
             if (difficulty == mlpAiDifficulty.Easy || opponent == null || !opponent.IsGrounded)
             {
                 return;
             }
 
-            // 2. 如果从后面接近对手，按技能概率决定是否发起抢断
+            // 2. If you approach the opponent from behind, decide whether to initiate a steal based on skill probability.
+
             if (IsOpponentCloseBehind(GetStealBehindDistance()))
             {
                 if (UnityEngine.Random.value <= profile.MakeSteal)
@@ -1126,7 +1320,8 @@ namespace mlp
                     stealDelay.SkipIt();
                 }
             }
-            // 3. 如果对手在篮筐附近（更危险），抢断概率提高到 1.5 倍
+            // 3. If the opponent is near the basket (more dangerous), the steal probability increases to 1.5 times
+
             else if (IsOpponentCloseToBasket(GetStealBasketDistance()))
             {
                 if (UnityEngine.Random.value <= 1.5f * profile.MakeSteal)
@@ -1141,39 +1336,47 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在条件和冷却允许的情况下，以短暂延迟激活超级冲刺。
+        /// Activates Super Sprint with a short delay, conditions and cooldown permitting.
+
         /// </summary>
-        /// <param name="dt">帧间隔时间（秒）</param>
-        /// <param name="shouldUse">当 AI 应该尝试超级冲刺时为 true</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="dt">Frame interval time (seconds)</param>
+
+        /// <param name="shouldUse">True when the AI should attempt a super sprint</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool TryUseDelayedSuperDash(float dt, bool shouldUse)
         {
-            // 1. 检查是否有可用的超级冲刺（角色自带或地狱难度奖励），以及当前场景是否值得使用
+            // 1. Check if there is a super sprint available (either with the character or as a hell difficulty reward) and if the current scenario is worth using
+
             var canUseNativeSuperDash = player.UsesDashSkill && player.ReadyForSuper;
             var canUseHellBonusSuperDash = player.CanUseHellBonusSuperDash;
-            // 2. 如果没有可用的超级冲刺或者场景不需要，重置计时器并返回
+            // 2. If there is no super sprint available or the scene does not require it, reset the timer and return
+
             if ((!canUseNativeSuperDash && !canUseHellBonusSuperDash) || !shouldUse)
             {
                 superDashDelay.Reset();
                 return false;
             }
 
-            // 3. 更新超级冲刺延迟计时器
+            // 3. Update the super sprint delay timer
             var state = superDashDelay.Update(dt);
-            // 4. 计时器首次激活（-1 表示刚开始计时）
+            // 4. The timer is activated for the first time (-1 means the timer has just started)
+
             if (state == -1)
             {
                 superDashDelay.Activate();
                 return false;
             }
 
-            // 5. 计时器还没到期，继续等待
+            // 5. The timer has not expired yet, continue to wait.
+
             if (state != 1)
             {
                 return false;
             }
 
-            // 6. 计时器到期 → 使用角色自带的超级冲刺
+            // 6. The timer expires → Use the character’s own super sprint
+
             if (canUseNativeSuperDash)
             {
                 TriggerSuperInput();
@@ -1181,20 +1384,23 @@ namespace mlp
                 return true;
             }
 
-            // 7. 尝试使用地狱难度奖励的超级冲刺
+            // 7. Try using the Hell Difficulty Bonus Super Sprint
+
             if (player.TryUseHellBonusSuperDash())
             {
                 superDashDelay.Reset();
                 return true;
             }
 
-            // 8. 两种都失败了，重置计时器
+            // 8. If both fail, reset the timer
+
             superDashDelay.Reset();
             return false;
         }
 
         /// <summary>
-        /// 设置必杀输入标志并清除其他输入以激活必杀技。
+        /// Set the kill input flag and clear other inputs to activate the kill move.
+
         /// </summary>
         protected void TriggerSuperInput()
         {
@@ -1204,9 +1410,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当持球对手处于理想的超级冲刺范围内时返回 true。
+        /// Returns true when the opponent with the ball is within ideal super rush range.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldUseSuperDashAgainstHolder()
         {
             if (opponent == null || !opponent.WithBall || !player.IsGrounded)
@@ -1219,9 +1426,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当自由球足够高且足够远，值得使用超级冲刺时返回 true。
+        /// Returns true when the free ball is high enough and far enough to merit using Super Sprint.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldUseSuperDashForBall()
         {
             if (ball == null || !ball.IsInGame || !player.IsGrounded)
@@ -1239,9 +1447,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当对手从后方施压或篮筐距离足够远值得超级冲刺时返回 true。
+        /// Returns true when the opponent is applying pressure from behind or the basket is far enough away to merit a super rush.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldUseSuperDashInAttack()
         {
             if (!player.WithBall || !player.IsGrounded)
@@ -1259,89 +1468,109 @@ namespace mlp
         }
 
         /// <summary>
-        /// 初始化进攻模式：设置攻击点、清除延迟、准备投篮路线。
+        /// Initialize the attack mode: set the attack point, clear the delay, and prepare the shooting route.
+
         /// </summary>
         protected void HandleBallInOwnHands()
         {
-            // 1. 重置所有延迟计时器和输入状态，切换到进攻策略（策略编号 2）
+            // 1. Reset all delay timers and input states and switch to the offensive strategy (strategy number 2)
+
             ResetBaseDelays();
             ResetCurrents();
             queuedReboundJump = false;
             strategy = 2;
             superDashDelay.Reset();
 
-            // 2. 根据球员在场上的位置，决定投篮目标点
+            // 2. Determine the shooting target point based on the player’s position on the court
+
             var reboundZone = IsReboundInAttackZone();
             if (reboundZone == -1)
             {
-                // 2a. 在进攻区域之前（离篮筐远）→ 设定一个近筐攻击点，如果在空中则立即准备投篮
+                // 2a. Before the offensive zone (far away from the basket) → Set an attack point near the basket, and if it is in the air, prepare to shoot immediately
+
                 willAttackAtOnce = !player.IsGrounded;
                 SetAttackPoint(150f, player.Position.x);
             }
             else if (reboundZone == 0)
             {
-                // 2b. 在进攻区域内 → 在当前位置投篮，如果在空中则立即投
+                // 2b. In the offensive zone → Shoot from your current position, or immediately if in the air
+
                 willAttackAtOnce = !player.IsGrounded;
                 var currentX = player.Position.x;
                 SetAttackPoint(currentX, currentX);
             }
             else
             {
-                // 2c. 在进攻区域之后（已深入对方半场）→ 自动选择最佳投篮点
+                // 2c. Behind the offensive zone (deep into the opponent's half) → automatically select the best shooting point
+
                 SetAttackPoint(0f, 0f);
                 willAttackAtOnce = !player.IsGrounded && Mathf.Abs(player.Position.x - attackPoint) < 50f;
             }
         }
 
         /// <summary>
-        /// 初始化防守模式：识别对手持球者并清除延迟。
+        /// Initialize defensive mode: identify the opponent's ball carrier and clear delays.
+
         /// </summary>
         protected void HandleBallInOpponentsHands()
         {
-            // 1. 切换到防守策略（编号 0）
+            // 1. Switch to defensive strategy (number 0)
+
             strategy = 0;
-            // 2. 重置所有延迟计时器和当前输入
+            // 2. Reset all delay timers and current inputs
+
             ResetBaseDelays();
             ResetCurrents();
-            // 3. 清除篮板、进攻、假动作等残留状态
+            // 3. Clear the remaining status of rebounds, offenses, fake actions, etc.
+
             queuedReboundJump = false;
             willAttackAtOnce = false;
             isPumped = false;
             superDashDelay.Reset();
-            // 4. 找到当前持球的对手作为防守目标
+            // 4. Find the opponent currently holding the ball as a defensive target
+
             opponent = player.GameCore.FindBallHolder(-player.Side);
         }
 
         /// <summary>
-        /// 初始化争夺球模式：清除延迟并准备追逐球。
+        /// Initialize scramble ball mode: Clear lag and get ready to chase the ball.
+
         /// </summary>
         protected void HandleBallOthers()
         {
-            // 1. 切换到争球策略（编号 1）
+            // 1. Switch to scrum strategy (number 1)
+
             strategy = 1;
-            // 2. 重置当前输入
+            // 2. Reset current input
+
             ResetCurrents();
-            // 3. 清除排队篮板起跳和超级冲刺延迟
+            // 3. Clear queue rebound jump and super sprint delays
             queuedReboundJump = false;
             superDashDelay.Reset();
         }
 
         /// <summary>
-        /// 响应游戏信号（抢断、跳跃、虚晃、冲刺、眩晕），调整 AI 输入和计时器。
+        /// Respond to game signals (tackle, jump, feint, dash, stun), adjust AI inputs and timers.
+
         /// </summary>
-        /// <param name="signal">玩家事件信号类型</param>
-        /// <param name="side">场地方向（-1 为左侧，1 为右侧）</param>
-        /// <param name="signalPlayerNo">触发信号的玩家编号</param>
+        /// <param name="signal">Player event signal type</param>
+
+        /// <param name="side">Field direction (-1 is left, 1 is right)</param>
+
+        /// <param name="signalPlayerNo">The player number that triggered the signal</param>
+
         protected void ProcessPlayerSignal(mlpPlayerSignalType signal, int side, int signalPlayerNo)
         {
-            // 1. 收到"开始抢断"信号 → 处理抢断反应（躲避或跟进）
+            // 1. Receive the "start tackling" signal → handle the tackling response (dodge or follow up)
+
             if (signal == mlpPlayerSignalType.StartSteal)
             {
                 PlayerStartSteal(side);
                 return;
             }
 
-            // 2. 收到"抢断完成"信号 → 如果是对手的抢断，清除躲避状态
+            // 2. Receive the "steal completed" signal → If it is an opponent's steal, clear the avoidance state
+
             if (signal == mlpPlayerSignalType.Steal)
             {
                 if (side == -player.Side)
@@ -1352,19 +1581,22 @@ namespace mlp
                 return;
             }
 
-            // 3. 收到"起跳"信号
+            // 3. Receive "take off" signal
+
             if (signal == mlpPlayerSignalType.JumpA)
             {
                 if (side == player.Side && signalPlayerNo == playerNo)
                 {
-                    // 3a. 自己起跳 → 清除躲避状态，激活攻击计时器，记录飞行方向
+                    // 3a. Take off by yourself → clear the avoidance state, activate the attack timer, and record the flight direction
+
                     ResetAvoidSteal();
                     attack.Activate();
                     directionToFly = player.Position.x - attackPoint >= 0f ? -1f : 1f;
                 }
                 else if (side == -player.Side)
                 {
-                    // 3b. 对手起跳 → 根据难度和概率决定是否跟着起跳干扰投篮
+                    // 3b. The opponent takes off → decide whether to follow the takeoff to interfere with the shot based on difficulty and probability
+
                     if (ShouldUsePerfectContestOnJump() || UnityEngine.Random.value <= profile.JumpThrow)
                     {
                         defenceDelay.Activate();
@@ -1374,21 +1606,24 @@ namespace mlp
                 return;
             }
 
-            // 4. 收到"假动作"信号 → 对手做假动作时可能被骗起跳
+            // 4. Receive a "feint" signal → Your opponent may be tricked into jumping when making a fake move
+
             if (signal == mlpPlayerSignalType.Pump)
             {
                 if (side == -player.Side && player.CanAct && IsOpponentCloseBehind(90f))
                 {
-                    // 4a. 限制最多被骗 3 次
+                    // 4a. Limit being cheated up to 3 times
+
                     if (++pumpCount <= 3)
                     {
-                        // 4b. 地狱难度下可能识破假动作，不被骗
+                        // 4b. In Hell difficulty, it is possible to see through fake moves and not be deceived.
                         if (ShouldIgnorePumpFake())
                         {
                             return;
                         }
 
-                        // 4c. 按概率被骗：起跳防守并停下移动，标记为"被晃飞"
+                        // 4c. Being cheated according to probability: jump to defend and stop moving, marked as "being shaken"
+
                         if (UnityEngine.Random.value <= profile.JumpPump)
                         {
                             defenceDelay.Activate();
@@ -1402,17 +1637,20 @@ namespace mlp
                 return;
             }
 
-            // 5. 收到"冲刺"信号
+            // 5. Receive "Sprint" signal
+
             if (signal == mlpPlayerSignalType.Dash)
             {
                 if (side == player.Side)
                 {
-                    // 5a. 队友冲刺 → 重置攻击计时器（队友在跑，重新规划）
+                    // 5a. Teammate sprints → Reset attack timer (teammate is running, re-plan)
+
                     attack.Reset();
                 }
                 else if (strategy == 0 && player.CanAct && IsOpponentInRangeBehind(40f, GetDashBlockRangeMaxDistance()))
                 {
-                    // 5b. 对手在身后冲刺 → 按概率尝试盖帽
+                    // 5b. The opponent is sprinting behind → try to block the shot based on probability
+
                     if (UnityEngine.Random.value <= profile.MakeBlock)
                     {
                         ResetCurrents();
@@ -1425,7 +1663,8 @@ namespace mlp
                 return;
             }
 
-            // 6. 收到"眩晕"信号 → 如果是自己被眩晕，重置所有计时器
+            // 6. Receive a "stun" signal → If you are stunned, reset all timers
+
             if (signal == mlpPlayerSignalType.Stun && side == player.Side)
             {
                 ResetAllDelays();
@@ -1433,9 +1672,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当对手开始抢断时做出反应，如果持球则尝试躲避。
+        /// React when the opponent starts to tackle and try to dodge if you have the ball.
         /// </summary>
-        /// <param name="side">场地方向（-1 为左侧，1 为右侧）</param>
+        /// <param name="side">Field direction (-1 is left, 1 is right)</param>
+
         protected void PlayerStartSteal(int side)
         {
             if (side == -player.Side)
@@ -1452,7 +1692,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通过冲刺、跳跃或侧移来躲避即将到来的抢断。
+        /// Dodge incoming tackles by sprinting, jumping or moving sideways.
         /// </summary>
         protected void TryToAvoid()
         {
@@ -1479,88 +1719,96 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回干扰投篮的距离阈值，来自难度调校配置。
+        /// Returns the distance threshold for interference shots, from the difficulty tuning configuration.
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetDefenceContestDistance()
         {
             return tuning.DefenceContestDistance;
         }
 
         /// <summary>
-        /// 返回从背后抢断的距离阈值，来自难度调校配置。
+        /// Returns the distance threshold for tackling from behind, from difficulty tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetStealBehindDistance()
         {
             return tuning.StealBehindDistance;
         }
 
         /// <summary>
-        /// 返回篮筐附近抢断的距离阈值，来自难度调校配置。
+        /// Returns the distance threshold for steals near the basket, from the difficulty adjustment configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetStealBasketDistance()
         {
             return tuning.StealBasketDistance;
         }
 
         /// <summary>
-        /// 返回超级冲刺所需的最小持球者距离，来自调校配置。
+        /// Minimum ball carrier distance required to return super sprint, from tuning configuration.
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetHolderSuperDashMinDistance()
         {
             return tuning.HolderSuperDashMinDistance;
         }
 
         /// <summary>
-        /// 返回超级冲刺所需的最大持球者距离，来自调校配置。
+        /// Returns the maximum ball carrier distance required to super sprint, from the tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetHolderSuperDashMaxDistance()
         {
             return tuning.HolderSuperDashMaxDistance;
         }
 
         /// <summary>
-        /// 返回自由球超级冲刺所需的最小球距，来自调校配置。
+        /// Minimum ball distance required to return free ball super sprint, from tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetLooseBallSuperDashDistance()
         {
             return tuning.LooseBallSuperDashDistance;
         }
 
         /// <summary>
-        /// 返回进攻中触发超级冲刺逃脱的后方距离阈值，来自调校配置。
+        /// Returns the rear distance threshold for triggering a super sprint escape during an attack, from the tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetAttackPressureDistance()
         {
             return tuning.AttackPressureDistance;
         }
 
         /// <summary>
-        /// 返回进攻中值得使用超级冲刺的篮筐距离，来自调校配置。
+        /// The distance to the rim that is worth using Super Sprint in the return offense comes from the tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetAttackSuperDashDistance()
         {
             return tuning.AttackSuperDashDistance;
         }
 
         /// <summary>
-        /// 返回 AI 尝试冲刺盖帽的最大距离，来自调校配置。
+        /// Returns the maximum distance the AI ​​will attempt to sprint a block, from the tuning configuration.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetDashBlockRangeMaxDistance()
         {
             return tuning.DashBlockRangeMaxDistance;
         }
 
         /// <summary>
-        /// 在地狱难度下，当人类玩家投出威胁性投篮时激活额外护盾。
+        /// On Hell difficulty, extra shields are activated when human players take threatening shots.
+
         /// </summary>
         protected void TryUseHellBonusShieldAgainstHumanShot()
         {
@@ -1581,19 +1829,23 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据玩家的位置方向和编号计算进攻、冲刺、防守和篮板位置。
+        /// Calculate offensive, sprinting, defensive and rebounding positions based on player position direction and number.
+
         /// </summary>
         protected void InitZones()
         {
-            // 1. 根据玩家所在阵营（左=1，右=-1）设置进攻和冲刺区域的边界
+            // 1. Set the boundaries of the attack and sprint areas according to the player's camp (left=1, right=-1)
+
             if (player.Side == 1)
             {
-                // 1a. 右侧阵营：直接使用配置中的区域值
+                // 1a. Right camp: directly use the area value in the configuration
+
                 attackZoneStart = mlpObjectsData.AttackZoneStart;
                 attackZoneEnd = mlpObjectsData.AttackZoneEnd;
                 dashZoneStart = mlpObjectsData.DashZoneStart;
                 dashZoneEnd = mlpObjectsData.DashZoneEnd;
-                // 1b. 根据球员编号（0=主力，1=辅助）设置不同的防守/篮板位置
+                // 1b. Set different defensive/rebounding positions according to player number (0=main player, 1=auxiliary)
+
                 if (playerNo == 0)
                 {
                     baseEndPoint = 280f;
@@ -1609,7 +1861,8 @@ namespace mlp
             }
             else
             {
-                // 1c. 左侧阵营：将坐标镜像翻转（场地关于中心对称）
+                // 1c. Left camp: Mirror the coordinates (the field is symmetrical about the center)
+
                 attackZoneStart = mlpConstants.Width - mlpObjectsData.AttackZoneEnd;
                 attackZoneEnd = mlpConstants.Width - mlpObjectsData.AttackZoneStart;
                 dashZoneStart = mlpConstants.Width - mlpObjectsData.DashZoneEnd;
@@ -1628,13 +1881,15 @@ namespace mlp
                 }
             }
 
-            // 2. 设置防守站位点和默认终点位置
+            // 2. Set defensive stance point and default end position
+
             defensePoint = player.Side == -1 ? mlpObjectsData.DefensePoint : mlpConstants.Width - mlpObjectsData.DefensePoint;
             endPoint = baseEndPoint;
         }
 
         /// <summary>
-        /// 首次使用时从游戏核心延迟获取球和对手的引用。
+        /// Lazy acquisition of ball and opponent references from the game core on first use.
+
         /// </summary>
         protected void EnsureRuntimeLinks()
         {
@@ -1652,36 +1907,46 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为新回合重置所有 AI 状态（策略、延迟、输入、虚晃计数）。
+        /// Reset all AI states (strategy, delays, inputs, feint counts) for the new round.
+
         /// </summary>
         protected void ResetForRestart()
         {
-            // 1. 设置默认策略为"跳球"（编号 3），重置无聊等待计时
+            // 1. Set the default strategy to "jump ball" (number 3) and reset the boring wait timer
+
             strategy = 3;
             deltaDownTime = 0f;
-            // 2. 恢复默认防守终点位置
+            // 2. Restore the default defensive end position
+
             endPoint = baseEndPoint;
-            // 3. 重置所有延迟计时器和当前输入
+            // 3. Reset all delay timers and current inputs
+
             ResetAllDelays();
             ResetCurrents();
-            // 4. 清除盖帽、大招、排队大招等状态
+            // 4. Clear the status of blocks, ultimate moves, queued ultimate moves, etc.
+
             CurrentBlockOrPump = false;
             CurrentSuper = false;
             queuedSuperInput = false;
-            // 5. 清除假动作被骗状态和计数
+            // 5. Clear the cheated status and count of fake actions
+
             isPumped = false;
             pumpCount = 0;
-            // 6. 清除排队篮板起跳和立即进攻标志
+            // 6. Clear the queue rebound jump and immediate attack flags
+
             queuedReboundJump = false;
             willAttackAtOnce = false;
-            // 7. 篮板位置默认为防守篮板位置
+            // 7. The rebound position defaults to the defensive rebound position.
+
             reboundPoint = reboundPointInDefence;
-            // 8. 清除抢断躲避状态
+            // 8. Clear steal avoidance status
+
             ResetAvoidSteal();
         }
 
         /// <summary>
-        /// 将所有控制器输入标志归零（移动、跳跃、动作、冲刺）。
+        /// Zeroes out all controller input flags (move, jump, action, sprint).
+
         /// </summary>
         protected void ResetCurrents()
         {
@@ -1692,7 +1957,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 重置进攻、防守、移动、抢断和攻击跳跃的延迟计时器。
+        /// Reset delay timers for offense, defense, movement, steals, and attack jumps.
         /// </summary>
         protected void ResetBaseDelays()
         {
@@ -1705,7 +1970,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 重置所有延迟计时器，包括冲刺决策和超级冲刺计时器。
+        /// Resets all delay timers, including sprint decision and super sprint timers.
+
         /// </summary>
         protected void ResetAllDelays()
         {
@@ -1715,7 +1981,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 清除抢断躲避的跳跃和移动标志。
+        /// Clear jump and move flags for steals and dodges.
+
         /// </summary>
         protected void ResetAvoidSteal()
         {
@@ -1724,10 +1991,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在对手列表中搜索指定编号的玩家，未找到则返回 null。
+        /// Search the opponent list for the player with the specified number, or return null if not found.
         /// </summary>
-        /// <param name="targetPlayerNo">要搜索的玩家编号</param>
-        /// <returns>搜索结果。</returns>
+        /// <param name="targetPlayerNo">Player number to search</param>
+        /// <returns>Search results. </returns>
         protected mlpPlayerObject FindOpponentByPlayerNo(int targetPlayerNo)
         {
             if (opponents == null)
@@ -1747,13 +2014,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 选择投篮的 X 位置，使用基于距离的随机化和关键球逻辑。
+        /// Select the X position of the shot, using distance-based randomization and clutch ball logic.
         /// </summary>
-        /// <param name="point">攻击 X 位置（0 表示自动选择）</param>
-        /// <param name="jump">跳跃点 X 位置，用于决定何时起跳投篮</param>
+        /// <param name="point">Attack X position (0 means automatic selection)</param>
+
+        /// <param name="jump">Jump point X position, used to determine when to take off and shoot</param>
+
         protected void SetAttackPoint(float point, float jump)
         {
-            // 1. 如果调用方指定了具体的攻击点（非 0），直接使用
+            // 1. If the caller specifies a specific attack point (non-zero), use it directly
+
             if (!Mathf.Approximately(point, 0f))
             {
                 attackPoint = point;
@@ -1761,38 +2031,45 @@ namespace mlp
             }
             else
             {
-                // 2. 没有指定攻击点 → 根据比赛情况和概率自动选择投篮位置
+                // 2. No attack point specified → Automatically select shooting position based on game situation and probability
+
                 if (ShouldForceClutchThree())
                 {
-                    // 2a. 比赛快结束且落后 → 强制选择三分线位置
+                    // 2a. The game is almost over and behind → Forced selection of the three-point line position
+
                     attackPoint = 500f + 24f * UnityEngine.Random.value;
                 }
                 else if (ShouldPreferSafeClutchTwo())
                 {
-                    // 2b. 比赛快结束且领先 → 选择安全的近距离两分位置
+                    // 2b. The game is almost over and you are ahead → Choose a safe close two-point position
                     attackPoint = 140f + 80f * UnityEngine.Random.value;
                 }
                 else if ((player.Position.x - 450f) * player.Side > 0f && UnityEngine.Random.value <= mlpObjectsData.ChanceForThree)
                 {
-                    // 2c. 已经在对方半场且随机命中 → 尝试三分
+                    // 2c. Already in the opponent's half and hit a random hit → try a three-pointer
+
                     attackPoint = 510f;
                 }
                 else if (UnityEngine.Random.value <= 0.7f)
                 {
-                    // 2d. 大概率选择中距离投篮位置
+                    // 2d. Choose a mid-range shooting position with high probability
+
                     attackPoint = 120f + 200f * UnityEngine.Random.value;
                 }
                 else
                 {
-                    // 2e. 小概率选择远距离中投位置
+                    // 2e. There is a small probability of choosing a long-range mid-range shot position.
+
                     attackPoint = 320f + 160f * UnityEngine.Random.value;
                 }
 
-                // 3. 跳跃点：近距离投篮需要先跳到更靠近篮筐的位置再出手
+                // 3. Jump point: To shoot from close range, you need to jump closer to the basket before shooting.
+
                 jumpPoint = attackPoint <= 200f ? attackPoint + 100f : attackPoint;
             }
 
-            // 4. 左侧阵营需要将 X 坐标镜像翻转
+            // 4. The left camp needs to mirror the X coordinate and flip it
+
             if (player.Side == -1)
             {
                 attackPoint = mlpConstants.Width - attackPoint;
@@ -1801,18 +2078,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在地狱难度下返回 true，启用基于弹道的球路预测。
+        /// Returns true on Hell difficulty to enable trajectory-based ball prediction.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldUseTechnicalPrediction()
         {
             return difficulty == mlpAiDifficulty.Hell;
         }
 
         /// <summary>
-        /// 在地狱难度下预测自由球的落点，否则返回球当前的 X 坐标。
+        /// Predicts the landing point of a free ball on Hell difficulty, otherwise returns the ball's current X coordinate.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetTechnicalLooseBallTargetX()
         {
             if (!ShouldUseTechnicalPrediction() || ball == null)
@@ -1829,9 +2108,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在地狱难度下预测投失球的落点，否则返回固定的篮板位置。
+        /// Predict the landing point of a missed shot on Hell difficulty, otherwise return to the fixed rebound position.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float GetTechnicalReboundTargetX()
         {
             if (!ShouldUseTechnicalPrediction() || ball == null)
@@ -1848,9 +2128,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当 AI 在比赛末段落后时返回 true，应强制投三分球。
+        /// Returns true when the AI ​​falls behind late in the game and should force a 3-pointer.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldForceClutchThree()
         {
             return SupportsClutchShotSelection() &&
@@ -1859,9 +2140,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当 AI 在比赛末段领先时返回 true，应选择安全的两分球。
+        /// Returns true when the AI ​​leads late in the game and should choose a safe two-point shot.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldPreferSafeClutchTwo()
         {
             return SupportsClutchShotSelection() &&
@@ -1870,18 +2152,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在困难或地狱难度下返回 true，启用末节投篮选择逻辑。
+        /// Returns true on Hard or Hell difficulty to enable late shot selection logic.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool SupportsClutchShotSelection()
         {
             return difficulty == mlpAiDifficulty.Hard || difficulty == mlpAiDifficulty.Hell;
         }
 
         /// <summary>
-        /// 在地狱难度下，当对手靠近且投出威胁性投篮时返回 true。
+        /// On Hell difficulty, returns true when an opponent is close and takes a threatening shot.
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldUsePerfectContestOnJump()
         {
             return difficulty == mlpAiDifficulty.Hell &&
@@ -1890,9 +2173,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在地狱难度下，当对手不太可能真正投篮时返回 true。
+        /// On Hell difficulty, returns true when the opponent is unlikely to actually shoot.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool ShouldIgnorePumpFake()
         {
             if (difficulty != mlpAiDifficulty.Hell)
@@ -1909,9 +2193,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当对手接近其攻击目标或比赛时间即将结束时返回 true。
+        /// Returns true when the opponent is close to their attack target or when the match time is about to end.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsOpponentImmediateShotThreat()
         {
             if (opponent == null || !opponent.WithBall)
@@ -1930,9 +2215,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回 -1、0 或 1，表示玩家在进攻区域之前、之内还是之后。
+        /// Returns -1, 0, or 1, indicating whether the player is before, inside, or behind the attacking zone.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected int IsReboundInAttackZone()
         {
             var playerX = player.Position.x;
@@ -1950,10 +2236,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回 -1、0 或 1，表示朝给定 X 位置移动的方向。
+        /// Returns -1, 0, or 1 indicating the direction of movement toward the given X position.
+
         /// </summary>
-        /// <param name="x">像素空间中的水平坐标</param>
-        /// <returns>计算结果。</returns>
+        /// <param name="x">Horizontal coordinates in pixel space</param>
+
+        /// <returns>Calculation results. </returns>
         protected int MoveTo(float x)
         {
             var delta = player.Position.x - x;
@@ -1961,22 +2249,26 @@ namespace mlp
         }
 
         /// <summary>
-        /// 决定向跳跃点还是攻击点移动，同时设置攻击跳跃标志。
+        /// Decide to move towards the jump point or attack point, and set the attack jump flag.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected int MoveInAttack()
         {
-            // 1. 先尝试向跳跃点移动
+            // 1. First try to move to the jump point
+
             var move = MoveTo(jumpPoint);
             if (move == 0)
             {
-                // 2. 已到达跳跃点 → 标记"可以起跳投篮"，再判断是否需要继续走向攻击点
+                // 2. The jumping point has been reached → Mark "You can take off and shoot", and then determine whether you need to continue walking towards the attack point.
+
                 attackJump = true;
                 move = Mathf.Approximately(jumpPoint, attackPoint) ? 0 : MoveTo(attackPoint);
             }
             else
             {
-                // 3. 还没到跳跃点 → 标记"不要跳"，向攻击点移动（先走大致方向）
+                // 3. Not yet at the jumping point → Mark "Don't jump" and move towards the attack point (first go in the general direction)
+
                 attackJump = false;
                 move = MoveTo(attackPoint);
             }
@@ -1985,37 +2277,42 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回玩家到球的水平距离（正值表示球在玩家左侧）。
+        /// Returns the horizontal distance from the player to the ball (positive values mean the ball is to the left of the player).
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float DeltaBallX()
         {
             return player.Position.x - ball.Position.x;
         }
 
         /// <summary>
-        /// 返回玩家到球的垂直距离。
+        /// Returns the vertical distance from the player to the ball.
+
         /// </summary>
-        /// <returns>计算结果。</returns>
+        /// <returns>Calculation results. </returns>
         protected float DeltaBallY()
         {
             return player.Position.y - ball.Position.y;
         }
 
         /// <summary>
-        /// 当球水平距离近而垂直距离远时返回 true，表示篮板机会。
+        /// Returns true when the ball is close horizontally but far vertically, indicating a rebound opportunity.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsBallInReboundZone()
         {
             return Mathf.Abs(DeltaBallX()) < 60f && Mathf.Abs(DeltaBallY()) > 70f;
         }
 
         /// <summary>
-        /// 当对手在玩家后方指定距离内时返回 true。
+        /// Returns true when the opponent is within the specified distance behind the player.
+
         /// </summary>
-        /// <param name="distance">到目标篮筐的估计距离</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="distance">Estimated distance to target basket</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsOpponentCloseBehind(float distance = 100f)
         {
             if (opponent == null)
@@ -2028,11 +2325,14 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当对手在玩家后方且处于最小-最大距离范围内时返回 true。
+        /// Returns true when the opponent is behind the player and within the min-max distance range.
+
         /// </summary>
-        /// <param name="min">最小距离阈值</param>
-        /// <param name="max">最大距离阈值</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="min">Minimum distance threshold</param>
+
+        /// <param name="max">Maximum distance threshold</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsOpponentInRangeBehind(float min = 40f, float max = 180f)
         {
             if (opponent == null)
@@ -2045,10 +2345,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当对手在玩家和篮筐之间，且在指定距离内时返回 true。
+        /// Returns true when an opponent is within the specified distance between the player and the basket.
+
         /// </summary>
-        /// <param name="distance">到目标篮筐的估计距离</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="distance">Estimated distance to target basket</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsOpponentCloseToBasket(float distance = 30f)
         {
             if (opponent == null)
@@ -2061,9 +2363,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当 AI 玩家比对手更靠近对方篮筐时返回 true。
+        /// Returns true when the AI ​​player is closer to the opponent's basket than the opponent.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsAICloserForBasket()
         {
             if (opponent == null)
@@ -2075,28 +2378,32 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当玩家站在自己篮筐下方时返回 true。
+        /// Returns true when the player is standing under his own basket.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsUnderOwnBasket()
         {
             return player.Side == 1 ? player.Position.x > 700f : player.Position.x < 100f;
         }
 
         /// <summary>
-        /// 当玩家的 X 位置处于配置的冲刺区域内时返回 true。
+        /// Returns true when the player's X position is within the configured sprint area.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool InDashingZone()
         {
             return player.Position.x >= dashZoneStart && player.Position.x <= dashZoneEnd;
         }
 
         /// <summary>
-        /// 当与对手的绝对水平距离在阈值内时返回 true。
+        /// Returns true when the absolute horizontal distance to the opponent is within the threshold.
+
         /// </summary>
-        /// <param name="distance">到目标篮筐的估计距离</param>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <param name="distance">Estimated distance to target basket</param>
+
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsOpponentCloseAbs(float distance = 100f)
         {
             if (opponent == null)
@@ -2108,9 +2415,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当玩家位于对手半场时返回 true。
+        /// Returns true when the player is in the opponent's half of the field.
+
         /// </summary>
-        /// <returns>操作成功时返回 true；否则返回 false。</returns>
+        /// <returns>Returns true if the operation is successful; otherwise returns false. </returns>
         protected bool IsInAttackZone()
         {
             return player.Side == 1 ? player.Position.x < 600f : player.Position.x > 200f;

@@ -1,12 +1,12 @@
-// 快速测试模式设置
-// 提供一个开关，开启后比赛时长缩短为 15 秒，方便开发者快速测试游戏流程而不用等完整比赛结束。
+// Quick test mode setup
+// Provide a switch that shortens the game duration to 15 seconds when turned on, allowing developers to quickly test the game process without waiting for the complete game to end.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// 快速测试模式设置：开启后比赛时长大幅缩短，方便开发调试。设置会通过 PlayerPrefs 持久化保存。
+    /// Quick test mode setting: After turning it on, the game duration is greatly shortened, which facilitates development and debugging. Settings are persisted via PlayerPrefs.
     /// </summary>
     public static class mlpQuickTestSettings
     {
@@ -15,7 +15,7 @@ namespace mlp
         public const float QuickMatchTime = 15f;
 
         /// <summary>
-        /// 获取或设置快速测试模式是否开启。该值通过 PlayerPrefs 持久化存储。
+        /// Gets or sets whether quick test mode is enabled. This value is stored persistently via PlayerPrefs.
         /// </summary>
         public static bool Enabled
         {
@@ -33,10 +33,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回比赛时长（秒）。当快速测试模式开启且为常规时间时使用快速比赛时长，否则使用标准时长或加时时长。
+        /// Returns the match duration in seconds. When the quick test mode is on and it is regular time, the quick match duration is used, otherwise the standard duration or overtime duration is used.
         /// </summary>
-        /// <param name="regularTime">true 表示常规时间，false 表示加时赛。</param>
-        /// <returns>比赛时长（秒）。</returns>
+        /// <param name="regularTime">true means regular time, false means overtime. </param>
+        /// <returns>Game duration (seconds). </returns>
         public static float GetMatchTime(bool regularTime)
         {
             if (!regularTime)

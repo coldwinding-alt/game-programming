@@ -1,10 +1,11 @@
-// 游戏模式 ID 常量
-// 定义各种游戏模式的编号：随机快速匹配、快速匹配、训练模式、双人对战、教程。用来区分当前正在玩的是哪种模式。
+// Game Mode ID Constant
+// Define numbers for various game modes: Random Quick Match, Quick Match, Training Mode, Two Player Battle, Tutorial. Used to distinguish which mode is currently being played.
 
 namespace mlp
 {
     /// <summary>
-    /// 游戏模式 ID 常量：定义各种游戏模式的编号（随机快速、快速匹配、训练、双人对战、教程），用来区分当前在玩哪种模式。
+    /// Game mode ID constant: Defines the number of various game modes (random quick, quick match, training, two-player battle, tutorial) to distinguish which mode is currently being played.
+
     /// </summary>
     public static class mlpGameModeIds
     {

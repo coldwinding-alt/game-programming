@@ -1,6 +1,6 @@
 # Test Log
 
-Updated: `2026-06-09`
+Updated: `2026-06-16`
 
 ## Current Baseline
 
@@ -14,6 +14,7 @@ Updated: `2026-06-09`
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-06-16 | Warning cleanup and provenance documentation audit | Pass | Removed the unused `mlpBallObject.upperSensorPassed` field/assignments after confirming score sequencing remains handled by `mlpMatchProcessor.ProcessSensor(...)`, refreshed provenance documentation links, ran `git diff --check`, and confirmed `mlp smoke test passed.` in Unity batch mode |
 | 2026-06-09 | Dunk animation feel tuning and repository cleanup | Pass | Rebuilt the runtime DragonBones skeleton with `Tools/Art/rebuild_runtime_dragonbones_skeleton.py`, confirmed the generated animation data and texture root name are consistent, ran `git diff --check`, and cleaned source-note wording plus document metadata before publishing the current mainline build |
 | 2026-06-04 | Runtime font replacement and provenance hardening | Pass | Replaced the risky `Impact`, `Impact2`, `AgencyBold`, and `CfCrackBold` bundled font binaries with official Google Fonts copies (`Anton`, `Barlow Condensed Bold`, and `Bungee`), added local OFL copies under `DOCS/FontLicenses`, regenerated the relevant TMP font assets in a disposable validation workspace because the main project was already open in another Unity instance, and confirmed the updated build with `mlp smoke test passed.` |
 | 2026-06-04 | Release smoke after reaper refresh and menu/HUD polish (`mlpSmokeTest.Run`) | Pass | Revalidated the current release candidate in Unity `2022.3.62f3c1` batch mode from a disposable validation workspace because the main project was already open in another editor instance; the renamed `REAPER` art assets, refreshed logo, single-player/menu updates, and HUD/native text changes all passed the repository smoke suite |
@@ -48,4 +49,4 @@ Updated: `2026-06-09`
 
 ## Known Non-Blocking Issue
 
-- Existing warning: `Assets/mlp/Scripts/GameObjects/mlpGameplayObjects.cs(176,22)` - `mlpBallObject.upperSensorPassed` is assigned but currently unused.
+- None at the moment. The unused `mlpBallObject.upperSensorPassed` warning was removed after confirming score sensor sequencing is handled by `mlpMatchProcessor.ProcessSensor(...)`.

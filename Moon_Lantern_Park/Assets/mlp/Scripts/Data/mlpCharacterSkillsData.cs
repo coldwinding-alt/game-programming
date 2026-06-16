@@ -1,27 +1,34 @@
-// 角色技能数据
-// 定义 8 个角色各自的专属技能：技能名称、冷却时间、效果描述。每个角色的技能都不一样，有的能加速，有的能增强投篮。
+// Character skill data
+// Define the exclusive skills of each of the 8 characters: skill name, cooling time, effect description. Each character has different skills, some can speed up, and some can enhance shooting.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// 角色技能类型：每个角色对应一种专属技能，如灵魂收割、幽灵帆、血月闪现等。
+    /// Character skill types: Each character corresponds to an exclusive skill, such as soul harvesting, ghost sail, blood moon flash, etc.
+
     /// </summary>
     public enum mlpCharacterSkillType
     {
-        SoulReap,           // 死神 — 冲刺抢断
-        CarnivalJackpot,    // 稻草人 — 下次得分+2
-        GhostSail,          // 骷髅海盗 — 篮筐护盾
-        BloodMoonBlink,     // 吸血鬼 — 闪现扣篮
-        WaxOverdrive,       // 蜡像人 — 速度加成
-        BadLuck,            // 女巫 — 冰冻对手
-        ReboundMagnet,      // 幽灵小丑 — 篮板磁铁
-        SureBlock           // 黑猫 — 必定封盖
+        SoulReap,           // Reaper - sprint steal
+
+        CarnivalJackpot,    // Scarecrow — score +2 next time
+        GhostSail,          // Skeleton Pirates — Basket Shield
+
+        BloodMoonBlink,     // Vampire — Flash Dunk
+
+        WaxOverdrive,       // Waxman — speed bonus
+
+        BadLuck,            // Witch — freezes opponents
+
+        ReboundMagnet,      // Ghost Clown - Backboard Magnet
+
+        SureBlock           // Black Cat — Definitely blocked shot
     }
 
     /// <summary>
-    /// 角色技能定义：描述一个技能的全部信息——名称、图标、充能效果、激活提示、冷却时间等。
+    /// Character skill definition: Describes all the information of a skill - name, icon, charging effect, activation prompt, cooling time, etc.
     /// </summary>
     public readonly struct mlpCharacterSkillDefinition
     {
@@ -43,24 +50,24 @@ namespace mlp
         public readonly int FlatScoreBonus;
 
         /// <summary>
-        /// 创建角色技能定义，包含所有视觉效果、玩法和平衡性数据。
+        /// Create character skill definitions, including all visual, gameplay and balance data.
         /// </summary>
-        /// <param name="skillType">技能类型。</param>
-        /// <param name="iconSuperId">必杀技能量条 UI 使用的图标索引。</param>
-        /// <param name="skillName">技能的显示名称。</param>
-        /// <param name="iconImageKey">技能图标的图片键名。</param>
-        /// <param name="chargeMaskImageKey">充能遮罩层的图片键名。</param>
-        /// <param name="activateNotice">技能激活时显示的提示文本。</param>
-        /// <param name="scoreNotice">技能影响得分时显示的提示文本。</param>
-        /// <param name="primaryColor">技能的主要 UI 颜色。</param>
-        /// <param name="secondaryColor">技能的次要 UI 颜色。</param>
-        /// <param name="accentColor">技能的强调 UI 颜色。</param>
-        /// <param name="effectDuration">技能效果持续时间（秒）。</param>
-        /// <param name="bonusDuration">额外的奖励持续时间（秒）。</param>
-        /// <param name="moveSpeedMultiplier">技能激活时的移动速度倍率。</param>
-        /// <param name="accuracyModifier">技能激活时的命中率加成。</param>
-        /// <param name="scoreRefundFraction">成功操作后返还的得分比例。</param>
-        /// <param name="flatScoreBonus">成功操作后额外增加的固定分数。</param>
+        /// <param name="skillType">Skill type. </param>
+        /// <param name="iconSuperId">The icon index used by the special skill gauge UI. </param>
+        /// <param name="skillName">The display name of the skill. </param>
+        /// <param name="iconImageKey">The image key name of the skill icon. </param>
+        /// <param name="chargeMaskImageKey">The image key name of the charge mask layer. </param>
+        /// <param name="activateNotice">Tip text displayed when the skill is activated. </param>
+        /// <param name="scoreNotice">Tip text displayed when the skill affects the score. </param>
+        /// <param name="primaryColor">The skill's primary UI color. </param>
+        /// <param name="secondaryColor">The secondary UI color of the skill. </param>
+        /// <param name="accentColor">The accent UI color for the skill. </param>
+        /// <param name="effectDuration">Skill effect duration (seconds). </param>
+        /// <param name="bonusDuration">The bonus duration in seconds. </param>
+        /// <param name="moveSpeedMultiplier">The movement speed multiplier when the skill is activated. </param>
+        /// <param name="accuracyModifier">Hit rate bonus when the skill is activated. </param>
+        /// <param name="scoreRefundFraction">The score ratio returned after a successful operation. </param>
+        /// <param name="flatScoreBonus">An additional fixed score added after a successful operation. </param>
         public mlpCharacterSkillDefinition(
             mlpCharacterSkillType skillType,
             int iconSuperId,
@@ -98,23 +105,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// 判断该技能是否使用传送扣篮机制。
+        /// Determine whether this skill uses the teleport dunk mechanism.
+
         /// </summary>
         public bool UsesTeleportDunk =>
             SkillType == mlpCharacterSkillType.BloodMoonBlink;
 
         /// <summary>
-        /// 判断该技能是否使用篮筐护盾机制。
+        /// Determine whether this skill uses the rim shield mechanism.
+
         /// </summary>
         public bool UsesBasketShield => SkillType == mlpCharacterSkillType.GhostSail;
 
         /// <summary>
-        /// 判断该技能是否使用冲刺机制。
+        /// Determine whether this skill uses the sprint mechanism.
+
         /// </summary>
         public bool UsesDashSkill => SkillType == mlpCharacterSkillType.SoulReap;
 
         /// <summary>
-        /// 判断该技能是否需要持球才能激活。
+        /// Determine whether the skill requires holding the ball to activate.
+
         /// </summary>
         public bool UsesPossessionSkill =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
@@ -122,35 +133,38 @@ namespace mlp
             SkillType == mlpCharacterSkillType.WaxOverdrive;
 
         /// <summary>
-        /// 判断该技能是否使用冰冻机制。
+        /// Determine whether this skill uses the freezing mechanism.
+
         /// </summary>
         public bool UsesFreezeSkill => SkillType == mlpCharacterSkillType.BadLuck;
 
         /// <summary>
-        /// 判断该技能是否能将自由篮板球拉向施法者。
+        /// Determines whether this skill pulls free rebound balls toward the caster.
         /// </summary>
         public bool UsesReboundMagnetSkill => SkillType == mlpCharacterSkillType.ReboundMagnet;
 
         /// <summary>
-        /// 判断该技能是否能立即封盖对手的投篮。
+        /// Determine whether this skill can immediately block the opponent's shot.
+
         /// </summary>
         public bool UsesGuaranteedBlockSkill => SkillType == mlpCharacterSkillType.SureBlock;
 
         /// <summary>
-        /// 判断该技能是否能提升下一次投篮的得分值。
+        /// Determine whether this skill can increase the score of the next shot.
+
         /// </summary>
         public bool UsesScoreUpgrade =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot;
 
         /// <summary>
-        /// 判断玩家是否必须持球才能激活该技能。
+        /// Determines whether the player must hold the ball to activate this skill.
         /// </summary>
         public bool RequiresBallToCast =>
             SkillType == mlpCharacterSkillType.CarnivalJackpot ||
             SkillType == mlpCharacterSkillType.BloodMoonBlink;
 
         /// <summary>
-        /// 判断该技能是否拥有独立的图标和充能遮罩美术资源。
+        /// Determine whether the skill has independent icon and charge mask art resources.
         /// </summary>
         public bool HasStandaloneIconArt =>
             !string.IsNullOrEmpty(IconImageKey) &&
@@ -158,7 +172,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 角色技能数据表：存储所有 8 个角色的技能定义，根据角色 ID 获取对应的技能信息。
+    /// Character skill data table: stores the skill definitions of all 8 characters, and obtains the corresponding skill information based on the character ID.
     /// </summary>
     public static class mlpCharacterSkillsData
     {
@@ -259,10 +273,10 @@ namespace mlp
         };
 
         /// <summary>
-        /// 获取指定角色 ID 的技能定义。如果 ID 超出范围，回退到第一个技能。
+        /// Gets the skill definition for the specified role ID. If the ID is out of range, fall back to the first skill.
         /// </summary>
-        /// <param name="characterId">要查找的角色 ID。</param>
-        /// <returns>该角色的技能定义。</returns>
+        /// <param name="characterId">The character ID to find. </param>
+        /// <returns>The character's skill definition. </returns>
         public static mlpCharacterSkillDefinition Get(int characterId)
         {
             return characterId >= 0 && characterId < Skills.Length

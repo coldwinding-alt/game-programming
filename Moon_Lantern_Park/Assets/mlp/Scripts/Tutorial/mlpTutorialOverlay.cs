@@ -1,5 +1,5 @@
-// 教程界面覆盖层 提示文字/箭头/UI覆盖
-// 在教程模式下覆盖在游戏画面上方，显示操作提示、进度点、女巫角色讲解、技能演示动画和按键提示。教程完成后的结算界面也在这里管理。
+// Tutorial interface overlay prompt text/arrow/UI overlay
+// In tutorial mode, it is overlaid on the top of the game screen to display operation tips, progress points, witch character explanations, skill demonstration animations and key press prompts. The settlement interface after the completion of the tutorial is also managed here.
 
 using System.Collections.Generic;
 using TMPro;
@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace mlp
 {
-    /// <summary>教程覆盖层命令：无、下一步、显示技能演示、显示完成画面等控制指令。</summary>
+    /// <summary>Tutorial overlay commands: none, next step, display skill demonstration, display completion screen and other control commands. </summary>
     public enum mlpTutorialOverlayCommand
     {
         None,
@@ -21,93 +21,166 @@ namespace mlp
     }
 
     /// <summary>
-    /// 教程界面覆盖层：在游戏画面上方显示操作提示、进度点、女巫讲解、技能演示和按键提示，教程完成后显示结算界面。
+    /// Tutorial interface overlay: Displays operation prompts, progress points, witch explanations, skill demonstrations and key prompts at the top of the game screen. After the tutorial is completed, the settlement interface is displayed.
+
     /// </summary>
     public sealed class mlpTutorialOverlay : MonoBehaviour
     {
-        private const int WitchCharacterId = 6; // 女巫角色ID
-        private const int CanvasSortingOrder = 1400; // 画布渲染排序层级
-        private const int WitchSortingOrderBase = 1425; // 女巫精灵排序层级基准
-        private const int ReferenceWidth = 800; // 参考分辨率宽度
-        private const int ReferenceHeight = 480; // 参考分辨率高度
-        private const float GuideLeft = 122f; // 引导卡片左边界
-        private const float GuideTop = 14f; // 引导卡片上边界
-        private const float GuideWidth = 476f; // 引导卡片宽度
-        private const float GuideHeight = 100f; // 引导卡片高度
-        private const float KeyChipWidth = 76f; // 按键标签宽度
-        private const float KeyChipHeight = 32f; // 按键标签高度
-        private const float KeyChipGap = 8f; // 按键标签间距
-        private const int ProgressDotCount = 10; // 进度点数量
+        private const int WitchCharacterId = 6; // Witch character ID
 
-        private static mlpTutorialOverlay activeOverlay; // 当前活动覆盖层单例
-        private static Sprite solidSprite; // 纯色精灵缓存
-        private static Sprite circleSprite; // 圆形精灵缓存
-        private static Sprite ringSprite; // 环形精灵缓存
-        private static Sprite witchPortraitSprite; // 女巫头像精灵缓存
+        private const int CanvasSortingOrder = 1400; // Canvas rendering sorting hierarchy
 
-        private Canvas canvas; // 画布
-        private RectTransform overlayRoot; // 覆盖层根节点
-        private RectTransform maskTop; // 顶部暗角遮罩
-        private RectTransform maskBottom; // 底部暗角遮罩
-        private RectTransform maskLeft; // 左侧暗角遮罩
-        private RectTransform maskRight; // 右侧暗角遮罩
-        private RectTransform focusFrame; // 聚焦金色边框
-        private RectTransform focusGlow; // 聚焦外围发光
-        private RectTransform targetZone; // 目标区域填充
-        private RectTransform targetGlow; // 目标区域发光
-        private RectTransform apexRing; // 投篮最高点脉冲环
-        private RectTransform energyPulse; // 能量脉冲光效
-        private RectTransform trajectoryRoot; // 轨迹圆点根节点
-        private GameObject scoringGuideRoot; // 得分引导根节点
-        private Image scoringLeftFill; // 得分区左侧填充
-        private Image scoringRightFill; // 得分区右侧填充
-        private TextMeshProUGUI scoringLeftLabel; // 得分区左侧标签
-        private TextMeshProUGUI scoringRightLabel; // 得分区右侧标签
-        private TextMeshProUGUI scoringLineLabel; // 得分分界线标签
-        private readonly List<Image> trajectoryDots = new List<Image>(); // 轨迹圆点列表
-        private readonly List<Image> progressDots = new List<Image>(); // 进度圆点列表
-        private readonly List<GameObject> keyChipRoots = new List<GameObject>(); // 按键标签根节点列表
-        private readonly List<TextMeshProUGUI> keyChipLabels = new List<TextMeshProUGUI>(); // 按键标签文字列表
+        private const int WitchSortingOrderBase = 1425; // Witch Elf Sorting Hierarchy Baseline
 
-        private GameObject headerRoot; // 标题栏根节点
-        private GameObject narratorRoot; // 讲解员面板根节点
-        private GameObject outroRoot; // 结束画面根节点
-        private TextMeshProUGUI stepText; // 步骤编号文字
-        private TextMeshProUGUI titleText; // 标题文字
-        private TextMeshProUGUI subtitleText; // 副标题文字
-        private TextMeshProUGUI goalText; // 目标说明文字
-        private TextMeshProUGUI narratorText; // 讲解文字
-        private TextMeshProUGUI feedbackText; // 反馈提示文字
-        private TextMeshProUGUI outroTitleText; // 结束画面标题文字
-        private TextMeshProUGUI outroBodyText; // 结束画面正文文字
-        private Image narratorOrb; // 讲解员光球
-        private Image headerGlow; // 标题栏发光
-        private Image targetFill; // 目标区域填充图
-        private Image targetGlowImage; // 目标发光图片
-        private Image energyPulseImage; // 能量脉冲图片
-        private Image apexRingImage; // 最高点环图片
-        private Button replayButton; // 重玩按钮
-        private Button trainingButton; // 训练按钮
-        private Button quickMatchButton; // 快速比赛按钮（主菜单）
-        private Button skipButton; // 跳过按钮
+        private const int ReferenceWidth = 800; // Reference resolution width
 
-        private DBLiteArmature witchArmature; // 女巫骨骼动画实例
-        private GameObject witchFallbackRoot; // 女巫静态头像根节点
-        private RectTransform witchFallbackRect; // 女巫静态头像矩形
-        private Vector3 witchBaseLocalPosition; // 女巫动画基础位置
-        private Vector3 witchBaseLocalScale = Vector3.one; // 女巫动画基础缩放
-        private Vector2 witchFallbackBasePosition; // 女巫静态头像基础位置
-        private bool initialized; // 是否已初始化
-        private bool visible; // 是否可见
-        private float feedbackTimer; // 反馈文字剩余时间
-        private float visibleTime; // 可见累计时间
-        private float effectTime; // 特效累计时间
-        private mlpTutorialOverlayCommand pendingCommand; // 待处理的按钮指令
+        private const int ReferenceHeight = 480; // Reference resolution height
+
+        private const float GuideLeft = 122f; // Bootstrap card left border
+
+        private const float GuideTop = 14f; // Bootstrap card upper border
+
+        private const float GuideWidth = 476f; // Boot card width
+
+        private const float GuideHeight = 100f; // Boot card height
+
+        private const float KeyChipWidth = 76f; // Button label width
+
+        private const float KeyChipHeight = 32f; // Button label height
+        private const float KeyChipGap = 8f; // Button label spacing
+
+        private const int ProgressDotCount = 10; // Number of progress points
+
+
+        private static mlpTutorialOverlay activeOverlay; // The currently active overlay singleton
+
+        private static Sprite solidSprite; // Solid color sprite cache
+
+        private static Sprite circleSprite; // Circle sprite cache
+
+        private static Sprite ringSprite; // Ring sprite cache
+
+        private static Sprite witchPortraitSprite; // Witch Avatar Elf Cache
+
+
+        private Canvas canvas; // canvas
+
+        private RectTransform overlayRoot; // Overlay root node
+
+        private RectTransform maskTop; // Top Vignetting Mask
+
+        private RectTransform maskBottom; // Bottom Vignette Mask
+
+        private RectTransform maskLeft; // Left vignetting mask
+
+        private RectTransform maskRight; // Right vignetting mask
+
+        private RectTransform focusFrame; // Focus on golden border
+
+        private RectTransform focusGlow; // Focused peripheral glow
+
+        private RectTransform targetZone; // Target area filling
+
+        private RectTransform targetGlow; // Target area glows
+
+        private RectTransform apexRing; // Pulse ring at the highest point of shooting
+
+        private RectTransform energyPulse; // energy pulse light effect
+
+        private RectTransform trajectoryRoot; // trajectory dot root node
+
+        private GameObject scoringGuideRoot; // Score bootstrap root node
+
+        private Image scoringLeftFill; // Fill left of scoring area
+
+        private Image scoringRightFill; // Fill the right side of the scoring area
+
+        private TextMeshProUGUI scoringLeftLabel; // Label on the left side of the scoring area
+        private TextMeshProUGUI scoringRightLabel; // Label on the right side of the scoring area
+
+        private TextMeshProUGUI scoringLineLabel; // score line label
+
+        private readonly List<Image> trajectoryDots = new List<Image>(); // Track dot list
+
+        private readonly List<Image> progressDots = new List<Image>(); // progress dot list
+
+        private readonly List<GameObject> keyChipRoots = new List<GameObject>(); // Key label root node list
+
+        private readonly List<TextMeshProUGUI> keyChipLabels = new List<TextMeshProUGUI>(); // Button label text list
+
+
+        private GameObject headerRoot; // title bar root node
+
+        private GameObject narratorRoot; // Explainer panel root node
+
+        private GameObject outroRoot; // End screen root node
+
+        private TextMeshProUGUI stepText; // step number text
+
+        private TextMeshProUGUI titleText; // title text
+
+        private TextMeshProUGUI subtitleText; // subtitle text
+
+        private TextMeshProUGUI goalText; // Goal description text
+
+        private TextMeshProUGUI narratorText; // explain text
+
+        private TextMeshProUGUI feedbackText; // Feedback prompt text
+
+        private TextMeshProUGUI outroTitleText; // End screen title text
+
+        private TextMeshProUGUI outroBodyText; // End screen text
+
+        private Image narratorOrb; // Commentator light ball
+
+        private Image headerGlow; // title bar glow
+
+        private Image targetFill; // Target area fill map
+
+        private Image targetGlowImage; // target glow picture
+
+        private Image energyPulseImage; // Energy Pulse Picture
+
+        private Image apexRingImage; // Highest point ring picture
+
+        private Button replayButton; // replay button
+        private Button trainingButton; // training button
+
+        private Button quickMatchButton; // Quick Match Button (Main Menu)
+
+        private Button skipButton; // skip button
+
+
+        private DBLiteArmature witchArmature; // Witch skeleton animation example
+
+        private GameObject witchFallbackRoot; // Witch static avatar root node
+
+        private RectTransform witchFallbackRect; // Witch static avatar rectangle
+
+        private Vector3 witchBaseLocalPosition; // Witch animation base position
+
+        private Vector3 witchBaseLocalScale = Vector3.one; // Witch animation basic scaling
+
+        private Vector2 witchFallbackBasePosition; // Basic position of witch static avatar
+
+        private bool initialized; // Has it been initialized?
+
+        private bool visible; // visible or not
+
+        private float feedbackTimer; // Feedback text remaining time
+
+        private float visibleTime; // Visible cumulative time
+
+        private float effectTime; // Special effects cumulative time
+
+        private mlpTutorialOverlayCommand pendingCommand; // Pending button commands
+
 
         public static mlpTutorialOverlay Active => FindOrCreate();
 
         /// <summary>
-        /// 注册为活跃的教程覆盖层，首次使用时构建 UI。
+        /// Sign up as an active tutorial overlay to build the UI on first use.
+
         /// </summary>
         private void Awake()
         {
@@ -121,7 +194,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 覆盖层销毁时清除单例引用。
+        /// Clear the singleton reference when the overlay is destroyed.
+
         /// </summary>
         private void OnDestroy()
         {
@@ -132,7 +206,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 驱动脉冲动画，淡出定时反馈消息。
+        /// Drive the pulse animation and fade out the timed feedback message.
+
         /// </summary>
         private void Update()
         {
@@ -156,7 +231,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧确保女巫精灵渲染在覆盖层上方。
+        /// Make sure the witch sprite is rendered on top of the overlay every frame.
+
         /// </summary>
         private void LateUpdate()
         {
@@ -164,27 +240,33 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在第一个练习开始前显示开场画面。
+        /// Show the opening screen before the first exercise begins.
+
         /// </summary>
         public void ShowPrelude(string title, string subtitle, string narration, params string[] keys)
         {
-            // 1. 激活覆盖层并重置计时器
+            // 1. Activate overlay and reset timer
+
             ShowInternal();
-            // 2. 隐藏进度点（开场画面不需要显示进度）
+            // 2. Hide progress points (the opening screen does not need to show progress)
+
             SetProgress(-1, 0);
-            // 3. 设置开场标题、讲解文字和按键提示
+            // 3. Set the opening title, explanation text and key prompts
+
             SetCopy("TUTORIAL", title, string.Empty, narration, keys);
             SetGoal(string.Empty);
-            // 4. 显示跳过按钮
+            // 4. Show skip button
             SetSkipVisible(true);
-            // 5. 清除所有运行时视觉效果（聚焦框、目标区、轨迹等）
+            // 5. Clear all runtime visual effects (focus frame, target area, trajectory, etc.)
+
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
             SetScoringGuide(0, false);
             SetTrajectory(null);
-            // 6. 隐藏结束画面
+            // 6. Hide the end screen
+
             if (outroRoot != null)
             {
                 outroRoot.SetActive(false);
@@ -192,18 +274,23 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示带编号的练习步骤，包含进度点和按键提示。
+        /// Displays numbered exercise steps with progress points and key prompts.
+
         /// </summary>
         public void ShowStep(int currentIndex, int total, string title, string subtitle, string goal, string narration, params string[] keys)
         {
-            // 1. 激活覆盖层并重置计时器
+            // 1. Activate overlay and reset timer
+
             ShowInternal();
-            // 2. 点亮对应的进度点（如第 3 步 / 共 10 步）
+            // 2. Light up the corresponding progress point (such as step 3 / 10 steps in total)
+
             SetProgress(currentIndex, total);
-            // 3. 设置步骤编号、标题、讲解文字和按键提示
+            // 3. Set step number, title, explanation text and key prompts
+
             SetCopy($"{currentIndex + 1}/{Mathf.Max(1, total)}", title, string.Empty, narration, keys);
             SetGoal(string.Empty);
-            // 4. 显示跳过按钮，隐藏结束画面
+            // 4. Show the skip button and hide the end screen
+
             SetSkipVisible(true);
             if (outroRoot != null)
             {
@@ -212,28 +299,35 @@ namespace mlp
         }
 
         /// <summary>
-        /// 刷新标题文字和按键提示，不改变布局结构。
+        /// Refresh the title text and key prompts without changing the layout structure.
+
         /// </summary>
         public void UpdateCopy(string title, string subtitle, string goal, string narration, params string[] keys)
         {
-            // 1. 确保覆盖层已激活
+            // 1. Make sure the overlay is activated
+
             ShowInternal();
-            // 2. 保留当前的步骤编号和讲解文字，只更新标题和按键提示
+            // 2. Keep the current step number and explanation text, and only update the title and key prompts
+
             var currentNarration = narratorText != null ? narratorText.text : string.Empty;
             SetCopy(stepText != null ? stepText.text : string.Empty, title, string.Empty, currentNarration, keys);
             SetGoal(string.Empty);
         }
 
         /// <summary>
-        /// 将指定矩形区域外的所有内容变暗，以高亮聚焦 UI 区域。
+        /// Darkens everything outside the specified rectangular area to highlight the focused UI area.
+
         /// </summary>
         public void SetFocusRect(float left, float top, float width, float height)
         {
-            // 1. 确保 UI 已经构建完成
+            // 1. Make sure the UI has been built
+
             EnsureInitialized();
-            // 2. 判断是否需要聚焦（宽高都大于 0 才有效）
+            // 2. Determine whether focus is required (valid only when width and height are greater than 0)
+
             var hasFocus = width > 0f && height > 0f;
-            // 3. 根据是否需要聚焦来显示或隐藏四块遮罩和聚焦框
+            // 3. Show or hide the four masks and focus frame according to whether focus is needed.
+
             SetMarkerActive(maskTop, hasFocus);
             SetMarkerActive(maskBottom, hasFocus);
             SetMarkerActive(maskLeft, hasFocus);
@@ -245,7 +339,8 @@ namespace mlp
                 return;
             }
 
-            // 4. 将聚焦区域限制在 800x480 画面范围内
+            // 4. Limit the focus area to the 800x480 frame
+
             var clampedLeft = Mathf.Clamp(left, 0f, ReferenceWidth);
             var clampedTop = Mathf.Clamp(top, 0f, ReferenceHeight);
             var clampedWidth = Mathf.Clamp(width, 0f, ReferenceWidth - clampedLeft);
@@ -253,18 +348,21 @@ namespace mlp
             var right = clampedLeft + clampedWidth;
             var bottom = clampedTop + clampedHeight;
 
-            // 5. 计算并设置四块遮罩的位置，让它们围绕聚焦区域形成"暗角"效果
+            // 5. Calculate and set the positions of the four masks so that they form a "vignetting" effect around the focus area.
+
             SetTopLeftRect(maskTop, 0f, 0f, ReferenceWidth, clampedTop);
             SetTopLeftRect(maskBottom, 0f, bottom, ReferenceWidth, Mathf.Max(0f, ReferenceHeight - bottom));
             SetTopLeftRect(maskLeft, 0f, clampedTop, clampedLeft, clampedHeight);
             SetTopLeftRect(maskRight, right, clampedTop, Mathf.Max(0f, ReferenceWidth - right), clampedHeight);
-            // 6. 设置金色聚焦边框和外围发光效果的位置和大小
+            // 6. Set the position and size of the golden focus border and peripheral glow effect
+
             SetTopLeftRect(focusFrame, clampedLeft, clampedTop, clampedWidth, clampedHeight);
             SetTopLeftRect(focusGlow, clampedLeft - 16f, clampedTop - 16f, clampedWidth + 32f, clampedHeight + 32f);
         }
 
         /// <summary>
-        /// 移除聚焦高亮，恢复全屏可见。
+        /// Remove focus highlighting and restore full screen visibility.
+
         /// </summary>
         public void ClearFocus()
         {
@@ -272,13 +370,16 @@ namespace mlp
         }
 
         /// <summary>
-        /// 高亮玩家需要瞄准的目标区域。
+        /// Highlight the target area that the player needs to aim at.
+
         /// </summary>
         public void SetTargetRect(float left, float top, float width, float height)
         {
-            // 1. 确保 UI 已经构建完成
+            // 1. Make sure the UI has been built
+
             EnsureInitialized();
-            // 2. 判断是否有有效的目标区域（宽高都大于 0 才显示）
+            // 2. Determine whether there is a valid target area (only displayed if the width and height are greater than 0)
+
             var hasTarget = width > 0f && height > 0f;
             SetMarkerActive(targetZone, hasTarget);
             SetMarkerActive(targetGlow, hasTarget);
@@ -287,12 +388,14 @@ namespace mlp
                 return;
             }
 
-            // 3. 将目标区域限制在 800x480 画面范围内
+            // 3. Limit the target area to the 800x480 frame
+
             var clampedLeft = Mathf.Clamp(left, 0f, ReferenceWidth);
             var clampedTop = Mathf.Clamp(top, 0f, ReferenceHeight);
             var clampedWidth = Mathf.Clamp(width, 0f, ReferenceWidth - clampedLeft);
             var clampedHeight = Mathf.Clamp(height, 0f, ReferenceHeight - clampedTop);
-            // 4. 设置目标区域填充和外围发光的位置和大小
+            // 4. Set the position and size of the target area fill and peripheral glow
+
             SetTopLeftRect(targetZone, clampedLeft, clampedTop, clampedWidth, clampedHeight);
             SetCenteredRect(
                 targetGlow,
@@ -303,7 +406,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏标记投篮弧线最高点的脉冲环。
+        /// Shows or hides the impulse ring that marks the highest point of the shot's arc.
+
         /// </summary>
         public void SetApexRing(Vector2 center, float size, bool active)
         {
@@ -316,7 +420,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏投篮通道附近的能量脉冲光效。
+        /// Shows or hides the energy pulse light effect near the shooting lane.
+
         /// </summary>
         public void SetEnergyPulse(bool active)
         {
@@ -329,7 +434,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 绘制一串圆点，显示篮球的预测轨迹。
+        /// Draw a series of dots showing the predicted trajectory of the basketball.
         /// </summary>
         public void SetTrajectory(IReadOnlyList<Vector2> points)
         {
@@ -350,29 +455,34 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏 2 分 / 3 分得分区域覆盖层。
+        /// Show or hide the 2-point/3-point scoring area overlay.
+
         /// </summary>
         public void SetScoringGuide(int scoringSide, bool active)
         {
-            // 1. 确保 UI 已构建，检查得分引导根节点是否存在
+            // 1. Make sure the UI is built and check if the score boot root node exists
+
             EnsureInitialized();
             if (scoringGuideRoot == null)
             {
                 return;
             }
 
-            // 2. 显示或隐藏得分区域引导
+            // 2. Show or hide the scoring area guide
+
             scoringGuideRoot.SetActive(active);
             if (!active)
             {
                 return;
             }
 
-            // 3. 根据哪边是三分区，分别着色左右两侧的区域
+            // 3. Depending on which side is the three partitions, color the areas on the left and right sides respectively.
+
             var leftIsThree = scoringSide == -1;
             SetScoringZone(scoringLeftFill, scoringLeftLabel, leftIsThree);
             SetScoringZone(scoringRightFill, scoringRightLabel, !leftIsThree);
-            // 4. 设置中间分界线标签
+            // 4. Set the middle dividing line label
+
             if (scoringLineLabel != null)
             {
                 scoringLineLabel.text = "2PT / 3PT LINE";
@@ -380,7 +490,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示一条彩色反馈消息，延迟后自动淡出。
+        /// Displays a colored feedback message that automatically fades out after a delay.
+
         /// </summary>
         public void ShowFeedback(string message, Color color, float duration = 1.35f)
         {
@@ -391,32 +502,39 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示结束画面，包含重玩、训练和返回菜单等选项。
+        /// Displays the end screen with options to replay, train, and return to the menu.
+
         /// </summary>
         public void ShowOutro(string characterName, string skillName)
         {
-            // 1. 激活覆盖层并重置计时器
+            // 1. Activate overlay and reset timer
+
             ShowInternal();
-            // 2. 显示第 9/10 步的进度点（全部完成）
+            // 2. Display the progress point of step 9/10 (all completed)
+
             SetProgress(9, 10);
-            // 3. 设置结束画面的标题和讲解文字
+            // 3. Set the title and explanation text of the end screen
+
             SetCopy("CLEAR", "READY TO PLAY", string.Empty, "Nice work. Choose your next run.", null);
             SetGoal(string.Empty);
             SetSkipVisible(false);
-            // 4. 清除所有运行时视觉元素（聚焦框、得分引导线、轨迹点等）
+            // 4. Clear all runtime visual elements (focus boxes, score guides, track points, etc.)
+
             ClearFocus();
             SetTargetRect(0f, 0f, 0f, 0f);
             SetApexRing(Vector2.zero, 0f, false);
             SetEnergyPulse(false);
             SetScoringGuide(0, false);
             SetTrajectory(null);
-            // 5. 显示结束画面卡片
+            // 5. Show end screen card
+
             if (outroRoot != null)
             {
                 outroRoot.SetActive(true);
             }
 
-            // 6. 设置结束画面标题和角色信息
+            // 6. Set the end screen title and character information
+
             if (outroTitleText != null)
             {
                 outroTitleText.text = "WHERE NEXT?";
@@ -429,7 +547,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回待处理的按钮指令并重置为 None。
+        /// Returns the pending button command and resets to None.
+
         /// </summary>
         public mlpTutorialOverlayCommand ConsumeCommand()
         {
@@ -439,7 +558,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏整个教程覆盖层。
+        /// Hide the entire tutorial overlay.
+
         /// </summary>
         public void Hide()
         {
@@ -451,17 +571,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// 查找场景中已有的覆盖层实例，若不存在则运行时创建一个新实例。
+        /// Looks for an existing overlay instance in the scene and creates a new one at runtime if it does not exist.
+
         /// </summary>
         private static mlpTutorialOverlay FindOrCreate()
         {
-            // 1. 如果已有缓存的活动覆盖层，直接返回
+            // 1. If there is already a cached active overlay, return directly
+
             if (activeOverlay != null)
             {
                 return activeOverlay;
             }
 
-            // 2. 尝试在场景中查找已存在的教程覆盖层
+            // 2. Try to find an existing tutorial overlay in the scene
+
             var existing = FindObjectOfType<mlpTutorialOverlay>();
             if (existing != null)
             {
@@ -469,44 +592,53 @@ namespace mlp
                 return existing;
             }
 
-            // 3. 场景中没有覆盖层：创建一个新的运行时实例
+            // 3. There is no overlay in the scene: create a new runtime instance
+
             var root = new GameObject("MlpTutorialOverlayRuntime");
             if (Application.isPlaying)
             {
                 DontDestroyOnLoad(root);
             }
 
-            // 4. 添加组件并缓存为活动覆盖层
+            // 4. Add components and cache them as active overlays
+
             activeOverlay = root.AddComponent<mlpTutorialOverlay>();
             return activeOverlay;
         }
 
         /// <summary>
-        /// 首次调用时构建 UI，后续调用仅修正相机设置。
+        /// The UI is built on the first call, subsequent calls only correct the camera settings.
+
         /// </summary>
         private void EnsureInitialized()
         {
-            // 1. 如果已经初始化过，只需确保画布绑定了正确的相机即可
+            // 1. If it has already been initialized, just make sure the canvas is bound to the correct camera.
+
             if (initialized)
             {
                 EnsureCanvasCamera();
                 return;
             }
 
-            // 2. 标记为已初始化，防止重复构建
+            // 2. Mark as initialized to prevent repeated construction
+
             initialized = true;
-            // 3. 生成纯色、圆形和环形纹理精灵（UI 绘图的基本素材）
+            // 3. Generate solid color, circular and ring texture sprites (basic materials for UI drawing)
+
             EnsureSprites();
-            // 4. 确保场景中有事件系统（没有按钮点击就没法工作）
+            // 4. Make sure there is an event system in the scene (it won’t work without button clicks)
             EnsureEventSystem();
-            // 5. 用纯代码构建整个教程覆盖层 UI（不依赖预制体）
+            // 5. Build the entire tutorial overlay UI in pure code (no reliance on prefabs)
+
             BuildUi();
-            // 6. 确保画布绑定了正确的相机
+            // 6. Make sure the canvas is bound to the correct camera
+
             EnsureCanvasCamera();
         }
 
         /// <summary>
-        /// 激活覆盖层根节点，重置计时器和反馈文字。
+        /// Activates the overlay root node, resetting the timer and feedback text.
+
         /// </summary>
         private void ShowInternal()
         {
@@ -527,11 +659,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 纯代码构建整个教程覆盖层（不依赖预制体）。
+        /// Build the entire tutorial overlay from pure code (no reliance on prefabs).
+
         /// </summary>
         private void BuildUi()
         {
-            // 1. 创建画布（Canvas）——所有 UI 元素的容器，使用相机渲染模式
+            // 1. Create a canvas - a container for all UI elements, using camera rendering mode
+
             canvas = gameObject.GetComponent<Canvas>();
             if (canvas == null)
             {
@@ -541,7 +675,8 @@ namespace mlp
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.sortingOrder = CanvasSortingOrder;
             gameObject.AddComponent<GraphicRaycaster>();
-            // 2. 设置画布缩放器——让 UI 在不同屏幕大小下自动缩放，参考分辨率 800x480
+            // 2. Set the canvas scaler - let the UI automatically scale in different screen sizes, reference resolution 800x480
+
             var scaler = gameObject.GetComponent<CanvasScaler>();
             if (scaler == null)
             {
@@ -553,14 +688,16 @@ namespace mlp
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 
-            // 3. 创建覆盖层根节点（所有教程 UI 的最外层容器），默认隐藏
+            // 3. Create the overlay root node (the outermost container of all tutorial UIs), which is hidden by default
+
             overlayRoot = CreateRootRect("OverlayRoot", transform);
             overlayRoot.gameObject.SetActive(false);
 
             var blurVeil = CreateImage("BlurVeil", overlayRoot, solidSprite, new Color(0.03f, 0.06f, 0.09f, 0.14f));
             StretchToParent(blurVeil.rectTransform);
 
-            // 4. 创建四块半透明遮罩（上下左右），用来变暗聚焦区域外的内容
+            // 4. Create four semi-transparent masks (top, bottom, left and right) to darken content outside the focus area
+
             maskTop = CreateMask("MaskTop");
             maskBottom = CreateMask("MaskBottom");
             maskLeft = CreateMask("MaskLeft");
@@ -578,17 +715,20 @@ namespace mlp
             targetFill = CreateImage("TargetZone", overlayRoot, solidSprite, new Color(1f, 0.82f, 0.44f, 0.16f));
             targetZone = targetFill.rectTransform;
 
-            // 5. 构建 2 分 / 3 分得分区域引导覆盖层
+            // 5. Build 2-point/3-point scoring area guidance overlays
+
             BuildScoringGuide();
 
-            // 6. 创建 7 个圆点，用于显示篮球预测轨迹
+            // 6. Create 7 dots to display the basketball prediction trajectory
+
             trajectoryRoot = CreateRootRect("TrajectoryRoot", overlayRoot);
             for (var i = 0; i < 7; i++)
             {
                 trajectoryDots.Add(CreateImage($"TrajectoryDot{i}", trajectoryRoot, circleSprite, new Color(0.62f, 1f, 0.9f, 0.85f)));
             }
 
-            // 7. 构建引导卡片（深色面板 + 发光标题 + 步骤编号 + 标题文字 + 副标题 + 目标文字 + 进度点）
+            // 7. Build a guide card (dark panel + luminous title + step number + title text + subtitle + target text + progress point)
+
             headerRoot = CreateCard("GuideRoot", overlayRoot, GuideLeft, GuideTop, GuideWidth, GuideHeight, 0.92f);
             headerGlow = CreateImage("HeaderGlow", headerRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.12f));
             SetCenteredRect(headerGlow.rectTransform, 198f, 48f, 248f, 78f);
@@ -606,7 +746,8 @@ namespace mlp
                 progressDots.Add(dot);
             }
 
-            // 8. 构建按键提示区域（最多 5 个"按 [A]"样式的小标签）
+            // 8. Build a key prompt area (up to 5 small labels in the "Press [A]" style)
+
             var keysRoot = CreateRootRect("KeysRoot", overlayRoot);
             SetTopLeftRect(keysRoot, GuideLeft, GuideTop + GuideHeight + 8f, GuideWidth, KeyChipHeight);
             for (var i = 0; i < 5; i++)
@@ -617,11 +758,13 @@ namespace mlp
                 keyChipLabels.Add(keyLabel != null ? keyLabel.GetComponent<TextMeshProUGUI>() : null);
             }
 
-            // 9. 创建反馈文字（练习过程中显示提示，如"Good dash"）和跳过按钮
+            // 9. Create feedback text (display prompts during practice, such as "Good dash") and skip buttons
+
             feedbackText = CreateText("FeedbackText", overlayRoot, 154f, 176f, 492f, 26f, 18, new Color32(0x9A, 0xFF, 0xDD, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
             skipButton = CreateButton("SkipStepButton", overlayRoot, 684f, 426f, 92f, 34f, "SKIP", new Color32(0x13, 0x1E, 0x30, 0xDD), new Color32(0xFF, 0xD5, 0x7C, 0xFF), mlpTutorialOverlayCommand.SkipStep);
 
-            // 10. 构建讲解员面板（女巫角色头像 + "WITCH:" 标签 + 讲解文字）
+            // 10. Build the commentator panel (witch character avatar + "WITCH:" label + explanation text)
+
             narratorRoot = CreateRootRect("NarratorRoot", headerRoot.transform).gameObject;
             narratorOrb = CreateImage("NarratorOrb", narratorRoot.transform as RectTransform, circleSprite, new Color(0.33f, 1f, 0.88f, 0.14f));
             SetTopLeftRect(narratorRoot.transform as RectTransform, 0f, 0f, 196f, GuideHeight);
@@ -635,7 +778,8 @@ namespace mlp
             var witchMount = CreateRootRect("WitchMount", narratorRoot.transform);
             SetTopLeftRect(witchMount, 8f, 12f, 70f, 76f);
 
-            // 11. 构建结束画面卡片（"WHERE NEXT?" 标题 + 重玩/训练/菜单三个按钮）
+            // 11. Construct the end screen card ("WHERE NEXT?" title + three buttons of replay/training/menu)
+
             outroRoot = CreateCard("OutroRoot", overlayRoot, 170f, 84f, 460f, 300f, 0.96f);
             outroRoot.SetActive(false);
             CreateImage("OutroAura", outroRoot.transform as RectTransform, circleSprite, new Color(1f, 0.72f, 0.35f, 0.12f));
@@ -653,36 +797,43 @@ namespace mlp
             trainingButton = CreateButton("TrainingButton", outroRoot.transform as RectTransform, 124f, 198f, 212f, 38f, "FREE TRAINING", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, mlpTutorialOverlayCommand.StartTraining);
             replayButton = CreateButton("ReplayButton", outroRoot.transform as RectTransform, 124f, 250f, 212f, 38f, "REPLAY TUTORIAL", new Color32(0x26, 0x34, 0x4F, 0xFF), Color.white, mlpTutorialOverlayCommand.ReplayTutorial);
 
-            // 12. 在讲解员面板中生成女巫角色实时模型（用于播放动画演示）
+            // 12. Generate a real-time model of the witch character in the commentator panel (for playing animation demonstrations)
+
             BuildWitchPreview(witchMount);
-            // 13. 初始状态隐藏跳过按钮和所有运行时标记物
+            // 13. The initial state hides the skip button and all runtime markers
+
             SetSkipVisible(false);
             HideRuntimeMarkers();
         }
 
         /// <summary>
-        /// 在讲解员面板中生成一个实时女巫角色模型。
+        /// Generate a real-time witch character model in the narrator panel.
+
         /// </summary>
         private void BuildWitchPreview(RectTransform witchMount)
         {
-            // 1. 如果挂载点不存在或已创建过模型，直接返回
+            // 1. If the mount point does not exist or the model has been created, return directly
+
             if (witchMount == null || witchArmature != null || witchFallbackRoot != null)
             {
                 return;
             }
 
-            // 2. 尝试创建女巫角色的骨骼动画实时模型
+            // 2. Try to create a skeletal animation real-time model of the witch character
+
             var builtArmature = mlpPlayersData.BuildGameplayArmature("TutorialNarratorWitch");
             if (builtArmature == null)
             {
-                // 3. 实时模型创建失败，回退到静态头像精灵
+                // 3. The real-time model creation failed and fell back to the static avatar sprite.
+
                 BuildWitchPortraitFallback(witchMount);
                 return;
             }
 
             try
             {
-                // 4. 将模型挂载到讲解员面板上，设置合适的位置和缩放
+                // 4. Mount the model to the commentator panel and set the appropriate position and scale.
+
                 witchArmature = builtArmature;
                 witchArmature.transform.SetParent(witchMount, false);
                 witchArmature.transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
@@ -692,17 +843,19 @@ namespace mlp
                     mlpConstants.PixelPerfectCharacterScale * 0.74f,
                     mlpConstants.PixelPerfectCharacterScale * 0.74f,
                     1f);
-                // 5. 应用女巫角色外观（颜色、服装），播放待机动画，隐藏篮球
+                // 5. Apply the appearance of the witch character (color, clothing), play the standby animation, and hide the basketball
+
                 mlpPlayersData.ApplyCharacter(witchArmature, WitchCharacterId);
                 witchArmature.Play("idle");
                 HidePreviewBall(witchArmature);
-                // 6. 记录基础位置和缩放（用于后续的脉冲动画）
+                // 6. Record base position and scale (for subsequent pulse animation)
                 witchBaseLocalPosition = witchArmature.transform.localPosition;
                 witchBaseLocalScale = witchArmature.transform.localScale;
             }
             catch (System.Exception)
             {
-                // 7. 出错时清理并回退到静态头像
+                // 7. Clean up and fall back to static avatar when errors occur
+
                 if (builtArmature != null)
                 {
                     if (Application.isPlaying)
@@ -721,7 +874,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当实时模型不可用时，使用静态头像精灵替代。
+        /// When live models are unavailable, static avatar sprites are used instead.
+
         /// </summary>
         private void BuildWitchPortraitFallback(RectTransform witchMount)
         {
@@ -740,21 +894,25 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新女巫光球、标题栏和聚焦区域的脉冲光效。
+        /// Updated pulsing light effects for the Witch's orb, title bar, and focus area.
+
         /// </summary>
         private void AnimatePulse()
         {
-            // 1. 计算两个正弦波：wave 用于脉冲缩放/透明度，floatWave 用于上下漂浮
+            // 1. Calculate two sine waves: wave for pulse scaling/transparency, floatWave for floating up and down
+
             var wave = 0.5f + 0.5f * Mathf.Sin(effectTime * 4.6f);
             var floatWave = Mathf.Sin(effectTime * 3.1f);
-            // 2. 讲解员光球做脉冲缩放和透明度变化
+            // 2. The commentator’s photosphere performs pulse scaling and transparency changes
+
             if (narratorOrb != null)
             {
                 narratorOrb.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.06f);
                 narratorOrb.color = new Color(0.33f, 1f, 0.88f, 0.1f + wave * 0.06f);
             }
 
-            // 3. 女巫实时模型或静态头像做轻微上下漂浮和缩放呼吸
+            // 3. The real-time model or static avatar of the witch floats up and down slightly and zooms in and out to breathe.
+
             if (witchArmature != null)
             {
                 witchArmature.transform.localPosition = witchBaseLocalPosition + new Vector3(0f, floatWave * 1.3f, 0f);
@@ -766,40 +924,46 @@ namespace mlp
                 witchFallbackRect.localScale = Vector3.one * (1f + wave * 0.035f);
             }
 
-            // 4. 标题栏发光做微弱的透明度脉冲
+            // 4. The title bar glows as a weak transparency pulse
+
             if (headerGlow != null)
             {
                 headerGlow.color = new Color(0.33f, 1f, 0.88f, 0.08f + wave * 0.05f);
             }
 
-            // 5. 聚焦框发光做缩放脉冲
+            // 5. The focus frame emits light to make a zoom pulse
+
             if (focusGlow != null && focusGlow.gameObject.activeSelf)
             {
                 focusGlow.localScale = Vector3.one * (1f + wave * 0.03f);
             }
 
-            // 6. 目标区域发光做缩放和透明度脉冲
+            // 6. The target area glows for scaling and transparency pulses
+
             if (targetGlowImage != null && targetGlowImage.gameObject.activeSelf)
             {
                 targetGlowImage.rectTransform.localScale = Vector3.one * (1f + wave * 0.05f);
                 targetGlowImage.color = new Color(1f, 0.8f, 0.4f, 0.12f + wave * 0.08f);
             }
 
-            // 7. 最高点环做缩放和透明度脉冲
+            // 7. Do scaling and transparency pulses on the highest point ring
+
             if (apexRingImage != null && apexRingImage.gameObject.activeSelf)
             {
                 apexRingImage.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.08f);
                 apexRingImage.color = new Color(1f, 0.84f, 0.46f, 0.72f + wave * 0.18f);
             }
 
-            // 8. 能量脉冲做缩放和透明度脉冲
+            // 8. Energy pulses for scaling and transparency pulses
+
             if (energyPulseImage != null && energyPulseImage.gameObject.activeSelf)
             {
                 energyPulseImage.rectTransform.localScale = Vector3.one * (0.98f + wave * 0.08f);
                 energyPulseImage.color = new Color(0.53f, 1f, 0.86f, 0.34f + wave * 0.18f);
             }
 
-            // 9. 防止覆盖层根节点的缩放被意外修改
+            // 9. Prevent the scaling of the overlay root node from being accidentally modified
+
             if (overlayRoot != null)
             {
                 overlayRoot.localScale = Vector3.one;
@@ -807,7 +971,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏所有聚焦框、目标区、最高点环、能量脉冲、得分区和轨迹标记。
+        /// Hides all focus boxes, target zones, peak rings, energy pulses, score zones and track markers.
+
         /// </summary>
         private void HideRuntimeMarkers()
         {
@@ -820,41 +985,48 @@ namespace mlp
         }
 
         /// <summary>
-        /// 更新所有标题和讲解员文字标签，以及按键提示显示。
+        /// Updated all title and narrator text labels, and keynote displays.
+
         /// </summary>
         private void SetCopy(string stepLabel, string title, string subtitle, string narration, IReadOnlyList<string> keys)
         {
-            // 1. 设置步骤编号标签（如 "3/10" 或 "TUTORIAL"）
+            // 1. Set the step number label (such as "3/10" or "TUTORIAL")
+
             if (stepText != null)
             {
                 stepText.text = stepLabel ?? string.Empty;
             }
 
-            // 2. 设置主标题文字
+            // 2. Set the main title text
+
             if (titleText != null)
             {
                 titleText.text = title ?? string.Empty;
             }
 
-            // 3. 设置副标题文字（非空时才显示）
+            // 3. Set the subtitle text (displayed only if it is not empty)
+
             if (subtitleText != null)
             {
                 subtitleText.text = subtitle ?? string.Empty;
                 subtitleText.gameObject.SetActive(!string.IsNullOrEmpty(subtitle));
             }
 
-            // 4. 设置讲解员（女巫）的讲解文字
+            // 4. Set the explanation text of the commentator (witch)
+
             if (narratorText != null)
             {
                 narratorText.text = narration ?? string.Empty;
             }
 
-            // 5. 更新按键提示标签
+            // 5. Update key prompt labels
+
             SetKeys(keys);
         }
 
         /// <summary>
-        /// 显示或隐藏标题下方的目标说明。
+        /// Show or hide the goal description below the title.
+
         /// </summary>
         private void SetGoal(string goal)
         {
@@ -868,7 +1040,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏跳过按钮。
+        /// Show or hide the skip button.
+
         /// </summary>
         private void SetSkipVisible(bool active)
         {
@@ -879,11 +1052,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 点亮进度点以显示玩家当前所在的步骤。
+        /// Light up the progress dot to show the player's current step.
+
         /// </summary>
         private void SetProgress(int currentIndex, int total)
         {
-            // 1. 遍历所有进度点圆点
+            // 1. Traverse all progress points
+
             for (var i = 0; i < progressDots.Count; i++)
             {
                 var dot = progressDots[i];
@@ -892,7 +1067,7 @@ namespace mlp
                     continue;
                 }
 
-                // 2. 超出总步数的圆点隐藏
+                // 2. Hide dots that exceed the total number of steps
                 var active = i < total;
                 dot.gameObject.SetActive(active);
                 if (!active)
@@ -900,7 +1075,8 @@ namespace mlp
                     continue;
                 }
 
-                // 3. 已完成的步骤用青色，当前步骤用金色，未到达的用深蓝色
+                // 3. Completed steps are in cyan, current steps are in gold, and unreached steps are in dark blue.
+
                 dot.color = i < currentIndex
                     ? new Color32(0x8A, 0xFF, 0xE1, 0xFF)
                     : i == currentIndex
@@ -910,17 +1086,21 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏各按键提示标签，并设置其文字内容。
+        /// Show or hide each key prompt label and set its text content.
+
         /// </summary>
         private void SetKeys(IReadOnlyList<string> keys)
         {
-            // 1. 遍历所有按键提示标签（最多 5 个）
+            // 1. Traverse all key prompt labels (up to 5)
+
             for (var i = 0; i < keyChipRoots.Count; i++)
             {
-                // 2. 判断该位置是否有有效的按键文字需要显示
+                // 2. Determine whether there is a valid button text that needs to be displayed at this position
+
                 var visibleChip = keys != null && i < keys.Count && !string.IsNullOrEmpty(keys[i]);
                 keyChipRoots[i].SetActive(visibleChip);
-                // 3. 有内容时设置按键文字（如 "W"、"B"、"S"）
+                // 3. Set the button text when there is content (such as "W", "B", "S")
+
                 if (visibleChip && i < keyChipLabels.Count && keyChipLabels[i] != null)
                 {
                     keyChipLabels[i].text = keys[i];
@@ -929,36 +1109,43 @@ namespace mlp
         }
 
         /// <summary>
-        /// 构建 2 分 / 3 分得分区域标签和分界线标记。
+        /// Construct 2-point/3-point scoring area labels and boundary markers.
+
         /// </summary>
         private void BuildScoringGuide()
         {
-            // 1. 创建得分引导的根节点
+            // 1. Create the root node of the score guide
+
             scoringGuideRoot = CreateRootRect("ScoringGuideRoot", overlayRoot).gameObject;
 
-            // 2. 创建左右两侧的得分区域半透明填充（左侧默认为三分区颜色，右侧为两分区颜色）
+            // 2. Create semi-transparent filling of the scoring area on the left and right sides (the left side defaults to a three-partition color, and the right side has a two-partition color)
+
             scoringLeftFill = CreateImage("ScoringLeftFill", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0x35, 0xD8, 0xB8, 0x24));
             SetTopLeftRect(scoringLeftFill.rectTransform, 44f, 336f, 346f, 58f);
             scoringRightFill = CreateImage("ScoringRightFill", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xB9, 0x4D, 0x24));
             SetTopLeftRect(scoringRightFill.rectTransform, 410f, 336f, 346f, 58f);
 
-            // 3. 创建两分区和三分区的分界线（发光层 + 核心线）
+            // 3. Create the dividing line between two and three zones (luminous layer + core line)
+
             var lineGlow = CreateImage("ScoringLineGlow", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xD5, 0x7C, 0x66));
             SetTopLeftRect(lineGlow.rectTransform, mlpConstants.Width2 - 2f, 148f, 4f, 268f);
             var lineCore = CreateImage("ScoringLineCore", scoringGuideRoot.transform as RectTransform, solidSprite, new Color32(0xFF, 0xF4, 0xB2, 0xEE));
             SetTopLeftRect(lineCore.rectTransform, mlpConstants.Width2 - 0.5f, 148f, 1f, 268f);
 
-            // 4. 创建分界线标签和左右区域的文字标签（"3PT RANGE" / "2PT RANGE"）
+            // 4. Create dividing line labels and text labels for the left and right areas ("3PT RANGE" / "2PT RANGE")
+
             scoringLineLabel = CreateText("ScoringLineLabel", scoringGuideRoot.transform as RectTransform, 330f, 314f, 140f, 18f, 13, new Color32(0xFF, 0xF4, 0xB2, 0xFF), TextAlignmentOptions.Center, LoadButtonFont());
             scoringLeftLabel = CreateText("ScoringLeftLabel", scoringGuideRoot.transform as RectTransform, 108f, 354f, 170f, 24f, 20, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
             scoringRightLabel = CreateText("ScoringRightLabel", scoringGuideRoot.transform as RectTransform, 522f, 354f, 170f, 24f, 20, Color.white, TextAlignmentOptions.Center, LoadButtonFont());
 
-            // 5. 默认隐藏（只有在教程需要时才显示）
+            // 5. Hidden by default (shown only when needed for tutorials)
+
             scoringGuideRoot.SetActive(false);
         }
 
         /// <summary>
-        /// 将单个得分区域着色并标记为 2 分区或 3 分区。
+        /// Color and label individual scoring areas as 2-Division or 3-Division.
+
         /// </summary>
         private static void SetScoringZone(Image fill, TextMeshProUGUI label, bool isThreePoint)
         {
@@ -979,7 +1166,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 如果画布尚未设置相机，则将主相机赋给它。
+        /// If the canvas doesn't already have a camera set, assign the main camera to it.
+
         /// </summary>
         private void EnsureCanvasCamera()
         {
@@ -995,7 +1183,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 如果场景中没有 EventSystem，则创建一个。
+        /// If there is no EventSystem in the scene, create one.
+
         /// </summary>
         private static void EnsureEventSystem()
         {
@@ -1012,26 +1201,32 @@ namespace mlp
         }
 
         /// <summary>
-        /// 生成覆盖层使用的纯色、圆形和环形精灵。
+        /// Solid color, circle and ring sprites used to generate overlays.
+
         /// </summary>
         private static void EnsureSprites()
         {
-            // 1. 如果三种精灵都已创建，直接返回
+            // 1. If all three elves have been created, return directly
+
             if (solidSprite != null && circleSprite != null && ringSprite != null)
             {
                 return;
             }
 
-            // 2. 创建纯色纹理精灵（用于背景面板和遮罩）
+            // 2. Create solid color texture sprites (for background panels and masks)
+
             solidSprite = CreateSprite(CreateSolidTexture(4, 4, Color.white), "TutorialSolid");
-            // 3. 创建圆形纹理精灵（用于光效和圆点），边缘柔和过渡
+            // 3. Create circular texture sprites (used for light effects and dots) with soft edges and transitions
+
             circleSprite = CreateSprite(CreateCircleTexture(128, 0.96f), "TutorialCircle");
-            // 4. 创建环形纹理精灵（用于边框轮廓），内外边缘柔和
+            // 4. Create a circular texture sprite (for border outline) with soft inner and outer edges
+
             ringSprite = CreateSprite(CreateRingTexture(160, 0.72f, 0.9f), "TutorialRing");
         }
 
         /// <summary>
-        /// 加载并缓存女巫角色的头像精灵。
+        /// Loads and caches the witch character's avatar sprite.
+
         /// </summary>
         private static Sprite LoadWitchPortraitSprite()
         {
@@ -1045,7 +1240,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 生成一个小尺寸的纯色纹理。
+        /// Generates a small sized solid color texture.
+
         /// </summary>
         private static Texture2D CreateSolidTexture(int width, int height, Color color)
         {
@@ -1062,7 +1258,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 生成边缘柔和的圆形纹理，用于光效和圆点。
+        /// Generates a soft-edged circular texture for use with light effects and dots.
+
         /// </summary>
         private static Texture2D CreateCircleTexture(int size, float softness)
         {
@@ -1091,7 +1288,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 生成中空的环形纹理，用于边框轮廓。
+        /// Generates a hollow ring texture for use in border outlines.
+
         /// </summary>
         private static Texture2D CreateRingTexture(int size, float innerRadius, float outerSoftness)
         {
@@ -1121,7 +1319,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将纹理封装为以中心为锚点的命名精灵。
+        /// Encapsulate the texture as a named sprite anchored at the center.
         /// </summary>
         private static Sprite CreateSprite(Texture2D texture, string name)
         {
@@ -1132,7 +1330,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建一个拉伸填满父级的 RectTransform。
+        /// Create a RectTransform that stretches to fill the parent.
+
         /// </summary>
         private static RectTransform CreateRootRect(string name, Transform parent)
         {
@@ -1147,7 +1346,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建半透明深色遮罩面板，用于变暗聚焦区域外的区域。
+        /// Creates a semi-transparent dark mask panel that darkens areas outside the focused area.
+
         /// </summary>
         private RectTransform CreateMask(string name)
         {
@@ -1156,7 +1356,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建带金色边框和阴影的深色卡片面板。
+        /// Create a dark card panel with a gold border and shadow.
+
         /// </summary>
         private static GameObject CreateCard(string name, RectTransform parent, float left, float top, float width, float height, float alpha)
         {
@@ -1178,7 +1379,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建一个不可交互的 Image 元素，使用指定的精灵和颜色。
+        /// Creates a non-interactive Image element using the specified sprite and color.
+
         /// </summary>
         private static Image CreateImage(string name, RectTransform parent, Sprite sprite, Color color)
         {
@@ -1192,7 +1394,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在指定屏幕位置创建带描边的 TextMeshPro 文本标签。
+        /// Creates a stroked TextMeshPro text label at a specified screen location.
+
         /// </summary>
         private TextMeshProUGUI CreateText(string name, RectTransform parent, float left, float top, float width, float height, int fontSize, Color color, TextAlignmentOptions alignment, TMP_FontAsset font)
         {
@@ -1212,7 +1415,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建带金色边框的"按下 [按键]"提示标签。
+        /// Create a "Press [key]" prompt label with a gold border.
+
         /// </summary>
         private GameObject CreateChip(RectTransform parent, int index)
         {
@@ -1234,17 +1438,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// 创建一个样式化按钮，点击时触发教程指令。
+        /// Create a styled button that triggers a tutorial command when clicked.
+
         /// </summary>
         private Button CreateButton(string name, RectTransform parent, float left, float top, float width, float height, string label, Color background, Color textColor, mlpTutorialOverlayCommand command)
         {
-            // 1. 创建按钮 GameObject，包含 RectTransform、Image 和 Button 组件
+            // 1. Create a button GameObject, including RectTransform, Image and Button components
+
             var root = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             root.transform.SetParent(parent, false);
             var rect = root.GetComponent<RectTransform>();
             SetTopLeftRect(rect, left, top, width, height);
 
-            // 2. 设置按钮背景颜色和白色细边框
+            // 2. Set the button background color and white thin border
+
             var image = root.GetComponent<Image>();
             image.sprite = solidSprite;
             image.color = background;
@@ -1252,7 +1459,8 @@ namespace mlp
             outline.effectColor = new Color(1f, 1f, 1f, 0.08f);
             outline.effectDistance = new Vector2(1f, -1f);
 
-            // 3. 配置按钮的交互颜色（普通、悬停、按下、禁用）
+            // 3. Configure the interaction color of the button (normal, hover, pressed, disabled)
+
             var button = root.GetComponent<Button>();
             var colors = button.colors;
             colors.normalColor = background;
@@ -1261,18 +1469,21 @@ namespace mlp
             colors.selectedColor = colors.highlightedColor;
             colors.disabledColor = new Color(background.r, background.g, background.b, 0.35f);
             button.colors = colors;
-            // 4. 绑定点击事件：设置待处理的教程命令
+            // 4. Bind click events: Set pending tutorial commands
+
             button.targetGraphic = image;
             button.onClick.AddListener(() => pendingCommand = command);
 
-            // 5. 创建按钮文字标签
+            // 5. Create button text labels
+
             var text = CreateText("Label", rect, 0f, 6f, width, height - 6f, 16, textColor, TextAlignmentOptions.Center, LoadButtonFont());
             text.text = label;
             return button;
         }
 
         /// <summary>
-        /// 设置 RectTransform 锚点，使其拉伸填满整个父级。
+        /// Set the RectTransform anchor point so that it stretches to fill the entire parent.
+
         /// </summary>
         private static void StretchToParent(RectTransform rect)
         {
@@ -1283,7 +1494,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 以左上角为锚点定位和设置 RectTransform 的尺寸。
+        /// Position and size the RectTransform with the upper left corner as the anchor point.
+
         /// </summary>
         private static void SetTopLeftRect(RectTransform rect, float left, float top, float width, float height)
         {
@@ -1300,7 +1512,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 以中心点为基准定位和设置 RectTransform 的尺寸。
+        /// Position and size the RectTransform based on the center point.
+
         /// </summary>
         private static void SetCenteredRect(RectTransform rect, float centerX, float centerY, float width, float height)
         {
@@ -1308,7 +1521,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 显示或隐藏标记物的 GameObject。
+        /// A GameObject that shows or hides markers.
+
         /// </summary>
         private static void SetMarkerActive(RectTransform rect, bool active)
         {
@@ -1319,7 +1533,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将女巫精灵的渲染层级提升到覆盖层画布之上。
+        /// Raise the witch sprite's rendering level above the overlay canvas.
+
         /// </summary>
         private void ApplyWitchSortingOrder()
         {
@@ -1340,7 +1555,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 隐藏女巫模型上的篮球插槽，只显示角色本身。
+        /// Hides the basketball slot on the Witch model, showing only the character itself.
+
         /// </summary>
         private static void HidePreviewBall(DBLiteArmature armature)
         {
@@ -1354,7 +1570,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 加载用于大标题的 Impact 字体。
+        /// Load the Impact font for large titles.
+
         /// </summary>
         private static TMP_FontAsset LoadTitleFont()
         {
@@ -1362,7 +1579,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 加载用于按钮和按键标签的 Agency Bold 字体。
+        /// Loads the Agency Bold font for button and key labels.
+
         /// </summary>
         private static TMP_FontAsset LoadButtonFont()
         {
@@ -1370,7 +1588,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 加载用于正文和讲解文字的 Rajdhani Bold 字体。
+        /// Loads the Rajdhani Bold font for body and explanatory text.
+
         /// </summary>
         private static TMP_FontAsset LoadBodyFont()
         {

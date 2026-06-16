@@ -1,12 +1,12 @@
-// 延时计时器工具类
-// 提供几种不同类型的计时器，比如倒计时结束后触发、使用后冷却等。AI 和游戏逻辑用这些计时器来控制节奏，比如 AI 等几秒再做动作。
+// Delay timer tool class
+// Provides several different types of timers, such as triggering after countdown, cooling after use, etc. AI and game logic use these timers to control pacing, such as how many seconds the AI ​​waits before making an action.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// 延时计时器的统一接口。所有计时器都支持启动、每帧更新和重置三个操作。
+    /// Unified interface for delay timers. All timers support three operations: start, update per frame, and reset.
     /// </summary>
     public interface IDelay
     {
@@ -16,7 +16,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 基础计时器：等待固定时间 + 随机时间。其他计时器都继承自这个类。
+    /// Basic timer: wait for fixed time + random time. All other timers inherit from this class.
     /// </summary>
     public class FullDelay : IDelay
     {
@@ -27,10 +27,10 @@ namespace mlp
         protected float dispersion;
 
         /// <summary>
-        /// 创建一个计时器，等待固定基础延迟加上给定范围内的随机时长。
+        /// Creates a timer that waits for a fixed base delay plus a random amount of time within a given range.
         /// </summary>
-        /// <param name="range">在固定延迟之上额外添加的最大随机时长（秒）。</param>
-        /// <param name="fixedDelay">始终添加的基础延迟（秒）。</param>
+        /// <param name="range">The maximum random amount of time (in seconds) to add to the fixed delay. </param>
+        /// <param name="fixedDelay">The base delay in seconds that is always added. </param>
         public FullDelay(float range, float fixedDelay = 0f)
         {
             this.range = range;
@@ -38,7 +38,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 启动计时器。实际延迟为固定延迟加上 0 到 range 之间的随机值。
+        /// Start timer. The actual delay is the fixed delay plus a random value between 0 and range.
         /// </summary>
         public virtual void Activate()
         {
@@ -48,10 +48,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 计时器前进 dt 秒。延迟结束返回 1，仍在计时返回 0，计时器未激活返回 -1。
+        /// The timer advances dt seconds. Returns 1 when the delay is over, 0 when the timer is still counting, and -1 when the timer is not activated.
         /// </summary>
-        /// <param name="dt">自上次更新以来经过的时间（秒）。</param>
-        /// <returns>1 = 延迟完成，0 = 仍在计时，-1 = 计时器未激活。</returns>
+        /// <param name="dt">The time in seconds since the last update. </param>
+        /// <returns>1 = delayed completion, 0 = still counting, -1 = timer not active. </returns>
         public virtual int Update(float dt)
         {
             if (delta < 0f)
@@ -70,7 +70,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 停止计时器并重置，使其可以重新激活。
+        /// Stop the timer and reset it so it can be reactivated.
         /// </summary>
         public virtual void Reset()
         {
@@ -79,21 +79,21 @@ namespace mlp
     }
 
     /// <summary>
-    /// 精确计时器：总是等待固定的秒数，没有随机变化。用于技能冷却等需要精确时间的场景。
+    /// Precise timer: always waits for a fixed number of seconds, no random variation. Used for scenes that require precise time, such as skill cooldown.
     /// </summary>
     public sealed class UseDelay : FullDelay
     {
         /// <summary>
-        /// 创建一个始终等待精确指定秒数的计时器（无随机变化）。
+        /// Create a timer that always waits for a precisely specified number of seconds (no random variation).
         /// </summary>
-        /// <param name="range">延迟时长（秒）。</param>
+        /// <param name="range">Delay length (seconds). </param>
         public UseDelay(float range)
             : base(range)
         {
         }
 
         /// <summary>
-        /// 以 range 值作为固定延迟启动计时器。
+        /// Starts a timer with a range value as a fixed delay.
         /// </summary>
         public override void Activate()
         {
@@ -103,22 +103,22 @@ namespace mlp
     }
 
     /// <summary>
-    /// 双向随机计时器：随机部分可能比固定时间长，也可能比固定时间短。用于需要变化节奏的场景。
+    /// Bidirectional random timer: The random part may be longer or shorter than the fixed time. Used for scenes that require a change of pace.
     /// </summary>
     public sealed class NegativeDelay : FullDelay
     {
         /// <summary>
-        /// 创建一个计时器，随机部分可以加到固定延迟上，也可以从固定延迟中减去。最终延迟为 fixedDelay 加减 range 内的随机值。
+        /// Create a timer where the random portion can be added to or subtracted from the fixed delay. The final delay is fixedDelay plus or minus a random value within range.
         /// </summary>
-        /// <param name="range">加减的最大随机偏移量（秒）。</param>
-        /// <param name="fixedDelay">基础延迟（秒）。</param>
+        /// <param name="range">Maximum random offset in seconds for addition and subtraction. </param>
+        /// <param name="fixedDelay">Base delay (seconds). </param>
         public NegativeDelay(float range, float fixedDelay = 0f)
             : base(range, fixedDelay)
         {
         }
 
         /// <summary>
-        /// 以 50% 的概率加或减随机部分来启动计时器。
+        /// Start the timer by adding or subtracting a random portion with a 50% probability.
         /// </summary>
         public override void Activate()
         {
@@ -129,21 +129,21 @@ namespace mlp
     }
 
     /// <summary>
-    /// 简单随机计时器：等待 0 到指定范围之间的随机时长。用于 AI 反应延迟等场景。
+    /// Simple random timer: waits for a random amount of time between 0 and the specified range. Used for scenarios such as AI response delays.
     /// </summary>
     public sealed class SimpleDelay : FullDelay
     {
         /// <summary>
-        /// 创建一个等待 0 到给定范围之间随机时长的计时器。
+        /// Create a timer that waits for a random amount of time between 0 and the given range.
         /// </summary>
-        /// <param name="range">最大延迟时长（秒）。</param>
+        /// <param name="range">Maximum delay time (seconds). </param>
         public SimpleDelay(float range)
             : base(range)
         {
         }
 
         /// <summary>
-        /// 以 0 到 range 之间的随机延迟启动计时器。
+        /// Start the timer with a random delay between 0 and range.
         /// </summary>
         public override void Activate()
         {
@@ -153,22 +153,22 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 冷却计时器：AI 角色专用，支持强制重新开始冷却和提前结束冷却。用于控制 AI 的行动节奏。
+    /// AI cooldown timer: exclusive for AI characters, supports forced restart of cooldown and early end of cooldown. Used to control the pace of AI action.
     /// </summary>
     public sealed class AIUseDelay : FullDelay
     {
         /// <summary>
-        /// 创建一个 AI 角色使用的冷却计时器。支持强制重新开始冷却或提前结束冷却。
+        /// Create a cooldown timer used by the AI ​​character. Supports forced restart of cooldown or early end of cooldown.
         /// </summary>
-        /// <param name="range">冷却时间的最大随机部分（秒）。</param>
-        /// <param name="fixedDelay">基础冷却时间（秒）。</param>
+        /// <param name="range">The maximum random portion of the cooldown in seconds. </param>
+        /// <param name="fixedDelay">Base cooldown time (seconds). </param>
         public AIUseDelay(float range, float fixedDelay = 0f)
             : base(range, fixedDelay)
         {
         }
 
         /// <summary>
-        /// 以 0 到 range 之间的随机时长启动冷却。
+        /// Starts the cooldown with a random duration between 0 and range.
         /// </summary>
         public override void Activate()
         {
@@ -177,13 +177,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// AI 冷却计时器前进。冷却完成返回 1，正在倒计时返回 0，空闲或刚完成返回 -1，强制冷却进行中返回 -2。
+        /// AI cooldown timer advances. Returns 1 when the cooling is completed, 0 when the countdown is in progress, -1 when idle or just completed, and -2 when the forced cooling is in progress.
         /// </summary>
-        /// <param name="dt">自上次更新以来经过的时间（秒）。</param>
-        /// <returns>1 = 冷却完成，0 = 正在倒计时，-1 = 空闲，-2 = 强制冷却进行中。</returns>
+        /// <param name="dt">The time in seconds since the last update. </param>
+        /// <returns>1 = Cooldown completed, 0 = Countdown in progress, -1 = Idle, -2 = Forced cooldown in progress. </returns>
         public override int Update(float dt)
         {
-            // 1. 正常倒计时中（delta >= 0）：累加时间，到期返回 1
+            // 1. During normal countdown (delta >= 0): accumulated time, returns 1 when expired
             if (delta >= 0f)
             {
                 delta += dt;
@@ -196,13 +196,15 @@ namespace mlp
                 return 0;
             }
 
-            // 2. 空闲状态（delta 约等于 -1）：返回 -1
+            // 2. Idle state (delta is approximately equal to -1): return -1
+
             if (Mathf.Approximately(delta, -1f))
             {
                 return -1;
             }
 
-            // 3. 强制冷却中（delta < -1）：累加时间，到 -1 时冷却结束
+            // 3. Forced cooling (delta < -1): cumulative time, cooling ends when -1
+
             delta += dt;
             if (delta >= -1f)
             {
@@ -210,12 +212,12 @@ namespace mlp
                 return -1;
             }
 
-            // 4. 强制冷却仍在进行中，返回 -2
+            // 4. Forced cooling is still in progress, returning -2
             return -2;
         }
 
         /// <summary>
-        /// 强制冷却以完整的固定延迟时长重新开始。当 AI 执行了需要触发冷却的动作时调用此方法。
+        /// Forced cooldown restarts with the full fixed delay length. This method is called when the AI ​​performs an action that needs to trigger a cooldown.
         /// </summary>
         public void UseIt()
         {
@@ -223,7 +225,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将冷却时间缩短固定延迟的一半，使 AI 能更快地再次行动。
+        /// Reduces the cooldown by half the fixed delay, allowing the AI ​​to act again faster.
+
         /// </summary>
         public void SkipIt()
         {

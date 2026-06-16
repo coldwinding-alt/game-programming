@@ -1,56 +1,56 @@
-// AI 技能参数表  AI 的"操作水平"
-// 全游戏单人 AI 有 Easy / Normal / Hard / Hell 四档。每档对应一组固定参数。
+// AI skill parameter table AI "operation level"
+// The single-player AI in the entire game has four levels: Easy/Normal/Hard/Hell. Each gear corresponds to a set of fixed parameters.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// AI 技能参数：定义某一档难度下 AI 的投篮命中率、扣篮成功率、冷却时间、抢断概率等数值。
+    /// AI skill parameters: Define the AI's shooting percentage, dunk success rate, cooling time, steal probability and other values ​​under a certain level of difficulty.
     /// </summary>
     public readonly struct mlpAISkillProfile
     {
-        // 投篮精度。【数值叠加】塞入 CalcDispersion() 公式计算球的飞行偏差，越低越准，0 = 百发百中
+        // Shooting accuracy. [Numerical Superposition] Insert the CalcDispersion() formula to calculate the flight deviation of the ball. The lower the ball, the more accurate it is. 0 = 100% hit.
         public readonly float Accuracy;
-        // 扣篮成功率。【概率掷骰】扣篮出手后 Random.value < 此值才算扣进，否则扣飞
+        // Dunk success rate. [Probability roll] After a dunk is made, Random.value < this value will be considered a dunk, otherwise the dunk will be missed.
         public readonly float ChanceToCompleteDunk;
-        // 超能力冷却时间。【延迟计时】充能所需秒数，每帧累加 dt，充满后才能释放超能力
+        // Super power cooldown time. [Delay Timing] The number of seconds required for charging, dt is accumulated every frame, and super powers can be released only after it is full.
         public readonly float CoolDown;
-        // 跳球反应速度。【延迟计时】传入 NegativeDelay 计时器控制起跳时机，值越小 AI 越早起跳
+        // Jump ball reaction speed. [Delay Timing] Pass in the NegativeDelay timer to control the timing of jumping. The smaller the value, the earlier the AI ​​will jump.
         public readonly float JumpBall;
-        // 篮板争抢概率。【概率掷骰】球在篮板区域时，Random.value < 此值才起跳（还需先通过位置和计时器判断）
+        // Rebound probability. [Probability roll] When the ball is in the backboard area, it will only take off if Random.value < this value (it needs to be judged by the position and timer first)
         public readonly float ChanceToRebound;
-        // 投篮出手延迟。【延迟计时】传入 FullDelay 计时器，控制 AI 起跳后到出手之间的延迟，越小出手越快
+        // Shot release is delayed. [Delay Timing] Pass in the FullDelay timer to control the delay between AI taking off and taking action. The smaller it is, the faster it will take action.
         public readonly float Attack;
-        // 接球即投概率。【概率掷骰】落地持球后，Random.value < 此值则立刻起跳投篮，否则先运球再决策
+        // Catch and shoot probability. [Probability roll] After landing and holding the ball, if Random.value < this value, you will immediately take off and shoot. Otherwise, dribble first and then make a decision.
         public readonly float AttackAtOnce;
-        // 闪避抢断能力。【概率掷骰】对手发起抢断时，Random.value < 此值则 AI 尝试闪避（冲刺/跳跃/侧移）
+        // Ability to dodge steals. [Probability roll] When the opponent initiates a steal, if Random.value < this value, the AI ​​will try to dodge (sprint/jump/sideways move)
         public readonly float AvoidSteal;
-        // 假动作概率。【未使用】原计划控制 AI 进攻时做假动作的概率，当前代码未接入，属于死代码
+        // Probability of false action. [Unused] The original plan was to control the probability of AI making false moves when attacking. The current code is not connected and is a dead code.
         public readonly float MakePump;
-        // 防守反应概率。【概率掷骰】进攻时身后有防守者，Random.value < 此值则 AI 做出反应（变向或冲刺），否则无视继续冲
+        // Defensive reaction probability. [Probability roll] There is a defender behind you when attacking. If Random.value < this value, the AI ​​will react (change direction or sprint), otherwise it will ignore it and continue to rush.
         public readonly float ReactOnOpponent;
-        // 冲刺闪避概率。【概率掷骰】ReactOnOpponent 通过后的二级判定，Random.value < 此值则用冲刺闪避，否则只变向
+        // Dash dodge probability. [Probability roll] Secondary judgment after ReactOnOpponent passes. If Random.value < this value, use sprint to dodge, otherwise it will only change direction.
         public readonly float MakeDash;
-        // 冲刺冷却间隔。【延迟计时】传入 AIUseDelay，控制两次冲刺决策之间的冷却秒数，越短冲刺越频繁
+        // Sprint cooldown interval. [Delay Timing] Pass in AIUseDelay to control the cooling seconds between two sprint decisions. The shorter the time, the more frequent the sprints will be.
         public readonly float DelayDash;
-        // 防守干扰延迟。【延迟计时】传入 SimpleDelay，控制对手起跳投篮后 AI 起跳干扰的延迟，越小反应越快
+        // Defensive interference delay. [Delay Timing] Pass in SimpleDelay to control the delay of AI jump interference after the opponent jumps to shoot. The smaller the delay, the faster the reaction.
         public readonly float Defence;
-        // 跳投干扰概率。【概率掷骰】两个用途：(1) 持球时身后有人，决定是否抢先起跳投篮；(2) 对手起跳时，决定是否起跳干扰
+        // Jump shot interference probability. [Probability Roll] Two purposes: (1) When holding the ball, if there is someone behind you, decide whether to take off first to shoot; (2) When the opponent takes off, decide whether to take off to interfere
         public readonly float JumpThrow;
-        // 抢断尝试概率。【概率掷骰】靠近持球者时 Random.value < 此值发起抢断；对手靠近篮筐时概率 ×1.5
+        // Steal attempt probability. [Probability roll] Random.value < this value initiates a steal when close to the ball holder; probability × 1.5 when the opponent is close to the basket
         public readonly float MakeSteal;
-        // 抢断冷却间隔。【延迟计时】加到基础抢断动作时长上，控制两次抢断尝试之间的冷却秒数
+        // Tackle cooldown interval. [Delay Timing] is added to the basic steal action duration to control the number of cooling seconds between two steal attempts.
         public readonly float DelaySteal;
-        // 被假动作骗到的概率。【概率掷骰】对手做假动作时，Random.value < 此值则 AI 被骗起跳（值越高越容易上当）
+        // The probability of being fooled by a fake move. [Probability roll] When the opponent makes a fake move, if Random.value < this value, the AI ​​will be tricked into jumping (the higher the value, the easier it is to be fooled)
         public readonly float JumpPump;
-        // 盖帽尝试概率。【概率掷骰】对手从身后冲刺时，Random.value < 此值则 AI 尝试起跳盖帽
+        // Block attempt probability. [Probability roll] When the opponent sprints from behind, if Random.value < this value, the AI ​​will try to take off and block the shot.
         public readonly float MakeBlock;
-        // 篮板固定延迟。【延迟计时】传入 FullDelay 作为固定延迟分量，控制篮板起跳时机的基础等待时间
+        // Fixed delay in rebounding. [Delay Timing] Pass in FullDelay as a fixed delay component to control the basic waiting time of the rebound timing.
         public readonly float ReboundFixed;
-        // 篮板随机浮动范围。【延迟计时】传入 FullDelay 作为随机浮动分量，和 ReboundFixed 共同决定篮板起跳的延迟窗口
+        // The backboard has a random floating range. [Delay Timing] Pass in FullDelay as a random floating component, which together with ReboundFixed determines the delay window for the rebound to take off.
         public readonly float ReboundRange;
-        // 移动决策间隔。【延迟计时】传入 FullDelay，控制 AI 攻防移动决策之间的间隔，越小 AI 移动越敏捷
+        // Move decision interval. [Delay Timing] Pass in FullDelay to control the interval between the AI’s offensive and defensive movement decisions. The smaller the value, the more agile the AI ​​will move.
         public readonly float MoveDelay;
 
         public mlpAISkillProfile(
@@ -101,10 +101,13 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 技能参数表：集中管理 Easy、Normal、Hard、Hell 四档固定难度。
-    /// 这里的 AI 难度索引只有 0、1、2、3 四个值：
+    /// AI skill parameter table: centralized management of four fixed difficulty levels: Easy, Normal, Hard, and Hell.
+
+    /// The AI difficulty index here only has four values: 0, 1, 2, and 3:
+
     /// 0 = Easy，1 = Normal，2 = Hard，3 = Hell。
-    /// 锦标赛轮次、冒险关卡编号和赛段进度都不会再产生额外的隐藏技能等级。
+    /// Tournament rounds, adventure level numbers, and stage progression no longer generate additional hidden skill levels.
+
     /// </summary>
     public static class mlpAISkillsData
     {
@@ -113,9 +116,12 @@ namespace mlp
         public const int HardSkillIndex = 2;
         public const int HellSkillIndex = 3;
 
-        // 人类玩家使用的基础手感参数。
-        // 注意：这不是第五个 AI 难度档，只是为了保留玩家角色原本的投篮、扣篮和超能力冷却手感。
-        // AI 的四档难度只读取下面的 Profiles 数组。
+        // Basic feel parameters used by human players.
+
+        // Note: This is not the fifth AI difficulty level, it is just to retain the original shooting, dunking and super power cooling feel of the player character.
+
+        // The four difficulty levels of AI only read the Profiles array below.
+
         private static readonly mlpAISkillProfile HumanPlayerProfile = new mlpAISkillProfile(
             accuracy: 0.01f,
             chanceToCompleteDunk: 0.9f,
@@ -139,12 +145,16 @@ namespace mlp
             reboundRange: 0f,
             moveDelay: 0f);
 
-        // 当前 AI 难度的四档固定调参表。
-        // 每个数组元素都直接对应一个可选难度档位，不再存在中间等级或隐藏递增等级。
-        // 如果以后需要调手感，只改这四个档位本身，不要新增赛段/关卡偏移。
+        // Four levels of fixed tuning parameters for the current AI difficulty.
+
+        // Each array element corresponds directly to a selectable difficulty level, and there are no longer intermediate levels or hidden increasing levels.
+
+        // If you need to adjust the feel in the future, only change the four gears themselves and do not add stage/level offsets.
+
         private static readonly mlpAISkillProfile[] Profiles =
         {
-            // Easy：保留基本移动和反应，但进攻、防守和扣篮稳定性都比较保守。
+            // Easy: Retains basic movements and reactions, but is more conservative in terms of offense, defense and dunk stability.
+
             new mlpAISkillProfile(
                 accuracy: 0.14f,
                 chanceToCompleteDunk: 0.4f,
@@ -167,7 +177,8 @@ namespace mlp
                 reboundFixed: 0.35f,
                 reboundRange: 0.1f,
                 moveDelay: 0.1f),
-            // Normal：默认单人体验，比 Easy 更会抢篮板和补防，但仍给玩家留下稳定反应空间。
+            // Normal: The default single-player experience, which is better at rebounding and defense than Easy, but still leaves room for players to react stably.
+
             new mlpAISkillProfile(
                 accuracy: 0.12f,
                 chanceToCompleteDunk: 0.45f,
@@ -190,7 +201,7 @@ namespace mlp
                 reboundFixed: 0.3f,
                 reboundRange: 0.1f,
                 moveDelay: 0.08f),
-            // Hard：明显提高防守压迫、抢断和进攻执行力，但不会因为锦标赛后期或冒险后期继续上涨。
+            // Hard: Significantly improves defensive pressure, steals and offensive execution, but will not continue to increase in the late stages of the tournament or adventure.
             new mlpAISkillProfile(
                 accuracy: 0.04f,
                 chanceToCompleteDunk: 0.7f,
@@ -213,7 +224,8 @@ namespace mlp
                 reboundFixed: 0.2f,
                 reboundRange: 0.1f,
                 moveDelay: 0.05f),
-            // Hell：四档里的最高基础参数；Hell 专属额外强化仍由难度调校和控制器逻辑处理。
+            // Hell: The highest basic parameters among the four levels; Hell’s exclusive additional enhancements are still handled by difficulty adjustment and controller logic.
+
             new mlpAISkillProfile(
                 accuracy: 0f,
                 chanceToCompleteDunk: 0.98f,
@@ -241,58 +253,63 @@ namespace mlp
         public static int MaxSkillIndex => Profiles.Length - 1;
 
         /// <summary>
-        /// 将玩家选择的四档难度转换为内部 AI 技能索引。
-        /// 所有单人模式都应该先走这里，再把结果写入比赛数据。
-        /// 这样快速赛、随机赛、锦标赛和冒险模式就不会各自维护一套难度规则。
+        /// Converts the four difficulty levels selected by the player into an internal AI skill index.
+
+        /// All single player modes should go here first before writing the results to the match data.
+        /// This way Quick Play, Random Play, Tournament and Adventure Mode won't each maintain their own set of difficulty rules.
         /// </summary>
-        /// <param name="difficulty">玩家在菜单里选择的难度档位。</param>
-        /// <returns>0 到 3 之间的 AI 技能索引。</returns>
+        /// <param name="difficulty">The difficulty level selected by the player in the menu. </param>
+        /// <returns>AI skill index between 0 and 3. </returns>
         public static int GetSkillIndex(mlpAiDifficulty difficulty)
         {
             switch (difficulty)
             {
                 case mlpAiDifficulty.Easy:
-                    // Easy = 0：四档里最简单的一档，让 AI 保留基本行动能力，但进攻和防守更宽松。
+                    // Easy = 0: The easiest level among the four levels, allowing the AI ​​to retain basic mobility, but with more relaxed attack and defense.
+
                     return EasySkillIndex;
                 case mlpAiDifficulty.Hard:
-                    // Hard = 2：明显强于普通难度，但依然是固定档位，不会随赛段或关卡继续增加。
+                    // Hard = 2: It is obviously stronger than the normal difficulty, but it is still a fixed level and will not continue to increase with stages or levels.
+
                     return HardSkillIndex;
                 case mlpAiDifficulty.Hell:
-                    // Hell = 3：四档里的最高基础技能值；Hell 额外强化在其他调校表里处理。
+                    // Hell = 3: The highest basic skill value among the four levels; Hell’s additional enhancements are handled in other tuning tables.
                     return HellSkillIndex;
                 default:
-                    // Normal = 1：默认难度。遇到未知枚举值时也回到普通，避免进入非法索引。
+                    // Normal = 1: Default difficulty. It also returns to normal when encountering an unknown enumeration value to avoid entering illegal indexes.
                     return NormalSkillIndex;
             }
         }
 
         /// <summary>
-        /// 根据四档难度直接获取 AI 技能配置。
+        /// Directly obtain AI skill configuration according to four levels of difficulty.
         /// </summary>
-        /// <param name="difficulty">玩家选择的难度档位。</param>
-        /// <returns>该难度档位的 AI 技能配置。</returns>
+        /// <param name="difficulty">The difficulty level selected by the player. </param>
+        /// <returns>AI skill configuration for this difficulty level. </returns>
         public static mlpAISkillProfile Get(mlpAiDifficulty difficulty)
         {
             return Get(GetSkillIndex(difficulty));
         }
 
         /// <summary>
-        /// 获取指定 AI 难度索引的技能配置。索引会被限制在 0 到 3 之间。
+        /// Gets the skill configuration for the specified AI difficulty index. Indexes will be limited to between 0 and 3.
         /// </summary>
-        /// <param name="skillIndex">四档固定难度索引：0 = Easy，1 = Normal，2 = Hard，3 = Hell。</param>
-        /// <returns>该难度档位的 AI 技能配置。</returns>
+        /// <param name="skillIndex">Four levels of fixed difficulty index: 0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell. </param>
+        /// <returns>AI skill configuration for this difficulty level. </returns>
         public static mlpAISkillProfile Get(int skillIndex)
         {
-            // 正常情况下 skillIndex 应该来自 GetSkillIndex。
-            // Clamp 只是防御旧存档、编辑器测试或外部调用传入非法值，避免数组越界导致比赛崩溃。
+            // Normally skillIndex should come from GetSkillIndex.
+
+            // Clamp only prevents illegal values ​​from being passed in by old saves, editor tests, or external calls, and prevents the game from crashing due to array out-of-bounds.
+
             var index = Mathf.Clamp(skillIndex, 0, Profiles.Length - 1);
             return Profiles[index];
         }
 
         /// <summary>
-        /// 获取人类玩家的基础手感配置。
+        /// Obtain the basic feel configuration of human players.
         /// </summary>
-        /// <returns>玩家角色使用的投篮、扣篮和超能力冷却参数。</returns>
+        /// <returns>The shooting, dunking and super power cooling parameters used by the player character. </returns>
         public static mlpAISkillProfile GetHumanPlayerProfile()
         {
             return HumanPlayerProfile;

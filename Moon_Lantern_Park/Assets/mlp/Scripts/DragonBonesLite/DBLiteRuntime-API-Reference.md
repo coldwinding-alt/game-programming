@@ -2,9 +2,9 @@
 
 ## Public API Surface
 
-对外接口仅 `DBLiteFactory`（3 个方法）和 `DBLiteArmature`（6 个方法 + 2 个事件 + 1 个属性）。
+The public interface only includes `DBLiteFactory` (3 methods) and `DBLiteArmature` (6 methods + 2 events + 1 property).
 
-其余类（`DBLiteSkeleton`、`DBLiteArmatureData`、`DBLiteBoneTrack`、`DBLiteSlotInstance` 等）均为内部实现，外部不直接调用。
+All other classes (`DBLiteSkeleton`, `DBLiteArmatureData`, `DBLiteBoneTrack`, `DBLiteSlotInstance`, etc.) are internal implementation details and are not called directly from outside.
 
 ---
 
@@ -16,20 +16,20 @@
 DBLiteFactory.Instance.EnsureLoaded();
 ```
 
-从 `Resources/mlp/DragonBones/` 加载 `sk2.json`、`texture2.json`、`texture2.png`。
-通常无需手动调用——`BuildArmature()` 内部自动调用。
+Loads `sk2.json`, `texture2.json`, and `texture2.png` from `Resources/mlp/DragonBones/`.
+This is usually not needed manually - `BuildArmature()` calls it internally.
 
 ### `BuildArmature(armatureName, objectName)`
 
 ```csharp
 var armature = DBLiteFactory.Instance.BuildArmature("playerSmall", "Player_0");
-// 返回 DBLiteArmature
+// Returns DBLiteArmature
 ```
 
-| 参数 | 说明 |
+| Parameter | Description |
 |------|------|
-| `armatureName` | 骨架名，当前项目固定为 `"playerSmall"` |
-| `objectName` | 生成的 GameObject 名称 |
+| `armatureName` | Skeleton name. This project is fixed to `"playerSmall"` |
+| `objectName` | Name of the generated GameObject |
 
 ### `GetTextureSprite(spriteName, textureAtlasKey)`
 
@@ -41,34 +41,34 @@ var sprite = DBLiteFactory.Instance.GetTextureSprite("head1", "texture2");
 
 ## DBLiteArmature
 
-### 任务 → 接口速查
+### Task -> Interface Quick Reference
 
-| 任务 | 接口 |
+| Task | Interface |
 |------|------|
-| 播放/切换动画 | `Play(name)` |
-| 停在动画首帧 | `StopAtStart(name)` |
-| 换装（切换角色外观） | `GetChildArmature(name).Play(skin)` |
-| 扣篮时隐藏手中的球 | `SetSlotHidden("ball", true)` |
-| 刷新渲染 | `RefreshPose()` |
-| 动画播完后执行逻辑 | `AnimationComplete += handler` |
-| 关键帧触发游戏逻辑 | `FrameEvent += handler` |
-| 加速/减速播放 | `PlaybackSpeed = 1.5f` |
+| Play / switch animation | `Play(name)` |
+| Stop on the first frame of an animation | `StopAtStart(name)` |
+| Change outfit (switch character appearance) | `GetChildArmature(name).Play(skin)` |
+| Hide the ball in hand during a dunk | `SetSlotHidden("ball", true)` |
+| Refresh rendering | `RefreshPose()` |
+| Run logic after an animation finishes | `AnimationComplete += handler` |
+| Trigger gameplay logic from a keyframe | `FrameEvent += handler` |
+| Speed up / slow down playback | `PlaybackSpeed = 1.5f` |
 
 ---
 
 ### `Play(string animationName, bool restart = true)`
 
-切换并播放动画。
+Switches and plays an animation.
 
 ```csharp
 armature.Play("idle");
 armature.Play("jump_wb");
 armature.Play("dash");
 armature.Play("dunk1");
-armature.Play("run_wb", restart: false);  // 同动画不重置进度
+armature.Play("run_wb", restart: false);  // Do not reset progress for the same animation
 ```
 
-项目内通过 `mlpPlayerObject.PlayState()` 封装调用（`mlpGameplayObjects.cs:5416`）：
+Inside the project, this is wrapped by `mlpPlayerObject.PlayState()` (`mlpGameplayObjects.cs:5416`):
 
 ```csharp
 private void PlayState(string state)
@@ -80,24 +80,24 @@ private void PlayState(string state)
 }
 ```
 
-#### 动画名称全集
+#### Full animation list
 
-| 动画 | 有球版本 | 触发条件 |
+| Animation | With-ball version | Trigger condition |
 |------|---------|---------|
-| `idle` | `idle_wb` | 静止站立 |
-| `run` | `run_wb` | 水平移动 |
-| `jump` | `jump_wb` | 起跳 |
-| `landing` | `landing_wb` | 落地 |
-| — | `fly1` ~ `fly5` / `fly1_wb` ~ `fly5_wb` | 空中 |
-| `dash` | — | 冲刺 |
-| `steal` | — | 抢断 |
-| `throw_land` | — | 投篮出手 |
-| `pumpStart` / `pumpEnd` | — | 假动作 |
-| `blockStart` / `blockEnd` | — | 盖帽 |
-| `stun` | — | 被眩晕 |
-| `dunk1` | — | 扣篮 |
-| `megadunk` / `megadunk_end` | — | 超级扣篮 |
-| `md_start` / `md_mid` / `md_end` | — | 超级冲刺 |
+| `idle` | `idle_wb` | Standing still |
+| `run` | `run_wb` | Horizontal movement |
+| `jump` | `jump_wb` | Jump takeoff |
+| `landing` | `landing_wb` | Landing |
+| — | `fly1` ~ `fly5` / `fly1_wb` ~ `fly5_wb` | In the air |
+| `dash` | — | Dash |
+| `steal` | — | Steal |
+| `throw_land` | — | Shot release |
+| `pumpStart` / `pumpEnd` | — | Pump fake |
+| `blockStart` / `blockEnd` | — | Block |
+| `stun` | — | Stunned |
+| `dunk1` | — | Dunk |
+| `megadunk` / `megadunk_end` | — | Super dunk |
+| `md_start` / `md_mid` / `md_end` | — | Super dash |
 
 `_wb` = With Ball
 
@@ -105,7 +105,7 @@ private void PlayState(string state)
 
 ### `StopAtStart(string animationName)`
 
-加载动画并冻结在第 0 帧。
+Loads an animation and freezes it on frame 0.
 
 ```csharp
 armature.StopAtStart("idle");
@@ -115,7 +115,7 @@ armature.StopAtStart("idle");
 
 ### `GetChildArmature(string slotName)`
 
-获取子骨架引用，用于换装。
+Gets a child armature reference for outfit switching.
 
 ```
 playerSmall
@@ -127,19 +127,19 @@ playerSmall
   ├── left leg
   ├── right leg
   ├── digleg
-  ├── ball          (普通插槽)
-  └── ball_front    (普通插槽)
+  ├── ball          (normal slot)
+  └── ball_front    (normal slot)
 ```
 
 ```csharp
 var headArmature = armature.GetChildArmature("head");
-headArmature?.Play("head3");                      // 切换为角色3的头部
+headArmature?.Play("head3");                      // Switch to character 3's head
 
 var bodyArmature = armature.GetChildArmature("body");
-bodyArmature?.Play("body1");                      // 切换为体型1的身体
+bodyArmature?.Play("body1");                      // Switch to body type 1
 ```
 
-完整换装流程见 `mlpPlayersData.SwitchPlayer()` (`mlpPlayersData.cs:356`)：
+See `mlpPlayersData.SwitchPlayer()` (`mlpPlayersData.cs:356`) for the full outfit-switching flow:
 
 ```csharp
 armature.GetChildArmature("head")?.Play("head" + (skinId + 1));
@@ -158,11 +158,11 @@ armature.Play("idle");
 ### `SetSlotHidden(string slotName, bool hidden)`
 
 ```csharp
-// 扣篮时隐藏手中的球
+// Hide the ball in hand during a dunk
 armature.SetSlotHidden("ball", true);
 armature.SetSlotHidden("ball_front", true);
 
-// 恢复
+// Restore
 armature.SetSlotHidden("ball", false);
 armature.SetSlotHidden("ball_front", false);
 ```
@@ -179,7 +179,7 @@ armature.RefreshPose();
 
 ### `AnimationComplete` (event)
 
-非循环动画播放完毕时触发。
+Fires when a non-looping animation finishes playing.
 
 ```csharp
 armature.AnimationComplete += animName =>
@@ -194,7 +194,7 @@ armature.AnimationComplete += animName =>
 
 ### `FrameEvent` (event)
 
-动画到达标记帧时触发。事件点由 sk2.json 定义。
+Fires when an animation reaches a marked frame. Event points are defined in `sk2.json`.
 
 ```csharp
 armature.FrameEvent += (animName, eventName) =>
@@ -204,7 +204,7 @@ armature.FrameEvent += (animName, eventName) =>
 };
 ```
 
-sk2.json 帧事件格式：
+`sk2.json` frame-event format:
 
 ```json
 { "name": "dunk1", "frame": [
@@ -214,7 +214,7 @@ sk2.json 帧事件格式：
 ]}
 ```
 
-表示第 15 帧触发 `releaseBall`。
+This means frame 15 triggers `releaseBall`.
 
 ---
 
@@ -223,31 +223,31 @@ sk2.json 帧事件格式：
 ```csharp
 armature.PlaybackSpeed = 1.2f;   // 1.2x
 armature.PlaybackSpeed = 0.8f;   // 0.8x
-armature.PlaybackSpeed = 1f;     // 正常
+armature.PlaybackSpeed = 1f;     // Normal
 ```
 
 ---
 
-## 构造与初始化
+## Construction and Initialization
 
 ```csharp
-// mlpGameplayObjects.cs:3344 — PlayerObject 构造函数中
+// In PlayerObject constructor: mlpGameplayObjects.cs:3344
 var armature = mlpPlayersData.BuildGameplayArmature($"playerSmall_{team}_{playerNo}");
 armature.transform.SetParent(graphic.transform, false);
 armature.transform.localPosition = new Vector3(0f, -35f, 0f);
 armature.transform.localScale = Vector3.one * mlpConstants.PixelPerfectCharacterScale;
 
-// 换装
+// Outfit switching
 mlpPlayersData.ApplyCharacter(armature, characterId);
 
-// 订阅事件
+// Subscribe to events
 armature.AnimationComplete += OnAnimationComplete;
 armature.FrameEvent += OnAnimationFrameEvent;
 ```
 
 ---
 
-## 调用链
+## Call Chain
 
 ```
 PlayState("jump_wb")          → armature.Play("jump_wb")

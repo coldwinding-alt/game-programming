@@ -1,21 +1,31 @@
-// 投篮和得分判定逻辑
-// 处理篮球是否投进篮筐的检测，计算得几分（2 分还是 3 分），判断球有没有碰到篮筐边缘，以及补篮和盖帽后的得分。
+// Shooting and scoring decision logic
+
+// Processes the detection of whether the basketball is thrown into the basket, calculates the number of points (2 points or 3 points), determines whether the ball touches the edge of the basket, and scores after tip-ins and blocks.
+
 
 namespace mlp
 {
     /// <summary>
-    /// 投篮和得分判定器：处理篮球是否投进篮筐的检测，计算得几分（2 分还是 3 分），判断球有没有被盖帽，以及篮筐传感器的触发逻辑。
+    /// Shot and score determiner: handles the detection of whether the basketball is shot into the basket, calculates the number of points (2 points or 3 points), determines whether the ball is blocked, and the triggering logic of the basket sensor.
+
     /// </summary>
     public sealed class mlpMatchProcessor
     {
-        private bool canScore = true;          // 开关：本轮是否还能判定得分（防止重复判定）
-        private bool upperSensorPassed;        // 开关：球是否已经经过篮筐上方传感器
-        private int shotSide;                  // 投篮方所在半场：-1 左半场，1 右半场
-        private bool isHuman;                  // 投篮的(或盖帽后归属方)是否为玩家
-        private int throwType;                 // 投篮类型：0=远投三分，正数=普通投篮，负数=特殊投篮
-        private int shotPlayerNo = -1;         // 投篮球员编号，-1 表示未设定
-        private int blockSide;                 // 盖帽方所在半场：0=没人盖帽，-1/1 为盖帽方
-        private bool blockIsHuman;             // 盖帽的是否为玩家
+        private bool canScore = true;          // Switch: Whether the score can still be determined in this round (to prevent repeated determination)
+
+        private bool upperSensorPassed;        // Switch: Whether the ball has passed the sensor above the basket
+
+        private int shotSide;                  // Half court of the shooting team: -1 left half, 1 right half
+
+        private bool isHuman;                  // Whether the shooter (or the team to whom the shot belongs after the block) is a player
+
+        private int throwType;                 // Shot type: 0=long three-point shot, positive number=normal shot, negative number=special shot
+
+        private int shotPlayerNo = -1;         // Shooting player number, -1 means not set
+
+        private int blockSide;                 // Half of the court where the shot-blocking team is: 0 = no one blocks the shot, -1/1 is the blocking team
+
+        private bool blockIsHuman;             // Whether the person blocking the shot is a player
 
         public int ThrowType => throwType;
         public int ShotSide => shotSide;
@@ -24,7 +34,7 @@ namespace mlp
         public bool IsHuman => isHuman;
 
         /// <summary>
-        /// 清除所有投篮和盖帽的追踪状态，为新一轮进攻做准备。
+        /// Clear the tracking status of all shots and blocks to prepare for a new round of offense.
         /// </summary>
         public void Reset()
         {
@@ -36,11 +46,11 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录一次投篮动作。重置之前的状态，并保存投篮者信息、所在半场和投篮类型。
+        /// Record a shooting motion. Reset the previous state and save the shooter, half and shot type.
         /// </summary>
-        /// <param name="side">投篮者所在半场（-1 = 左侧，1 = 右侧）。</param>
-        /// <param name="shotByHuman">是否为玩家手动投篮，false 表示 AI 投篮。</param>
-        /// <param name="shotThrowType">0 = 远距离投篮，正数 = 普通投篮，负数 = 特殊投篮。</param>
+        /// <param name="side">The half of the court where the shooter is (-1 = left, 1 = right). </param>
+        /// <param name="shotByHuman">Whether the player manually shoots the ball, false means AI shooting. </param>
+        /// <param name="shotThrowType">0 = long range shot, positive number = normal shot, negative number = special shot. </param>
         public void Shoot(int side, bool shotByHuman, int shotThrowType, int shooterPlayerNo = -1)
         {
             Reset();
@@ -51,38 +61,40 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录一次盖帽尝试。即使球最终进了，如果被盖帽者碰触过，仍按 2 分计算。
+        /// Record a blocked shot attempt. Even if the ball ends up going in, it still counts as 2 points if it was touched by the blocker.
         /// </summary>
-        /// <param name="side">盖帽球员所在半场（-1 = 左侧，1 = 右侧）。</param>
-        /// <param name="blockedByHuman">是否为玩家手动盖帽，false 表示 AI 盖帽。</param>
+        /// <param name="side">The half of the court where the player blocking the shot is (-1 = left, 1 = right). </param>
+        /// <param name="blockedByHuman">Whether the player blocks the shot manually, false means AI blocks the shot. </param>
         public void Block(int side, bool blockedByHuman)
         {
-            // 保留当前的投篮/传感器链路，这样被盖帽的球如果继续沿着原篮筐路径飞行，仍然可以正确判定。
+            // Preserve the current shot/sensor link so that a blocked ball can still be determined correctly if it continues to fly along its original path to the basket.
             blockSide = side;
             blockIsHuman = blockedByHuman;
         }
 
         /// <summary>
-        /// 处理篮筐传感器触发事件。球必须先经过上方传感器再经过下方传感器，才算有效进球。
+        /// Handle basket sensor trigger events. The ball must first pass through the upper sensor and then the lower sensor to be considered a valid goal.
         /// </summary>
-        /// <param name="sensorType">0 = 上方传感器，非零 = 下方传感器。</param>
-        /// <returns>球成功入篮（上下传感器依次触发）时返回 true。</returns>
+        /// <param name="sensorType">0 = upper sensor, non-zero = lower sensor. </param>
+        /// <returns> Returns true when the ball successfully enters the basket (the upper and lower sensors are triggered in sequence). </returns>
         public bool ProcessSensor(int sensorType)
         {
-            // 1. 已经判定过得分，不再重复判定
+            // 1. The score has already been determined and will not be determined again.
+
             if (!canScore)
             {
                 return false;
             }
 
-            // 2. 上方传感器触发：标记球已通过上方
+            // 2. The upper sensor triggers: the marking ball has passed the upper
+
             if (sensorType == 0)
             {
                 upperSensorPassed = true;
                 return false;
             }
 
-            // 3. 下方传感器触发且上方已通过：有效进球
+            // 3. The lower sensor is triggered and the upper part is passed: a valid goal
             if (upperSensorPassed)
             {
                 canScore = false;
@@ -90,20 +102,21 @@ namespace mlp
                 return true;
             }
 
-            // 4. 下方先触发（未经过上方）：无效，禁止后续得分
+            // 4. The bottom triggers first (without passing the top): invalid, subsequent scoring is prohibited
             canScore = false;
             return false;
         }
 
-        /// <summary> 算分
-        /// 计算一次成功进球的得分。被盖帽后仍进的球始终计 2 分；远距离投篮计 3 分；其他情况使用默认分值。
+        /// <summary> Score calculation
+        /// Calculate the score for a successful goal. A shot scored after being blocked always counts 2 points; a shot from distance counts 3 points; otherwise the default value is used.
         /// </summary>
-        /// <param name="scoringSide">得分方所在半场（-1 = 左侧，1 = 右侧）。</param>
-        /// <param name="fallbackPoints">默认分值（通常根据距离为 2 或 3）。</param>
-        /// <returns>本次进球获得的分数。</returns>
+        /// <param name="scoringSide">The half of the court where the scorer is playing (-1 = left, 1 = right). </param>
+        /// <param name="fallbackPoints">Default points value (usually 2 or 3 depending on distance). </param>
+        /// <returns>The points earned for this goal. </returns>
         public int ResolvePointsForScore(int scoringSide, int fallbackPoints)
         {
-            // 1. 被对手盖帽后仍然进的球，统一按 2 分结算
+            // 1. Goals scored after being blocked by the opponent will be settled as 2 points.
+
             if (blockSide == -scoringSide)
             {
                 isHuman = blockIsHuman;
@@ -111,19 +124,20 @@ namespace mlp
                 return 2;
             }
 
-            // 2. 远距离投篮（throwType == 0）计 3 分
+            // 2. Long-distance shots (throwType == 0) count for 3 points
+
             if (throwType == 0)
             {
                 return 3;
             }
 
-            // 3. 普通投篮（throwType > 0）计 2 分
+            // 3. Normal shot (throwType > 0) counts 2 points
             if (throwType > 0)
             {
                 return 2;
             }
 
-            // 4. 其他情况使用传入的默认分值
+            // 4. In other cases, use the passed default score.
             return fallbackPoints;
         }
     }

@@ -1,4 +1,4 @@
-// 锦标赛赛制数据和对阵管理 / 管理 4 人锦标赛的完整流程：随机分组、半决赛、决赛、记录每场比赛结果、计算排名和战绩。还负责保存和读取锦标赛进度，让玩家可以中途退出再回来继续。
+// Tournament format data and match management/Complete process of managing a 4-player tournament: randomization, semi-finals, finals, recording the results of each game, calculating rankings and results. It is also responsible for saving and loading tournament progress, allowing players to quit midway and come back to continue.
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine;
 namespace mlp
 {
     /// <summary>
-    /// 锦标赛阶段：无、常规赛、半决赛、三四名决赛、决赛、已完成。标识锦标赛进行到哪一步。
+    /// Championship stage: None, regular season, semi-finals, third and fourth place finals, finals, completed. Identifies the stage of the tournament.
     /// </summary>
     public enum mlpTournamentStage
     {
@@ -19,7 +19,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 锦标赛单场比赛结果：记录双方角色、比分和获胜方。平局时左侧自动胜出。
+    /// Championship single match results: Record both sides' roles, scores and winners. In the event of a draw, the left side automatically wins.
     /// </summary>
     public sealed class mlpTournamentMatchResult
     {
@@ -31,7 +31,8 @@ namespace mlp
         public bool Completed { get; private set; }
 
         /// <summary>
-        /// 重置本场比赛结果，并可选地指定双方参赛角色。
+        /// Reset the results of this match and optionally specify the participating roles of both sides.
+
         /// </summary>
         public void Reset(int leftCharacterId = -1, int rightCharacterId = -1)
         {
@@ -44,7 +45,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录最终比分并判定获胜方；平局时左侧胜出。
+        /// The final score is recorded and the winner is determined; in the event of a tie, the left side wins.
         /// </summary>
         public void Complete(int leftScore, int rightScore)
         {
@@ -66,7 +67,8 @@ namespace mlp
     }
 
     /// <summary>
-    /// 锦标赛排名记录：记录某个角色在分区中的胜负场次、总得分和净胜分，用于排名。
+    /// Tournament ranking record: Record the number of wins and losses, total points and points difference of a certain character in the division for ranking.
+
     /// </summary>
     public sealed class mlpTournamentStandingEntry
     {
@@ -82,7 +84,8 @@ namespace mlp
         public float Percentage => GamesPlayed > 0 ? Wins / (float)GamesPlayed : 0f;
 
         /// <summary>
-        /// 重置本条排名记录，并分配给指定的角色、分区和位置。
+        /// Reset this ranking record and assign it to the specified role, division and position.
+
         /// </summary>
         public void Reset(int characterId, int divisionIndex, int divisionSlot)
         {
@@ -96,7 +99,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将一场比赛的结果添加到本条排名记录中，更新胜场、负场和总得分。
+        /// Add the results of a game to this ranking record, updating wins, losses and total points.
         /// </summary>
         public void ApplyResult(int scored, int allowed)
         {
@@ -114,7 +117,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 锦标赛完整数据：管理 8 人锦标赛的全部流程——随机分两个区、3 轮常规赛、半决赛、决赛、记录所有比赛结果、计算排名。支持保存和恢复进度。
+    /// Complete tournament data: Manage the entire process of an 8-player tournament - random division into two zones, 3 rounds of regular season, semi-finals, finals, recording of all game results, calculation of rankings. Supports saving and restoring progress.
     /// </summary>
     public sealed class mlpTournamentData
     {
@@ -202,11 +205,12 @@ namespace mlp
         public mlpTournamentMatchResult FinalResult { get; } = new mlpTournamentMatchResult();
 
         /// <summary>
-        /// 清除所有锦标赛状态，重置每场比赛结果和排名记录。
+        /// Clears all tournament status, resetting every game result and ranking record.
+
         /// </summary>
         public void Reset()
         {
-            // 1. 重置所有基本状态标记和当前阶段信息
+            // 1. Reset all basic status markers and current stage information
             Active = false;
             Completed = false;
             RegularSeasonCompleted = false;
@@ -219,7 +223,8 @@ namespace mlp
             PlayerPlacement = 0;
             CurrentRegularSeasonRoundIndex = 0;
 
-            // 2. 遍历两个分区，重置所有参赛者 ID 和排名记录
+            // 2. Traverse the two partitions and reset all contestant IDs and ranking records
+
             for (var division = 0; division < DivisionCount; division++)
             {
                 for (var slot = 0; slot < TeamsPerDivision; slot++)
@@ -229,7 +234,8 @@ namespace mlp
                 }
             }
 
-            // 3. 遍历所有常规赛轮次，重置每场比赛结果
+            // 3. Traverse all regular season rounds and reset the results of each game
+
             for (var round = 0; round < RegularSeasonRoundCount; round++)
             {
                 for (var matchIndex = 0; matchIndex < MatchesPerRegularSeasonRound; matchIndex++)
@@ -238,7 +244,7 @@ namespace mlp
                 }
             }
 
-            // 4. 重置季后赛所有比赛结果
+            // 4. Reset all playoff game results
             SemiFinalResults[0].Reset();
             SemiFinalResults[1].Reset();
             ThirdPlaceResult.Reset();
@@ -246,11 +252,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 使用指定的玩家角色和难度创建一场新锦标赛，将参赛者分为两个分区。
+        /// Create a new tournament with specified player characters and difficulty, dividing participants into two divisions.
+
         /// </summary>
         public bool Create(int playerCharacterId, mlpAiDifficulty difficulty)
         {
-            // 1. 重置所有数据，检查是否有足够的角色（至少 8 个）
+            // 1. Reset all data and check if there are enough characters (at least 8)
+
             Reset();
             var activeCharacters = mlpPlayersData.GetActiveCharacterIds();
             if (activeCharacters.Length < DivisionCount * TeamsPerDivision)
@@ -258,12 +266,14 @@ namespace mlp
                 return false;
             }
 
-            // 2. 设置锦标赛基本信息：激活状态、难度、玩家角色
+            // 2. Set the basic information of the tournament: activation status, difficulty, player role
+
             Active = true;
             Difficulty = difficulty;
             PlayerCharacterId = mlpPlayersData.SanitizeCharacterId(playerCharacterId);
 
-            // 3. 从剩余角色中随机选取 7 个对手，打乱顺序
+            // 3. Randomly select 7 opponents from the remaining characters and shuffle them.
+
             var availableOpponents = new List<int>(activeCharacters.Length - 1);
             for (var i = 0; i < activeCharacters.Length; i++)
             {
@@ -274,7 +284,8 @@ namespace mlp
             }
             Shuffle(availableOpponents);
 
-            // 4. 分配到两个区：A 区放玩家 + 3 个对手，B 区放 4 个对手
+            // 4. Assigned to two areas: Area A contains players + 3 opponents, Area B contains 4 opponents
+
             DivisionEntrantCharacterIds[0][0] = PlayerCharacterId;
             for (var slot = 1; slot < TeamsPerDivision; slot++)
             {
@@ -285,7 +296,7 @@ namespace mlp
                 DivisionEntrantCharacterIds[1][slot] = availableOpponents[slot + TeamsPerDivision - 1];
             }
 
-            // 5. 初始化每个区的排名记录
+            // 5. Initialize the ranking records of each area
             for (var division = 0; division < DivisionCount; division++)
             {
                 for (var slot = 0; slot < TeamsPerDivision; slot++)
@@ -297,7 +308,8 @@ namespace mlp
                 }
             }
 
-            // 6. 生成常规赛赛程，进入第一轮
+            // 6. Generate regular season schedule and enter the first round
+
             BuildRegularSeasonSchedule();
             CurrentStage = mlpTournamentStage.RegularSeason;
             CurrentRegularSeasonRoundIndex = 0;
@@ -306,7 +318,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从常规赛阶段过渡到半决赛季后赛阶段。
+        /// Transition from the regular season stage to the semi-finals playoff stage.
+
         /// </summary>
         public void BeginFinals()
         {
@@ -325,7 +338,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录玩家的比赛结果，并推进到锦标赛的下一个阶段。
+        /// Record player results and advance to the next stage of the tournament.
+
         /// </summary>
         public void ApplyCurrentMatchResult(int playerScore, int opponentScore)
         {
@@ -352,7 +366,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回指定分区的排名，按胜场、净胜分和总得分排序。
+        /// Returns the rankings for the specified division, sorted by wins, point differential, and total points.
+
         /// </summary>
         public mlpTournamentStandingEntry[] GetDivisionStandings(int divisionIndex)
         {
@@ -372,28 +387,33 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录玩家的常规赛比赛结果，模拟本轮剩余比赛，推进到下一轮或季后赛。
+        /// Record the players' regular season game results, simulate the remaining games of this round, and advance to the next round or playoffs.
+
         /// </summary>
         private void ApplyRegularSeasonResult(int playerScore, int opponentScore)
         {
-            // 1. 前置检查：常规赛已结束或轮次索引无效时跳过
+            // 1. Pre-check: Skip when the regular season is over or the round index is invalid
+
             if (RegularSeasonCompleted || CurrentRegularSeasonRoundIndex < 0 || CurrentRegularSeasonRoundIndex >= RegularSeasonRoundCount)
             {
                 return;
             }
 
-            // 2. 找到玩家本轮的比赛，确认未完成
+            // 2. Find the player’s current round of games and confirm that they are not completed.
+
             var playerMatch = GetPlayerMatchForRound(CurrentRegularSeasonRoundIndex);
             if (playerMatch == null || playerMatch.Completed)
             {
                 return;
             }
 
-            // 3. 记录玩家比赛结果，更新双方排名
+            // 3. Record player competition results and update the rankings of both parties
+
             playerMatch.Complete(playerScore, opponentScore);
             ApplyStandingUpdate(playerMatch);
 
-            // 4. 模拟本轮其他比赛并更新排名
+            // 4. Simulate other games in this round and update the rankings
+
             var roundMatches = RegularSeasonRounds[CurrentRegularSeasonRoundIndex];
             for (var i = 0; i < roundMatches.Length; i++)
             {
@@ -406,7 +426,8 @@ namespace mlp
                 ApplyStandingUpdate(roundMatches[i]);
             }
 
-            // 5. 推进到下一轮，如果还有剩余轮次则设置下一场对手
+            // 5. Advance to the next round, and if there are remaining rounds, set the next opponent.
+
             CurrentRegularSeasonRoundIndex++;
             if (CurrentRegularSeasonRoundIndex < RegularSeasonRoundCount)
             {
@@ -414,12 +435,14 @@ namespace mlp
                 return;
             }
 
-            // 6. 常规赛结束，构建季后赛对阵
+            // 6. The regular season is over and the playoffs are set up.
+
             RegularSeasonCompleted = true;
             CurrentOpponentCharacterId = -1;
             BuildPlayoffBracket();
 
-            // 7. 玩家未晋级时自动模拟全部季后赛
+            // 7. Automatically simulate all playoffs when the player fails to advance
+
             if (!PlayerQualifiedForPlayoffs)
             {
                 SimulateEntirePlayoffs();
@@ -428,21 +451,25 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录玩家的半决赛结果，模拟另一场半决赛，并安排决赛和三四名决赛。
+        /// Record the player's semi-final results, simulate another semi-final, and arrange the final and third-place finals.
+
         /// </summary>
         private void ApplySemiFinalResult(int playerScore, int opponentScore)
         {
-            // 1. 找到玩家的半决赛，确认未完成
+            // 1. Find the player's semi-finals and confirm that they are not completed.
+
             var playerSemi = GetPlayerMatchFromSet(SemiFinalResults);
             if (playerSemi == null || playerSemi.Completed)
             {
                 return;
             }
 
-            // 2. 记录玩家半决赛结果
+            // 2. Record player semi-final results
+
             playerSemi.Complete(playerScore, opponentScore);
 
-            // 3. 模拟另一场半决赛
+            // 3. Simulate another semi-final
+
             for (var i = 0; i < SemiFinalResults.Length; i++)
             {
                 if (SemiFinalResults[i].Completed)
@@ -453,9 +480,11 @@ namespace mlp
                 SimulateMatch(SemiFinalResults[i]);
             }
 
-            // 4. 根据半决赛结果安排决赛和三四名决赛
+            // 4. Arrange the finals and the third and fourth place finals based on the results of the semi-finals
+
             ConfigurePlacementMatchesFromSemiFinals();
-            // 5. 玩家赢了进决赛，输了打三四名决赛
+            // 5. Players who win will advance to the finals, and players who lose will advance to the third or fourth place finals.
+
             if (playerSemi.WinnerCharacterId == PlayerCharacterId)
             {
                 SimulateMatch(ThirdPlaceResult);
@@ -470,7 +499,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 记录名次赛结果（三四名决赛或决赛）并完成锦标赛。
+        /// Record the results of the placing match (third or fourth place final or final) and complete the tournament.
+
         /// </summary>
         private void ApplyPlacementResult(mlpTournamentMatchResult match, int playerScore, int opponentScore)
         {
@@ -484,37 +514,43 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当决赛和三四名决赛都完成后，确定冠军和玩家排名。
+        /// When the finals and the third and fourth place finals are completed, the champion and player rankings will be determined.
+
         /// </summary>
         private void FinalizeTournament()
         {
-            // 1. 决赛和三四名决赛都完成才能结算
+            // 1. The finals and the third and fourth place finals must be completed to settle the settlement.
+
             if (!FinalResult.Completed || !ThirdPlaceResult.Completed)
             {
                 return;
             }
 
-            // 2. 确定冠军，计算玩家最终排名
+            // 2. Determine the champion and calculate the final ranking of players
+
             ChampionCharacterId = FinalResult.WinnerCharacterId;
             PlayerPlacement = ResolvePlayerPlacement();
-            // 3. 清除对手，标记锦标赛完成
+            // 3. Clear the opponents and mark the tournament complete
+
             CurrentOpponentCharacterId = -1;
             CurrentStage = mlpTournamentStage.Complete;
             Completed = true;
         }
 
         /// <summary>
-        /// 根据季后赛结果和常规赛排名确定玩家的最终名次（第 1 到第 8 名）。
+        /// A player's final ranking (1st to 8th) is determined based on playoff results and regular season standings.
         /// </summary>
         private int ResolvePlayerPlacement()
         {
-            // 1. 获取前四名的角色 ID
+            // 1. Get the top four character IDs
+
             var champion = FinalResult.WinnerCharacterId;
             var runnerUp = GetMatchLoserCharacterId(FinalResult);
             var third = ThirdPlaceResult.WinnerCharacterId;
             var fourth = GetMatchLoserCharacterId(ThirdPlaceResult);
 
-            // 2. 检查玩家是否是冠军、亚军、季军或第四名
+            // 2. Check if the player is the champion, runner-up, third runner-up or fourth place
+
             if (PlayerCharacterId == champion)
             {
                 return 1;
@@ -535,7 +571,8 @@ namespace mlp
                 return 4;
             }
 
-            // 3. 未进季后赛的队伍，按排名排序后确定第 5-8 名
+            // 3. Teams that did not advance to the playoffs will be ranked 5th-8th according to ranking.
+
             var nonPlayoffEntries = new List<mlpTournamentStandingEntry>(4);
             var playoffCharacters = new HashSet<int> { champion, runnerUp, third, fourth };
             for (var division = 0; division < DivisionCount; division++)
@@ -550,7 +587,8 @@ namespace mlp
                 }
             }
 
-            // 4. 排序后找到玩家位置
+            // 4. Find the player position after sorting
+
             nonPlayoffEntries.Sort(CompareOverallStandings);
             for (var i = 0; i < nonPlayoffEntries.Count; i++)
             {
@@ -560,22 +598,27 @@ namespace mlp
                 }
             }
 
-            // 5. 兜底返回第 8 名
+            // 5. Return to 8th place
+
             return 8;
         }
 
         /// <summary>
-        /// 生成三个常规赛轮次的循环赛赛程，覆盖两个分区。
+        /// Generate a round-robin schedule for three regular season rounds, covering both divisions.
+
         /// </summary>
         private void BuildRegularSeasonSchedule()
         {
-            // 1. 遍历每一轮
+            // 1. Go through each round
+
             for (var round = 0; round < RegularSeasonRoundCount; round++)
             {
-                // 2. 遍历每个分区
+                // 2. Traverse each partition
+
                 for (var division = 0; division < DivisionCount; division++)
                 {
-                    // 3. 每轮每区 2 场比赛，从循环赛配对表中读取对阵双方
+                    // 3. There are 2 games per region in each round, and the two teams are read from the round-robin matchmaking table.
+
                     for (var pair = 0; pair < 2; pair++)
                     {
                         var matchIndex = division * 2 + pair;
@@ -590,21 +633,25 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将每个分区的前两名队伍配对为半决赛对阵，并检查玩家是否晋级。
+        /// The top two teams from each division are paired up for a semi-final matchup, and players are checked to see if they advance.
+
         /// </summary>
         private void BuildPlayoffBracket()
         {
-            // 1. 获取两个分区的排名
+            // 1. Get the rankings of two partitions
+
             var divisionA = GetDivisionStandings(0);
             var divisionB = GetDivisionStandings(1);
 
-            // 2. 交叉配对：A 区第 1 vs B 区第 2，B 区第 1 vs A 区第 2
+            // 2. Cross-matching: No. 1 in Zone A vs No. 2 in Zone B, No. 1 in Zone B vs No. 2 in Zone A
+
             SemiFinalResults[0].Reset(divisionA[0].CharacterId, divisionB[1].CharacterId);
             SemiFinalResults[1].Reset(divisionB[0].CharacterId, divisionA[1].CharacterId);
             ThirdPlaceResult.Reset();
             FinalResult.Reset();
 
-            // 3. 检查玩家是否在半决赛对阵中
+            // 3. Check if the player is in the semi-final match
+
             PlayerQualifiedForPlayoffs =
                 SemiFinalResults[0].LeftCharacterId == PlayerCharacterId ||
                 SemiFinalResults[0].RightCharacterId == PlayerCharacterId ||
@@ -613,7 +660,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据半决赛的胜者和败者安排决赛和三四名决赛。
+        /// The finals and third-place finals are arranged based on the winners and losers of the semi-finals.
+
         /// </summary>
         private void ConfigurePlacementMatchesFromSemiFinals()
         {
@@ -626,25 +674,30 @@ namespace mlp
         }
 
         /// <summary>
-        /// 当玩家未晋级时，自动模拟所有剩余的季后赛比赛。
+        /// Automatically simulates all remaining playoff games when a player does not advance.
+
         /// </summary>
         private void SimulateEntirePlayoffs()
         {
-            // 1. 模拟两场半决赛
+            // 1. Simulate two semi-finals
+
             for (var i = 0; i < SemiFinalResults.Length; i++)
             {
                 SimulateMatch(SemiFinalResults[i]);
             }
 
-            // 2. 根据半决赛结果安排决赛和三四名决赛
+            // 2. Arrange the finals and the third and fourth place finals based on the results of the semi-finals
+
             ConfigurePlacementMatchesFromSemiFinals();
-            // 3. 模拟三四名决赛和决赛
+            // 3. Simulate the third and fourth place finals and finals
+
             SimulateMatch(ThirdPlaceResult);
             SimulateMatch(FinalResult);
         }
 
         /// <summary>
-        /// 在指定的常规赛轮次中查找并返回玩家的比赛，未找到时返回 null。
+        /// Finds and returns the player's games during the specified regular season round, or null if not found.
+
         /// </summary>
         private mlpTournamentMatchResult GetPlayerMatchForRound(int roundIndex)
         {
@@ -666,7 +719,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从比赛结果数组中查找并返回玩家的比赛，未找到时返回 null。
+        /// Finds and returns the player's matches from the match results array, or null if not found.
+
         /// </summary>
         private mlpTournamentMatchResult GetPlayerMatchFromSet(mlpTournamentMatchResult[] matches)
         {
@@ -687,7 +741,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 获取指定常规赛轮次中玩家对手的角色 ID。
+        /// Gets the character ID of the player's opponent in the specified regular season round.
+
         /// </summary>
         private int GetPlayerOpponentForRound(int roundIndex)
         {
@@ -695,7 +750,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从比赛结果数组中获取玩家对手的角色 ID。
+        /// Get the player's opponent's character ID from the match results array.
+
         /// </summary>
         private int GetPlayerOpponentForMatchSet(mlpTournamentMatchResult[] matches)
         {
@@ -703,11 +759,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据已结束比赛的结果更新双方队伍的排名记录。
+        /// The ranking records of both teams are updated based on the results of the completed games.
+
         /// </summary>
         private void ApplyStandingUpdate(mlpTournamentMatchResult match)
         {
-            // 1. 查找双方的排名记录
+            // 1. Find the ranking records of both parties
             var leftEntry = GetStandingEntry(match.LeftCharacterId);
             var rightEntry = GetStandingEntry(match.RightCharacterId);
             if (leftEntry == null || rightEntry == null)
@@ -715,13 +772,15 @@ namespace mlp
                 return;
             }
 
-            // 2. 分别更新双方的胜负场次和得分
+            // 2. Update the winning and losing games and scores of both sides respectively.
+
             leftEntry.ApplyResult(match.LeftScore, match.RightScore);
             rightEntry.ApplyResult(match.RightScore, match.LeftScore);
         }
 
         /// <summary>
-        /// 查找并返回指定角色的排名记录，未找到时返回 null。
+        /// Find and return the ranking record of the specified role, or return null if not found.
+
         /// </summary>
         private mlpTournamentStandingEntry GetStandingEntry(int characterId)
         {
@@ -741,37 +800,43 @@ namespace mlp
         }
 
         /// <summary>
-        /// 按胜场、净胜分、总得分和位置索引排序两个分区排名记录。
+        /// Sort both conference standings records by wins, point differential, total points and position index.
+
         /// </summary>
         private static int CompareDivisionStandings(mlpTournamentStandingEntry left, mlpTournamentStandingEntry right)
         {
-            // 1. 首先比较胜场数（多的排前面）
+            // 1. First compare the number of wins (the one with more wins will be ranked first)
+
             var winCompare = right.Wins.CompareTo(left.Wins);
             if (winCompare != 0)
             {
                 return winCompare;
             }
 
-            // 2. 胜场相同时比较净胜分（高的排前面）
+            // 2. Compare the points difference when the wins are the same (higher ranked first)
+
             var diffCompare = right.PointDiff.CompareTo(left.PointDiff);
             if (diffCompare != 0)
             {
                 return diffCompare;
             }
 
-            // 3. 净胜分相同时比较总得分（高的排前面）
+            // 3. If the points difference is the same, compare the total points (the one with the higher score will be ranked first)
+
             var pointsCompare = right.PointsFor.CompareTo(left.PointsFor);
             if (pointsCompare != 0)
             {
                 return pointsCompare;
             }
 
-            // 4. 所有指标都相同时按初始位置排序
+            // 4. Sort by initial position when all indicators are the same
+
             return left.DivisionSlot.CompareTo(right.DivisionSlot);
         }
 
         /// <summary>
-        /// 按分区排名、分区索引和位置排序两个总体排名记录。
+        /// Two overall ranking records sorted by partition rank, partition index, and position.
+
         /// </summary>
         private static int CompareOverallStandings(mlpTournamentStandingEntry left, mlpTournamentStandingEntry right)
         {
@@ -791,7 +856,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据已知参赛者的角色 ID，返回该场比赛对手的角色 ID。
+        /// Returns the character ID of the opponent in this match based on the character ID of the known contestant.
+
         /// </summary>
         private static int GetOpponentCharacterId(mlpTournamentMatchResult match, int characterId)
         {
@@ -814,7 +880,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回已结束比赛中败方的角色 ID。
+        /// Returns the character ID of the loser in a completed match.
+
         /// </summary>
         private static int GetMatchLoserCharacterId(mlpTournamentMatchResult match)
         {
@@ -837,7 +904,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为未进行的比赛自动生成随机比分并标记为已完成。
+        /// Random scores are automatically generated for matches not played and marked as completed.
+
         /// </summary>
         private static void SimulateMatch(mlpTournamentMatchResult match)
         {
@@ -852,7 +920,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 使用 Fisher-Yates 算法对整数列表进行随机洗牌。
+        /// Randomly shuffle a list of integers using the Fisher-Yates algorithm.
         /// </summary>
         private static void Shuffle(List<int> values)
         {

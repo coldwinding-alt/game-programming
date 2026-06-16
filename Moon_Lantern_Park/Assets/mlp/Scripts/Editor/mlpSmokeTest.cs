@@ -1,4 +1,4 @@
-// 自动化冒烟测试 / 在编辑器中运行一系列基本功能测试，检查游戏的核心系统是否正常工作：角色数据是否完整、技能配置是否正确、图集能否加载、音频能否播放、UI 能否创建等。用来在发布前快速发现明显的问题。
+// Automated smoke testing / Run a series of basic functional tests in the editor to check whether the core system of the game is working properly: whether the character data is complete, whether the skill configuration is correct, whether the atlas can be loaded, whether the audio can be played, whether the UI can be created, etc. Used to quickly identify obvious issues before release.
 
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,8 @@ using UnityEngine;
 namespace mlp.EditorTools
 {
     /// <summary>
-    /// 自动化冒烟测试：在编辑器中运行基本功能测试，检查角色数据、技能配置、图集、音频、UI 等核心系统是否正常。
+    /// Automated smoke testing: Run basic functional tests in the editor to check whether core systems such as character data, skill configuration, atlas, audio, and UI are normal.
+
     /// </summary>
     public static class mlpSmokeTest
     {
@@ -31,7 +32,8 @@ namespace mlp.EditorTools
         {
             const float expectedBlockHorizontalOffset = 20f;
             const float expectedBlockHandsOffsetY = 64f;
-            // 1. 保存原始状态，测试结束后恢复
+            // 1. Save the original state and restore it after the test is completed
+
             var inventory = mlpInventory.Instance;
             var originalParticipantMode = inventory.ParticipantMode;
             var originalSessionMode = inventory.SessionMode;
@@ -43,7 +45,8 @@ namespace mlp.EditorTools
 
             try
             {
-                // 2. 设置为教程模式并创建一场对局
+                // 2. Set to tutorial mode and create a match
+
                 mlpAudio.Create(runtimeRoot.transform);
                 inventory.ParticipantMode = mlpParticipantMode.Tutorial;
                 inventory.SessionMode = mlpSessionMode.Tutorial;
@@ -52,14 +55,16 @@ namespace mlp.EditorTools
                 inventory.MatchData.StartTutorial(7, mlpBallSelection.ClassicOriginal);
                 inventory.MatchPrepared = true;
                 core = new mlpGameBuilder().Build(runtimeRoot.transform);
-                // 3. 确认双方角色都已创建
+                // 3. Confirm that both roles have been created
+
                 if (core.PlayersLeft == null || core.PlayersLeft.Count == 0 || core.PlayersRight == null || core.PlayersRight.Count == 0)
                 {
                     errors.Add("Guaranteed-block teleport test could not create both players.");
                     return;
                 }
 
-                // 4. 确认左侧角色是"必中盖帽"（黑猫）技能
+                // 4. Confirm that the character on the left has the "Must-Block" (Black Cat) skill
+
                 var blocker = core.PlayersLeft[0];
                 var shooter = core.PlayersRight[0];
                 if (blocker.SkillType != mlpCharacterSkillType.SureBlock)
@@ -68,48 +73,55 @@ namespace mlp.EditorTools
                     return;
                 }
 
-                // 5. 把盖帽者和投篮者放到指定位置，并给盖帽者充满必杀能量
+                // 5. Place the shot blocker and shooter in designated positions, and fill the shot blocker with killing energy
                 blocker.TutorialSnapTo(new Vector2(730f, mlpObjectsData.PlayerIndentY), -1f);
                 shooter.TutorialSnapTo(new Vector2(560f, mlpObjectsData.PlayerIndentY), -1f);
                 blocker.TutorialChargeSuper();
-                // 6. 对手发起投篮
+                // 6. The opponent initiates a shot
+
                 core.MatchProcessor.Shoot(shooter.Side, false, 0, shooter.PlayerNo);
                 core.Ball.Shoot(shooter.Side, 500f, 260f, 0f, 1f);
                 core.NotifyPlayersBallShot(shooter.Side, shooter.PlayerNo);
 
-                // 7. 计算盖帽者应该被传送到的预期位置（球旁边）
+                // 7. Calculate the expected location (next to the ball) the shot blocker should be teleported to
+
                 var ballPosition = core.Ball.Position;
                 var originalBlockerPosition = blocker.Position;
                 var expectedPosition = new Vector2(
                     Mathf.Clamp(ballPosition.x - core.Ball.Side * expectedBlockHorizontalOffset, 20f, mlpConstants.Width - 20f),
                     Mathf.Clamp(ballPosition.y + expectedBlockHandsOffsetY, mlpObjectsData.BasketHeight - 18f, mlpObjectsData.PlayerIndentY));
 
-                // 8. 触发必杀技，验证是否成功激活
+                // 8. Trigger the nirvana and verify whether it is successfully activated
+
                 if (!blocker.SuperShot())
                 {
                     errors.Add("Guaranteed-block skill did not activate against a live opponent shot.");
                     return;
                 }
 
-                // 9. 验证球是否立即变为盖帽状态
+                // 9. Verify that the ball immediately becomes blocked
+
                 if (core.Ball.State != "block")
                 {
                     errors.Add($"Guaranteed-block skill did not immediately block the shot. Ball state: {core.Ball.State}.");
                 }
 
-                // 10. 验证盖帽者是否被传送到了球旁边的正确位置
+                // 10. Verify that the shot blocker is teleported to the correct location next to the ball
+
                 if (Vector2.Distance(blocker.Position, expectedPosition) > 0.1f)
                 {
                     errors.Add($"Guaranteed-block skill did not teleport beside the ball. Expected {expectedPosition}, got {blocker.Position}.");
                 }
 
-                // 11. 验证盖帽者确实移动了足够远的距离（证明传送生效了）
+                // 11. Verify that the shot-blocker has indeed moved far enough (proves that the teleportation is effective)
+
                 if (Mathf.Abs(blocker.Position.x - originalBlockerPosition.x) < 80f)
                 {
                     errors.Add("Guaranteed-block skill did not move the blocker far enough to prove the teleport path ran.");
                 }
 
-                // 12. 推进一小段时间，验证必杀状态已正确释放
+                // 12. Advance for a short period of time to verify that the kill state has been released correctly.
+
                 blocker.Update(0.26f);
                 if (blocker.IsSuperShot || core.IsSuperShot)
                 {
@@ -118,7 +130,8 @@ namespace mlp.EditorTools
             }
             finally
             {
-                // 13. 清理运行时对象并恢复原始状态
+                // 13. Clean up runtime objects and restore original state
+
                 core?.Shutdown();
                 UnityEngine.Object.DestroyImmediate(runtimeRoot);
                 inventory.ParticipantMode = originalParticipantMode;
@@ -130,7 +143,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 运行所有冒烟测试：验证资源、快速构建游戏并报告错误。
+        /// Run all smoke tests: verify assets, build your game quickly, and report bugs.
+
         /// </summary>
         private static void ValidateFogWindAdventureFeedback(List<string> errors)
         {
@@ -388,35 +402,41 @@ namespace mlp.EditorTools
 
         public static void Run()
         {
-            // 1. 初始化错误收集列表和临时运行时对象
+            // 1. Initialize error collection list and temporary runtime objects
+
             var errors = new List<string>();
             GameObject root = null;
             mlpGameCore core = null;
 
             try
             {
-                // ---- 第一阶段：检查核心资源文件是否存在 ----
-                // 2. 检查图集资源（游戏界面、技能特效的纹理和配置文件）
+                // ---- Phase 1: Check whether the core resource file exists ----
+
+                // 2. Check the atlas resources (game interface, textures and configuration files of skill effects)
                 CheckResource<Texture2D>("mlp/Atlases/gameplay", errors);
                 CheckResource<TextAsset>("mlp/Atlases/gameplay", errors);
                 CheckResource<Texture2D>("mlp/Atlases/interface", errors);
                 CheckResource<TextAsset>("mlp/Atlases/interface", errors);
                 CheckResource<Texture2D>("mlp/Atlases/skillfx", errors);
                 CheckResource<TextAsset>("mlp/Atlases/skillfx", errors);
-                // 3. 检查字体文件是否存在
+                // 3. Check if the font file exists
+
                 CheckResource<Font>("mlp/Fonts/Impact", errors);
                 CheckResource<Font>("mlp/Fonts/Impact2", errors);
                 CheckResource<Font>("mlp/Fonts/CfCrackBold", errors);
                 CheckResource<Font>("mlp/Fonts/Rajdhani-SemiBold", errors);
                 CheckResource<Font>("mlp/Fonts/Rajdhani-Bold", errors);
                 CheckResource<Font>("mlp/Fonts/Griffy-Regular", errors);
-                // 4. 检查 TextMeshPro 的必要资源和菜单文本层
+                // 4. Check TextMeshPro for necessary resources and menu text layers
+
                 EnsureTextMeshProEssentialResources(errors);
                 ValidateNativeMenuTextLayer(errors);
-                // 5. 检查单人模式的叙述文本和冒险模式关卡定义
+                // 5. Check single-player narrative text and adventure mode level definitions
+
                 ValidateSinglePlayerNarrativeDefinitions(errors);
                 ValidateAdventureModeDefinitionsAndFlow(errors);
-                // 6. 检查 UI 图片资源（暂停按钮、音乐按钮、帮助按钮、各种面板等）
+                // 6. Check UI image resources (pause button, music button, help button, various panels, etc.)
+
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.PauseButton), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.MusicButtonOn), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.MusicButtonOff), errors);
@@ -431,14 +451,17 @@ namespace mlp.EditorTools
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.AwardsShowcasePanel), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.AwardsResultPlaque), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.Ui.AwardsPodiumBase), errors);
-                // 7. 检查每个角色的技能图标资源
+                // 7. Check each character’s skill icon resources
+
                 ValidateSkillIconAssets(errors);
-                // 8. 检查 HUD（抬头显示）和肖像图集资源
+                // 8. Check the HUD (heads-up display) and portrait gallery resources
+
                 CheckResource<Texture2D>(mlpAssets.Hud.ResourcePath(mlpAssets.Hud.Scoreboard), errors);
                 CheckResource<Texture2D>(mlpAssets.Hud.ResourcePath(mlpAssets.Hud.Popup), errors);
                 CheckResource<TextAsset>(mlpAssets.Portraits.ResourcePath(mlpAssets.Portraits.UiAtlas), errors);
                 CheckResource<Texture2D>(mlpAssets.Portraits.ResourcePath(mlpAssets.Portraits.UiAtlas), errors);
-                // 9. 检查万圣节主题球的纹理是否存在
+                // 9. Check if the texture of the Halloween themed ball exists
+
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallGhoulGreen), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallPumpkinEmber), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallMoonlitViolet), errors);
@@ -446,13 +469,16 @@ namespace mlp.EditorTools
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallEvilEye), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallCursed8Ball), errors);
                 CheckResource<Texture2D>(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallCandySwirl), errors);
-                // 10. 检查 DragonBones 骨骼动画数据和纹理
+                // 10. Examine DragonBones skeletal animation data and textures
+
                 CheckResource<TextAsset>("mlp/DragonBones/sk2", errors);
                 CheckResource<TextAsset>("mlp/DragonBones/texture2", errors);
                 CheckResource<Texture2D>("mlp/DragonBones/texture2", errors);
-                // 11. 检查所有音效文件
+                // 11. Check all sound effects files
+
                 CheckAudioResources(errors);
-                // 12. 验证球体纹理质量（尺寸、角落透明度、无白色光晕）
+                // 12. Verify sphere texture quality (size, corner transparency, no white halo)
+
                 ValidateBallSpriteAsset(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallGhoulGreen), "Assets/mlp/Resources/mlp/Images/Gameplay/ball_halloween_ghoul_green.png", errors);
                 ValidateBallSpriteAsset(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallPumpkinEmber), "Assets/mlp/Resources/mlp/Images/Gameplay/ball_halloween_pumpkin_ember.png", errors);
                 ValidateBallSpriteAsset(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallMoonlitViolet), "Assets/mlp/Resources/mlp/Images/Gameplay/ball_halloween_moonlit_violet.png", errors);
@@ -461,14 +487,17 @@ namespace mlp.EditorTools
                 ValidateBallSpriteAsset(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallCursed8Ball), "Assets/mlp/Resources/mlp/Images/Gameplay/ball_halloween_cursed_8ball.png", errors);
                 ValidateBallSpriteAsset(mlpAssets.Images.ResourcePath(mlpAssets.Images.GameplayImages.BallCandySwirl), "Assets/mlp/Resources/mlp/Images/Gameplay/ball_halloween_candy_swirl.png", errors);
 
-                // ---- 第二阶段：验证图集和动画系统的完整性 ----
-                // 13. 检查自定义着色器是否存在
+                // ---- Phase 2: Verify the integrity of the atlas and animation system ----
+
+                // 13. Check if custom shader exists
+
                 if (Shader.Find("mlp/TextMeshOutlined") == null)
                 {
                     errors.Add("Could not find mlp/TextMeshOutlined shader.");
                 }
 
-                // 14. 验证三个图集是否包含预期的关键帧
+                // 14. Verify that the three atlases contain the expected keyframes
+
                 var gameplay = mlpAtlasCache.Instance.Gameplay;
                 if (!gameplay.HasFrame("0bg_gameplay0000") || !gameplay.HasFrame("BallMC0000"))
                 {
@@ -487,7 +516,8 @@ namespace mlp.EditorTools
                     errors.Add("Skill FX atlas did not expose expected shield and teleport frame keys.");
                 }
 
-                // 15. 验证 DragonBones 骨骼动画能否正常构建和换装
+                // 15. Verify whether the DragonBones skeleton animation can be constructed and dressed normally
+
                 DBLiteFactory.Instance.EnsureLoaded();
                 var armature = mlpPlayersData.BuildGameplayArmature("SmokePlayerSmall");
                 if (armature == null)
@@ -496,7 +526,8 @@ namespace mlp.EditorTools
                 }
                 else
                 {
-                    // 16. 遍历所有角色，测试换装和头像加载
+                    // 16. Traverse all characters, test dressing and avatar loading
+
                     foreach (var characterId in mlpPlayersData.GetActiveCharacterIds())
                     {
                         mlpPlayersData.ApplyCharacter(armature, characterId);
@@ -514,31 +545,39 @@ namespace mlp.EditorTools
                     UnityEngine.Object.DestroyImmediate(armature.gameObject);
                 }
 
-                // 17. 验证 DragonBones 数据中是否包含预期的帧事件
+                // 17. Verify that DragonBones data contains expected frame events
+
                 var dragonBones = Resources.Load<TextAsset>("mlp/DragonBones/sk2");
                 if (dragonBones == null || !dragonBones.text.Contains("\"mega\""))
                 {
                     errors.Add("DragonBones data did not expose the expected mega frame event.");
                 }
 
-                // ---- 第三阶段：验证游戏逻辑 ----
-                // 18. 测试难度切换循环和 AI 技能映射
+                // ----The third stage: verify game logic----
+
+                // 18. Test difficulty switching loop and AI skill mapping
+
                 ValidateDifficultyCycleAndSkillMapping(errors);
-                // 19. 在多个难度下分别运行完整锦标赛流程
+                // 19. Run the full tournament process on multiple difficulties
+
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Normal, "normal");
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Hard, "hard");
                 ValidateTournamentSeasonMode(errors, mlpAiDifficulty.Hell, "hell");
                 ValidateFixedTournamentSkillMapping(errors);
-                // 20. 验证球体皮肤选择在不同模式间是否正确保持
+                // 20. Verify that sphere skin selection maintains correctly between modes
+
                 ValidateBallSelectionStateAndResolution(errors);
-                // 21. 验证运行时材质和网格的共享与释放
+                // 21. Verify the sharing and release of materials and meshes at runtime
+
                 ValidateRuntimeGraphicsResourceReuse(errors);
-                // 22. 验证必中盖帽技能的传送逻辑
+                // 22. Verify the transmission logic of the guaranteed-blocking skill
+
                 ValidateGuaranteedBlockTeleportsToShot(errors);
                 ValidateFogWindAdventureFeedback(errors);
 
-                // ---- 第四阶段：构建游戏运行时并验证实际运行 ----
-                // 23. 创建临时游戏运行时，快速启动一局游戏并更新一帧
+                // ---- Phase 4: Build the game runtime and verify actual operation ----
+
+                // 23. When creating a temporary game, quickly start a game and update a frame
                 root = new GameObject("SmokeRuntimeRoot");
                 mlpAudio.Create(root.transform);
                 mlpInventory.Instance.SetQuickSelection(0);
@@ -546,11 +585,14 @@ namespace mlp.EditorTools
                 mlpInventory.Instance.StartQuickGame();
                 core = new mlpGameBuilder().Build(root.transform);
                 core.Update(0.016f);
-                // 24. 验证盖帽后的投篮仍能得分
+                // 24. Verify that a blocked shot can still score.
+
                 ValidateBlockedShotScorePersistence(core, errors);
-                // 25. 验证帮助面板预制体的教程入口
+                // 25. Tutorial entry to verify help panel prefab
+
                 ValidateHelpPanelTutorialEntry(errors);
-                // 26. 验证教程模式的启动和清理
+                // 26. Verify startup and cleanup of tutorial mode
+
                 ValidateTutorialModeBoot(errors);
             }
             catch (Exception ex)
@@ -559,7 +601,8 @@ namespace mlp.EditorTools
             }
             finally
             {
-                // 27. 无论成功失败，都清理运行时对象
+                // 27. Clean up runtime objects regardless of success or failure
+
                 core?.Shutdown();
                 if (root != null)
                 {
@@ -567,7 +610,8 @@ namespace mlp.EditorTools
                 }
             }
 
-            // 28. 输出结果：有错误则报告并以失败退出，否则以成功退出
+            // 28. Output result: If there is an error, report it and exit with failure, otherwise exit with success
+
             if (errors.Count > 0)
             {
                 foreach (var error in errors)
@@ -584,7 +628,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查指定路径是否存在资源，若缺失则记录错误。
+        /// Check whether the resource exists in the specified path, and log an error if it is missing.
+
         /// </summary>
         private static void CheckResource<T>(string path, List<string> errors) where T : UnityEngine.Object
         {
@@ -595,7 +640,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证原生 TMP 菜单文本层能否创建标题和按钮标签。
+        /// Verify that native TMP menu text layer can create title and button labels.
+
         /// </summary>
         private static void ValidateNativeMenuTextLayer(List<string> errors)
         {
@@ -644,7 +690,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查所有单人模式叙述文本条目和模式定义是否存在。
+        /// Checks that all single player mode narrative text entries and mode definitions exist.
+
         /// </summary>
         private static void ValidateSinglePlayerNarrativeDefinitions(List<string> errors)
         {
@@ -839,8 +886,10 @@ namespace mlp.EditorTools
                     errors.Add($"Adventure level {i + 1} needs at least two rule icons.");
                 }
 
-                // OpponentSkill 是旧版冒险基础强度字段，当前固定四档模式下不直接参与 AI 技能计算。
-                // 因此这里不再要求它落在 0..3 的四档索引范围内，只保留关卡结构和流程校验。
+                // OpponentSkill is the basic strength field of the old version of adventure. It is not directly involved in AI skill calculation in the current fixed four-level mode.
+
+                // Therefore, it is no longer required to fall within the four-level index range of 0..3, only the level structure and process verification are retained.
+
             }
 
             var adventure = new mlpAdventureData();
@@ -999,7 +1048,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证 Resources 文件夹中是否存在所有预期的音频片段。
+        /// Verify that all expected audio clips are present in the Resources folder.
+
         /// </summary>
         private static void CheckAudioResources(List<string> errors)
         {
@@ -1033,7 +1083,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查运行时材质和网格是否被共享并正确释放。
+        /// Check that materials and meshes are shared and released correctly at runtime.
+
         /// </summary>
         private static void ValidateRuntimeGraphicsResourceReuse(List<string> errors)
         {
@@ -1042,7 +1093,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查帮助面板预制体是否有重玩教程按钮。
+        /// Check the help panel prefab to see if there is a replay tutorial button.
+
         /// </summary>
         private static void ValidateHelpPanelTutorialEntry(List<string> errors)
         {
@@ -1082,25 +1134,29 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证教程模式能否创建流程、覆盖层，并正确清理聚焦标记。
+        /// Verify that tutorial mode creates flows, overlays, and cleans focus markers correctly.
+
         /// </summary>
         private static void ValidateTutorialModeBoot(List<string> errors)
         {
-            // 1. 清除场景中已有的教程覆盖层（避免干扰测试）
+            // 1. Clear the existing tutorial overlay in the scene (to avoid interfering with testing)
+
             var existingOverlay = UnityEngine.Object.FindObjectOfType<mlpTutorialOverlay>();
             if (existingOverlay != null)
             {
                 UnityEngine.Object.DestroyImmediate(existingOverlay.gameObject);
             }
 
-            // 2. 创建临时运行时根对象
+            // 2. Create a temporary runtime root object
+
             var runtimeRoot = new GameObject("TutorialSmokeRoot");
             mlpGameCore tutorialCore = null;
             mlpTutorialOverlay tutorialOverlay = null;
 
             try
             {
-                // 3. 启动教程模式并构建游戏运行时
+                // 3. Start tutorial mode and build the game runtime
+
                 mlpAudio.Create(runtimeRoot.transform);
                 mlpInventory.Instance.SetTrainingSelection(0);
                 mlpInventory.Instance.SetTrainingBallSelection(mlpBallSelection.ClassicOriginal);
@@ -1108,13 +1164,15 @@ namespace mlp.EditorTools
                 tutorialCore = new mlpGameBuilder().Build(runtimeRoot.transform);
                 tutorialCore.Update(0.016f);
 
-                // 4. 验证教程流程对象是否被创建
+                // 4. Verify whether the tutorial process object is created
+
                 if (tutorialCore.TutorialFlow == null)
                 {
                     errors.Add("Tutorial mode did not create a tutorial flow.");
                 }
 
-                // 5. 验证教程覆盖层 UI 是否存在
+                // 5. Verify that the tutorial overlay UI exists
+
                 tutorialOverlay = UnityEngine.Object.FindObjectOfType<mlpTutorialOverlay>();
                 if (tutorialOverlay == null)
                 {
@@ -1122,19 +1180,22 @@ namespace mlp.EditorTools
                     return;
                 }
 
-                // 6. 通过反射检查覆盖层的 UI 根节点是否构建成功
+                // 6. Use reflection to check whether the UI root node of the overlay is built successfully.
+
                 var overlayRootField = typeof(mlpTutorialOverlay).GetField("overlayRoot", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (overlayRootField == null || overlayRootField.GetValue(tutorialOverlay) == null)
                 {
                     errors.Add("Tutorial overlay did not build its runtime UI root.");
                 }
 
-                // 7. 验证教程步骤完成后聚焦标记是否被正确清理
+                // 7. Verify that the focus mark is cleared correctly after completing the tutorial steps.
+
                 ValidateTutorialStepCleanup(tutorialCore, tutorialOverlay, errors);
             }
             finally
             {
-                // 8. 清理所有临时对象
+                // 8. Clean up all temporary objects
+
                 tutorialCore?.Shutdown();
                 UnityEngine.Object.DestroyImmediate(runtimeRoot);
                 if (tutorialOverlay != null)
@@ -1185,7 +1246,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查篮筐网和径向图标网格是否共享材质而非重复创建。
+        /// Check if basket mesh and radial icon mesh share materials instead of being duplicated.
+
         /// </summary>
         private static void ValidateSharedRuntimeMaterials(List<string> errors)
         {
@@ -1252,7 +1314,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证游戏关闭时是否释放径向图标的动态网格。
+        /// Verify that the dynamic grid of radial icons is released when the game is closed.
         /// </summary>
         private static void ValidateGameRuntimeMeshRelease(List<string> errors)
         {
@@ -1297,26 +1359,31 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证被盖帽的投篮在偏转后仍能得分。
+        /// Verify that a blocked shot can still score after being deflected.
+
         /// </summary>
         private static void ValidateBlockedShotScorePersistence(mlpGameCore core, List<string> errors)
         {
-            // 1. 确认运行时对象可访问
+            // 1. Confirm that the runtime object is accessible
+
             if (core == null || core.Ball == null || core.PlayersRight == null || core.PlayersRight.Count == 0)
             {
                 errors.Add("Blocked-shot score regression test could not access the runtime ball/blocker state.");
                 return;
             }
 
-            // 2. 模拟一次投篮并让球通过第一个传感器（篮筐上方）
+            // 2. Simulate a shot and let the ball pass the first sensor (above the rim)
+
             core.MatchProcessor.Shoot(-1, true, 0);
             core.Ball.Shoot(-1, 240f, 260f, 0f, 1f);
             core.MatchProcessor.ProcessSensor(0);
 
-            // 3. 对球施加一次盖帽
+            // 3. Block the ball once
+
             core.Ball.ApplyBlock(core.PlayersRight[0]);
 
-            // 4. 通过反射读取球的内部计分状态
+            // 4. Reading the internal scoring state of the ball through reflection
+
             var canScoreField = typeof(mlpBallObject).GetField("canScore", BindingFlags.Instance | BindingFlags.NonPublic);
             var scoreArmedSideField = typeof(mlpBallObject).GetField("scoreArmedSide", BindingFlags.Instance | BindingFlags.NonPublic);
             if (canScoreField == null || scoreArmedSideField == null)
@@ -1325,7 +1392,8 @@ namespace mlp.EditorTools
                 return;
             }
 
-            // 5. 验证盖帽后球仍然保持得分资格
+            // 5. Verify that the ball remains eligible for scoring after being blocked
+
             var canScore = (bool)canScoreField.GetValue(core.Ball);
             var scoreArmedSide = (int)scoreArmedSideField.GetValue(core.Ball);
             if (!canScore)
@@ -1333,20 +1401,23 @@ namespace mlp.EditorTools
                 errors.Add("Blocked shot unexpectedly lost its scoring eligibility before entering the basket.");
             }
 
-            // 6. 验证盖帽后得分方向没有被改变
+            // 6. Verify that the scoring direction has not been changed after blocking the shot
+
             if (scoreArmedSide != -1)
             {
                 errors.Add($"Blocked shot lost its original scoring side. Expected -1, got {scoreArmedSide}.");
             }
 
-            // 7. 让球通过第二个传感器（篮筐下方），验证得分流程能走完
+            // 7. Let the ball pass the second sensor (under the basket) to verify that the scoring process can be completed.
+
             if (!core.MatchProcessor.ProcessSensor(1))
             {
                 errors.Add("Blocked shot did not preserve the upper-sensor progress needed to finish the made-basket chain.");
                 return;
             }
 
-            // 8. 验证被盖帽的投篮正确计为 2 分（不是 3 分）
+            // 8. Verification that a blocked shot is correctly worth 2 points (not 3 points)
+
             var points = core.MatchProcessor.ResolvePointsForScore(-1, 3);
             if (points != 2)
             {
@@ -1355,11 +1426,13 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查球体纹理是否为 36x36 且角落透明、无白色光晕。
+        /// Check that the sphere texture is 36x36 with transparent corners and no white glow.
+
         /// </summary>
         private static void ValidateBallSpriteAsset(string resourcePath, string assetPath, List<string> errors)
         {
-            // 1. 加载球体纹理，确认存在
+            // 1. Load the sphere texture and confirm that it exists
+
             var texture = Resources.Load<Texture2D>(resourcePath);
             if (texture == null)
             {
@@ -1367,20 +1440,23 @@ namespace mlp.EditorTools
                 return;
             }
 
-            // 2. 检查纹理尺寸是否为 36x36 像素
+            // 2. Check whether the texture size is 36x36 pixels
+
             if (texture.width != 36 || texture.height != 36)
             {
                 errors.Add($"{resourcePath} expected 36x36, got {texture.width}x{texture.height}.");
             }
 
-            // 3. 检查原始图片文件是否存在
+            // 3. Check whether the original image file exists
+
             if (!File.Exists(assetPath))
             {
                 errors.Add($"Missing ball asset file: {assetPath}");
                 return;
             }
 
-            // 4. 从磁盘加载原始图片进行像素级质量检查
+            // 4. Load original image from disk for pixel-level quality check
+
             var inspector = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             try
             {
@@ -1390,14 +1466,17 @@ namespace mlp.EditorTools
                     return;
                 }
 
-                // 5. 检查四个角落像素是否透明（确保球旋转时没有残影）
+                // 5. Check whether the pixels in the four corners are transparent (make sure there is no residual image when the ball rotates)
+
                 ValidateCornerAlpha(inspector, resourcePath, 0, 0, errors);
                 ValidateCornerAlpha(inspector, resourcePath, inspector.width - 1, 0, errors);
                 ValidateCornerAlpha(inspector, resourcePath, 0, inspector.height - 1, errors);
                 ValidateCornerAlpha(inspector, resourcePath, inspector.width - 1, inspector.height - 1, errors);
-                // 6. 检查球体是否填满整个画布（没有多余空白边距）
+                // 6. Check whether the sphere fills the entire canvas (no extra blank margins)
+
                 ValidateBallBounds(inspector, resourcePath, errors);
-                // 7. 检查是否有半透明白色像素（会导致白色光晕伪影）
+                // 7. Check for translucent white pixels (can cause white halo artifacts)
+
                 ValidateNoWhiteHalo(inspector, resourcePath, errors);
             }
             finally
@@ -1407,7 +1486,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查每个角色的技能图标和充能遮罩纹理是否存在且符合质量要求。
+        /// Check that each character's skill icon and charge mask textures are present and meet quality requirements.
+
         /// </summary>
         private static void ValidateSkillIconAssets(List<string> errors)
         {
@@ -1427,7 +1507,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证单个技能图标纹理：是否存在、尺寸是否足够、导入设置是否正确。
+        /// Verify individual skill icon textures: exist, are of sufficient size, and have correct import settings.
+
         /// </summary>
         private static void ValidateSkillIconTexture(string imageKey, HashSet<string> validatedImageKeys, List<string> errors)
         {
@@ -1456,7 +1537,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查 UI 纹理是否禁用了 mipmap、启用了 alpha 透明且未压缩。
+        /// Checks that the UI texture has mipmap disabled, alpha transparency enabled, and uncompressed.
+
         /// </summary>
         private static void ValidateStandaloneUiTextureImport(string resourcePath, string assetPath, List<string> errors)
         {
@@ -1498,7 +1580,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查平台特定的纹理设置是否覆盖了默认值并保持未压缩。
+        /// Check if platform-specific texture settings override the default and leave them uncompressed.
+
         /// </summary>
         private static void ValidatePlatformTextureSettings(string resourcePath, TextureImporterPlatformSettings settings, List<string> errors)
         {
@@ -1519,7 +1602,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查球体纹理的角落像素是否透明，以确保旋转时干净无残影。
+        /// Check if the corner pixels of the sphere texture are transparent to ensure clean and no ghosting when rotating.
+
         /// </summary>
         private static void ValidateCornerAlpha(Texture2D texture, string resourcePath, int x, int y, List<string> errors)
         {
@@ -1530,7 +1614,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查球体是否填满整个 36x36 画布，没有空白边距。
+        /// Checks if the sphere fills the entire 36x36 canvas with no empty margins.
+
         /// </summary>
         private static void ValidateBallBounds(Texture2D texture, string resourcePath, List<string> errors)
         {
@@ -1562,7 +1647,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查半透明像素是否接近白色，这会导致可见的光晕。
+        /// Check whether translucent pixels are close to white, which would cause visible halos.
         /// </summary>
         private static void ValidateNoWhiteHalo(Texture2D texture, string resourcePath, List<string> errors)
         {
@@ -1586,7 +1671,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 验证球体选择在快速、训练、对战和锦标赛模式间是否正确保持。
+        /// Verify that sphere selection is maintained correctly between Quick, Training, Versus, and Championship modes.
+
         /// </summary>
         private static void ValidateBallSelectionStateAndResolution(List<string> errors)
         {
@@ -1694,7 +1780,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查难度切换是否正确循环并映射到预期的四档 AI 技能索引。
+        /// Check that difficulty toggles cycle correctly and map to the expected four-tier AI skill index.
+
         /// </summary>
         private static void ValidateDifficultyCycleAndSkillMapping(List<string> errors)
         {
@@ -1703,14 +1790,16 @@ namespace mlp.EditorTools
 
             try
             {
-                // 1. 设置为简单难度，验证标签显示是否正确
+                // 1. Set to easy difficulty and verify whether the labels are displayed correctly
+
                 inventory.Difficulty = mlpAiDifficulty.Easy;
                 if (inventory.DifficultyLabel != "AI: EASY")
                 {
                     errors.Add("Difficulty label did not render AI: EASY.");
                 }
 
-                // 2. 依次切换难度，验证是否按 Easy -> Normal -> Hard -> Hell -> Easy 循环
+                // 2. Switch the difficulty in turn and verify whether you press the Easy -> Normal -> Hard -> Hell -> Easy cycle
+
                 inventory.ToggleDifficulty();
                 if (inventory.Difficulty != mlpAiDifficulty.Normal || inventory.DifficultyLabel != "AI: NORMAL")
                 {
@@ -1735,7 +1824,8 @@ namespace mlp.EditorTools
                     errors.Add("Difficulty toggle did not cycle from Hell back to Easy.");
                 }
 
-                // 3. 验证快速赛和随机赛都使用固定四档难度索引：
+                // 3. Verify that both quick matches and random matches use fixed four-level difficulty indexes:
+
                 //    Easy=0、Normal=1、Hard=2、Hell=3。
                 var matchData = new mlpMatchData(true);
                 var expectedSkills = new[]
@@ -1763,13 +1853,14 @@ namespace mlp.EditorTools
             }
             finally
             {
-                // 4. 恢复原始难度设置
+                // 4. Restore original difficulty settings
                 inventory.Difficulty = originalDifficulty;
             }
         }
 
         /// <summary>
-        /// 在指定难度下运行完整锦标赛，验证对阵表、排名和名次。
+        /// Run the full tournament on the specified difficulty to verify brackets, rankings and rankings.
+
         /// </summary>
         private static void ValidateTournamentSeasonMode(List<string> errors, mlpAiDifficulty difficulty, string difficultyLabel)
         {
@@ -1838,7 +1929,8 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查锦标赛在四档难度下是否始终使用固定 AI 技能索引。
+        /// Check that tournaments always use a fixed AI skill index on four difficulty levels.
+
         /// </summary>
         private static void ValidateFixedTournamentSkillMapping(List<string> errors)
         {
@@ -1857,7 +1949,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 检查一个具体难度在锦标赛常规赛、半决赛、决赛和三四名赛中是否保持同一个技能索引。
+        /// Checks whether a specific difficulty maintains the same skill index across the regular season, semi-finals, finals, and third-place matches of a tournament.
         /// </summary>
         private static void ValidateFixedTournamentSkillMappingForDifficulty(
             List<string> errors,
@@ -1939,7 +2031,7 @@ namespace mlp.EditorTools
         }
 
         /// <summary>
-        /// 断言对手的四档 AI 技能索引与预期值匹配。
+        /// Asserts that the opponent's Tier 4 AI skill index matches the expected value.
         /// </summary>
         private static void AssertOpponentSkill(mlpMatchData matchData, int expectedSkillIndex, List<string> errors, string context)
         {

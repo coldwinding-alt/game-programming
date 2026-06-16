@@ -1,10 +1,11 @@
-// 教程模式的对手控制器
-// 训练关卡里，对手会按照脚本移动到指定位置、跳跃、投篮，配合玩家完成练习。
-// 自由对战时，切换成普通 AI 控制。
+// Tutorial Mode Opponent Controller
+
+// In the training level, the opponent will move to the designated position, jump, and shoot according to the script, and cooperate with the player to complete the exercise.
+// During free battle, switch to normal AI control.
 
 namespace mlp
 {
-    /// <summary>教程对手模式：脚本模式（按预设动作配合玩家练习）或自由对战模式（切换成普通 AI）。</summary>
+    /// <summary>Tutorial opponent mode: script mode (practice with the player according to preset actions) or free battle mode (switch to normal AI). </summary>
     public enum mlpTutorialOpponentMode
     {
         Scripted,
@@ -12,7 +13,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 教程对手控制器：在教程练习中按脚本控制对手移动到指定位置、跳跃、投篮，配合玩家完成练习动作。
+    /// Tutorial opponent controller: During the tutorial exercises, control the opponent to move to a designated position, jump, and shoot according to the script, and cooperate with the player to complete the practice actions.
     /// </summary>
     public sealed class mlpTutorialOpponentController : IBLPlayerController
     {
@@ -28,20 +29,21 @@ namespace mlp
         public int CurrentDash { get; private set; }
 
         /// <summary>
-        /// 创建教程对手控制器。skillLevel 是四档 AI 技能索引（0 = Easy，1 = Normal，2 = Hard，3 = Hell）。
+        /// Create a tutorial opponent controller. skillLevel is the four-level AI skill index (0 = Easy, 1 = Normal, 2 = Hard, 3 = Hell).
         /// </summary>
         public mlpTutorialOpponentController(mlpPlayerObject player, int skillLevel)
         {
-            // 1. 保存对手玩家对象的引用
+            // 1. Save a reference to the opponent’s player object
+
             this.player = player;
-            // 2. 创建一个普通 AI 控制器作为后备——当教程进入自由对战阶段时，对手会切换成这个 AI 来自主行动
-            //    0 现在是合法的 Easy 索引，不能再当成无效值回退到更高难度。
+            // 2. Create a normal AI controller as a backup - when the tutorial enters the free battle phase, the opponent will switch to this AI to act autonomously
+            //    0 is now a valid Easy index and can no longer be treated as an invalid value to fallback to a higher difficulty.
             var fallbackSkillIndex = UnityEngine.Mathf.Clamp(skillLevel, 0, mlpAISkillsData.MaxSkillIndex);
             fallbackController = mlpAIController.CreateForBrain(player, "B0", fallbackSkillIndex);
         }
 
         /// <summary>
-        /// 切换脚本模式（按教程指令行动）和自由对战模式（普通 AI 控制）。
+        /// Switch between script mode (act according to tutorial instructions) and free battle mode (normal AI control).
         /// </summary>
         public void SetMode(mlpTutorialOpponentMode nextMode)
         {
@@ -53,11 +55,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧调用。脚本模式下由教程流程控制对手的行为，自由对战模式下由 AI 自主决策。
+        /// Called every frame. In the script mode, the opponent's behavior is controlled by the tutorial process, and in the free battle mode, the AI ​​makes decisions independently.
         /// </summary>
         public void UpdateController(float dt)
         {
-            // 1. 如果是自由对战模式，让后备 AI 自主决策，然后同步它的按键状态
+            // 1. If it is a free battle mode, let the backup AI make decisions independently, and then synchronize its button status
+
             if (mode == mlpTutorialOpponentMode.FreePlay)
             {
                 fallbackController.UpdateController(dt);
@@ -65,13 +68,15 @@ namespace mlp
                 return;
             }
 
-            // 2. 脚本模式：先清空所有按键，然后让教程流程系统填充本帧对手该做的动作（移动到指定位置、跳跃、投篮等）
+            // 2. Script mode: First clear all buttons, and then let the tutorial process system fill in the actions that the opponent should do in this frame (move to the designated position, jump, shoot, etc.)
+
             SetFrameInputs(0, false, false, false, false, 0);
             player.GameCore.TutorialFlow?.PopulateOpponentInputs(player, this, dt);
         }
 
         /// <summary>
-        /// 通知 AI：当前玩家已持球。
+        /// Notify AI: The current player has the ball.
+
         /// </summary>
         public void BallInOwnHands(int holderPlayerNo)
         {
@@ -79,7 +84,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通知 AI：对手已持球。
+        /// Notify the AI ​​that the opponent has the ball.
+
         /// </summary>
         public void BallInOpponentsHands(int holderPlayerNo)
         {
@@ -87,7 +93,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通知 AI：当前玩家刚完成投篮。
+        /// Notify AI: The current player has just finished shooting.
+
         /// </summary>
         public void BallOwnShoot(int shooterPlayerNo)
         {
@@ -95,7 +102,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通知 AI：对手刚完成投篮。
+        /// Notify AI: The opponent has just completed a shot.
         /// </summary>
         public void BallOpponentShoot(int shooterPlayerNo)
         {
@@ -103,7 +110,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 通知 AI：当前无人持球或投篮。
+        /// Notify AI: No one is currently holding the ball or shooting.
+
         /// </summary>
         public void BallOthers()
         {
@@ -111,7 +119,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 判断玩家当前是否可以按下动作键。
+        /// Determine whether the player can currently press the action key.
+
         /// </summary>
         public bool ReadyForAction()
         {
@@ -121,7 +130,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 判断玩家是否应该松开防守/假动作键。
+        /// Determines whether the player should release the guard/feint key.
+
         /// </summary>
         public bool ReleaseBlockOrPump(float dt)
         {
@@ -131,7 +141,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 新回合开始时重置控制器状态。
+        /// Reset controller state at the start of a new round.
+
         /// </summary>
         public void Restart(int startSide)
         {
@@ -140,7 +151,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 玩家落地时调用。
+        /// Called when the player lands.
+
         /// </summary>
         public void PlayerOnGround()
         {
@@ -148,7 +160,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 玩家冲刺结束时调用。
+        /// Called when the player's sprint ends.
         /// </summary>
         public void PlayerOnDashEnd()
         {
@@ -156,7 +168,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 玩家成功盖帽时调用。
+        /// Called when a player successfully blocks a shot.
+
         /// </summary>
         public void PlayerOnBlock()
         {
@@ -165,7 +178,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 设置本帧的所有按键输入（由教程系统用来脚本化对手行为）。
+        /// Sets all key inputs for this frame (used by the tutorial system to script opponent behavior).
+
         /// </summary>
         public void SetFrameInputs(int move, bool jump, bool action, bool blockOrPump, bool super, int dash)
         {
@@ -178,7 +192,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从另一个控制器同步按键状态（用于同步 AI 决策结果）。
+        /// Sync key state from another controller (used to synchronize AI decision results).
         /// </summary>
         private void SyncInputsFrom(IBLPlayerController controller)
         {

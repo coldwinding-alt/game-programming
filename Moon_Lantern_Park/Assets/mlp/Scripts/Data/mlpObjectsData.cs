@@ -1,128 +1,226 @@
-// 游戏物体物理参数
-// 定义篮球、球员、篮筐等游戏物体的物理数值：重力、弹跳系数、移动速度、投篮力量、扣篮范围等。游戏里所有物体的运动都参考这些数值。
+// Game object physical parameters
+// Define the physical values ​​of basketballs, players, baskets and other game objects: gravity, bounce coefficient, movement speed, shooting power, dunk range, etc. The movement of all objects in the game refers to these values.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// 游戏物体物理参数：定义篮球、球员、篮筐等物体的物理数值——重力、弹跳系数、移动速度、投篮力量、扣篮范围等。
+    /// Physical parameters of game objects: Define the physical values ​​of basketballs, players, baskets and other objects - gravity, bounce coefficient, movement speed, shooting power, dunk range, etc.
+
     /// </summary>
     public static class mlpObjectsData
     {
-        // 全局重力向量（像素/秒²），Y 分量 450 表示向下加速，X 为 0 表示无水平重力
+        // Global gravity vector (pixels/second²), with a Y component of 450 for downward acceleration and an X of 0 for no horizontal gravity
         public static readonly Vector2 Gravity = new Vector2(0f, 450f);
 
-        // --- 篮球物理参数 ---
-        public const float BallRadius = 18f;               // 篮球碰撞半径（像素），用于篮筐、篮板、护盾等碰撞检测
-        public const float BallGravMass = 2f;              // 篮球重力倍率，实际重力 = Gravity.y × BallGravMass，使球下落比其他物体更快
-        public const float BallBounce = -400f;             // 篮球触地反弹的垂直速度（负值=向上），数值越大弹得越高
-        public const float BallUpVelocityY = -500f;        // 篮球起始/跳球时的向上初速度（负值=向上），决定开场抛球高度
-        public const float BallStealVelocityXBase = 400f;  // 抢断后球飞出的基础水平速度（像素/秒），方向由抢断者朝向决定
-        public const float BallStealVelocityXAdd = 200f;   // 抢断距离越远，额外叠加的水平速度，使远距离抢断球飞得更远
-        public const float BallStealVelocityY = -100f;     // 抢断后球飞出的垂直速度（负值=向上），让球轻微弹起
-        public const float BallIndentYCenter = 300f;       // 篮球在中场跳球时的起始 Y 坐标（像素，从屏幕顶部算起）
-        public const float BallIndentYPlayer = 340f;       // 篮球在球员手中持球时的 Y 坐标偏移，控制球在手中的高度
-        public const float VerticalDispersion = 0.1f;      // 投篮垂直方向最大偏移系数，出手点越高（跳投）偏差越大
-        public const float Dispersion = 0.01f;             // 投篮基础随机偏移系数，叠加距离、高度、跑动等因素后决定球是否命中
+        // --- Basketball physical parameters ---
 
-        // --- 篮筐与篮板参数 ---
-        public const float BasketIndent = 20f;             // 篮筐边缘距场地边界的内缩距离（像素），篮筐不紧贴墙壁
-        public const float BasketRadius = 30f;             // 篮圈半径（像素），决定篮筐大小和投篮容错
-        public const float BasketCenter = BasketIndent + BasketRadius;   // 左侧篮筐中心的 X 坐标（像素）
-        public const float BasketCenter2 = mlpConstants.Width - BasketCenter; // 右侧篮筐中心的 X 坐标（像素），镜像对称
-        public const float BasketHeight = 200f;            // 篮筐中心距屏幕顶部的高度（像素），控制篮筐在画面中的位置
-        public const float BasketPartRadius = 7f;          // 篮圈碰撞圆柱的半径（像素），与 BallRadius 叠加计算球与篮圈的碰撞
-        public const float GlassWidth = 12f;               // 篮板玻璃平面距场地边界的水平距离（像素），决定篮板碰撞面的 X 位置
-        public const float GlassHeight = 120f;             // 篮板玻璃的垂直高度（像素），球在此范围内才会与篮板发生碰撞
-        public const float GlassY = 20f - GlassHeight;     // 篮板玻璃顶部 Y 坐标偏移（相对于篮筐高度），负值表示在篮筐上方
-        public const float SensorHalf = 25f;               // 得分传感器半宽（像素），传感器中心左右各 25 像素判定进球
-        public const float SensorWidth = 2f * SensorHalf;  // 得分传感器总宽度（像素），球必须穿过此宽度才算有效进球路径
-        public const float SensorHeight = 5f;              // 得分传感器的垂直厚度（像素），上下传感器之间的判定带高度
-        public const float SensorUp = -10f;                // 上传感器相对于篮筐高度的 Y 偏移（负=上方），球先过此线再过下线才算进球
-        public const float SensorDown = 15f;               // 下传感器相对于篮筐高度的 Y 偏移（正值=下方），球穿过此线确认进球
+        public const float BallRadius = 18f;               // Basketball collision radius (pixels), used for collision detection of baskets, backboards, shields, etc.
 
-        // --- 玩家/球员参数 ---
-        public const float PlayerJump = -600f;             // 球员跳跃的初始垂直速度（负值=向上），数值越大跳得越高
-        public const float PlayerMove = 250f;              // 球员空手时的水平移动速度（像素/秒）
-        public const float PlayerMoveWithBall = 0.85f * PlayerMove; // 持球移动速度，为空手速度的 85%，持球会略微减速
-        public const float PlayerIndentX = 30f;            // 球员碰撞体距场地左右边界的最小距离（像素），防止球员走出球场
-        public const float PlayerIndentY = 385f;           // 球员站立时脚部的 Y 坐标（像素），即球员在地面上的位置
-        public const float PlayersHandsWidth = 30f;        // 球员手部碰撞体的宽度（像素），用于判定拾球和抢断范围
-        public const float PlayersHandsHeight = 80f;       // 球员手部碰撞体的高度（像素），垂直方向的拾球/抢断判定范围
-        public const float BallPickupDistanceX = PlayersHandsWidth * 0.5f + BallRadius;  // 水平方向拾球有效距离（手部半宽+球半径）
-        public const float BallPickupDistanceY = PlayersHandsHeight * 0.5f + BallRadius; // 垂直方向拾球有效距离（手部半高+球半径）
-        public const float StealDistance = 55f;            // 抢断触发的水平距离阈值（像素），在此范围内才能发动抢断
-        public const float IndentGeneralX = 50f;           // 球员通用的水平活动边界内缩量（像素），限制球员移动范围
-        public const float BlockWidth = 20f;               // 盖帽判定区域的宽度（像素），站在持球者前方此范围内可盖帽
-        public const float BlockHeight = 70f;              // 盖帽判定区域的高度（像素），垂直方向的有效盖帽范围
-        public const float JumpBlockWidth = 10f;           // 跳起盖帽时判定区域的宽度（像素），跳盖比站盖更窄但可盖高球
-        public const float JumpBlockHeight = 70f;          // 跳起盖帽时判定区域的高度（像素）
-        public const float BlockStartDuration = 3f / 30f;  // 盖帽动作起手阶段的持续时间（秒），3 帧 @ 30fps，此期间可触发盖帽
-        public const float BlockEndDuration = 5f / 30f;    // 盖帽动作收招阶段的持续时间（秒），5 帧 @ 30fps，盖帽后有短暂硬直
-        public const float PumpStartDuration = 4f / 30f;   // 虚晃（假投）动作起手阶段的持续时间（秒），4 帧 @ 30fps
-        public const float PumpEndDuration = 4f / 30f;     // 虚晃动作收招阶段的持续时间（秒），4 帧 @ 30fps
+        public const float BallGravMass = 2f;              // Basketball gravity multiplier, actual gravity = Gravity.y × BallGravMass, making the ball fall faster than other objects
 
-        // --- 扣篮系统参数 ---
-        public const float PaintStartX = 100f;             // 三秒区（油漆区）起始 X 坐标（像素），进入此区域才能尝试扣篮
-        public const float PaintMiddleX = 200f;            // 三秒区中线 X 坐标（像素），AI 用此判断是否深入到扣篮位置
-        public const float DunkZone1Y = 280f;              // 扣篮触发区域的上边界 Y 坐标（像素），球员需在此高度以下才能扣篮
-        public const float DunkZone2Y = 300f;              // 扣篮触发区域的下边界 Y 坐标（像素），与 DunkZone1Y 共同定义扣篮有效区域
-        public const float DunkX = 100f;                   // 扣篮动画中球员飞向篮筐的水平偏移量（像素），控制扣篮起跳距离
-        public const float DunkY = 180f;                   // 扣篮动画中球员飞向篮筐的垂直偏移量（像素），控制扣篮起跳高度
-        public const float DunkChanceToComplete = 0.9f;    // 扣篮成功完成的概率（90%），10% 概率被篮筐弹开（扣飞）
-        // 三种扣篮动画各自的总帧数（需与 Tools/Art/rebuild_runtime_dragonbones_skeleton.py 中生成的帧数同步）
-        public const float Dunk1Duration = 24f / 30f;      // 扣篮类型 1 的动画总时长（秒），24 帧 @ 30fps
-        public const float Dunk2Duration = 15f / 30f;      // 扣篮类型 2 的动画总时长（秒），15 帧 @ 30fps，最快的扣篮
-        public const float Dunk3Duration = 24f / 30f;      // 扣篮类型 3 的动画总时长（秒），24 帧 @ 30fps
+        public const float BallBounce = -400f;             // The vertical speed of the basketball when it hits the ground (negative value = upward). The larger the value, the higher it will bounce.
 
-        // 运行时手感微调：球员从起跳到飞到篮筐的实际飞行时长（比动画总时长略短，保证手感流畅）
-        public const float Dunk1TravelDuration = 19f / 30f; // 扣篮类型 1 的飞行时长（秒）
-        public const float Dunk2TravelDuration = 12f / 30f; // 扣篮类型 2 的飞行时长（秒）
-        public const float Dunk3TravelDuration = 18f / 30f; // 扣篮类型 3 的飞行时长（秒）
+        public const float BallUpVelocityY = -500f;        // The upward initial velocity when the basketball starts/jumps (negative value = upward), which determines the height of the opening throw.
 
-        // 球从手中释放的时刻（飞行中的第几秒松手入筐），早于飞行结束保证球先到
-        public const float Dunk1ReleaseTime = 18f / 30f;   // 扣篮类型 1 球释放时刻（秒）
-        public const float Dunk2ReleaseTime = 9f / 30f;    // 扣篮类型 2 球释放时刻（秒）
-        public const float Dunk3ReleaseTime = 14f / 30f;   // 扣篮类型 3 球释放时刻（秒）
+        public const float BallStealVelocityXBase = 400f;  // The basic horizontal speed of the ball after a steal (pixels/second), the direction is determined by the direction of the stealer
+        public const float BallStealVelocityXAdd = 200f;   // The farther the steal is, the additional horizontal speed will make the ball fly farther
 
-        // 扣篮骨骼动画播放速度倍率，>1 表示加速播放使动画更紧凑有力
-        public const float Dunk1AnimationSpeed = 1.16f;    // 扣篮类型 1 动画播放速度（16% 加速）
-        public const float Dunk2AnimationSpeed = 1.12f;    // 扣篮类型 2 动画播放速度（12% 加速）
-        public const float Dunk3AnimationSpeed = 1.16f;    // 扣篮类型 3 动画播放速度（16% 加速）
+        public const float BallStealVelocityY = -100f;     // The vertical speed of the ball after the steal (negative value = upward), allowing the ball to bounce slightly
 
-        // --- 空接与冲刺参数 ---
-        public const float AlleyOopX = 160f;               // 空接接球点的水平偏移量（像素），球飞向篮筐附近的此 X 位置
-        public const float AlleyOopY = 150f;               // 空接接球点的 Y 坐标（像素），球员跳到此高度完成空接
-        public const float SuperDashX1 = 150f;             // 超级冲刺起始区域的左边界 X 坐标（像素），在此范围内可发动冲刺
-        public const float SuperDashX2 = 650f;             // 超级冲刺起始区域的右边界 X 坐标（像素）
-        public const float SuperDashY = 385f;              // 超级冲刺的 Y 坐标（像素），需在地面高度才能冲刺
+        public const float BallIndentYCenter = 300f;       // The basketball's starting Y coordinate (in pixels, measured from the top of the screen) when the ball jumps at midcourt
 
-        // --- AI 与游戏规则参数 ---
-        public const float OpponentDelta = 60f;            // AI 对手与玩家球员保持的水平间距（像素），控制防守贴身程度
-        public const float IdealJumpBallJump = 0.5f;       // 跳球时 AI 理想起跳时机（0~1 比例），越接近 0.5 表示在球到最高点时跳
-        public const float IdealAttackJump = 0.41f;        // 进攻时 AI 理想投篮起跳时机（0~1 比例），控制 AI 投篮节奏
-        public const float ChanceForThree = 0.2f;          // AI 在近距离区域选择投三分球的概率（20%）
-        public const float ChanceForThree2 = 0.4f;         // AI 在远距离区域选择投三分球的概率（40%），远距离更倾向三分
-        public const float AttackZoneStart = 120f;         // 进攻区域起始 X 坐标（像素），进入此区域 AI 开始考虑进攻动作
-        public const float AttackZoneEnd = 350f;           // 进攻区域结束 X 坐标（像素），超过此位置 AI 不再尝试进攻
-        public const float DashZoneStart = 300f;           // 冲刺区域起始 X 坐标（像素），在此范围内 AI 可发动冲刺突破
-        public const float DashZoneEnd = 700f;             // 冲刺区域结束 X 坐标（像素）
-        public const float DefensePoint = 250f;            // AI 防守站位的参考 X 坐标（像素），AI 回防时会回到此位置附近
-        public const float StealDuration = 0.3f;           // 抢断动作的总持续时间（秒），此期间球员处于抢断动画中
-        public const float StealFrameEventTime = 8f / 30f; // 抢断动画中判定抢断成功的时刻（秒），8 帧 @ 30fps 时实际触碰球
-        public const float StealAnimationDuration = 13f / 30f; // 抢断动画总时长（秒），13 帧 @ 30fps，含收招
-        public const float StunDuration = 22f / 30f;       // 被抢断后的眩晕硬直时间（秒），22 帧 @ 30fps，期间无法行动
-        public const float ThreePointsDistance = mlpConstants.Width2; // 三分线距离（像素），等于场地宽度的一半（400 像素）
-        public const float DashDelay = 1f;                 // 冲刺技能冷却时间（秒），使用后需等待此时间才能再次冲刺
-        public const float DashDoubleTapWindow = 0.55f;    // 双击方向键触发冲刺的时间窗口（秒），两次按键间隔在此内视为双击
-        public const float DashInputBuffer = 0.22f;        // 冲刺输入缓冲时间（秒），提前按键也能被缓冲并在适当时机触发
-        public const float DigTime = 3f;                   // 蓄力/运球突破的蓄力时间（秒），按住此时间后释放发动突破
-        public const float EnergyTime = 3f;                // 技能能量恢复的冷却时间（秒），使用技能后需等待此时间恢复
-        public const float DunkPickupLock = 0.22f;         // 扣篮后球的拾取锁定时间（秒），防止扣篮后立即被对方抢球
+        public const float BallIndentYPlayer = 340f;       // The Y coordinate offset of the basketball when the player holds the ball, controlling the height of the ball in the hand
 
-        // --- 场地边界参数 ---
-        public const float FloorY = 420f;                  // 地面 Y 坐标（像素），球员站立位置和球弹跳的底部边界
-        public const float BallFloorY = FloorY - BallRadius; // 球触地的实际 Y 坐标（像素），考虑球半径后的精确弹跳点
+        public const float VerticalDispersion = 0.1f;      // The maximum deviation coefficient in the vertical direction of a shot. The higher the release point (jump shot), the greater the deviation.
+
+        public const float Dispersion = 0.01f;             // The basic random offset coefficient of the shot is superimposed on distance, height, running and other factors to determine whether the ball hits the target.
+
+
+        // --- Basket and backboard parameters ---
+
+        public const float BasketIndent = 20f;             // The distance (in pixels) between the edge of the basket and the edge of the court, when the basket is not close to the wall
+
+        public const float BasketRadius = 30f;             // Basket radius (pixels), determines the size of the basket and shooting tolerance
+
+        public const float BasketCenter = BasketIndent + BasketRadius;   // X coordinate of center of left basket (pixels)
+
+        public const float BasketCenter2 = mlpConstants.Width - BasketCenter; // X coordinate (pixels) of the center of the right basket, mirrored
+
+        public const float BasketHeight = 200f;            // The height (in pixels) of the center of the basket from the top of the screen, controlling the position of the basket in the screen
+
+        public const float BasketPartRadius = 7f;          // The radius (pixels) of the hoop's collision with the cylinder, superimposed with BallRadius to calculate the collision between the ball and the hoop.
+
+        public const float GlassWidth = 12f;               // The horizontal distance (in pixels) between the backboard glass plane and the court boundary, which determines the X position of the backboard collision surface
+
+        public const float GlassHeight = 120f;             // The vertical height of the backboard glass (in pixels). The ball will collide with the backboard only within this range.
+
+        public const float GlassY = 20f - GlassHeight;     // Y coordinate offset of the top of the backboard glass (relative to the height of the basket), negative values indicate above the basket
+
+        public const float SensorHalf = 25f;               // Score sensor half width (pixels), 25 pixels left and right of the sensor center to determine the goal
+
+        public const float SensorWidth = 2f * SensorHalf;  // The total width of the scoring sensor (pixels) through which the ball must pass to be considered a valid goal path
+
+        public const float SensorHeight = 5f;              // Vertical thickness of the scoring sensor in pixels, height of the decision band between the upper and lower sensors
+
+        public const float SensorUp = -10f;                // The Y offset of the upper sensor relative to the height of the basket (negative = above), the ball will be considered a goal if it passes this line first and then the lower line
+
+        public const float SensorDown = 15f;               // Y offset of the lower sensor relative to the height of the basket (positive value = below), the ball crossing this line to confirm a goal
+
+
+        // --- Player/player parameters ---
+
+        public const float PlayerJump = -600f;             // The initial vertical speed of the player's jump (negative value = upward). The higher the value, the higher the jump.
+
+        public const float PlayerMove = 250f;              // Player's horizontal movement speed when empty-handed (pixels/second)
+        public const float PlayerMoveWithBall = 0.85f * PlayerMove; // The movement speed of holding the ball is 85% of the unarmed speed. Holding the ball will slow down slightly.
+
+        public const float PlayerIndentX = 30f;            // The minimum distance (in pixels) between the player's collision body and the left and right boundaries of the field to prevent players from walking out of the field
+
+        public const float PlayerIndentY = 385f;           // The Y coordinate (in pixels) of the player's feet when standing, i.e. the player's position on the ground
+
+        public const float PlayersHandsWidth = 30f;        // The width (pixels) of the player's hand collision body, used to determine the ball pickup and steal range
+
+        public const float PlayersHandsHeight = 80f;       // The height of the player's hand collision body (pixels), the ball pickup/stealing judgment range in the vertical direction
+
+        public const float BallPickupDistanceX = PlayersHandsWidth * 0.5f + BallRadius;  // Effective distance for picking up the ball in the horizontal direction (half hand width + ball radius)
+
+        public const float BallPickupDistanceY = PlayersHandsHeight * 0.5f + BallRadius; // Effective distance for picking up the ball in the vertical direction (half height of hand + ball radius)
+
+        public const float StealDistance = 55f;            // The horizontal distance threshold (pixels) for the steal to be triggered. The steal can only be initiated within this range.
+
+        public const float IndentGeneralX = 50f;           // The player's general horizontal activity boundary indentation amount (pixels), limiting the player's movement range
+
+        public const float BlockWidth = 20f;               // The width of the block judgment area (pixels). You can block shots if you stand in front of the ball holder within this range.
+
+        public const float BlockHeight = 70f;              // The height of the block determination area (pixels), the effective block range in the vertical direction
+
+        public const float JumpBlockWidth = 10f;           // The width (pixels) of the judgment area when jumping to block a shot. The jumping block is narrower than the standing block but can block high balls.
+
+        public const float JumpBlockHeight = 70f;          // The height of the judgment area when jumping to block the shot (pixels)
+
+        public const float BlockStartDuration = 3f / 30f;  // Duration of the starting phase of the shot-blocking action (seconds), 3 frames @ 30fps, during which the shot-blocking action can be triggered
+
+        public const float BlockEndDuration = 5f / 30f;    // Duration of the closing phase of the block action (seconds), 5 frames @ 30fps, there is a brief stiffness after the block
+
+        public const float PumpStartDuration = 4f / 30f;   // Duration of the initial phase of the feint (seconds), 4 frames @ 30fps
+
+        public const float PumpEndDuration = 4f / 30f;     // Duration of feint closing phase (seconds), 4 frames @ 30fps
+
+
+        // --- Dunk system parameters ---
+
+        public const float PaintStartX = 100f;             // The starting X coordinate (pixels) of the three-second zone (paint area). Only when you enter this area can you attempt a dunk.
+
+        public const float PaintMiddleX = 200f;            // The X coordinate (pixels) of the center line of the three-second zone. AI uses this to determine whether it is deep into the dunk position.
+
+        public const float DunkZone1Y = 280f;              // Y coordinate (pixels) of the upper boundary of the dunk trigger area. Players must be below this height to dunk.
+
+        public const float DunkZone2Y = 300f;              // Y coordinate (pixel) of the lower boundary of the dunk trigger area, which together with DunkZone1Y defines the dunk effective area
+
+        public const float DunkX = 100f;                   // The horizontal offset (in pixels) of the player flying towards the basket in the dunk animation, which controls the take-off distance of the dunk.
+
+        public const float DunkY = 180f;                   // The vertical offset (pixels) of the player flying towards the basket in the dunk animation, which controls the take-off height of the dunk.
+        public const float DunkChanceToComplete = 0.9f;    // Probability of successfully completing the dunk (90%), 10% probability of being bounced off the basket (dunk)
+
+        // The total number of frames for each of the three dunk animations (needs to be synchronized with the number of frames generated in Tools/Art/rebuild_runtime_dragonbones_skeleton.py)
+
+        public const float Dunk1Duration = 24f / 30f;      // Total dunk type 1 animation duration (seconds), 24 frames @ 30fps
+
+        public const float Dunk2Duration = 15f / 30f;      // Total animation duration (seconds) for dunk type 2, 15 frames @ 30fps, fastest dunk
+
+        public const float Dunk3Duration = 24f / 30f;      // Total dunk type 3 animation duration (seconds), 24 frames @ 30fps
+
+
+        // Fine-tuning of the feel during runtime: the actual flight time of the player from takeoff to flying to the basket (slightly shorter than the total duration of the animation to ensure a smooth feel)
+
+        public const float Dunk1TravelDuration = 19f / 30f; // Duration of dunk type 1 flight (seconds)
+
+        public const float Dunk2TravelDuration = 12f / 30f; // Duration of dunk type 2 flight (seconds)
+
+        public const float Dunk3TravelDuration = 18f / 30f; // Duration of dunk type 3 flight (seconds)
+
+
+        // The moment when the ball is released from the hand (the first few seconds during the flight when the ball is released and enters the basket), it must be earlier than the end of the flight to ensure that the ball arrives first
+
+        public const float Dunk1ReleaseTime = 18f / 30f;   // Dunk Type 1 Ball Release Time (Seconds)
+
+        public const float Dunk2ReleaseTime = 9f / 30f;    // Dunk type 2 ball release time (seconds)
+
+        public const float Dunk3ReleaseTime = 14f / 30f;   // Dunk type 3 ball release time (seconds)
+
+
+        // Dunk skeleton animation playback speed multiplier, >1 means accelerated playback to make the animation more compact and powerful
+
+        public const float Dunk1AnimationSpeed = 1.16f;    // Dunk type 1 animation playback speed (16% speedup)
+
+        public const float Dunk2AnimationSpeed = 1.12f;    // Dunk type 2 animation playback speed (12% speedup)
+
+        public const float Dunk3AnimationSpeed = 1.16f;    // Dunk type 3 animation playback speed (16% speedup)
+
+
+        // --- Alley-oop and sprint parameters ---
+
+        public const float AlleyOopX = 160f;               // Horizontal offset (in pixels) of the alley catch point where the ball flies to this X position near the basket
+
+        public const float AlleyOopY = 150f;               // The Y coordinate (pixels) of the alley catch point. The player jumps to this height to complete the alley catch.
+
+        public const float SuperDashX1 = 150f;             // The X coordinate (in pixels) of the left boundary of the super sprint starting area, within which sprint can be launched
+
+        public const float SuperDashX2 = 650f;             // Right edge X coordinate of the super sprint starting area (pixels)
+
+        public const float SuperDashY = 385f;              // Y coordinate (pixels) of super sprint, you need to be at ground height to sprint
+
+
+        // ---AI and game rules parameters ---
+        public const float OpponentDelta = 60f;            // The horizontal distance (pixels) between AI opponents and player players to control the degree of defensive closeness
+
+        public const float IdealJumpBallJump = 0.5f;       // AI's ideal take-off time when jumping the ball (0~1 ratio), the closer it is to 0.5, it means jumping when the ball reaches the highest point
+
+        public const float IdealAttackJump = 0.41f;        // AI's ideal shooting timing when attacking (0~1 ratio), controls AI's shooting rhythm
+
+        public const float ChanceForThree = 0.2f;          // The probability that the AI will choose to shoot a three-pointer in a close area (20%)
+
+        public const float ChanceForThree2 = 0.4f;         // The probability of AI choosing to shoot a three-pointer from a long distance (40%), with a preference for three-pointers from a distance
+
+        public const float AttackZoneStart = 120f;         // The starting X coordinate of the attack area (pixels). When entering this area, the AI starts to consider offensive actions.
+
+        public const float AttackZoneEnd = 350f;           // The end X coordinate of the attack area (pixels), beyond which the AI will no longer attempt to attack
+
+        public const float DashZoneStart = 300f;           // The starting X coordinate of the sprint area (pixels), within this range the AI can launch a sprint breakthrough
+
+        public const float DashZoneEnd = 700f;             // Sprint area end X coordinate (pixels)
+
+        public const float DefensePoint = 250f;            // The reference X coordinate (pixels) of the AI's defensive position. The AI will return to this position when returning to defense.
+
+        public const float StealDuration = 0.3f;           // The total duration of the tackle action (seconds) during which the player is in the tackle animation
+
+        public const float StealFrameEventTime = 8f / 30f; // The moment (seconds) when the tackle is determined to be successful in the tackle animation, when the ball is actually touched at 8 frames @ 30fps
+
+        public const float StealAnimationDuration = 13f / 30f; // Total steal animation duration (seconds), 13 frames @ 30fps, including closing move
+
+        public const float StunDuration = 22f / 30f;       // Stun time after being intercepted (seconds), 22 frames @ 30fps, unable to move during this period
+
+        public const float ThreePointsDistance = mlpConstants.Width2; // Three-point line distance in pixels, equal to half the field width (400 pixels)
+
+        public const float DashDelay = 1f;                 // Sprint skill cooling time (seconds), you need to wait for this time after using it before you can sprint again
+
+        public const float DashDoubleTapWindow = 0.55f;    // The time window (seconds) for double-clicking the direction key to trigger sprinting. The interval between two key presses is considered a double-click within this period.
+
+        public const float DashInputBuffer = 0.22f;        // Sprint input buffering time (seconds), early key presses can also be buffered and triggered at the appropriate time
+
+        public const float DigTime = 3f;                   // Charging time (seconds) for charging/dribbling breakthrough, press and hold this time and then release to initiate breakthrough
+
+        public const float EnergyTime = 3f;                // Cooling time for skill energy recovery (seconds), you need to wait for this time to recover after using the skill
+
+        public const float DunkPickupLock = 0.22f;         // The ball pick-up and lock time after dunking (seconds) to prevent the opponent from grabbing the ball immediately after dunking
+
+
+        // --- Site boundary parameters ---
+
+        public const float FloorY = 420f;                  // Ground Y coordinate (pixels), where the player is standing and the bottom boundary of the ball's bounce
+
+        public const float BallFloorY = FloorY - BallRadius; // The actual Y coordinate (pixels) of the ball hitting the ground, the exact bounce point after taking into account the ball radius
     }
 }

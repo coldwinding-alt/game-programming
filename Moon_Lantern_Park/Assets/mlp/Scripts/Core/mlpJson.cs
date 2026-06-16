@@ -1,5 +1,5 @@
-// 简易 JSON 解析器
-// 自己写的 JSON 解析工具，不依赖外部库。能把 JSON 字符串解析成字典和列表，也能把字典和列表转回 JSON 字符串。用于保存和读取游戏数据。
+// Simple JSON parser
+// A self-written JSON parsing tool that does not rely on external libraries. It can parse JSON strings into dictionaries and lists, and convert dictionaries and lists back to JSON strings. Used to save and read game data.
 
 using System;
 using System.Collections.Generic;
@@ -9,16 +9,16 @@ using System.Text;
 namespace mlp
 {
     /// <summary>
-    /// 简易 JSON 解析器：自己写的 JSON 工具，不依赖外部库。能把 JSON 字符串解析成字典和列表，也能把数据转回 JSON 字符串。用于保存和读取游戏数据。
+    /// Simple JSON parser: JSON tool written by myself, does not rely on external libraries. It can parse JSON strings into dictionaries and lists, and also convert data back to JSON strings. Used to save and read game data.
     /// </summary>
     public static class mlpJson
     {
         /// <summary>
-        /// 将 JSON 字符串解析为字典、列表、字符串、数字、布尔值或 null。
-        /// 如果输入为空或包含非法 JSON 格式，则返回 null。
+        /// Parse a JSON string into a dictionary, list, string, number, boolean, or null.
+        /// If the input is empty or contains illegal JSON format, null is returned.
         /// </summary>
-        /// <param name="json">待解析的原始 JSON 文本。</param>
-        /// <returns>解析后的对象，解析失败时返回 null。</returns>
+        /// <param name="json">The raw JSON text to be parsed. </param>
+        /// <returns>The parsed object, returns null if parsing fails. </returns>
         public static object Parse(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -31,54 +31,54 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将已解析的 JSON 对象转换为以字符串为键的字典。如果对象不是字典类型，则返回 null。
+        /// Converts a parsed JSON object into a dictionary keyed by strings. If the object is not of type dictionary, null is returned.
         /// </summary>
-        /// <param name="value">已解析的 JSON 对象。</param>
-        /// <returns>转换后的字典，若对象不是字典类型则返回 null。</returns>
+        /// <param name="value">The parsed JSON object. </param>
+        /// <returns>The converted dictionary, if the object is not a dictionary type, null is returned. </returns>
         public static Dictionary<string, object> AsDict(object value)
         {
             return value as Dictionary<string, object>;
         }
 
         /// <summary>
-        /// 将已解析的 JSON 对象转换为列表。如果对象不是列表类型，则返回 null。
+        /// Convert a parsed JSON object to a list. If the object is not of type list, null is returned.
         /// </summary>
-        /// <param name="value">已解析的 JSON 对象。</param>
-        /// <returns>转换后的列表，若对象不是列表类型则返回 null。</returns>
+        /// <param name="value">The parsed JSON object. </param>
+        /// <returns>The converted list, or null if the object is not a list type. </returns>
         public static List<object> AsList(object value)
         {
             return value as List<object>;
         }
 
         /// <summary>
-        /// 从父字典中根据键查找嵌套的字典值。如果键不存在或值不是字典类型，则返回 null。
+        /// Finds a nested dictionary value based on key from the parent dictionary. If the key does not exist or the value is not of dictionary type, null is returned.
         /// </summary>
-        /// <param name="dict">要搜索的父字典。</param>
-        /// <param name="key">要查找的键。</param>
-        /// <returns>嵌套的字典，未找到时返回 null。</returns>
+        /// <param name="dict">The parent dictionary to search for. </param>
+        /// <param name="key">The key to look for. </param>
+        /// <returns>Nested dictionary, returns null if not found. </returns>
         public static Dictionary<string, object> Dict(Dictionary<string, object> dict, string key)
         {
             return dict != null && dict.TryGetValue(key, out var value) ? AsDict(value) : null;
         }
 
         /// <summary>
-        /// 从字典中根据键查找列表值。如果键不存在或值不是列表类型，则返回 null。
+        /// Find a list value from a dictionary based on a key. If the key does not exist or the value is not a list type, null is returned.
         /// </summary>
-        /// <param name="dict">要搜索的字典。</param>
-        /// <param name="key">要查找的键。</param>
-        /// <returns>列表值，未找到时返回 null。</returns>
+        /// <param name="dict">Dictionary to search. </param>
+        /// <param name="key">The key to look for. </param>
+        /// <returns>List value, returns null if not found. </returns>
         public static List<object> List(Dictionary<string, object> dict, string key)
         {
             return dict != null && dict.TryGetValue(key, out var value) ? AsList(value) : null;
         }
 
         /// <summary>
-        /// 从字典中根据键读取字符串值。如果键不存在或值为 null，则返回默认值。
+        /// Read a string value from a dictionary based on a key. If the key does not exist or the value is null, the default value is returned.
         /// </summary>
-        /// <param name="dict">要读取的字典。</param>
-        /// <param name="key">要读取的键。</param>
-        /// <param name="fallback">键不存在或值为 null 时返回的默认值。</param>
-        /// <returns>读取到的字符串值，或默认值。</returns>
+        /// <param name="dict">The dictionary to read. </param>
+        /// <param name="key">The key to read. </param>
+        /// <param name="fallback">The default value returned when the key does not exist or the value is null. </param>
+        /// <returns>The read string value, or the default value. </returns>
         public static string String(Dictionary<string, object> dict, string key, string fallback = "")
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -90,12 +90,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从字典中根据键读取浮点数值。会自动将其他数值类型转换为浮点数。键不存在或值为 null 时返回默认值。
+        /// Reads a floating point value from a dictionary based on a key. Other numeric types are automatically converted to floating point numbers. Returns the default value if the key does not exist or the value is null.
         /// </summary>
-        /// <param name="dict">要读取的字典。</param>
-        /// <param name="key">要读取的键。</param>
-        /// <param name="fallback">键不存在或值为 null 时返回的默认值。</param>
-        /// <returns>读取到的浮点数值，或默认值。</returns>
+        /// <param name="dict">The dictionary to read. </param>
+        /// <param name="key">The key to read. </param>
+        /// <param name="fallback">The default value returned when the key does not exist or the value is null. </param>
+        /// <returns>The floating point value read, or the default value. </returns>
         public static float Float(Dictionary<string, object> dict, string key, float fallback = 0f)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -107,12 +107,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从字典中根据键读取整数值。会自动将其他数值类型转换为整数。键不存在或值为 null 时返回默认值。
+        /// Read an integer value from a dictionary based on key. Other numeric types are automatically converted to integers. Returns the default value if the key does not exist or the value is null.
         /// </summary>
-        /// <param name="dict">要读取的字典。</param>
-        /// <param name="key">要读取的键。</param>
-        /// <param name="fallback">键不存在或值为 null 时返回的默认值。</param>
-        /// <returns>读取到的整数值，或默认值。</returns>
+        /// <param name="dict">The dictionary to read. </param>
+        /// <param name="key">The key to read. </param>
+        /// <param name="fallback">The default value returned when the key does not exist or the value is null. </param>
+        /// <returns>The integer value read, or the default value. </returns>
         public static int Int(Dictionary<string, object> dict, string key, int fallback = 0)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -124,12 +124,12 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从字典中根据键读取布尔值。如果键不存在、值为 null 或不是布尔类型，则返回默认值。
+        /// Read a boolean value from a dictionary based on a key. If the key does not exist, the value is null, or is not of type boolean, the default value is returned.
         /// </summary>
-        /// <param name="dict">要读取的字典。</param>
-        /// <param name="key">要读取的键。</param>
-        /// <param name="fallback">键不存在或值不是布尔类型时返回的默认值。</param>
-        /// <returns>读取到的布尔值，或默认值。</returns>
+        /// <param name="dict">The dictionary to read. </param>
+        /// <param name="key">The key to read. </param>
+        /// <param name="fallback">The default value returned when the key does not exist or the value is not of boolean type. </param>
+        /// <returns>The Boolean value read, or the default value. </returns>
         public static bool Bool(Dictionary<string, object> dict, string key, bool fallback = false)
         {
             if (dict == null || !dict.TryGetValue(key, out var value) || value == null)
@@ -146,19 +146,19 @@ namespace mlp
             private int index;
 
             /// <summary>
-            /// 创建一个逐字符解析给定 JSON 字符串的读取器。
+            /// Creates a reader that parses the given JSON string character by character.
             /// </summary>
-            /// <param name="source">待解析的原始 JSON 文本。</param>
+            /// <param name="source">The raw JSON text to be parsed. </param>
             public mlpJsonReader(string source)
             {
                 this.source = source;
             }
 
             /// <summary>
-            /// 读取一个完整的 JSON 文档。当整个输入被正确解析为合法 JSON 时返回 true。
+            /// Read a complete JSON document. Returns true when the entire input is correctly parsed as valid JSON.
             /// </summary>
-            /// <param name="value">解析结果（字典、列表、字符串、数字、布尔值或 null）。</param>
-            /// <returns>解析成功且全部输入已消费时返回 true。</returns>
+            /// <param name="value">Parse result (dict, list, string, number, boolean, or null). </param>
+            /// <returns>Returns true when parsing is successful and all input has been consumed. </returns>
             public bool TryReadDocument(out object value)
             {
                 value = null;
@@ -173,10 +173,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// 从当前位置读取下一个 JSON 值（对象、数组、字符串、数字、布尔值或 null）。
+            /// Reads the next JSON value (object, array, string, number, boolean, or null) from the current position.
             /// </summary>
-            /// <param name="value">解析得到的值。</param>
-            /// <returns>成功读取到合法 JSON 值时返回 true。</returns>
+            /// <param name="value">The value obtained by parsing. </param>
+            /// <returns>Returns true when a valid JSON value is successfully read. </returns>
             private bool TryReadValue(out object value)
             {
                 value = null;
@@ -206,13 +206,13 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取一个以 '{' 开头的 JSON 对象，解析为以字符串为键的字典。
+            /// Read a JSON object starting with '{' and parse it into a dictionary with strings as keys.
             /// </summary>
-            /// <param name="value">解析得到的字典，失败时为 null。</param>
-            /// <returns>对象解析成功时返回 true。</returns>
+            /// <param name="value">The dictionary obtained by parsing, null if failed. </param>
+            /// <returns>Returns true when the object is parsed successfully. </returns>
             private bool TryReadObject(out object value)
             {
-                // 1. 创建空字典，读取左花括号
+                // 1. Create an empty dictionary and read the left curly brace
                 var map = new Dictionary<string, object>();
                 value = map;
 
@@ -221,40 +221,45 @@ namespace mlp
                     return false;
                 }
 
-                // 2. 空对象直接返回
+                // 2. Empty objects are returned directly
+
                 SkipWhitespace();
                 if (TryConsume('}'))
                 {
                     return true;
                 }
 
-                // 3. 循环读取键值对：键 -> 冒号 -> 值
+                // 3. Loop to read key-value pairs: key -> colon -> value
+
                 while (true)
                 {
-                    // 4. 读取键名（字符串）
+                    // 4. Read the key name (string)
+
                     SkipWhitespace();
                     if (!TryReadStringValue(out var propertyName))
                     {
                         return false;
                     }
 
-                    // 5. 读取冒号分隔符
+                    // 5. Read colon delimiter
+
                     SkipWhitespace();
                     if (!TryConsume(':'))
                     {
                         return false;
                     }
 
-                    // 6. 读取值（可以是任意 JSON 类型）
+                    // 6. Read the value (can be any JSON type)
+
                     if (!TryReadValue(out var propertyValue))
                     {
                         return false;
                     }
 
-                    // 7. 存入字典
+                    // 7. Save to dictionary
                     map[propertyName] = propertyValue;
 
-                    // 8. 遇到右花括号结束，遇到逗号继续读下一对
+                    // 8. End when encountering the right curly brace, continue reading the next pair when encountering the comma
                     SkipWhitespace();
                     if (TryConsume('}'))
                     {
@@ -269,13 +274,14 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取一个以 '[' 开头的 JSON 数组，解析为对象列表。
+            /// Read a JSON array starting with '[' and parse it into a list of objects.
             /// </summary>
-            /// <param name="value">解析得到的列表，失败时为 null。</param>
-            /// <returns>数组解析成功时返回 true。</returns>
+            /// <param name="value">The parsed list, null if failed. </param>
+            /// <returns>Returns true when array parsing is successful. </returns>
             private bool TryReadArray(out object value)
             {
-                // 1. 创建空列表，读取左方括号
+                // 1. Create an empty list and read the left square bracket
+
                 var items = new List<object>();
                 value = items;
 
@@ -284,26 +290,28 @@ namespace mlp
                     return false;
                 }
 
-                // 2. 空数组直接返回
+                // 2. Empty array is returned directly
                 SkipWhitespace();
                 if (TryConsume(']'))
                 {
                     return true;
                 }
 
-                // 3. 循环读取每个元素
+                // 3. Loop to read each element
+
                 while (true)
                 {
-                    // 4. 读取一个值
+                    // 4. Read a value
+
                     if (!TryReadValue(out var itemValue))
                     {
                         return false;
                     }
 
-                    // 5. 添加到列表
+                    // 5. Add to list
                     items.Add(itemValue);
 
-                    // 6. 遇到右方括号结束，遇到逗号继续读下一个
+                    // 6. End when encountering the right square bracket, continue reading the next one when encountering the comma
                     SkipWhitespace();
                     if (TryConsume(']'))
                     {
@@ -318,10 +326,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取一个用双引号包裹的 JSON 字符串，并将其包装为对象。
+            /// Reads a JSON string wrapped in double quotes and wraps it as an object.
             /// </summary>
-            /// <param name="value">包装在对象中的字符串值。</param>
-            /// <returns>字符串解析成功时返回 true。</returns>
+            /// <param name="value">String value wrapped in an object. </param>
+            /// <returns>Returns true when string parsing is successful. </returns>
             private bool TryReadString(out object value)
             {
                 value = null;
@@ -335,32 +343,35 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取 JSON 字符串并处理转义序列（如 \n、\t、\uXXXX 等）。
+            /// Read JSON strings and handle escape sequences (such as \n, \t, \uXXXX, etc.).
             /// </summary>
-            /// <param name="value">解码后的字符串，失败时为 null。</param>
-            /// <returns>字符串解析成功时返回 true。</returns>
+            /// <param name="value">The decoded string, or null on failure. </param>
+            /// <returns>Returns true when string parsing is successful. </returns>
             private bool TryReadStringValue(out string value)
             {
-                // 1. 读取左引号
+                // 1. Read the opening quote
+
                 value = null;
                 if (!TryConsume('"'))
                 {
                     return false;
                 }
 
-                // 2. 逐字符读取直到遇到右引号
+                // 2. Read character by character until the closing quotation mark is encountered
+
                 var builder = new StringBuilder();
                 while (!IsAtEnd)
                 {
                     var current = ReadChar();
-                    // 3. 右引号：字符串结束
+                    // 3. Closing quote: end of string
                     if (current == '"')
                     {
                         value = builder.ToString();
                         return true;
                     }
 
-                    // 4. 反斜杠：处理转义序列
+                    // 4. Backslash: Handling escape sequences
+
                     if (current == '\\')
                     {
                         if (!TryAppendEscapeSequence(builder))
@@ -371,13 +382,14 @@ namespace mlp
                         continue;
                     }
 
-                    // 5. 控制字符非法
+                    // 5. Illegal control character
+
                     if (current < ' ')
                     {
                         return false;
                     }
 
-                    // 6. 普通字符直接追加
+                    // 6. Ordinary characters are appended directly
                     builder.Append(current);
                 }
 
@@ -385,20 +397,21 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取反斜杠后面的一个转义字符，并将解码结果追加到 StringBuilder 中。
-            /// 支持 \"、\\、\/、\b、\f、\n、\r、\t 和 \uXXXX 等转义序列。
+            /// Reads an escape character after the backslash and appends the decoded result to a StringBuilder.
+            /// Escape sequences such as \", \\, \/, \b, \f, \n, \r, \t and \uXXXX are supported.
             /// </summary>
-            /// <param name="builder">用于追加解码字符的 StringBuilder。</param>
-            /// <returns>转义序列合法时返回 true。</returns>
+            /// <param name="builder">StringBuilder for appending decoded characters. </param>
+            /// <returns>Returns true if the escape sequence is legal. </returns>
             private bool TryAppendEscapeSequence(StringBuilder builder)
             {
-                // 1. 确保反斜杠后面还有字符
+                // 1. Make sure there are characters after the backslash
+
                 if (IsAtEnd)
                 {
                     return false;
                 }
 
-                // 2. 根据转义字符类型追加对应的实际字符
+                // 2. Append the corresponding actual characters according to the escape character type
                 switch (ReadChar())
                 {
                     case '"':
@@ -425,7 +438,8 @@ namespace mlp
                     case 't':
                         builder.Append('\t');
                         return true;
-                    // 3. \u 表示 Unicode 转义，交给专门方法处理
+                    // 3. \u represents Unicode escape and is handled by specialized methods.
+
                     case 'u':
                         return TryAppendUnicode(builder);
                     default:
@@ -434,20 +448,22 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取一个 \uXXXX 转义序列，将解码后的 Unicode 字符追加到 StringBuilder 中。
-            /// 支持代理对（两个连续的 \u 序列，用于表示 U+FFFF 以上的字符）。
+            /// Reads a \uXXXX escape sequence and appends the decoded Unicode characters to a StringBuilder.
+
+            /// Surrogate pairs (two consecutive \u sequences representing characters above U+FFFF) are supported.
             /// </summary>
-            /// <param name="builder">用于追加解码字符的 StringBuilder。</param>
-            /// <returns>十六进制数字合法时返回 true。</returns>
+            /// <param name="builder">StringBuilder for appending decoded characters. </param>
+            /// <returns>Returns true if the hexadecimal number is legal. </returns>
             private bool TryAppendUnicode(StringBuilder builder)
             {
-                // 1. 读取第一个四位十六进制数
+                // 1. Read the first four-digit hexadecimal number
+
                 if (!TryReadHexQuad(out var firstUnit))
                 {
                     return false;
                 }
 
-                // 2. 如果不是高代理项（BMP 字符），直接追加
+                // 2. If it is not a high surrogate (BMP character), append it directly
                 var firstChar = (char)firstUnit;
                 if (!char.IsHighSurrogate(firstChar))
                 {
@@ -455,17 +471,19 @@ namespace mlp
                     return true;
                 }
 
-                // 3. 是高代理项，尝试读取第二个 \uXXXX（低代理项）
+                // 3. is a high surrogate, try to read the second \uXXXX (low surrogate)
+
                 var rewind = index;
                 if (!TryConsume('\\') || !TryConsume('u') || !TryReadHexQuad(out var secondUnit))
                 {
-                    // 4. 找不到配对的低代理项，只追加高代理项
+                    // 4. Unable to find matching low surrogate, only append high surrogate
+
                     index = rewind;
                     builder.Append(firstChar);
                     return true;
                 }
 
-                // 5. 验证是低代理项，配对成功则两个都追加
+                // 5. The verification is a low surrogate item. If the pairing is successful, both will be appended.
                 var secondChar = (char)secondUnit;
                 if (!char.IsLowSurrogate(secondChar))
                 {
@@ -478,10 +496,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取恰好四个十六进制字符，并将其转换为整数值。
+            /// Read exactly four hexadecimal characters and convert them to an integer value.
             /// </summary>
-            /// <param name="value">解码后的 16 位整数。</param>
-            /// <returns>成功读取四个合法十六进制数字时返回 true。</returns>
+            /// <param name="value">Decoded 16-bit integer. </param>
+            /// <returns>Returns true when four legal hexadecimal digits are successfully read. </returns>
             private bool TryReadHexQuad(out int value)
             {
                 value = 0;
@@ -505,12 +523,12 @@ namespace mlp
             }
 
             /// <summary>
-            /// 尝试匹配一个字面量关键字（如 "true"、"false" 或 "null"），匹配成功时返回对应的值。
+            /// Try to match a literal keyword (such as "true", "false" or "null") and return the corresponding value if the match is successful.
             /// </summary>
-            /// <param name="keyword">要匹配的关键字文本（如 "true"）。</param>
-            /// <param name="replacement">匹配成功时返回的 C# 值（如 "true" 对应 true，"null" 对应 null）。</param>
-            /// <param name="value">匹配成功时的替换值，否则为 null。</param>
-            /// <returns>当前位置匹配到关键字时返回 true。</returns>
+            /// <param name="keyword">Keyword text to match (such as "true"). </param>
+            /// <param name="replacement">The C# value returned when the match is successful (such as "true" for true, "null" for null). </param>
+            /// <param name="value">The replacement value if the match is successful, otherwise it is null. </param>
+            /// <returns>Returns true when the current position matches the keyword. </returns>
             private bool TryReadKeyword(string keyword, object replacement, out object value)
             {
                 value = null;
@@ -525,14 +543,15 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取一个 JSON 数字（整数或小数，支持可选的正负号和指数部分）。
-            /// 整数返回 long 类型，小数返回 double 类型。
+            /// Read a JSON number (integer or decimal, supports optional sign and exponent parts).
+            /// Integers are returned as long, and decimals are returned as double.
             /// </summary>
-            /// <param name="value">解析后的数字，long 或 double 类型。</param>
-            /// <returns>成功读取到合法数字时返回 true。</returns>
+            /// <param name="value">The parsed number, long or double type. </param>
+            /// <returns>Returns true when a legal number is successfully read. </returns>
             private bool TryReadNumber(out object value)
             {
-                // 1. 记录数字起始位置，读取可选的负号
+                // 1. Record the starting position of the number and read the optional negative sign
+
                 value = null;
                 var start = index;
                 var isWholeNumber = true;
@@ -542,13 +561,15 @@ namespace mlp
                     return false;
                 }
 
-                // 2. 读取整数部分
+                // 2. Read the integer part
+
                 if (!TryReadIntegerDigits())
                 {
                     return false;
                 }
 
-                // 3. 有小数点则读取小数部分
+                // 3. If there is a decimal point, read the decimal part
+
                 if (TryConsume('.'))
                 {
                     isWholeNumber = false;
@@ -558,7 +579,8 @@ namespace mlp
                     }
                 }
 
-                // 4. 有 e/E 则读取指数部分
+                // 4. If e/E is present, read the exponent part
+
                 if (!IsAtEnd && (source[index] == 'e' || source[index] == 'E'))
                 {
                     isWholeNumber = false;
@@ -574,7 +596,8 @@ namespace mlp
                     }
                 }
 
-                // 5. 整数用 long，小数用 double
+                // 5. Use long for integers and double for decimals.
+
                 var slice = source.Substring(start, index - start);
                 if (isWholeNumber && long.TryParse(slice, NumberStyles.Integer, CultureInfo.InvariantCulture, out var wholeNumber))
                 {
@@ -592,9 +615,9 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取数字的整数部分（一个或多个数字，除 "0" 本身外不允许前导零）。
+            /// Reads the integer part of a number (one or more digits, leading zeros are not allowed except "0" itself).
             /// </summary>
-            /// <returns>至少读取到一位数字时返回 true。</returns>
+            /// <returns>Returns true if at least one digit is read. </returns>
             private bool TryReadIntegerDigits()
             {
                 if (IsAtEnd)
@@ -623,9 +646,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// 读取数字的小数部分或指数部分的一个或多个数字。
+            /// Reads one or more digits of the decimal or exponent part of a number.
+
             /// </summary>
-            /// <returns>至少读取到一位数字时返回 true。</returns>
+            /// <returns>Returns true if at least one digit is read. </returns>
             private bool TryReadDecimalDigits()
             {
                 var start = index;
@@ -638,10 +662,10 @@ namespace mlp
             }
 
             /// <summary>
-            /// 检查给定关键字是否出现在当前读取位置，不移动读取位置。
+            /// Checks whether the given keyword appears at the current read position without moving the read position.
             /// </summary>
-            /// <param name="keyword">要匹配的文本。</param>
-            /// <returns>当前位置匹配到关键字时返回 true。</returns>
+            /// <param name="keyword">Text to match. </param>
+            /// <returns>Returns true when the current position matches the keyword. </returns>
             private bool Matches(string keyword)
             {
                 if (index + keyword.Length > source.Length)
@@ -661,7 +685,8 @@ namespace mlp
             }
 
             /// <summary>
-            /// 跳过所有空格、制表符和换行符，直到遇到非空白字符为止。
+            /// Skips all spaces, tabs, and newlines until a non-whitespace character is encountered.
+
             /// </summary>
             private void SkipWhitespace()
             {
@@ -672,19 +697,19 @@ namespace mlp
             }
 
             /// <summary>
-            /// 返回当前位置的字符，并将读取位置向后移动一位。
+            /// Returns the character at the current position and moves the reading position one position backward.
             /// </summary>
-            /// <returns>读取到的字符。</returns>
+            /// <returns>The characters read. </returns>
             private char ReadChar()
             {
                 return source[index++];
             }
 
             /// <summary>
-            /// 如果当前字符与期望字符匹配，则跳过该字符并返回 true，否则返回 false。
+            /// If the current character matches the expected character, skip the character and return true, otherwise return false.
             /// </summary>
-            /// <param name="expected">期望匹配的字符。</param>
-            /// <returns>成功匹配并消费该字符时返回 true。</returns>
+            /// <param name="expected">Characters expected to match. </param>
+            /// <returns>Returns true when the character is successfully matched and consumed. </returns>
             private bool TryConsume(char expected)
             {
                 if (IsAtEnd || source[index] != expected)
@@ -697,30 +722,30 @@ namespace mlp
             }
 
             /// <summary>
-            /// 判断字符是否可能是 JSON 数字的起始字符（数字或负号）。
+            /// Determines whether a character may be the starting character of a JSON number (a digit or a minus sign).
             /// </summary>
-            /// <param name="value">要测试的字符。</param>
-            /// <returns>字符为 '-' 或数字时返回 true。</returns>
+            /// <param name="value">The character to test. </param>
+            /// <returns> Returns true if the character is '-' or a number. </returns>
             private static bool IsNumberStart(char value)
             {
                 return value == '-' || char.IsDigit(value);
             }
 
             /// <summary>
-            /// 判断字符是否为 1 到 9 之间的数字（不包括零）。
+            /// Determines whether the character is a number between 1 and 9 (excluding zero).
             /// </summary>
-            /// <param name="value">要测试的字符。</param>
-            /// <returns>字符在 '1' 到 '9' 之间时返回 true。</returns>
+            /// <param name="value">The character to test. </param>
+            /// <returns> Returns true if the character is between '1' and '9'. </returns>
             private static bool IsNonZeroDigit(char value)
             {
                 return value >= '1' && value <= '9';
             }
 
             /// <summary>
-            /// 将单个十六进制字符（0-9、a-f、A-F）转换为对应的整数值。
+            /// Converts single hexadecimal characters (0-9, a-f, A-F) to corresponding integer values.
             /// </summary>
-            /// <param name="value">要解码的十六进制字符。</param>
-            /// <returns>对应的整数值（0-15），字符不是合法十六进制数字时返回 -1。</returns>
+            /// <param name="value">The hexadecimal character to decode. </param>
+            /// <returns>The corresponding integer value (0-15), -1 is returned when the character is not a legal hexadecimal number. </returns>
             private static int DecodeHexDigit(char value)
             {
                 if (value >= '0' && value <= '9')

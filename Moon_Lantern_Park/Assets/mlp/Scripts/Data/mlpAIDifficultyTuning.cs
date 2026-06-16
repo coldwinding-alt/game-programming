@@ -1,111 +1,113 @@
-// AI 难度调节参数  AI 的"身体素质"
-// 根据难度等级（简单、普通、困难、地狱）调整电脑对手的表现：反应速度、投篮准确度、防守积极性等。难度越高，电脑越厉害。
+// AI difficulty adjustment parameters AI "physical fitness"
+// Adjust the computer opponent's performance according to the difficulty level (easy, normal, hard, hell): reaction speed, shooting accuracy, defensive enthusiasm, etc. The higher the difficulty, the more powerful the computer.
 
 namespace mlp
 {
     /// <summary>
-    /// AI 难度调节参数：定义某个难度等级下 AI 的各种行为距离和概率，比如防守距离、抢断距离、冲刺距离等。
+    /// AI difficulty adjustment parameters: Define various behavioral distances and probabilities of AI under a certain difficulty level, such as defensive distance, tackling distance, sprinting distance, etc.
+
     /// </summary>
     public readonly struct mlpAIDifficultyTuningProfile
     {
-        // ===== 防守类参数 =====
+        // ===== Defense parameters =====
 
-        /// <summary>防守干扰距离：AI 在对手投篮时，多大范围内会尝试干扰/封盖。
-        /// 值越大 → AI 防守覆盖范围越广 → 难度越高。例如 Easy=180, Hell=260。</summary>
+        /// <summary>Defensive interference distance: The range within which the AI ​​will attempt to interfere/block shots when the opponent shoots.
+        /// The larger the value → the wider the AI ​​defense coverage → the higher the difficulty. For example Easy=180, Hell=260. </summary>
         public readonly float DefenceContestDistance;
 
-        /// <summary>身后抢断距离：AI 在持球人身后时，多大范围内会尝试抢断。
-        /// 值越大 → AI 从背后抢断越容易 → 难度越高。例如 Easy=80, Hell=140。</summary>
+        /// <summary>Stealing distance from behind: When the AI ​​is behind the ball holder, the range within which it will attempt to steal.
+        /// The larger the value → the easier it is for the AI ​​to steal from behind → the higher the difficulty. For example Easy=80, Hell=140. </summary>
         public readonly float StealBehindDistance;
 
-        /// <summary>篮下抢断距离：AI 在篮筐附近时，多大范围内会尝试抢断。
-        /// 值越大 → AI 在篮筐附近防守越积极 → 难度越高。例如 Easy=45, Hell=90。</summary>
+        /// <summary>Stealing distance under the basket: When the AI ​​is near the basket, the range within which it will attempt to steal.
+        /// The larger the value → the more aggressive the AI ​​will defend near the basket → the higher the difficulty. For example Easy=45, Hell=90. </summary>
         public readonly float StealBasketDistance;
 
-        // ===== 冲刺类参数 =====
+        // ===== Sprint parameters =====
 
-        /// <summary>持球人超级冲刺最短距离：持球的 AI 必须跑过至少多远才能触发超级冲刺。
-        /// 值越小 → AI 越容易触发冲刺 → 难度越高。例如 Easy=90, Hell=40。</summary>
+        /// <summary>Minimum distance for ball carrier super sprint: The minimum distance the AI ​​holding the ball must travel to trigger a super sprint.
+        /// The smaller the value → the easier it is for the AI ​​to trigger sprint → the higher the difficulty. For example Easy=90, Hell=40. </summary>
         public readonly float HolderSuperDashMinDistance;
 
-        /// <summary>持球人超级冲刺最大距离：持球 AI 使用超级冲刺的有效范围上限。
-        /// 值越大 → AI 冲刺覆盖范围越远 → 难度越高。例如 Easy=460, Hell=620。</summary>
+        /// <summary>Maximum super sprint distance of the ball holder: the upper limit of the effective range of the super sprint used by the ball holding AI.
+        /// The larger the value → the farther the AI ​​sprint covers → the higher the difficulty. For example Easy=460, Hell=620. </summary>
         public readonly float HolderSuperDashMaxDistance;
 
-        /// <summary>自由球超级冲刺距离：球处于无人控制状态时，AI 冲刺抢球的最大距离。
-        /// 值越小 → AI 越早开始冲刺抢球（反应越快）→ 难度越高。例如 Easy=120, Hell=60。</summary>
+        /// <summary>Free ball super sprint distance: The maximum distance the AI ​​can sprint to grab the ball when the ball is uncontrolled.
+        /// The smaller the value → the earlier the AI ​​starts sprinting to grab the ball (the faster the reaction) → the higher the difficulty. For example Easy=120, Hell=60. </summary>
         public readonly float LooseBallSuperDashDistance;
 
-        // ===== 进攻类参数 =====
+        // ===== Offensive parameters =====
 
-        /// <summary>进攻施压距离：AI 进攻时，多大范围内开始对防守方施加压力。
-        /// 值越大 → AI 进攻时越早开始施压 → 难度越高。例如 Easy=140, Hell=240。</summary>
+
+        /// <summary>Offensive pressure distance: When the AI attacks, the range within which it starts to exert pressure on the defender.
+        /// The larger the value → the earlier the AI ​​starts to apply pressure when attacking → the higher the difficulty. For example Easy=140, Hell=240. </summary>
         public readonly float AttackPressureDistance;
 
-        /// <summary>进攻超级冲刺距离：AI 向篮筐发起进攻性超级冲刺的最大距离。
-        /// 值越小 → AI 越倾向于近距离精确冲刺（更高效）→ 难度越高。例如 Easy=260, Hell=150。</summary>
+        /// <summary>Offensive Super Sprint Distance: The maximum distance the AI ​​can launch an offensive super sprint to the basket.
+        /// The smaller the value → the more the AI ​​prefers precision sprinting at close range (more efficient) → the higher the difficulty. For example Easy=260, Hell=150. </summary>
         public readonly float AttackSuperDashDistance;
 
-        /// <summary>冲刺封盖最远距离：AI 尝试用冲刺动作封盖投篮的最远距离。
-        /// 值越大 → AI 封盖覆盖范围越广 → 难度越高。例如 Easy=180, Hell=280。</summary>
+        /// <summary>Maximum sprint block distance: The furthest distance the AI ​​attempts to block a shot with a sprint action.
+        /// The larger the value → the wider the AI ​​blocking coverage → the higher the difficulty. For example Easy=180, Hell=280. </summary>
         public readonly float DashBlockRangeMaxDistance;
 
-        // ===== 倍率/加成类参数（仅高难度启用） =====
+        // ===== Multiplier/bonus parameters (enabled only in high difficulty) =====
 
-        /// <summary>冲刺冷却倍率：AI 冲刺后冷却时间的缩放系数（基于默认冷却时间）。
-        /// 值越小 → 冷却越短 → AI 冲刺越频繁 → 难度越高。默认=1.0，Hell=0.6。</summary>
+        /// <summary>Sprint Cooldown Multiplier: Scaling factor for the AI's cooldown after sprinting (based on the default cooldown).
+        /// The smaller the value → the shorter the cooldown → the more frequently the AI ​​sprints → the higher the difficulty. Default=1.0, Hell=0.6. </summary>
         public readonly float DashCooldownMultiplier;
 
-        /// <summary>抢断范围加成：AI 抢断判定距离的额外增量（直接加到基础上）。
-        /// 值越大 → AI 抢断判定范围越大 → 难度越高。默认=0，Hell=20。</summary>
+        /// <summary>Stealing range bonus: additional increment of AI stealing judgment distance (directly added to the base).
+        /// The larger the value → the larger the AI ​​steal judgment range → the higher the difficulty. Default=0, Hell=20. </summary>
         public readonly float StealRangeBonus;
 
-        /// <summary>眩晕持续时间倍率：AI 被眩晕时的持续时间缩放系数（基于默认眩晕时间）。
-        /// 值越小 → AI 恢复越快 → 难度越高。默认=1.0，Hell=0.65。</summary>
+        /// <summary>Stun duration multiplier: The duration scaling factor when the AI ​​is stunned (based on the default stun time).
+        /// The smaller the value → the faster the AI ​​recovery → the higher the difficulty. Default=1.0, Hell=0.65. </summary>
         public readonly float StunDurationMultiplier;
 
-        // ===== 必杀技/能量类参数（仅高难度启用） =====
+        // ===== Special skills/energy parameters (enabled only in high difficulty) =====
 
-        /// <summary>开局必杀技能量比例：比赛开始时 AI 拥有的必杀技能量占满槽的百分比。
-        /// 值越大 → AI 开局就有更多能量 → 难度越高。默认=0，Hell=0.55（开局半管以上）。</summary>
+        /// <summary>The proportion of the sure-kill skills at the beginning: the percentage of the sure-kill skills owned by the AI ​​at the beginning of the game to the full slot.
+        /// The larger the value → the AI ​​starts with more energy → the higher the difficulty. Default=0, Hell=0.55 (above half pipe at the beginning). </summary>
         public readonly float OpeningSuperChargeFraction;
 
-        /// <summary>必杀技能量返还比例：AI 使用必杀技后，返还的能量占消耗量的百分比。
-        /// 值越大 → AI 能更快攒出下一个必杀技 → 难度越高。默认=0，Hell=0.35。</summary>
+        /// <summary>Special skill energy return ratio: After the AI ​​uses a special skill, the energy returned accounts for the percentage of consumption.
+        /// The larger the value → the AI ​​can accumulate the next special move faster → the higher the difficulty. Default=0, Hell=0.35. </summary>
         public readonly float NativeSuperRefundFraction;
 
-        /// <summary>额外超级冲刺冷却（秒）：AI 超级冲刺在基础冷却之上额外增加的冷却时间。
-        /// 值越大 → AI 冲刺间隔越长 → 难度越低（此为限制高难度 AI 的平衡参数）。默认=0，Hell=10。</summary>
+        /// <summary>Extra Super Sprint Cooldown (seconds): The additional cooldown time of AI Super Sprint on top of the base cooldown.
+        /// The larger the value → the longer the AI ​​sprint interval → the lower the difficulty (this is a balance parameter that limits high-difficulty AI). Default=0, Hell=10. </summary>
         public readonly float BonusSuperDashCooldown;
 
-        /// <summary>额外护盾冷却（秒）：AI 护盾技能在基础冷却之上额外增加的冷却时间。
-        /// 值越大 → AI 护盾使用频率越低 → 难度越低（同为平衡参数）。默认=0，Hell=24。</summary>
+        /// <summary>Extra shield cooldown (seconds): The additional cooldown time of the AI ​​shield skill on top of the base cooldown.
+        /// The larger the value → the less frequently the AI ​​shield is used → the lower the difficulty (the same as the balance parameter). Default=0, Hell=24. </summary>
         public readonly float BonusShieldCooldown;
 
-        /// <summary>是否拥有额外必杀技：高难度 AI 是否解锁额外的必杀技能力。
-        /// true → AI 拥有更多技能选项 → 难度更高。默认=false，Hell=true。</summary>
+        /// <summary>Whether it has additional special skills: whether high-difficulty AI unlocks additional special skills.
+        /// true → AI has more skill options → more difficult. Default=false, Hell=true. </summary>
         public readonly bool HasBonusSupers;
 
         /// <summary>
-        /// 创建一个新的 AI 难度配置，包含某个难度等级的所有调节数值。
+        /// Creates a new AI difficulty profile that contains all modifiers for a difficulty level.
         /// </summary>
-        /// <param name="defenceContestDistance">防守时 AI 干扰投篮所需的距离。</param>
-        /// <param name="stealBehindDistance">在持球人身后尝试抢断的最大距离。</param>
-        /// <param name="stealBasketDistance">在篮筐附近尝试抢断的最大距离。</param>
-        /// <param name="holderSuperDashMinDistance">持球人必须跑过的最短距离才能使用超级冲刺。</param>
-        /// <param name="holderSuperDashMaxDistance">持球状态下 AI 使用超级冲刺的最大范围。</param>
-        /// <param name="looseBallSuperDashDistance">AI 冲刺抢夺自由球的最大距离。</param>
-        /// <param name="attackPressureDistance">进攻时 AI 开始施压的接近距离。</param>
-        /// <param name="attackSuperDashDistance">向篮筐发起进攻性超级冲刺的最大距离。</param>
-        /// <param name="dashBlockRangeMaxDistance">AI 尝试冲刺封盖的最远距离。</param>
-        /// <param name="dashCooldownMultiplier">冲刺冷却时间的倍率（越低 = 冲刺越快）。</param>
-        /// <param name="stealRangeBonus">AI 抢断的额外距离加成。</param>
-        /// <param name="stunDurationMultiplier">AI 被眩晕持续时间的倍率（越低 = 恢复越快）。</param>
-        /// <param name="openingSuperChargeFraction">比赛开始时 AI 拥有的必杀技能量比例。</param>
-        /// <param name="nativeSuperRefundFraction">AI 使用技能后返还的必杀技能量比例。</param>
-        /// <param name="bonusSuperDashCooldown">AI 超级冲刺的额外冷却时间（秒）。</param>
-        /// <param name="bonusShieldCooldown">AI 护盾技能的额外冷却时间（秒）。</param>
-        /// <param name="hasBonusSupers">该难度等级是否赋予 AI 额外的必杀技能力。</param>
+        /// <param name="defenceContestDistance">The distance required for the AI ​​to interfere with shots when defending. </param>
+        /// <param name="stealBehindDistance">The maximum distance behind the ball handler to attempt a steal. </param>
+        /// <param name="stealBasketDistance">Maximum distance near the basket for attempted steals. </param>
+        /// <param name="holderSuperDashMinDistance">The shortest distance the ball carrier must travel to use Super Dash. </param>
+        /// <param name="holderSuperDashMaxDistance">The maximum range of the AI's super dash when holding the ball. </param>
+        /// <param name="looseBallSuperDashDistance">The maximum distance the AI ​​can sprint to grab a free ball. </param>
+        /// <param name="attackPressureDistance">The approach distance at which the AI ​​starts to apply pressure when attacking. </param>
+        /// <param name="attackSuperDashDistance">The maximum distance for an offensive super dash to the basket. </param>
+        /// <param name="dashBlockRangeMaxDistance">The maximum distance the AI ​​attempts to sprint to block. </param>
+        /// <param name="dashCooldownMultiplier">Multiplier for dash cooldown (lower = faster dash). </param>
+        /// <param name="stealRangeBonus">Extra range bonus for AI steals. </param>
+        /// <param name="stunDurationMultiplier">The multiplier for the duration the AI ​​is stunned (lower = faster recovery). </param>
+        /// <param name="openingSuperChargeFraction">The ratio of the amount of special kills the AI ​​has at the start of the match. </param>
+        /// <param name="nativeSuperRefundFraction">The proportion of the amount of special skills returned by the AI ​​after using skills. </param>
+        /// <param name="bonusSuperDashCooldown">Bonus cooldown for AI Super Dash in seconds. </param>
+        /// <param name="bonusShieldCooldown">Bonus cooldown for AI shield skills in seconds. </param>
+        /// <param name="hasBonusSupers">Whether this difficulty level gives the AI ​​additional special kill skills. </param>
         public mlpAIDifficultyTuningProfile(
             float defenceContestDistance,
             float stealBehindDistance,
@@ -146,7 +148,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// AI 难度调节器：根据选择的难度等级（简单/普通/困难/地狱）返回对应的调节参数。
+    /// AI difficulty adjuster: Returns the corresponding adjustment parameters according to the selected difficulty level (easy/normal/hard/hell).
     /// </summary>
     public static class mlpAIDifficultyTuning
     {
@@ -203,10 +205,10 @@ namespace mlp
             hasBonusSupers: true);
 
         /// <summary>
-        /// 获取指定难度等级的调节配置。如果难度未知，回退到普通难度。
+        /// Get the adjustment configuration for the specified difficulty level. If the difficulty is unknown, fall back to normal difficulty.
         /// </summary>
-        /// <param name="difficulty">要查找的难度等级（Easy、Normal、Hard 或 Hell）。</param>
-        /// <returns>匹配的 AI 难度调节配置。</returns>
+        /// <param name="difficulty">The difficulty level to find (Easy, Normal, Hard, or Hell). </param>
+        /// <returns>Matching AI difficulty adjustment configuration. </returns>
         public static mlpAIDifficultyTuningProfile Get(mlpAiDifficulty difficulty)
         {
             switch (difficulty)

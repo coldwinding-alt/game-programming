@@ -31,6 +31,17 @@ You can safely say:
 
 > The current build uses documented Google Fonts runtime files for `Rajdhani-Bold`, `Rajdhani-SemiBold`, and `Griffy-Regular`, and it replaces the former legacy `Impact`, `Impact2`, `AgencyBold`, and `CfCrackBold` bundle slots with exact Google Fonts copies (`Anton`, `Barlow Condensed Bold`, and `Bungee`) while keeping the Unity resource filenames stable for compatibility.
 
+## Unity/TextMesh Pro default resources
+
+The repository also contains Unity/TextMesh Pro default support resources under `Assets/TextMesh Pro/`.
+
+| File | Source / status | License or attribution basis | Notes |
+| --- | --- | --- | --- |
+| `Assets/TextMesh Pro/Fonts/LiberationSans.ttf` | Unity/TextMesh Pro default font resource | `Assets/TextMesh Pro/Fonts/LiberationSans - OFL.txt` (`SIL Open Font License 1.1`) | Package support font, separate from the project-selected runtime font set under `Assets/mlp/Resources/mlp/Fonts/` |
+| `Assets/TextMesh Pro/Sprites/EmojiOne.png` | Unity/TextMesh Pro default emoji sprite sample | `Assets/TextMesh Pro/Sprites/EmojiOne Attribution.txt` | Package default sprite sample, not a project-authored AI image asset |
+
+These TextMesh Pro files should not be described as ChatGPT-generated project image assets. If they remain in the final repository, they should be treated as Unity/TMP package default resources retained with their included license/attribution files.
+
 ## Recommended follow-up
 
 - Keep `DOCS/FontLicenses/` with the repository so the bundled `OFL` texts stay alongside the coursework submission materials.

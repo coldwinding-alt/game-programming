@@ -35,6 +35,3 @@ __pycache__/
 
 # Unity editor-only scripts
 Assets/**/Editor/
-
-# Local Python tooling
-Tools/**/*.py

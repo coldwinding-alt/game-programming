@@ -1,5 +1,7 @@
-// 菜单界面的文字渲染层
-// 用 TextMeshPro 在屏幕上绘制菜单文字，自动根据屏幕大小缩放，保证文字在不同分辨率下都清晰好看。
+// Text rendering layer for menu interface
+
+// Use TextMeshPro to draw menu text on the screen and automatically scale it according to the screen size to ensure that the text is clear and beautiful at different resolutions.
+
 
 using System.Collections.Generic;
 using TMPro;
@@ -10,7 +12,7 @@ using UnityEngine.UI;
 namespace mlp
 {
     /// <summary>
-    /// 菜单文字渲染层：用 TextMeshPro 在屏幕上绘制菜单文字，自动根据屏幕大小缩放，保证文字清晰好看。
+    /// Menu text rendering layer: Use TextMeshPro to draw menu text on the screen and automatically scale it according to the screen size to ensure that the text is clear and beautiful.
     /// </summary>
     public sealed class mlpNativeMenuTextLayer
     {
@@ -25,14 +27,15 @@ namespace mlp
         public static mlpNativeMenuTextLayer Active { get; private set; }
 
         /// <summary>
-        /// 创建一个全屏画布，使用 TextMeshPro 绘制菜单文字。画布采用固定的 800x480 参考分辨率，确保文字位置在不同屏幕上保持一致。
+        /// Create a full-screen canvas and use TextMeshPro to draw menu text. The canvas uses a fixed reference resolution of 800x480 to ensure consistent text placement across screens.
         /// </summary>
         public mlpNativeMenuTextLayer(Transform menuRoot)
         {
-            // 1. 保存菜单根节点的引用（后续判断某个文字是否属于该层）
+            // 1. Save the reference to the menu root node (then determine whether a certain text belongs to this layer)
+
             this.menuRoot = menuRoot;
 
-            // 2. 创建画布——使用屏幕覆盖模式，始终显示在最上层
+            // 2. Create a canvas - use screen overlay mode to always display on top
             var canvasObject = new GameObject("mlpNativeMenuTextLayer");
             canvasObject.transform.SetParent(menuRoot, false);
 
@@ -40,13 +43,15 @@ namespace mlp
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = short.MaxValue;
 
-            // 3. 设置画布缩放器为固定像素大小模式（不自动缩放，由 RefreshLayout 手动控制）
+            // 3. Set the canvas scaler to fixed pixel size mode (no automatic scaling, manually controlled by RefreshLayout)
+
             var scaler = canvasObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
             scaler.scaleFactor = 1f;
             scaler.referencePixelsPerUnit = 100f;
 
-            // 4. 创建视口根节点——所有文字元素都放在这个节点下，参考尺寸 800x480
+            // 4. Create the viewport root node - all text elements are placed under this node, the reference size is 800x480
+
             viewportRoot = new GameObject("ViewportRoot").AddComponent<RectTransform>();
             viewportRoot.SetParent(canvas.transform, false);
             viewportRoot.anchorMin = new Vector2(0.5f, 0.5f);
@@ -56,12 +61,12 @@ namespace mlp
             viewportRoot.localScale = Vector3.one;
             viewportRoot.anchoredPosition = Vector2.zero;
 
-            // 5. 将自己注册为当前活跃的文字层（全局只有一个）
+            // 5. Register yourself as the currently active text layer (there is only one globally)
             Active = this;
         }
 
         /// <summary>
-        /// 检查给定的 Transform 是否属于此文字层的菜单根节点。用于判断某个文字元素是否由该层创建。
+        /// Checks whether the given Transform belongs to this text layer's menu root node. Used to determine whether a text element was created by this layer.
         /// </summary>
         public bool Owns(Transform parent)
         {
@@ -69,29 +74,32 @@ namespace mlp
         }
 
         /// <summary>
-        /// 屏幕尺寸变化时重新计算画布缩放，使 800x480 参考布局保持居中和正确大小。
+        /// Recalculate canvas scaling when screen size changes, keeping the 800x480 reference layout centered and correctly sized.
+
         /// </summary>
         public void RefreshLayout(int screenWidth, int screenHeight)
         {
-            // 1. 如果视口根节点不存在，直接返回
+            // 1. If the viewport root node does not exist, return directly
             if (viewportRoot == null)
             {
                 return;
             }
 
-            // 2. 确保屏幕尺寸至少为 1 像素
+            // 2. Make sure the screen size is at least 1 pixel
+
             var width = Mathf.Max(1, screenWidth);
             var height = Mathf.Max(1, screenHeight);
-            // 3. 计算缩放比例：取宽高中较小值，确保 800x480 的参考布局完整显示
+            // 3. Calculate the scaling ratio: take the smaller value of width and center to ensure that the 800x480 reference layout is fully displayed
+
             var scale = Mathf.Min(width / ReferenceWidth, height / ReferenceHeight);
-            // 4. 保持参考尺寸不变，只调整缩放比例，使文字在不同屏幕上大小一致
+            // 4. Keep the reference size unchanged and only adjust the scaling ratio to make the text the same size on different screens.
             viewportRoot.sizeDelta = ReferenceSize;
             viewportRoot.localScale = new Vector3(scale, scale, 1f);
             viewportRoot.anchoredPosition = Vector2.zero;
         }
 
         /// <summary>
-        /// 显示或隐藏整个文字层。隐藏时不绘制任何菜单文字。
+        /// Show or hide the entire text layer. No menu text is drawn when hidden.
         /// </summary>
         public void SetVisible(bool visible)
         {
@@ -102,7 +110,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在指定像素位置创建一个新的 TextMeshPro 文字元素。返回 TMP_Text 组件以便后续更新文字内容。x/y 坐标基于 800x480 参考坐标系。
+        /// Creates a new TextMeshPro text element at the specified pixel position. Return the TMP_Text component for subsequent updates of text content. The x/y coordinates are based on the 800x480 reference coordinate system.
         /// </summary>
         public TMP_Text CreateText(
             string name,
@@ -114,20 +122,23 @@ namespace mlp
             TextAnchor anchor,
             mlpTextStyle style)
         {
-            // 1. 创建新的 GameObject 并添加 RectTransform，挂载到视口根节点下
+            // 1. Create a new GameObject and add a RectTransform, mount it under the root node of the viewport
             var textObject = new GameObject(name);
             var rectTransform = textObject.AddComponent<RectTransform>();
             rectTransform.SetParent(viewportRoot, false);
-            // 2. 设置锚点为中心，根据对齐方式设置 pivot（如左上角、居中等）
+            // 2. Set the anchor point as the center and set the pivot according to the alignment (such as upper left corner, center, etc.)
+
             rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
             rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             rectTransform.pivot = AnchorToPivot(anchor);
-            // 3. 将像素坐标（左上角为原点）转换为画布坐标（中心为原点）
+            // 3. Convert pixel coordinates (the upper left corner is the origin) to canvas coordinates (the center is the origin)
+
             rectTransform.anchoredPosition = PixelToViewportPosition(x, y);
-            // 4. 根据文字行数估算所需高度
+            // 4. Estimate the required height based on the number of lines of text
+
             rectTransform.sizeDelta = new Vector2(ReferenceWidth, EstimateHeight(text, fontSize));
 
-            // 5. 添加 TextMeshPro 文字组件，配置基础属性
+            // 5. Add TextMeshPro text component and configure basic properties
             var textComponent = textObject.AddComponent<TextMeshProUGUI>();
             textComponent.raycastTarget = false;
             textComponent.richText = false;
@@ -139,7 +150,7 @@ namespace mlp
             textComponent.fontSize = fontSize;
             textComponent.text = text;
 
-            // 6. 应用字体样式（字体族、描边等）
+            // 6. Apply font styles (font family, stroke, etc.)
             ApplyStyle(textComponent, style, fontSize);
             return textComponent;
         }
@@ -155,7 +166,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 销毁画布及所有文字元素。在离开菜单时调用。
+        /// Destroy the canvas and all text elements. Called when leaving the menu.
         /// </summary>
         public void Dispose()
         {
@@ -178,7 +189,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为文字组件应用字体样式（字体族、描边等）。不同样式使用不同字体，例如标题用 Impact，正文用 Rajdhani。
+        /// Apply font styles (font family, stroke, etc.) to text components. Use different fonts for different styles, such as Impact for titles and Rajdhani for body text.
         /// </summary>
         private static void ApplyStyle(TMP_Text textComponent, mlpTextStyle style, int fontSize)
         {
@@ -196,7 +207,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将像素坐标（0,0 = 左上角）转换为画布锚点坐标（基于中心点）。
+        /// Convert pixel coordinates (0,0 = top left corner) to canvas anchor coordinates (based on center point).
+
         /// </summary>
         private static Vector2 PixelToViewportPosition(float x, float y)
         {
@@ -206,7 +218,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据行数和字号估算文字元素所需的高度。
+        /// Estimate the required height of the text element based on the number of lines and font size.
         /// </summary>
         private static float EstimateHeight(string text, int fontSize)
         {
@@ -226,7 +238,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将 TextAnchor（如 UpperLeft、MiddleCenter）转换为 RectTransform 的 pivot 向量。
+        /// Convert a TextAnchor (such as UpperLeft, MiddleCenter) to a RectTransform's pivot vector.
+
         /// </summary>
         private static Vector2 AnchorToPivot(TextAnchor anchor)
         {
@@ -254,7 +267,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将 TextAnchor 转换为对应的 TextMeshPro 对齐选项。
+        /// Convert a TextAnchor to the corresponding TextMeshPro alignment option.
         /// </summary>
         private static TextAlignmentOptions AnchorToAlignment(TextAnchor anchor)
         {
@@ -282,23 +295,24 @@ namespace mlp
         }
     }
 
-    /// <summary>TextMeshPro 字体缓存：内部使用的字体资源缓存，避免重复加载同一字体。</summary>
+    /// <summary>TextMeshPro font cache: internally used font resource cache to avoid loading the same font repeatedly. </summary>
     internal static class mlpTmpFontCache
     {
         private static readonly Dictionary<mlpFontKind, TMP_FontAsset> FontAssets = new Dictionary<mlpFontKind, TMP_FontAsset>();
 
         /// <summary>
-        /// 获取指定字体类型的缓存 TextMeshPro 字体资源。若尚未缓存，则尝试加载预打包的 SDF 字体，或从源字体动态创建。
+        /// Gets the cached TextMeshPro font resource for the specified font type. If not already cached, attempts to load a prepackaged SDF font, or dynamically create it from a source font.
         /// </summary>
         public static TMP_FontAsset Get(mlpFontKind fontKind)
         {
-            // 1. 检查缓存中是否已有该字体类型的 TMP 字体资源
+            // 1. Check whether the TMP font resource of this font type already exists in the cache
             if (FontAssets.TryGetValue(fontKind, out var cached) && cached != null)
             {
                 return cached;
             }
 
-            // 2. 优先加载预打包的 SDF 字体资源（性能最好）
+            // 2. Prioritize loading of prepackaged SDF font resources (best performance)
+
             var bundledFontAsset = Resources.Load<TMP_FontAsset>(GetBundledFontAssetPath(fontKind));
             if (bundledFontAsset != null)
             {
@@ -306,14 +320,16 @@ namespace mlp
                 return bundledFontAsset;
             }
 
-            // 3. 预打包资源缺失，从系统字体动态创建 TMP 字体资源
+            // 3. Prepackaged resources are missing and TMP font resources are dynamically created from system fonts.
+
             var sourceFont = mlpFontCache.Get(fontKind, 96);
             if (sourceFont == null)
             {
                 return null;
             }
 
-            // 4. 使用 TextMeshPro 的 API 从源字体生成 SDF 字体图集
+            // 4. Generate SDF font atlas from source fonts using TextMeshPro’s API
+
             var fontAsset = TMP_FontAsset.CreateFontAsset(
                 sourceFont,
                 96,
@@ -329,13 +345,14 @@ namespace mlp
                 fontAsset.hideFlags = HideFlags.HideAndDontSave;
             }
 
-            // 5. 缓存并返回
+            // 5. Cache and return
+
             FontAssets[fontKind] = fontAsset;
             return fontAsset;
         }
 
         /// <summary>
-        /// 返回与指定字体类型对应的预构建 TMP 字体资源的 Resources 路径。
+        /// Returns the Resources path to the prebuilt TMP font resource corresponding to the specified font type.
         /// </summary>
         private static string GetBundledFontAssetPath(mlpFontKind fontKind)
         {

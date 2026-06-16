@@ -1,30 +1,30 @@
-// 键盘控制配置（玩家 1 和玩家 2 的按键映射）
-// 定义两个玩家各自用哪些键盘按键来控制角色：移动、跳跃、投篮、假动作、扣篮、大招。游戏启动时根据这里设置的按键来读取玩家输入。
+// Keyboard control configuration (key mapping for Player 1 and Player 2)
+// Define which keyboard keys each player uses to control the character: move, jump, shoot, feint, dunk, ultimate move. When the game starts, player input is read based on the keys set here.
 
 using UnityEngine;
 
 namespace mlp
 {
     /// <summary>
-    /// 键盘控制配置：存储一个玩家的完整按键绑定（移动、跳跃、防守、投篮、大招）和 UI 显示标签。
+    /// Keyboard control configuration: Stores a player's complete key bindings (movement, jump, defense, shooting, ultimate) and UI display labels.
     /// </summary>
     public readonly struct mlpControlProfile
     {
         /// <summary>
-        /// 存储一个玩家的完整键盘按键绑定和显示标签。
+        /// Stores a player's complete keyboard keybindings and display labels.
         /// </summary>
-        /// <param name="controllerSlot">此配置所属的玩家槽位（0 = 单人，1 = 玩家 1，2 = 玩家 2）。</param>
-        /// <param name="moveHint">UI 中显示的移动键提示文本（如 "A/D"）。</param>
-        /// <param name="jumpHint">UI 中显示的跳跃键提示文本（如 "W"）。</param>
-        /// <param name="blockHint">UI 中显示的防守键提示文本（如 "S"）。</param>
-        /// <param name="actionHint">UI 中显示的投篮/操作键提示文本（如 "B"）。</param>
-        /// <param name="superHint">UI 中显示的大招键提示文本（如 "N"）。</param>
-        /// <param name="moveLeftKey">向左移动的 KeyCode。</param>
-        /// <param name="moveRightKey">向右移动的 KeyCode。</param>
-        /// <param name="jumpKey">跳跃的 KeyCode。</param>
-        /// <param name="blockKey">防守的 KeyCode。</param>
-        /// <param name="actionKey">投篮或执行主要操作的 KeyCode。</param>
-        /// <param name="superKey">激活大招的 KeyCode。</param>
+        /// <param name="controllerSlot">The player slot this configuration belongs to (0 = solo, 1 = player 1, 2 = player 2). </param>
+        /// <param name="moveHint">Move key hint text displayed in the UI (such as "A/D"). </param>
+        /// <param name="jumpHint">The jump key hint text displayed in the UI (such as "W"). </param>
+        /// <param name="blockHint">The defense key hint text displayed in the UI (such as "S"). </param>
+        /// <param name="actionHint">The shooting/action key hint text displayed in the UI (such as "B"). </param>
+        /// <param name="superHint">Ultimate key hint text displayed in the UI (such as "N"). </param>
+        /// <param name="moveLeftKey">KeyCode for moving left. </param>
+        /// <param name="moveRightKey">KeyCode to move to the right. </param>
+        /// <param name="jumpKey">Jump KeyCode. </param>
+        /// <param name="blockKey">The defending KeyCode. </param>
+        /// <param name="actionKey">KeyCode for shooting the ball or performing the main action. </param>
+        /// <param name="superKey">KeyCode that activates the ultimate move. </param>
         public mlpControlProfile(
             int controllerSlot,
             string moveHint,
@@ -68,7 +68,7 @@ namespace mlp
     }
 
     /// <summary>
-    /// 控制配置管理器：预设了单人、玩家 1、玩家 2 三套按键配置，根据玩家编号返回对应的按键映射。
+    /// Control configuration manager: Three sets of button configurations are preset for single player, player 1, and player 2, and the corresponding button mapping is returned according to the player number.
     /// </summary>
     public static class mlpControlsData
     {
@@ -120,20 +120,20 @@ namespace mlp
             $"2P  P2 {playerTwoProfile.MoveHint} MOVE  {playerTwoProfile.JumpHint} JUMP  {playerTwoProfile.BlockHint} BLOCK  {playerTwoProfile.ActionHint} SHOOT  {playerTwoProfile.SuperHint} SUPER";
 
         /// <summary>
-        /// 返回与给定脑标识字符串（如 "P0"、"B1"）匹配的控制配置。
+        /// Returns the control configuration matching the given brain identification string (e.g. "P0", "B1").
         /// </summary>
-        /// <param name="brain">脑字符串，其第二个字符编码了控制器槽位号。</param>
-        /// <returns>匹配的控制配置。</returns>
+        /// <param name="brain">Brain string, the second character encodes the controller slot number. </param>
+        /// <returns> Matching control configuration. </returns>
         public static mlpControlProfile ProfileForBrain(string brain)
         {
             return ProfileForSlot(ParseControllerSlot(brain));
         }
 
         /// <summary>
-        /// 返回指定玩家槽位的控制配置。
+        /// Returns the control configuration for the specified player slot.
         /// </summary>
-        /// <param name="controllerSlot">0 = 单人模式，1 = 双人模式中的玩家 1，2 = 玩家 2。</param>
-        /// <returns>匹配槽位号的控制配置。</returns>
+        /// <param name="controllerSlot">0 = Solo mode, 1 = Player 1 in Duo mode, 2 = Player 2. </param>
+        /// <returns>Control configuration matching the slot number. </returns>
         public static mlpControlProfile ProfileForSlot(int controllerSlot)
         {
             switch (controllerSlot)
@@ -148,10 +148,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从脑标识字符串中提取控制器槽位号。读取脑字符串的第二个字符作为数字，并限制在 0-2 范围内。
+        /// Extract the controller slot number from the brain identification string. Read the second character of the brain string as a number, limited to the range 0-2.
         /// </summary>
-        /// <param name="brain">脑字符串，如 "P0"、"P1" 或 "B2"。</param>
-        /// <returns>解析出的槽位号（0、1 或 2），解析失败时返回 0。</returns>
+        /// <param name="brain">Brain string, such as "P0", "P1" or "B2". </param>
+        /// <returns>The parsed slot number (0, 1 or 2), 0 will be returned if the parsing fails. </returns>
         public static int ParseControllerSlot(string brain)
         {
             if (string.IsNullOrEmpty(brain) || brain.Length < 2)

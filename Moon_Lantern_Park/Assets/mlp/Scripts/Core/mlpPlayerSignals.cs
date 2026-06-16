@@ -1,12 +1,13 @@
-// 玩家动作信号系统
-// 当玩家做出特定动作（投篮、扣篮、抢断、盖帽、得分等）时发出通知。教程系统和其他模块监听这些信号来做出反应，比如教程检测玩家是否完成了指定操作。
+// Player action signal system
+// Notify when a player takes a specific action (shoot, dunk, steal, block, score, etc.). The tutorial system and other modules listen to these signals to react, such as the tutorial detecting whether the player has completed a specified action.
 
 using System;
 
 namespace mlp
 {
     /// <summary>
-    /// 玩家动作信号类型：投篮、扣篮、抢断、盖帽、得分等各种动作的标识符。
+    /// Player action signal types: identifiers for various actions such as shooting, dunking, stealing, blocking, scoring, etc.
+
     /// </summary>
     public enum mlpPlayerSignalType
     {
@@ -26,18 +27,19 @@ namespace mlp
     }
 
     /// <summary>
-    /// 玩家动作信号总线：当玩家做出特定动作时广播通知，教程系统等模块监听这些信号来做出反应。
+    /// Player action signal bus: Broadcast notifications when players make specific actions, and modules such as the tutorial system listen to these signals to respond.
+
     /// </summary>
     public sealed class mlpPlayerSignalBus
     {
         public event Action<mlpPlayerSignalType, int, int> OnSignal;
 
         /// <summary>
-        /// 向所有注册的监听器（如教程系统）广播玩家动作事件。
+        /// Broadcast player action events to all registered listeners (such as the tutorial system).
         /// </summary>
-        /// <param name="signal">发生的动作类型（如投篮、扣篮、抢断等）。</param>
-        /// <param name="side">玩家所属队伍（-1 = 左侧，1 = 右侧）。</param>
-        /// <param name="playerNo">球员在队伍中的索引。</param>
+        /// <param name="signal">The type of action that occurred (e.g. shot, dunk, steal, etc.). </param>
+        /// <param name="side">The team the player belongs to (-1 = left, 1 = right). </param>
+        /// <param name="playerNo">The index of the player in the team. </param>
         public void Dispatch(mlpPlayerSignalType signal, int side, int playerNo)
         {
             OnSignal?.Invoke(signal, side, playerNo);

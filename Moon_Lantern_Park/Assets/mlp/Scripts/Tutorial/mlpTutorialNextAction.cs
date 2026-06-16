@@ -1,9 +1,10 @@
-// 教程结束后玩家的下一步选择
-// 教程完成后，玩家可以选择重玩教程、进入自由训练或开始快速匹配。
+// The player’s next choice after the tutorial ends
+
+// After the tutorial is completed, players can choose to replay the tutorial, enter free training, or start a quick match.
 
 namespace mlp
 {
-    /// <summary>教程结束后玩家的下一步选择：无、重玩教程、进入训练、开始快速匹配。</summary>
+    /// <summary>The player's next choice after the tutorial is: None, replay the tutorial, enter training, and start quick matching. </summary>
     public enum mlpTutorialNextAction
     {
         None,

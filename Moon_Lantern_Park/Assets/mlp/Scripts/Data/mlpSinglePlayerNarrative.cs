@@ -1,10 +1,12 @@
-// 单人模式叙事文案管理
-// 集中管理月灯公园单人模式的所有命名和剧情文案，包括冒险模式和锦标赛模式的标题、副标题、剧情面板和结局文本。
+// Single-player mode narrative copy management
+// Centrally manage all naming and plot copy for Moonlight Park's single-player mode, including titles, subtitles, plot panels, and ending text for Adventure and Tournament modes.
+
 
 namespace mlp
 {
     /// <summary>
-    /// 单人模式类型：冒险模式或锦标赛模式，用于区分不同模式的剧情文案。
+    /// Single player mode type: adventure mode or tournament mode, used to distinguish the plot copy of different modes.
+
     /// </summary>
     public enum mlpSinglePlayerNarrativeMode
     {
@@ -13,45 +15,50 @@ namespace mlp
     }
 
     /// <summary>
-    /// 故事面板定义：描述一个剧情漫画页面的内容——标题、美术风格、图片、背景故事标题和正文。
+    /// Story panel definition: Describes the content of a story comic page—title, art style, images, backstory title, and text.
     /// </summary>
     public sealed class mlpStoryPanelDefinition
     {
-        public readonly string Caption;       // 面板标题，漫画页面上显示的文字标题
-        public readonly string ArtDirection;  // 美术指导，描述这一页漫画应该怎么画（风格、构图等），给画师或 AI 生图用的提示词
-        public readonly string ImageKey;      // 图片资源键名，用于从资源系统中查找对应的漫画图片
-        public readonly string LoreTitle;     // 背景故事标题，面板下方可选显示的 Lore 文本的标题
-        public readonly string LoreBody;      // 背景故事正文，面板下方可选显示的 Lore 文本内容（支持多行）
+        public readonly string Caption;       // Panel title, the text title displayed on the comic page
+
+        public readonly string ArtDirection;  // Art director, describing how this page of comics should be drawn (style, composition, etc.), and prompt words for the artist or AI to draw the drawings
+
+        public readonly string ImageKey;      // Picture resource key name, used to find corresponding comic pictures from the resource system
+
+        public readonly string LoreTitle;     // Backstory title, the title of the Lore text optionally displayed below the panel
+
+        public readonly string LoreBody;      // Background story text, Lore text content optionally displayed below the panel (supports multiple lines)
+
 
         /// <summary>
-        /// 创建一个仅有标题和美术指导的故事面板，不包含图片和背景故事。
+        /// Create a story board with just the title and art direction, no images and no backstory.
         /// </summary>
-        /// <param name="caption">面板标题文本。</param>
-        /// <param name="artDirection">面板的美术指导说明。</param>
+        /// <param name="caption">Panel title text. </param>
+        /// <param name="artDirection">The art direction description of the panel. </param>
         public mlpStoryPanelDefinition(string caption, string artDirection)
             : this(caption, artDirection, null, null, null)
         {
         }
 
         /// <summary>
-        /// 创建一个带有标题、美术指导和图片资源的故事面板，不包含背景故事。
+        /// Create a story panel with a title, art direction, and image assets, but no backstory.
         /// </summary>
-        /// <param name="caption">面板标题文本。</param>
-        /// <param name="artDirection">面板的美术指导说明。</param>
-        /// <param name="imageKey">面板图片的资源键名。</param>
+        /// <param name="caption">Panel title text. </param>
+        /// <param name="artDirection">The art direction description of the panel. </param>
+        /// <param name="imageKey">The resource key name of the panel image. </param>
         public mlpStoryPanelDefinition(string caption, string artDirection, string imageKey)
             : this(caption, artDirection, imageKey, null, null)
         {
         }
 
         /// <summary>
-        /// 创建一个包含标题、美术指导、图片资源和可选背景故事的完整故事面板。
+        /// Create a complete storyboard that includes a title, art direction, image assets, and optional backstory.
         /// </summary>
-        /// <param name="caption">面板标题文本。</param>
-        /// <param name="artDirection">面板的美术指导说明。</param>
-        /// <param name="imageKey">面板图片的资源键名。</param>
-        /// <param name="loreTitle">背景故事标题，传 null 表示不显示背景故事。</param>
-        /// <param name="loreBodyLines">背景故事正文，多行文本会用换行符拼接。</param>
+        /// <param name="caption">Panel title text. </param>
+        /// <param name="artDirection">The art direction description of the panel. </param>
+        /// <param name="imageKey">The resource key name of the panel image. </param>
+        /// <param name="loreTitle">Backstory title, passing null means not to display the background story. </param>
+        /// <param name="loreBodyLines">Backstory text, multi-line text will be spliced ​​with line breaks. </param>
         public mlpStoryPanelDefinition(
             string caption,
             string artDirection,
@@ -59,20 +66,23 @@ namespace mlp
             string loreTitle,
             params string[] loreBodyLines)
         {
-            // 1. 保存面板的基本信息：标题、美术指导、图片路径
+            // 1. Save the basic information of the panel: title, art direction, image path
+
             Caption = caption;
             ArtDirection = artDirection;
             ImageKey = imageKey;
-            // 2. 如果没有传入背景故事标题，用空字符串代替（避免空引用错误）
+            // 2. If no background story title is passed in, use an empty string instead (to avoid null reference errors)
             LoreTitle = loreTitle ?? string.Empty;
-            // 3. 如果有背景故事正文（多行文本），用换行符拼接成一个字符串；否则设为空字符串
+            // 3. If there is background story text (multi-line text), use line breaks to concatenate it into a string; otherwise, set it to an empty string
+
             LoreBody = loreBodyLines == null || loreBodyLines.Length == 0
                 ? string.Empty
                 : string.Join("\n", loreBodyLines);
         }
 
         /// <summary>
-        /// 判断该面板是否包含可显示的背景故事（标题或正文）。
+        /// Determines whether the panel contains displayable backstory (title or text).
+
         /// </summary>
         public bool HasLore
         {
@@ -81,32 +91,39 @@ namespace mlp
     }
 
     /// <summary>
-    /// 单人模式剧情定义：描述一个完整模式的标题、副标题、所有故事面板和结局文本。
+    /// Single-player mode story definition: A title, subtitle, all story panels, and ending text that describe a complete mode.
     /// </summary>
     public sealed class mlpSinglePlayerModeDefinition
     {
-        public readonly mlpSinglePlayerNarrativeMode Mode;       // 叙事模式类型（冒险或锦标赛），例：Adventure
-        public readonly string ModeName;                         // 内部模式名称，用于程序逻辑中的标识，例："ADVENTURE MODE"
-        public readonly string MenuTitle;                        // 菜单界面上显示的模式标题，例："ESCAPE MOON LANTERN"
-        public readonly string Subtitle;                         // 菜单标题下方的副标题，简短描述模式目标，例："Collect every Lantern Sigil before dawn."
-        public readonly string Objective;                        // 模式的完整目标描述，例："Win 1v1 duels, reclaim every Lantern Sigil, and reopen the park gates."
-        public readonly string Tone;                             // 模式的叙事风格基调，例："Tense, adventurous, mysterious, but never grim."
-        public readonly string GameplayWrapper;                  // 玩法结构描述，例："A park map links one Warden duel to the next."
-        public readonly string WorldRole;                        // 该模式在游戏世界观中的角色定位，例："The night Moon Lantern Park locked its gates."
-        public readonly mlpStoryPanelDefinition[] OpeningComic;  // 模式开始时播放的开场漫画面板数组，冒险模式有3页：公园开放→心灯熄灭→首次决斗
+        public readonly mlpSinglePlayerNarrativeMode Mode;       // Narrative mode type (Adventure or Tournament), example: Adventure
+
+        public readonly string ModeName;                         // Internal mode name, used for identification in program logic, for example: "ADVENTURE MODE"
+
+        public readonly string MenuTitle;                        // The mode title displayed on the menu interface, for example: "ESCAPE MOON LANTERN"
+
+        public readonly string Subtitle;                         // A subtitle below the menu title that briefly describes the mode goal, for example: "Collect every Lantern Sigil before dawn."
+
+        public readonly string Objective;                        // The complete goal description of the mode, for example: "Win 1v1 duels, reclaim every Lantern Sigil, and reopen the park gates."
+
+        public readonly string Tone;                             // The tone of the mode's narrative style, for example: "Tense, adventurous, mysterious, but never grim."
+        public readonly string GameplayWrapper;                  // Description of gameplay structure, for example: "A park map links one Warden duel to the next."
+
+        public readonly string WorldRole;                        // The role of this mode in the game world view, for example: "The night Moon Lantern Park locked its gates."
+
+        public readonly mlpStoryPanelDefinition[] OpeningComic;  // The array of opening comic panels played when the mode starts. The adventure mode has 3 pages: Park opening → Heart light goes out → First duel
 
         /// <summary>
-        /// 创建单人模式定义，包含所有叙事和展示数据。
+        /// Create a single-player mode definition, including all narrative and presentation data.
         /// </summary>
-        /// <param name="mode">叙事模式类型。</param>
-        /// <param name="modeName">内部模式名称。</param>
-        /// <param name="menuTitle">模式选择菜单上显示的标题。</param>
-        /// <param name="subtitle">菜单标题下方显示的副标题。</param>
-        /// <param name="objective">模式目标的描述。</param>
-        /// <param name="tone">模式呈现风格的基调指南。</param>
-        /// <param name="gameplayWrapper">玩法结构的描述。</param>
-        /// <param name="worldRole">该模式在游戏世界叙事中的角色定位。</param>
-        /// <param name="openingComic">模式开始时展示的剧情面板。</param>
+        /// <param name="mode">Narrative mode type. </param>
+        /// <param name="modeName">Internal mode name. </param>
+        /// <param name="menuTitle">The title displayed on the mode selection menu. </param>
+        /// <param name="subtitle">The subtitle displayed below the menu title. </param>
+        /// <param name="objective">Description of the pattern objective. </param>
+        /// <param name="tone">Tone guide for pattern presentation style. </param>
+        /// <param name="gameplayWrapper">Description of gameplay structure. </param>
+        /// <param name="worldRole">The role of this mode in the game world narrative. </param>
+        /// <param name="openingComic">The story panel displayed at the beginning of the mode. </param>
         public mlpSinglePlayerModeDefinition(
             mlpSinglePlayerNarrativeMode mode,
             string modeName,
@@ -131,37 +148,58 @@ namespace mlp
     }
 
     /// <summary>
-    /// 单人模式剧情文案管理器：存储冒险模式和锦标赛模式的所有剧情文本，供 UI 显示使用。
+    /// Single-player mode story text manager: stores all story text for adventure mode and tournament mode for UI display.
+
     /// </summary>
     public static class mlpSinglePlayerNarrative
     {
-        // ── 世界观术语（出现在漫画 Lore、剧情文本、HUD 等多处） ──
-        public const string ParkName = "MOON LANTERN PARK";                // 公园名称，出现在开场漫画和各处剧情描述中
-        public const string PumpkinHeartLantern = "PUMPKIN HEART LANTERN"; // 南瓜心灯，公园核心道具，出现在漫画 Lore 和结局文本中
-        public const string LanternSigil = "LANTERN SIGIL";                // 灯印记（单数），击败 Warden 后获得的收集物
-        public const string LanternSigils = "LANTERN SIGILS";              // 灯印记（复数），用于菜单副标题等需要复数形式的场景
-        public const string Warden = "WARDEN";                             // 守护者（单数），冒险模式中的对手角色
-        public const string Wardens = "WARDENS";                           // 守护者（复数），锦标赛中作为明星选手回归
-        public const string MidnightLockdownProtocol = "MIDNIGHT LOCKDOWN PROTOCOL"; // 午夜封锁协议，公园自动封锁的机制名称
-        public const string LanternChampion = "LANTERN CHAMPION";          // 灯冠军，锦标赛冠军头衔，出现在 HUD 和颁奖界面
+        // ── World view terms (appearing in comic Lore, plot text, HUD, etc.) ──
+        public const string ParkName = "MOON LANTERN PARK";                // The name of the park appears in the opening comics and various plot descriptions
 
-        // ── 模式选择菜单 UI ──
-        public const string AdventureMenuTitle = "ESCAPE MOON LANTERN";    // 冒险模式菜单标题，显示在模式选择页面和开场漫画标题栏
-        public const string AdventureSubtitle = "Collect every Lantern Sigil before dawn."; // 冒险模式副标题，显示在菜单标题下方
-        public const string TournamentMenuTitle = "MOON LANTERN CUP";      // 锦标赛菜单标题，显示在模式选择页面和各锦标赛界面
-        public const string TournamentSubtitle = "Win the season and become the Lantern Champion."; // 锦标赛副标题，显示在菜单标题下方
-        public const string TournamentResultSubtitle = "MOON LANTERN RESULT"; // 锦标赛比赛结果页面副标题，出现在每场比赛结算界面
-        public const string TournamentSeasonCompleteTitle = "SEASON COMPLETE"; // 赛季完成标题，显示在颁奖界面顶部
-        public const string TournamentFormatLine = "8 PLAYERS / 2 DIVISIONS"; // 锦标赛赛制说明，显示在锦标赛设置页面
-        public const string AdventurePreviewStatus = "PARK MAP PLAYABLE";  // 冒险模式入口状态标签，显示在模式选择页面表示可游玩
-        public const string TournamentPreviewStatus = "FULL SEASON PLAYABLE"; // 锦标赛入口状态标签，显示在模式选择页面表示可游玩
-        public const string TournamentSeasonBanner = "PUBLIC CHAMPIONSHIP SEASON"; // 锦标赛赛季横幅标题，显示在锦标赛主页顶部
-        public const string TournamentSeasonHook = "A restored park turns its hidden ritual into an annual Halloween cup."; // 赛季简介描述，显示在锦标赛页面
-        public const string ComicReplayButton = "READ COMIC";              // 漫画重播按钮文字，显示在冒险和锦标赛菜单页面供玩家回顾漫画
-        public const string AdventureLinkToCup = "The public Cup later turns this lockdown ritual into a season."; // 冒险→锦标赛关联文案，暗示两个模式的故事联系
-        public const string CupLinkToAdventure = "The season quietly honors the night the park gates locked."; // 锦标赛→冒险关联文案，暗示两个模式的故事联系
+        public const string PumpkinHeartLantern = "PUMPKIN HEART LANTERN"; // Pumpkin heart lantern, the core prop of the park, appears in the comic Lore and the ending text
 
-        //两个模式定义实例
+        public const string LanternSigil = "LANTERN SIGIL";                // Lamp Sigil (odd number), a collectible obtained after defeating the Warden
+        public const string LanternSigils = "LANTERN SIGILS";              // Lamp mark (plural), used for menu subtitles and other scenes that require plural forms
+
+        public const string Warden = "WARDEN";                             // Guardian (singular), an opponent character in Adventure Mode
+
+        public const string Wardens = "WARDENS";                           // Guardians (plural), returning as star players in tournaments
+
+        public const string MidnightLockdownProtocol = "MIDNIGHT LOCKDOWN PROTOCOL"; // Midnight Lockout Protocol, the name of the park's automatic lockout mechanism
+
+        public const string LanternChampion = "LANTERN CHAMPION";          // Lamp Champion, the championship title, appears on the HUD and awards screen
+
+
+        // ── Mode selection menu UI ──
+
+        public const string AdventureMenuTitle = "ESCAPE MOON LANTERN";    // Adventure mode menu title, displayed on the mode selection page and opening comic title bar
+
+        public const string AdventureSubtitle = "Collect every Lantern Sigil before dawn."; // Adventure mode subtitle, displayed below the menu title
+
+        public const string TournamentMenuTitle = "MOON LANTERN CUP";      // Tournament menu title, displayed on the mode selection page and each tournament interface
+
+        public const string TournamentSubtitle = "Win the season and become the Lantern Champion."; // Tournament subtitle, displayed below the menu title
+
+        public const string TournamentResultSubtitle = "MOON LANTERN RESULT"; // The subtitle of the tournament results page, which appears on the settlement screen of each game.
+
+        public const string TournamentSeasonCompleteTitle = "SEASON COMPLETE"; // Season completion title, displayed at the top of the awards interface
+        public const string TournamentFormatLine = "8 PLAYERS / 2 DIVISIONS"; // Tournament format description, displayed on the tournament settings page
+
+        public const string AdventurePreviewStatus = "PARK MAP PLAYABLE";  // Adventure mode entrance status label, displayed on the mode selection page to indicate playability
+
+        public const string TournamentPreviewStatus = "FULL SEASON PLAYABLE"; // Tournament entrance status label, displayed on the mode selection page to indicate playability
+
+        public const string TournamentSeasonBanner = "PUBLIC CHAMPIONSHIP SEASON"; // Tournament season banner title, displayed at the top of the tournament homepage
+
+        public const string TournamentSeasonHook = "A restored park turns its hidden ritual into an annual Halloween cup."; // Season profile description, displayed on the tournament page
+
+        public const string ComicReplayButton = "READ COMIC";              // Comic replay button text, displayed on adventure and tournament menu pages for players to review the comic
+        public const string AdventureLinkToCup = "The public Cup later turns this lockdown ritual into a season."; // Adventure→Tournament related copywriting, hinting at the story connection between the two modes
+
+        public const string CupLinkToAdventure = "The season quietly honors the night the park gates locked."; // Tournament→Adventure related copywriting, hinting at the story connection between the two modes
+
+
+        //Two schema definition examples
         public static readonly mlpSinglePlayerModeDefinition Adventure =
             new mlpSinglePlayerModeDefinition(
                 mlpSinglePlayerNarrativeMode.Adventure,
@@ -251,39 +289,41 @@ namespace mlp
                 });
 
         /// <summary>
-        /// 根据叙事模式类型返回对应的模式定义。
+        /// Returns the corresponding mode definition based on the narrative mode type.
         /// </summary>
-        /// <param name="mode">要查找的叙事模式。</param>
-        /// <returns>冒险模式或锦标赛模式的定义。</returns>
+        /// <param name="mode">The narrative mode to look for. </param>
+        /// <returns>Definition of adventure mode or tournament mode. </returns>
         public static mlpSinglePlayerModeDefinition GetMode(mlpSinglePlayerNarrativeMode mode)
         {
             return mode == mlpSinglePlayerNarrativeMode.Adventure ? Adventure : Tournament;
         }
 
         /// <summary>
-        /// 获取当前锦标赛阶段的显示标题。
+        /// Get the display title of the current tournament stage.
         /// </summary>
-        /// <param name="tournament">要读取阶段信息的锦标赛数据。</param>
-        /// <returns>显示标题，如 "DIVISIONS"、"FINAL FOUR" 或 "GRAND FINAL"。</returns>
+        /// <param name="tournament">Tournament data to read stage information from. </param>
+        /// <returns>Display title, such as "DIVISIONS", "FINAL FOUR" or "GRAND FINAL". </returns>
         public static string GetTournamentStageTitle(mlpTournamentData tournament)
         {
-            // 1. 如果锦标赛数据为空，返回默认的赛季横幅标题
+            // 1. If the tournament data is empty, return the default season banner title
+
             if (tournament == null)
             {
                 return TournamentSeasonBanner;
             }
 
-            // 2. 如果锦标赛已结束，显示颁奖台标题
+            // 2. If the championship has ended, show the podium title
+
             if (tournament.Completed)
             {
                 return "AWARDS PODIUM";
             }
 
-            // 3. 根据锦标赛当前阶段返回对应的标题
+            // 3. Return the corresponding title based on the current stage of the tournament
             switch (tournament.CurrentStage)
             {
                 case mlpTournamentStage.RegularSeason:
-                    // 常规赛阶段：根据是否打完显示"分区赛"或"四强赛"
+                    // Regular season stage: "Divisional Tournament" or "Final Four" will be displayed depending on whether the game is completed or not.
                     return tournament.RegularSeasonCompleted ? "FINAL FOUR" : "DIVISIONS";
                 case mlpTournamentStage.SemiFinal:
                     return "FINAL FOUR";
@@ -297,29 +337,31 @@ namespace mlp
         }
 
         /// <summary>
-        /// 获取当前锦标赛阶段的叙事描述文本。
+        /// Gets the narrative description text for the current tournament stage.
         /// </summary>
-        /// <param name="tournament">要读取阶段信息的锦标赛数据。</param>
-        /// <returns>与当前阶段匹配的风味文本描述。</returns>
+        /// <param name="tournament">Tournament data to read stage information from. </param>
+        /// <returns>The flavor text description matching the current stage. </returns>
         public static string GetTournamentStageDescription(mlpTournamentData tournament)
         {
-            // 1. 如果锦标赛数据为空，返回默认的赛季简介
+            // 1. If the tournament data is empty, return to the default season introduction
+
             if (tournament == null)
             {
                 return TournamentSeasonHook;
             }
 
-            // 2. 如果锦标赛已结束，返回结局描述
+            // 2. If the tournament has ended, return the ending description
+
             if (tournament.Completed)
             {
                 return "The Cup renews the Heart Lantern, just as the first escape once did.";
             }
 
-            // 3. 根据当前阶段返回对应的风味文本描述
+            // 3. Return the corresponding flavor text description according to the current stage
             switch (tournament.CurrentStage)
             {
                 case mlpTournamentStage.RegularSeason:
-                    // 常规赛阶段：根据进度返回不同描述
+                    // Regular season stage: Return different descriptions based on progress
                     return tournament.RegularSeasonCompleted
                         ? "The top four step into the dome lights once reserved for Wardens."
                         : "Win division rounds and keep the Heart Lantern bright.";
@@ -335,10 +377,10 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据锦标赛最终排名返回结局叙事文本。
+        /// Returns the ending narrative text based on the final ranking of the tournament.
         /// </summary>
-        /// <param name="placement">玩家的最终排名（1 = 冠军）。</param>
-        /// <returns>与排名匹配的结局描述。</returns>
+        /// <param name="placement">The player's final ranking (1 = champion). </param>
+        /// <returns>An ending description that matches the ranking. </returns>
         public static string GetTournamentPlacementEnding(int placement)
         {
             switch (placement)

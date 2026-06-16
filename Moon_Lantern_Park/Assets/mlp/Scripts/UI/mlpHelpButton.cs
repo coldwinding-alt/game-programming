@@ -1,5 +1,5 @@
-// 帮助面板里的可点击按钮
-// 支持鼠标悬停变色和缩放效果，用于帮助面板的标签页切换和动作演示选择。
+// The clickable button
+//  in the help panel supports mouse hover discoloration and zoom effects, and is used for tab switching and action demonstration selection in the help panel.
 
 using TMPro;
 using UnityEngine;
@@ -7,7 +7,7 @@ using UnityEngine;
 namespace mlp
 {
     /// <summary>
-    /// 帮助面板按钮：支持鼠标悬停变色和缩放效果，用于帮助面板的标签页切换和动作演示选择。
+    /// Help panel button: supports mouse-over discoloration and zoom effects, used for tab switching and action demonstration selection of the help panel.
     /// </summary>
     public sealed class mlpHelpButton : MonoBehaviour
     {
@@ -49,12 +49,12 @@ namespace mlp
             Color configuredSelectedLabelTint,
             float configuredHoverScale)
         {
-            // 1. 保存按钮的动作类型（关闭、切换标签页、选择演示等）
+            // 1. Save the action type of the button (close, switch tabs, select presentation, etc.)
             action = configuredAction;
-            // 2. 保存按钮在屏幕上的中心位置和尺寸（用于鼠标碰撞检测）
+            // 2. Save the center position and size of the button on the screen (for mouse collision detection)
             pixelCenter = center;
             pixelSize = size;
-            // 3. 保存视觉元素引用和三种状态的颜色（普通、悬停、选中）
+            // 3. Save the visual element reference and the color of the three states (normal, hover, selected)
             visualRoot = configuredVisualRoot;
             tintTargets = configuredTintTargets;
             labelTargets = configuredLabelTargets;
@@ -65,14 +65,14 @@ namespace mlp
             hoverLabelTint = configuredHoverLabelTint;
             selectedLabelTint = configuredSelectedLabelTint;
             hoverScale = configuredHoverScale;
-            // 4. 强制重新初始化碰撞区域并刷新显示
+            // 4. Force reinitialization of the collision area and refresh the display
             initialized = false;
             EnsureInitialized();
             RefreshVisuals();
         }
 
         /// <summary>
-        /// 游戏启动时初始化按钮碰撞区域并显示默认视觉状态。
+        /// Initialize the button collision area and display the default visual state when the game starts.
         /// </summary>
         private void Awake()
         {
@@ -81,7 +81,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 按钮禁用时重置悬停和按下状态，避免按钮保持高亮显示。
+        /// Resets the hover and pressed states when the button is disabled, preventing the button from remaining highlighted.
         /// </summary>
         private void OnDisable()
         {
@@ -91,31 +91,31 @@ namespace mlp
         }
 
         /// <summary>
-        /// 检测鼠标是否悬停在按钮上。当玩家在按钮上完成一次完整的点击释放时返回 true。需要由面板每帧调用。
+        /// Detects whether the mouse is hovering over the button. Returns true when the player completes a full click release on the button. Needs to be called by the panel every frame.
         /// </summary>
         public bool Tick(Camera camera)
         {
-            // 1. 如果按钮被禁用或不在激活层级中，直接返回未点击
+            // 1. If the button is disabled or not in the activation level, return unclicked directly
             if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
             {
                 return false;
             }
 
-            // 2. 确保碰撞区域已初始化
+            // 2. Make sure the collision area has been initialized
             EnsureInitialized();
-            // 3. 获取鼠标在游戏像素坐标中的位置，判断是否在按钮区域内
+            // 3. Get the position of the mouse in the game pixel coordinates and determine whether it is within the button area
             var inside = TryGetMousePixel(camera, out var pixel) && pixelRect.Contains(pixel);
             hovered = inside;
-            // 4. 根据悬停状态更新按钮的颜色和缩放
+            // 4. Update the color and scale of the button based on the hover state
             RefreshVisuals();
 
-            // 5. 鼠标按下时记录"已按下"状态
+            // 5. Record the "pressed" state when the mouse is pressed
             if (inside && Input.GetMouseButtonDown(0))
             {
                 pressed = true;
             }
 
-            // 6. 鼠标松开时：如果之前按下了且仍在按钮区域内，则算作一次有效点击
+            // 6. When the mouse is released: If it was previously pressed and is still within the button area, it counts as a valid click
             if (!pressed || !Input.GetMouseButtonUp(0))
             {
                 return false;
@@ -126,7 +126,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 设置按钮的选中（高亮）状态。用于标签页和演示按钮，让玩家能看到当前激活的是哪个。
+        /// Set the selected (highlighted) state of the button. Used for tabs and demo buttons so players can see which one is currently active.
         /// </summary>
         public void SetSelected(bool isSelected)
         {
@@ -136,23 +136,23 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据 Inspector 中设置的中心点和尺寸构建像素碰撞区域。仅在按钮首次使用时执行一次。
+        /// Constructs a pixel collision area based on the center point and dimensions set in the Inspector. Executed only once when the button is first used.
         /// </summary>
         private void EnsureInitialized()
         {
-            // 1. 如果已经初始化过，直接返回
+            // 1. If it has been initialized, directly return
             if (initialized)
             {
                 return;
             }
 
-            // 2. 标记为已初始化
+            // 2. Mark as initialized
             initialized = true;
-            // 3. 如果没有指定视觉根节点，使用按钮自身的 Transform
+            // 3. If no visual root node is specified, use the button's own Transform
             visualRoot = visualRoot != null ? visualRoot : transform;
-            // 4. 记录原始缩放值（悬停时会在此基础上放大）
+            // 4. Record the original scale value (it will be enlarged on this basis when hovering)
             baseScale = visualRoot != null ? visualRoot.localScale : Vector3.one;
-            // 5. 根据中心点和尺寸构建像素碰撞矩形（用于检测鼠标是否在按钮上）
+            // 5. Construct a pixel collision rectangle based on the center point and size (used to detect whether the mouse is on the button)
             pixelRect = new Rect(
                 pixelCenter.x - pixelSize.x * 0.5f,
                 pixelCenter.y - pixelSize.y * 0.5f,
@@ -161,26 +161,26 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据按钮的悬停、选中或普通状态更新颜色和缩放。悬停时按钮略微放大，选中时使用不同的着色。
+        /// Update the color and scale according to the hover, selected or normal state of the button. The button enlarges slightly when hovered and uses a different coloring when selected.
         /// </summary>
         private void RefreshVisuals()
         {
-            // 1. 如果尚未初始化，跳过
+            // 1. If not initialized yet, skip
             if (!initialized)
             {
                 return;
             }
 
-            // 2. 悬停且未选中时略微放大按钮，否则恢复原始大小
+            // 2. Slightly enlarge button when hovered and unselected, otherwise return to original size
             var scaleTarget = hovered && !selected ? hoverScale : 1f;
             if (visualRoot != null)
             {
                 visualRoot.localScale = baseScale * scaleTarget;
             }
 
-            // 3. 根据状态选择背景颜色：选中 > 悬停 > 普通
+            // 3. Select background color based on state: Selected > Hover > Normal
             var tint = selected ? selectedTint : hovered ? hoverTint : normalTint;
-            // 4. 将背景颜色应用到所有需要着色的精灵渲染器
+            // 4. Apply background color to all sprite renderers that need shading
             if (tintTargets != null)
             {
                 for (var i = 0; i < tintTargets.Length; i++)
@@ -192,9 +192,9 @@ namespace mlp
                 }
             }
 
-            // 5. 根据状态选择文字颜色：选中 > 悬停 > 普通
+            // 5. Select text color based on state: Selected > Hover > Normal
             var labelTint = selected ? selectedLabelTint : hovered ? hoverLabelTint : normalLabelTint;
-            // 6. 将文字颜色应用到所有文字组件
+            // 6. Apply text color to all text components
             if (labelTargets != null)
             {
                 for (var i = 0; i < labelTargets.Length; i++)
@@ -208,7 +208,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将鼠标屏幕坐标转换为游戏像素坐标。当鼠标在游戏窗口或摄像机视野之外时返回 false。
+        /// Convert mouse screen coordinates to game pixel coordinates. Returns false when the mouse is outside the game window or camera field of view.
         /// </summary>
         private static bool TryGetMousePixel(Camera camera, out Vector2 pixel)
         {
@@ -238,7 +238,7 @@ namespace mlp
 
 #if UNITY_EDITOR
         /// <summary>
-        /// 通过预制体构建器配置按钮。仅在 Unity 编辑器中创建或更新帮助面板预制体时使用。
+        /// Configure buttons via the prefab builder. Only used when creating or updating a help panel prefab in the Unity Editor.
         /// </summary>
         public void EditorConfigure(
             mlpHelpButtonAction configuredAction,

@@ -13,7 +13,7 @@ This folder stores the June 2026 high-resolution source art used to rebuild the 
 - `witch_skill_source.png` -> `WITCH` / `FREEZE 2 SEC`
 - `black_cat_skill_source.png` -> `BLACK CAT` / `DASH STEAL`
 
-These images were generated on flat chroma-key backgrounds so the local rebuild script can remove the background and export clean transparent UI icons.
+These images were generated with ChatGPT image generation on flat chroma-key backgrounds so the local rebuild script can remove the background and export clean transparent UI icons.
 
 ## Rebuild Workflow
 

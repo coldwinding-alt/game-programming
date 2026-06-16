@@ -1,4 +1,4 @@
-// DragonBones 骨骼动画运行时 / 加载和播放 DragonBones 格式的骨骼动画，让角色能做出跑步、跳跃、投篮等各种动作。负责解析动画数据、管理骨骼层级、插值关键帧、显示插槽上的图片。游戏中所有角色动画都靠这个系统驱动。
+// DragonBones skeletal animation runtime/loads and plays skeletal animation in DragonBones format, allowing the character to perform various actions such as running, jumping, shooting, etc. Responsible for parsing animation data, managing bone levels, interpolating key frames, and displaying images on slots. All character animations in the game are driven by this system.
 
 using System;
 using System.Collections.Generic;
@@ -7,20 +7,25 @@ using UnityEngine;
 namespace mlp
 {
     /// <summary>
-    /// 骨骼动画工厂（单例）：负责加载和缓存骨骼数据、纹理图集，管理所有骨骼动画的创建和资源复用。
+    /// Skeleton animation factory (single case): Responsible for loading and caching skeletal data and texture atlases, managing the creation and resource reuse of all skeletal animations.
     /// </summary>
     public sealed class DBLiteFactory
     {
-        private static DBLiteFactory instance; // 单例实例
+        private static DBLiteFactory instance; // Singleton instance
 
-        private readonly Dictionary<string, DBLiteSkeleton> skeletons = new Dictionary<string, DBLiteSkeleton>(); // 已加载的骨架数据缓存，键为骨架名称
-        private readonly Dictionary<string, DBLiteTextureAtlas> textureAtlases = new Dictionary<string, DBLiteTextureAtlas>(); // 已加载的纹理图集缓存，键为图集名称
-        private readonly Dictionary<string, DBLiteArmatureData> armatures = new Dictionary<string, DBLiteArmatureData>(); // 已加载的骨架定义缓存，键为骨架名称
+
+        private readonly Dictionary<string, DBLiteSkeleton> skeletons = new Dictionary<string, DBLiteSkeleton>(); // Loaded skeleton data cache, key is skeleton name
+
+        private readonly Dictionary<string, DBLiteTextureAtlas> textureAtlases = new Dictionary<string, DBLiteTextureAtlas>(); // Loaded texture atlas cache, key is the atlas name
+
+        private readonly Dictionary<string, DBLiteArmatureData> armatures = new Dictionary<string, DBLiteArmatureData>(); // Loaded skeleton definition cache, key is skeleton name
+
 
         public static DBLiteFactory Instance => instance ?? (instance = new DBLiteFactory());
 
         /// <summary>
-        /// 如果尚未加载，则加载默认的 DragonBones 骨架和纹理。
+        /// Loads the default DragonBones skeleton and textures if not already loaded.
+
         /// </summary>
         public void EnsureLoaded()
         {
@@ -28,17 +33,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从 Resources 加载 DragonBones 骨架、纹理图集 JSON 和纹理图片。
+        /// Load the DragonBones skeleton, texture atlas JSON, and texture image from Resources.
         /// </summary>
         public void Load(string skeletonKey, string textureJsonKey, string textureImageKey)
         {
-            // 1. 如果该骨架数据已加载过，直接跳过（避免重复加载）
+            // 1. If the skeleton data has already been loaded, skip it directly (to avoid repeated loading)
+
             if (skeletons.ContainsKey(skeletonKey))
             {
                 return;
             }
 
-            // 2. 从 Resources 文件夹加载骨架 JSON、纹理图集 JSON 和纹理图片三个资源
+            // 2. Load three resources: skeleton JSON, texture atlas JSON and texture pictures from the Resources folder
+
             var skeletonAsset = Resources.Load<TextAsset>($"mlp/DragonBones/{skeletonKey}");
             var textureJsonAsset = Resources.Load<TextAsset>($"mlp/DragonBones/{textureJsonKey}");
             var texture = Resources.Load<Texture2D>($"mlp/DragonBones/{textureImageKey}");
@@ -48,14 +55,17 @@ namespace mlp
                 return;
             }
 
-            // 3. 解析纹理图集 JSON，记录每张小图在大图中的位置和尺寸
+            // 3. Parse the texture atlas JSON and record the position and size of each small image in the large image.
+
             var textureAtlas = DBLiteTextureAtlas.Parse(textureJsonKey, texture, textureJsonAsset.text);
             textureAtlases[textureJsonKey] = textureAtlas;
 
-            // 4. 解析骨架 JSON，提取所有骨架定义（骨骼、插槽、动画数据）
+            // 4. Parse the skeleton JSON and extract all skeleton definitions (bones, slots, animation data)
+
             var skeleton = DBLiteSkeleton.Parse(skeletonAsset.text, textureAtlas);
             skeletons[skeletonKey] = skeleton;
-            // 5. 把所有骨架的名称和数据存入字典，方便按名称查找
+            // 5. Store the names and data of all skeletons in the dictionary to facilitate searching by name
+
             foreach (var pair in skeleton.Armatures)
             {
                 armatures[pair.Key] = pair.Value;
@@ -63,20 +73,24 @@ namespace mlp
         }
 
         /// <summary>
-        /// 为指定名称的骨架创建一个带有 DBLiteArmature 组件的新 GameObject。
+        /// Creates a new GameObject with a DBLiteArmature component for the specified named skeleton.
+
         /// </summary>
         public DBLiteArmature BuildArmature(string armatureName, string objectName = null)
         {
-            // 1. 确保骨架数据已加载
+            // 1. Make sure the skeleton data is loaded
+
             EnsureLoaded();
-            // 2. 按名称查找骨架数据，找不到则返回 null
+            // 2. Search skeleton data by name, if not found, return null
+
             if (!armatures.TryGetValue(armatureName, out var data))
             {
                 Debug.LogWarning($"Missing DragonBones armature {armatureName}");
                 return null;
             }
 
-            // 3. 创建新的游戏对象，添加骨骼动画组件并初始化
+            // 3. Create a new game object, add skeletal animation components and initialize
+
             var go = new GameObject(objectName ?? armatureName);
             var armature = go.AddComponent<DBLiteArmature>();
             armature.Init(this, data);
@@ -84,7 +98,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 尝试根据名称查找已加载的骨架定义。
+        /// Try to find a loaded skeleton definition by name.
+
         /// </summary>
         public bool TryGetArmature(string armatureName, out DBLiteArmatureData data)
         {
@@ -93,7 +108,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据名称从纹理图集返回精灵，未找到则返回 null。
+        /// Returns the sprite from the texture atlas by name, or null if not found.
+
         /// </summary>
         public Sprite GetTextureSprite(string spriteName, string textureAtlasKey = "texture2")
         {
@@ -105,39 +121,59 @@ namespace mlp
     }
 
     /// <summary>
-    /// 骨骼动画播放器（挂载在游戏对象上）：控制一个角色的骨骼动画播放，包括切换动画、暂停、设置速度、更新骨骼和插槽的变换。
+    /// Skeletal animation player (mounted on the game object): Controls the skeletal animation playback of a character, including switching animations, pausing, setting speed, updating bones and slot transformations.
+
     /// </summary>
     public sealed class DBLiteArmature : MonoBehaviour
     {
-        private const float SlotDepthStep = 0.001f; // 插槽之间的 Z 轴深度步长，值越小插槽越紧密排列
-        private const string BallSlotName = "ball"; // 球体骨骼名称
-        private const string BallFrontSlotName = "ball_front"; // 球体前层骨骼名称
-        private DBLiteFactory factory; // 骨骼动画工厂引用，用于创建子骨架和获取纹理
-        private DBLiteArmatureData data; // 当前骨架的定义数据，包含骨骼、插槽和动画信息
-        private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>(); // 插槽实例字典，键为插槽名称，管理每个身体部件的显示
-        private readonly HashSet<string> hiddenSlots = new HashSet<string>(); // 被手动隐藏的插槽名称集合
-        private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>(); // 骨骼变换字典，键为骨骼名称，用于控制骨骼位置旋转缩放
-        private DBLiteAnimationData currentAnimation; // 当前正在播放的动画数据
-        private float elapsedFrames; // 当前动画已播放的累计帧数
-        private bool animationCompleteSent; // 是否已发送动画完成事件，防止重复发送
-        private bool playing = true; // 是否正在播放动画
+        private const float SlotDepthStep = 0.001f; // The Z-axis depth step between slots. The smaller the value, the closer the slots are.
 
-        public string ArmatureName => data != null ? data.Name : string.Empty; // 当前骨架的名称
-        public float PlaybackSpeed { get; set; } = 1f; // 动画播放速度倍率，1为正常速度
-        public event Action<string> AnimationComplete; // 动画播放完成事件，参数为动画名称
-        public event Action<string, string> FrameEvent; // 帧事件回调，参数为动画名称和事件名称
+        private const string BallSlotName = "ball"; // Sphere bone name
+
+        private const string BallFrontSlotName = "ball_front"; // Sphere front layer bone name
+
+        private DBLiteFactory factory; // Skeleton animation factory reference, used to create sub-skeletons and obtain textures
+
+        private DBLiteArmatureData data; // Definition data of the current skeleton, including bone, slot and animation information
+
+        private readonly Dictionary<string, DBLiteSlotInstance> slots = new Dictionary<string, DBLiteSlotInstance>(); // A dictionary of slot instances, with keys being slot names, managing the display of each body part
+
+        private readonly HashSet<string> hiddenSlots = new HashSet<string>(); // A collection of manually hidden slot names
+
+        private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>(); // Bone transformation dictionary, the key is the bone name, used to control the rotation and scaling of bone position
+
+        private DBLiteAnimationData currentAnimation; // Animation data currently being played
+
+        private float elapsedFrames; // The cumulative number of frames that the current animation has been played
+
+        private bool animationCompleteSent; // Whether the animation completion event has been sent to prevent repeated sending
+
+        private bool playing = true; // Whether animation is playing
+
+        public string ArmatureName => data != null ? data.Name : string.Empty; // The name of the current skeleton
+
+        public float PlaybackSpeed { get; set; } = 1f; // Animation playback speed multiplier, 1 is normal speed
+
+        public event Action<string> AnimationComplete; // Animation playback completion event, the parameter is the animation name
+
+        public event Action<string, string> FrameEvent; // Frame event callback, the parameters are animation name and event name
+
 
         /// <summary>
-        /// 使用数据初始化骨架，构建骨骼层级，并播放第一个动画。
+        /// Initialize the skeleton with data, build the bone hierarchy, and play the first animation.
+
         /// </summary>
         public void Init(DBLiteFactory factory, DBLiteArmatureData data)
         {
-            // 1. 保存工厂引用和骨架数据
+            // 1. Save factory reference and skeleton data
+
             this.factory = factory;
             this.data = data;
-            // 2. 根据数据创建骨骼层级和插槽显示对象
+            // 2. Create bone hierarchy and slot display objects based on data
+
             BuildBonesAndSlots();
-            // 3. 自动播放第一个动画，如果没有动画则显示第 0 帧静止姿态
+            // 3. Automatically play the first animation. If there is no animation, the static posture of frame 0 will be displayed.
+
             var firstAnimation = data.FirstAnimationName;
             if (!string.IsNullOrEmpty(firstAnimation))
             {
@@ -150,7 +186,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回指定插槽中显示的子骨架（如果有）。
+        /// Returns the child skeleton shown in the specified slot, if any.
+
         /// </summary>
         public DBLiteArmature GetChildArmature(string slotName)
         {
@@ -158,17 +195,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据名称显示或隐藏指定插槽。
+        /// Show or hide specified slots based on their names.
+
         /// </summary>
         public void SetSlotHidden(string slotName, bool hidden)
         {
-            // 1. 插槽名为空时跳过
+            // 1. Skip when the slot name is empty
+
             if (string.IsNullOrEmpty(slotName))
             {
                 return;
             }
 
-            // 2. 将插槽名添加到或从隐藏列表中移除
+            // 2. Add or remove slot names to or from the hidden list
+
             if (hidden)
             {
                 hiddenSlots.Add(slotName);
@@ -178,13 +218,15 @@ namespace mlp
                 hiddenSlots.Remove(slotName);
             }
 
-            // 3. 如果该插槽尚未创建，只记录状态即可（创建时会检查）
+            // 3. If the slot has not been created yet, just record the status (it will be checked when creating)
+
             if (!slots.TryGetValue(slotName, out var slot))
             {
                 return;
             }
 
-            // 4. 隐藏时直接将透明度设为 0，取消隐藏时刷新整个骨架姿态
+            // 4. Set the transparency to 0 directly when hiding, and refresh the entire skeleton posture when unhiding.
+
             if (hidden)
             {
                 slot.SetAlpha(0f);
@@ -196,23 +238,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从头开始播放指定名称的动画。
+        /// Plays the animation with the specified name from the beginning.
+
         /// </summary>
         public void Play(string animationName, bool restart = true)
         {
-            // 1. 没有骨架数据则无法播放
+            // 1. Unable to play without skeleton data
+
             if (data == null)
             {
                 return;
             }
 
-            // 2. 按名称查找动画数据，找不到则忽略
+            // 2. Search animation data by name, ignore if not found
+
             if (!data.Animations.TryGetValue(animationName, out var animation))
             {
                 return;
             }
 
-            // 3. 如果是新动画或需要重新开始，重置计时器和完成标记
+            // 3. If it is a new animation or needs to be restarted, reset the timer and completion mark
+
             if (currentAnimation != animation || restart)
             {
                 currentAnimation = animation;
@@ -220,13 +266,15 @@ namespace mlp
                 animationCompleteSent = false;
             }
 
-            // 4. 标记为播放状态并立即应用当前帧的姿态
+            // 4. Mark as playing state and immediately apply the pose of the current frame
+
             playing = true;
             ApplyPose(elapsedFrames);
         }
 
         /// <summary>
-        /// 加载动画但冻结在第 0 帧，不播放。
+        /// The animation loads but freezes at frame 0 and does not play.
+
         /// </summary>
         public void StopAtStart(string animationName)
         {
@@ -238,7 +286,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 重新应用当前动画姿态（更改插槽或可见性后调用）。
+        /// Reapply the current animation pose (called after changing slots or visibility).
+
         /// </summary>
         public void RefreshPose()
         {
@@ -246,38 +295,46 @@ namespace mlp
         }
 
         /// <summary>
-        /// 每帧推进动画计时器并应用当前姿态。
+        /// Each frame advances the animation timer and applies the current pose.
+
         /// </summary>
         private void Update()
         {
-            // 1. 没有正在播放的动画则跳过
+            // 1. Skip if there is no animation currently playing.
+
             if (currentAnimation == null)
             {
                 return;
             }
 
-            // 2. 如果处于播放状态，根据时间流逝推进帧计数器
+            // 2. If playing, advance the frame counter based on the passage of time
             if (playing)
             {
                 var previousFrame = elapsedFrames;
-                // 3. 帧增量 = 一帧的时间 x 帧率 x 播放速度
+                // 3. Frame increment = one frame time x frame rate x playback speed
+
                 elapsedFrames += Time.deltaTime * data.FrameRate * Mathf.Max(0f, PlaybackSpeed);
-                // 4. 检查并触发帧事件（如音效、特效）
+                // 4. Check and trigger frame events (such as sound effects, special effects)
+
                 DispatchFrameEvents(previousFrame, elapsedFrames);
-                // 5. 检查非循环动画是否播放完毕
+                // 5. Check whether the non-loop animation has finished playing
+
                 TryDispatchAnimationComplete(previousFrame, elapsedFrames);
             }
 
-            // 6. 将当前帧的姿态应用到所有骨骼和插槽上
+            // 6. Apply the pose of the current frame to all bones and slots
+
             ApplyPose(elapsedFrames);
         }
 
         /// <summary>
-        /// 触发前一帧和当前帧之间的所有帧事件。
+        /// Triggers all frame events between the previous frame and the current frame.
+
         /// </summary>
         private void DispatchFrameEvents(float previousFrame, float currentFrame)
         {
-            // 1. 没有动画或没有帧事件则跳过
+            // 1. Skip if there is no animation or frame event
+
             if (currentAnimation == null || currentAnimation.FrameEvents.Count == 0)
             {
                 return;
@@ -286,17 +343,20 @@ namespace mlp
             var duration = Mathf.Max(1f, currentAnimation.Duration);
             if (currentAnimation.Loops)
             {
-                // 2. 循环动画：判断上一帧和当前帧是否在同一圈内
+                // 2. Loop animation: determine whether the previous frame and the current frame are in the same circle
+
                 var previousLoop = Mathf.FloorToInt(previousFrame / duration);
                 var currentLoop = Mathf.FloorToInt(currentFrame / duration);
                 if (currentLoop == previousLoop)
                 {
-                    // 3. 同一圈内，直接检查这段区间内的事件
+                    // 3. In the same circle, directly check the events in this interval
+
                     EmitFrameEventsInRange(Mod(previousFrame, duration), Mod(currentFrame, duration), duration);
                     return;
                 }
 
-                // 4. 跨圈了：先触发上一圈尾部的事件，再触发中间完整圈的所有事件，最后触发当前圈头部的事件
+                // 4. Crossed the circle: first trigger the event at the end of the previous circle, then trigger all events of the complete circle in the middle, and finally trigger the event at the head of the current circle.
+
                 EmitFrameEventsInRange(Mod(previousFrame, duration), duration, duration);
                 for (var loop = previousLoop + 1; loop < currentLoop; loop++)
                 {
@@ -307,14 +367,16 @@ namespace mlp
                 return;
             }
 
-            // 5. 非循环动画：在有效范围内检查事件
+            // 5. Acyclic animation: check events within the valid range
+
             var start = Mathf.Clamp(previousFrame, 0f, duration);
             var end = Mathf.Clamp(currentFrame, 0f, duration);
             EmitFrameEventsInRange(start, end, duration);
         }
 
         /// <summary>
-        /// 当非循环动画播放到末尾时触发 AnimationComplete 事件。
+        /// The AnimationComplete event is triggered when the non-looping animation reaches the end.
+
         /// </summary>
         private void TryDispatchAnimationComplete(float previousFrame, float currentFrame)
         {
@@ -332,7 +394,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 触发时间戳在指定范围内的帧事件。
+        /// Triggers frame events with timestamps within the specified range.
+
         /// </summary>
         private void EmitFrameEventsInRange(float start, float end, float duration)
         {
@@ -353,7 +416,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回值对除数的正取模结果。
+        /// Returns the positive modulo result of the divisor.
+
         /// </summary>
         private static float Mod(float value, float divisor)
         {
@@ -361,11 +425,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据骨架数据创建骨骼变换层级和插槽显示对象。
+        /// Create bone transform hierarchy and slot display objects based on skeleton data.
+
         /// </summary>
         private void BuildBonesAndSlots()
         {
-            // 1. 第一遍遍历：为每根骨骼创建一个游戏对象，先全部挂在根节点下
+            // 1. First pass of traversal: create a game object for each bone, first hang them all under the root node
+
             foreach (var boneData in data.Bones)
             {
                 var boneGo = new GameObject(boneData.Name);
@@ -373,7 +439,8 @@ namespace mlp
                 bones[boneData.Name] = boneGo.transform;
             }
 
-            // 2. 第二遍遍历：根据父子关系，把骨骼挂到正确的父骨骼下
+            // 2. Second traversal: According to the parent-child relationship, hang the bones under the correct parent bones
+
             foreach (var boneData in data.Bones)
             {
                 if (!string.IsNullOrEmpty(boneData.Parent) && bones.TryGetValue(boneData.Parent, out var parent))
@@ -382,7 +449,8 @@ namespace mlp
                 }
             }
 
-            // 3. 第三遍遍历：为每个插槽创建显示对象，挂在对应的父骨骼下
+            // 3. The third traversal: Create a display object for each slot and hang it under the corresponding parent bone.
+
             foreach (var slotData in data.Slots)
             {
                 if (!bones.TryGetValue(slotData.Parent, out var parent))
@@ -390,28 +458,33 @@ namespace mlp
                     continue;
                 }
 
-                // 4. 创建插槽游戏对象，设置层级深度（Order 越大越靠前显示）
+                // 4. Create a slot game object and set the hierarchy depth (the larger the Order, the higher it will be displayed)
+
                 var slotGo = new GameObject(slotData.Name);
                 slotGo.transform.SetParent(parent, false);
                 slotGo.transform.localPosition = new Vector3(0f, 0f, -slotData.Order * SlotDepthStep);
-                // 5. 创建插槽实例，负责管理图片精灵或子骨架的显示
+                // 5. Create a slot instance to manage the display of picture sprites or sub-skeletons
+
                 var slot = new DBLiteSlotInstance(slotData, data.GetDisplays(slotData.Name), slotGo.transform, factory);
                 slots[slotData.Name] = slot;
             }
         }
 
         /// <summary>
-        /// 在指定帧采样当前动画，并将变换应用到所有骨骼和插槽。
+        /// Samples the current animation at the specified frame and applies the transform to all bones and slots.
+
         /// </summary>
         private void ApplyPose(float frame)
         {
-            // 1. 没有骨架数据则跳过
+            // 1. Skip if there is no skeleton data.
+
             if (data == null)
             {
                 return;
             }
 
-            // 2. 根据动画是否循环，计算当前实际帧号
+            // 2. Calculate the current actual frame number based on whether the animation loops
+
             var animFrame = 0f;
             var animationDuration = 1f;
             var animationLoops = false;
@@ -419,11 +492,12 @@ namespace mlp
             {
                 animationDuration = Mathf.Max(1, currentAnimation.Duration);
                 animationLoops = currentAnimation.Loops;
-                // 循环动画用取模，非循环动画停在最后一帧之前
+                // Looping animations use modulo, and non-looping animations stop before the last frame.
+
                 animFrame = animationLoops ? frame % animationDuration : Mathf.Min(frame, animationDuration - 0.001f);
             }
 
-            // 3. 遍历所有骨骼，计算并应用变换（位置、旋转、缩放）
+            // 3. Traverse all bones, calculate and apply transformations (position, rotation, scale)
             foreach (var boneData in data.Bones)
             {
                 if (!bones.TryGetValue(boneData.Name, out var transform))
@@ -431,20 +505,23 @@ namespace mlp
                     continue;
                 }
 
-                // 4. 从初始姿态开始，叠加动画轨道的关键帧插值结果
+                // 4. Starting from the initial pose, superimpose the keyframe interpolation results of the animation track
+
                 var pose = boneData.Transform;
                 if (currentAnimation != null && currentAnimation.BoneTracks.TryGetValue(boneData.Name, out var track))
                 {
                     pose = pose.Combine(track.Sample(animFrame, animationDuration, animationLoops));
                 }
 
-                // 5. 球体骨骼在特定动画中保持等比缩放（避免被压扁变形）
+                // 5. Sphere bones maintain proportional scaling in specific animations (to avoid being squashed and deformed)
+
                 if (IsBallBone(boneData.Name) && ShouldKeepBallRound(currentAnimation))
                 {
                     pose = KeepUniformScale(pose);
                 }
 
-                // 6. 应用最终的位置（Y 轴翻转，对齐到像素网格）、旋转和缩放
+                // 6. Apply final position (Y-axis flip, snap to pixel grid), rotation and scale
+
                 transform.localPosition = mlpConstants.SnapLocalPositionToScreenPixels(
                     transform.parent,
                     new Vector3(pose.X, -pose.Y, 0f));
@@ -452,24 +529,28 @@ namespace mlp
                 transform.localScale = new Vector3(pose.ScaleX, pose.ScaleY, 1f);
             }
 
-            // 7. 遍历所有插槽，重置为初始显示，再根据动画轨道切换图片和透明度
+            // 7. Traverse all slots, reset to initial display, and then switch pictures and transparency according to the animation track
+
             foreach (var pair in slots)
             {
                 pair.Value.ResetToSetupPose();
                 if (currentAnimation != null && currentAnimation.SlotTracks.TryGetValue(pair.Key, out var slotTrack))
                 {
-                    // 8. 根据动画帧切换插槽显示的内容（如不同身体部件）
+                    // 8. Switch the content displayed by the slot according to the animation frame (such as different body parts)
+
                     var displayIndex = slotTrack.SampleDisplay(animFrame);
                     if (displayIndex != int.MinValue)
                     {
                         pair.Value.SetDisplay(displayIndex);
                     }
 
-                    // 9. 根据动画帧设置插槽的透明度（实现淡入淡出效果）
+                    // 9. Set the transparency of the slot according to the animation frame (to achieve the fade-in and fade-out effect)
+
                     pair.Value.SetAlpha(slotTrack.SampleAlpha(animFrame));
                 }
 
-                // 10. 如果插槽被手动隐藏，强制设为不可见
+                // 10. If the slot is manually hidden, force it to be invisible
+
                 if (hiddenSlots.Contains(pair.Key))
                 {
                     pair.Value.SetAlpha(0f);
@@ -484,13 +565,15 @@ namespace mlp
 
         private static bool ShouldKeepBallRound(DBLiteAnimationData animation)
         {
-            // 1. 没有动画数据时不需要保持球体圆形
+            // 1. There is no need to keep the sphere round when there is no animation data.
+
             if (animation == null || string.IsNullOrEmpty(animation.Name))
             {
                 return false;
             }
 
-            // 2. 跳跃、落地、飞行、扣篮和超级扣篮动画中，球体需要保持等比缩放（不被压扁）
+            // 2. During jumping, landing, flying, dunking and super dunk animations, the sphere needs to maintain proportional scaling (not be squashed)
+
             var name = animation.Name;
             return name == "jump_wb" ||
                    name == "landing_wb" ||
@@ -510,17 +593,23 @@ namespace mlp
     }
 
     /// <summary>
-    /// 纹理图集：存储一张大图中所有小图的位置和尺寸信息，用于从图集中裁剪出各个身体部件的图片。
+    /// Texture atlas: stores the position and size information of all small images in a large image, which is used to cut out images of various body parts from the atlas.
+
     /// </summary>
     public sealed class DBLiteTextureAtlas
     {
-        private readonly Texture2D texture; // 纹理图集的大图纹理
-        private readonly float pixelsPerUnit; // 每单位像素数，控制精灵在世界空间中的显示大小
-        private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>(); // 子纹理字典，键为名称，记录每张小图在大图中的位置和尺寸
-        private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // 已创建的精灵缓存，键为名称，避免重复裁剪
+        private readonly Texture2D texture; // Large image textures from texture atlas
+
+        private readonly float pixelsPerUnit; // Number of pixels per unit, controls the display size of sprites in world space
+
+        private readonly Dictionary<string, DBLiteSubTexture> subTextures = new Dictionary<string, DBLiteSubTexture>(); // Sub-texture dictionary, the key is the name, recording the position and size of each small image in the large image
+
+        private readonly Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>(); // The created sprite cache, the key is the name, to avoid repeated cropping
+
 
         /// <summary>
-        /// 使用给定的纹理和每单位像素比例创建纹理图集。
+        /// Creates a texture atlas using the given texture and pixel-per-unit scale.
+
         /// </summary>
         private DBLiteTextureAtlas(Texture2D texture, float pixelsPerUnit)
         {
@@ -529,21 +618,25 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从 JSON 定义和纹理解析 DragonBones 纹理图集。
+        /// Parse DragonBones texture atlas from JSON definitions and textures.
+
         /// </summary>
         public static DBLiteTextureAtlas Parse(string name, Texture2D texture, string json)
         {
-            // 1. 解析 JSON 字符串为字典，读取像素单位比例
+            // 1. Parse the JSON string into a dictionary and read the pixel unit ratio
+
             var root = mlpJson.AsDict(mlpJson.Parse(json));
             var atlas = new DBLiteTextureAtlas(texture, mlpJson.Float(root, "pixelsPerUnit", 1f));
-            // 2. 读取 SubTexture 列表，每项记录了大图中某张小图的位置和尺寸
+            // 2. Read the SubTexture list, each item records the position and size of a small picture in the big picture
+
             var list = mlpJson.List(root, "SubTexture");
             if (list == null)
             {
                 return atlas;
             }
 
-            // 3. 遍历每张子纹理，记录名称、坐标和大小
+            // 3. Traverse each sub-texture and record the name, coordinates and size
+
             foreach (var item in list)
             {
                 var dict = mlpJson.AsDict(item);
@@ -567,48 +660,57 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回指定子纹理的缓存精灵，未找到则返回 null。
+        /// Returns the cached sprite for the specified subtexture, or null if not found.
+
         /// </summary>
         public Sprite Sprite(string name)
         {
-            // 1. 名称为空则返回 null
+            // 1. If the name is empty, null is returned.
+
             if (string.IsNullOrEmpty(name))
             {
                 return null;
             }
 
-            // 2. 如果之前已经创建过这个精灵，直接从缓存返回（避免重复创建）
+            // 2. If this elf has been created before, return it directly from the cache (to avoid repeated creation)
+
             if (sprites.TryGetValue(name, out var cached))
             {
                 return cached;
             }
 
-            // 3. 在子纹理字典中查找，找不到则返回 null
+            // 3. Search in the sub-texture dictionary, return null if not found
+
             if (!subTextures.TryGetValue(name, out var sub))
             {
                 return null;
             }
 
-            // 4. 从大图中裁剪出该子纹理对应的矩形区域（Y 轴需要翻转，因为图片坐标和 Unity 坐标方向相反）
+            // 4. Cut out the rectangular area corresponding to the sub-texture from the large image (the Y axis needs to be flipped because the image coordinates and Unity coordinates are in opposite directions)
             var rect = new Rect(sub.X, texture.height - sub.Y - sub.Height, sub.Width, sub.Height);
-            // 5. 创建 Unity Sprite 对象，锚点在中心
+            // 5. Create a Unity Sprite object with the anchor point in the center
+
             var sprite = UnityEngine.Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), pixelsPerUnit, 0, SpriteMeshType.FullRect);
             sprite.name = name;
-            // 6. 存入缓存后返回
+            // 6. Return after storing in cache
+
             sprites[name] = sprite;
             return sprite;
         }
     }
 
     /// <summary>
-    /// 骨骼骨架数据：存储一个角色的完整骨骼结构，包括所有骨骼、插槽、图集引用和动画数据。
+    /// Skeletal skeleton data: Stores the complete skeletal structure of a character, including all bones, slots, atlas references, and animation data.
+
     /// </summary>
     public sealed class DBLiteSkeleton
     {
-        public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>(); // 骨架定义字典，键为骨架名称，一个骨骼文件可包含多个骨架
+        public readonly Dictionary<string, DBLiteArmatureData> Armatures = new Dictionary<string, DBLiteArmatureData>(); // Skeleton definition dictionary, the key is the skeleton name, one skeleton file can contain multiple skeletons
+
 
         /// <summary>
-        /// 解析 DragonBones 骨架文件，提取所有骨架定义。
+        /// Parse the DragonBones skeleton file and extract all skeleton definitions.
+
         /// </summary>
         public static DBLiteSkeleton Parse(string json, DBLiteTextureAtlas textureAtlas)
         {
@@ -638,21 +740,31 @@ namespace mlp
     }
 
     /// <summary>
-    /// 骨架数据：存储一个骨架的所有骨骼层级、插槽列表和动画集合，是动画播放的核心数据结构。
+    /// Skeleton data: stores all bone levels, slot lists and animation collections of a skeleton. It is the core data structure for animation playback.
+
     /// </summary>
     public sealed class DBLiteArmatureData
     {
-        public string Name; // 骨架名称
-        public int FrameRate; // 动画帧率（每秒帧数）
-        public readonly List<DBLiteBoneData> Bones = new List<DBLiteBoneData>(); // 骨骼列表，定义骨架的层级结构
-        public readonly List<DBLiteSlotData> Slots = new List<DBLiteSlotData>(); // 插槽列表，每个插槽挂在一根骨骼上用于显示图片
-        public readonly Dictionary<string, List<DBLiteDisplayData>> DisplaysBySlot = new Dictionary<string, List<DBLiteDisplayData>>(); // 每个插槽可显示的图片/子骨架列表，键为插槽名称
-        public readonly Dictionary<string, DBLiteAnimationData> Animations = new Dictionary<string, DBLiteAnimationData>(); // 动画字典，键为动画名称
-        public DBLiteTextureAtlas TextureAtlas; // 该骨架使用的纹理图集引用
-        public string FirstAnimationName; // 骨架的第一个动画名称，用于初始化时自动播放
+        public string Name; // Skeleton name
+
+        public int FrameRate; // Animation frame rate (frames per second)
+
+        public readonly List<DBLiteBoneData> Bones = new List<DBLiteBoneData>(); // Bone list, defining the hierarchical structure of the skeleton
+
+        public readonly List<DBLiteSlotData> Slots = new List<DBLiteSlotData>(); // Slot list, each slot is hung on a bone and used to display images
+
+        public readonly Dictionary<string, List<DBLiteDisplayData>> DisplaysBySlot = new Dictionary<string, List<DBLiteDisplayData>>(); // List of images/sub-skeletons that can be displayed for each slot, the key is the slot name
+
+        public readonly Dictionary<string, DBLiteAnimationData> Animations = new Dictionary<string, DBLiteAnimationData>(); // Animation dictionary, the key is the animation name
+
+        public DBLiteTextureAtlas TextureAtlas; // Texture atlas reference used by this skeleton
+
+        public string FirstAnimationName; // The first animation name of the skeleton, used to play automatically during initialization
+
 
         /// <summary>
-        /// 返回指定插槽的显示条目列表，若不存在则返回 null。
+        /// Returns a list of displayed entries for the specified slot, or null if none exists.
+
         /// </summary>
         public List<DBLiteDisplayData> GetDisplays(string slotName)
         {
@@ -660,11 +772,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从 JSON 解析骨架定义，包括骨骼、插槽、皮肤和动画。
+        /// Parse skeleton definitions from JSON, including bones, slots, skins, and animations.
+
         /// </summary>
         public static DBLiteArmatureData Parse(Dictionary<string, object> dict, DBLiteTextureAtlas atlas, int frameRate)
         {
-            // 1. 创建骨架数据对象，记录名称、帧率和纹理图集引用
+            // 1. Create a skeleton data object and record the name, frame rate and texture atlas reference
+
             var data = new DBLiteArmatureData
             {
                 Name = mlpJson.String(dict, "name"),
@@ -672,7 +786,8 @@ namespace mlp
                 TextureAtlas = atlas
             };
 
-            // 2. 解析骨骼列表：每根骨骼有名称、父骨骼和初始变换
+            // 2. Parse the bone list: each bone has a name, parent bone and initial transformation
+
             var boneList = mlpJson.List(dict, "bone");
             if (boneList != null)
             {
@@ -693,7 +808,8 @@ namespace mlp
                 }
             }
 
-            // 3. 解析插槽列表：每个插槽关联一根骨骼，决定图片的显示顺序
+            // 3. Parse the slot list: Each slot is associated with a bone, which determines the display order of the images.
+
             var slotList = mlpJson.List(dict, "slot");
             if (slotList != null)
             {
@@ -716,15 +832,18 @@ namespace mlp
                 }
             }
 
-            // 4. 解析皮肤（每个插槽可显示哪些图片或子骨架）
+            // 4. Analyze skins (which pictures or sub-skeletons can be displayed in each slot)
+
             ParseSkin(dict, data);
-            // 5. 解析动画定义（骨骼轨道、插槽轨道、帧事件）
+            // 5. Analyze animation definition (bone track, slot track, frame event)
+
             ParseAnimations(dict, data);
             return data;
         }
 
         /// <summary>
-        /// 解析皮肤定义以填充每个插槽的显示数据。
+        /// Parses the skin definition to populate the display data for each slot.
+
         /// </summary>
         private static void ParseSkin(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
@@ -776,7 +895,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 解析所有动画定义并保存第一个动画的名称。
+        /// Parse all animation definitions and save the name of the first animation.
+
         /// </summary>
         private static void ParseAnimations(Dictionary<string, object> dict, DBLiteArmatureData data)
         {
@@ -805,23 +925,31 @@ namespace mlp
     }
 
     /// <summary>
-    /// 动画数据：存储一段动画的所有关键帧轨道（骨骼轨道和插槽轨道）、持续时间和帧事件。
+    /// Animation data: Stores all keyframe tracks (bone tracks and slot tracks), durations, and frame events for an animation.
     /// </summary>
     public sealed class DBLiteAnimationData
     {
-        public string Name; // 动画名称
-        public int Duration = 1; // 动画总帧数（以帧为单位，非秒）
-        public bool Loops; // 是否循环播放（true为循环，false为播放一次后停止）
-        public readonly Dictionary<string, DBLiteBoneTrack> BoneTracks = new Dictionary<string, DBLiteBoneTrack>(); // 骨骼轨道字典，键为骨骼名称，控制每根骨骼的位移动画
-        public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>(); // 插槽轨道字典，键为插槽名称，控制插槽的显示切换和透明度
-        public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>(); // 帧事件列表，在特定帧触发音效或特效
+        public string Name; // Animation name
+
+        public int Duration = 1; // The total number of animation frames (in frames, not seconds)
+
+        public bool Loops; // Whether to loop playback (true means loop, false means stop after playing once)
+
+        public readonly Dictionary<string, DBLiteBoneTrack> BoneTracks = new Dictionary<string, DBLiteBoneTrack>(); // Bone orbit dictionary, the key is the bone name, controls the displacement animation of each bone
+
+        public readonly Dictionary<string, DBLiteSlotTrack> SlotTracks = new Dictionary<string, DBLiteSlotTrack>(); // Slot track dictionary, the key is the slot name, controls the display switching and transparency of the slot
+
+        public readonly List<DBLiteAnimationFrameEvent> FrameEvents = new List<DBLiteAnimationFrameEvent>(); // Frame event list, triggering sound effects or special effects at specific frames
+
 
         /// <summary>
-        /// 解析包含骨骼轨道、插槽轨道和帧事件的动画定义。
+        /// Parse animation definitions containing bone tracks, slot tracks, and frame events.
+
         /// </summary>
         public static DBLiteAnimationData Parse(Dictionary<string, object> dict)
         {
-            // 1. 读取动画名称、持续帧数和是否循环（playTimes 为 0 表示无限循环）
+            // 1. Read the animation name, duration of frames and whether to loop (playTimes of 0 means infinite loop)
+
             var animation = new DBLiteAnimationData
             {
                 Name = mlpJson.String(dict, "name"),
@@ -829,7 +957,8 @@ namespace mlp
                 Loops = mlpJson.Int(dict, "playTimes", 1) == 0
             };
 
-            // 2. 解析每根骨骼的动画轨道（包含位置、旋转、缩放的关键帧序列）
+            // 2. Analyze the animation track of each bone (keyframe sequence including position, rotation, and scaling)
+
             var bones = mlpJson.List(dict, "bone");
             if (bones != null)
             {
@@ -845,7 +974,8 @@ namespace mlp
                 }
             }
 
-            // 3. 解析每个插槽的动画轨道（包含显示切换和透明度的关键帧序列）
+            // 3. Parse the animation track for each slot (contains keyframe sequences showing transitions and transparency)
+
             var slots = mlpJson.List(dict, "slot");
             if (slots != null)
             {
@@ -861,7 +991,8 @@ namespace mlp
                 }
             }
 
-            // 4. 解析帧事件列表（在动画特定时间点触发的事件，如音效或特效）
+            // 4. Parse the frame event list (events triggered at specific time points in the animation, such as sound effects or special effects)
+
             var frames = mlpJson.List(dict, "frame");
             if (frames != null)
             {
@@ -884,7 +1015,8 @@ namespace mlp
                         });
                     }
 
-                    // 累加每帧的持续时间，得到事件触发的绝对帧号
+                    // Accumulate the duration of each frame to get the absolute frame number when the event is triggered.
+
                     start += Mathf.Max(1, mlpJson.Int(frame, "duration", 1));
                 }
             }
@@ -894,25 +1026,33 @@ namespace mlp
     }
 
     /// <summary>
-    /// 动画帧事件：在动画的特定时间点触发的事件，包含事件名称（如播放音效、触发特效）。
+    /// Animation frame event: an event triggered at a specific time point of the animation, including the event name (such as playing sound effects, triggering special effects).
+
     /// </summary>
     public struct DBLiteAnimationFrameEvent
     {
-        public float Frame; // 事件触发的帧号
-        public string EventName; // 事件名称（如音效名、特效名）
+        public float Frame; // The frame number when the event is triggered
+
+        public string EventName; // Event name (such as sound effect name, special effect name)
+
     }
 
     /// <summary>
-    /// 骨骼动画轨道：存储一根骨骼在一段动画中的所有位置/旋转关键帧，用于播放时插值计算骨骼姿态。
+    /// Bone animation track: stores all the position/rotation keyframes of a bone in an animation, which is used to interpolate and calculate the bone posture during playback.
+
     /// </summary>
     public sealed class DBLiteBoneTrack
     {
-        private readonly List<DBLiteTimedTransform> translate = new List<DBLiteTimedTransform>(); // 平移动画关键帧列表
-        private readonly List<DBLiteTimedTransform> rotate = new List<DBLiteTimedTransform>(); // 旋转动画关键帧列表
-        private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>(); // 缩放动画关键帧列表
+        private readonly List<DBLiteTimedTransform> translate = new List<DBLiteTimedTransform>(); // Pan animation keyframe list
+
+        private readonly List<DBLiteTimedTransform> rotate = new List<DBLiteTimedTransform>(); // Rotation animation keyframe list
+
+        private readonly List<DBLiteTimedTransform> scale = new List<DBLiteTimedTransform>(); // Zoom animation keyframe list
+
 
         /// <summary>
-        /// 从 JSON 解析骨骼轨道的平移、旋转和缩放关键帧。
+        /// Parse translation, rotation, and scale keyframes for bone tracks from JSON.
+
         /// </summary>
         public static DBLiteBoneTrack Parse(Dictionary<string, object> dict)
         {
@@ -924,17 +1064,20 @@ namespace mlp
         }
 
         /// <summary>
-        /// 在指定帧采样骨骼轨道，在关键帧之间进行插值。
+        /// Samples bone tracks at specified frames, interpolating between keyframes.
+
         /// </summary>
         public DBLiteTransform Sample(float frame, float animationDuration, bool loop)
         {
-            // 1. 以单位变换为基础，分别对平移、旋转、缩放三组关键帧进行插值采样
+            // 1. Based on unit transformation, perform interpolation sampling on three groups of key frames: translation, rotation, and scaling.
+
             var result = DBLiteTransform.Identity;
             var translation = SampleList(translate, frame, FrameKind.Translate, animationDuration, loop);
             var rotation = SampleList(rotate, frame, FrameKind.Rotate, animationDuration, loop);
             var scaling = SampleList(scale, frame, FrameKind.Scale, animationDuration, loop);
 
-            // 2. 将三组插值结果合并为一个完整的变换
+            // 2. Combine three sets of interpolation results into a complete transformation
+
             result.X = translation.X;
             result.Y = translation.Y;
             result.Rotation = rotation.Rotation;
@@ -944,17 +1087,19 @@ namespace mlp
         }
 
         /// <summary>
-        /// 从 JSON 数组解析关键帧列表（平移、旋转或缩放）。
+        /// Parse a list of keyframes (translation, rotation, or scale) from a JSON array.
         /// </summary>
         private static void ParseTransformFrames(List<object> list, List<DBLiteTimedTransform> output, FrameKind kind)
         {
-            // 1. 没有关键帧列表则跳过
+            // 1. Skip if there is no keyframe list
+
             if (list == null)
             {
                 return;
             }
 
-            // 2. 遍历每个关键帧，记录起始时间、持续时间和变换值
+            // 2. Traverse each keyframe and record the start time, duration and transformation value
+
             var start = 0f;
             foreach (var item in list)
             {
@@ -964,7 +1109,8 @@ namespace mlp
                     continue;
                 }
 
-                // 3. 读取变换值，然后根据类型（平移/旋转/缩放）只保留对应字段，其余重置
+                // 3. Read the transformation value, then only keep the corresponding fields according to the type (translation/rotation/zoom), and reset the rest
+
                 var transform = DBLiteTransform.Identity;
                 transform.X = mlpJson.Float(dict, "x", 0f);
                 transform.Y = mlpJson.Float(dict, "y", 0f);
@@ -992,34 +1138,41 @@ namespace mlp
                     transform.Rotation = 0f;
                 }
 
-                // 4. 记录关键帧的起始时间、持续时间和是否使用补间（平滑过渡）
+                // 4. Record the start time, duration of the keyframe and whether to use tweening (smooth transition)
+
                 var duration = Mathf.Max(1, mlpJson.Int(dict, "duration", 1));
                 output.Add(new DBLiteTimedTransform
                 {
                     Start = start,
                     Duration = duration,
                     Transform = transform,
-                    // DragonBones 将缺失的 tweenEasing 和 tweenEasing: 0 视为线性补间。
-                    // 只有显式的 null 值才会禁用变换关键帧之间的插值。
+                    // DragonBones treats missing tweenEasing and tweenEasing: 0 as linear tweens.
+
+                    // Only an explicit null value disables interpolation between transform keyframes.
+
                     Tween = !dict.ContainsKey("tweenEasing") || dict["tweenEasing"] != null
                 });
-                // 5. 累加时间，下一个关键帧的起始时间 = 当前起始 + 当前持续
+                // 5. Accumulated time, starting time of next keyframe = current start + current duration
+
                 start += duration;
             }
         }
 
         /// <summary>
-        /// 查找包围指定帧的关键帧并进行变换插值。
+        /// Finds keyframes surrounding the specified frame and performs transform interpolation.
+
         /// </summary>
         private static DBLiteTransform SampleList(List<DBLiteTimedTransform> list, float frame, FrameKind kind, float animationDuration, bool loop)
         {
-            // 1. 没有关键帧则返回默认姿态
+            // 1. If there is no keyframe, return to the default posture.
+
             if (list.Count == 0)
             {
                 return DBLiteTransform.Identity;
             }
 
-            // 2. 找到当前帧所在的区间：current 是当前关键帧，next 是下一个关键帧
+            // 2. Find the interval where the current frame is located: current is the current key frame, next is the next key frame
+
             var current = list[0];
             DBLiteTimedTransform? next = null;
             for (var i = 0; i < list.Count; i++)
@@ -1031,7 +1184,8 @@ namespace mlp
                 }
             }
 
-            // 3. 循环动画：如果当前帧已超过最后一个关键帧，下一个关键帧就是第一个（首尾衔接）
+            // 3. Loop animation: If the current frame has exceeded the last key frame, the next key frame will be the first one (connected from beginning to end)
+
             if (!next.HasValue && loop && list.Count > 1)
             {
                 next = new DBLiteTimedTransform
@@ -1043,13 +1197,15 @@ namespace mlp
                 };
             }
 
-            // 4. 如果当前关键帧不使用补间、没有下一个关键帧、或持续时间为 0，直接返回当前值（不插值）
+            // 4. If the current keyframe does not use tweening, there is no next keyframe, or the duration is 0, return the current value directly (no interpolation)
+
             if (!current.Tween || !next.HasValue || current.Duration <= 0f)
             {
                 return current.Transform;
             }
 
-            // 5. 计算当前帧在区间内的归一化进度（0 到 1 之间），然后在两个关键帧之间插值
+            // 5. Calculate the normalized progress of the current frame within the interval (between 0 and 1), and then interpolate between the two key frames
+
             var segmentDuration = current.Duration;
             if (loop)
             {
@@ -1061,15 +1217,19 @@ namespace mlp
     }
 
     /// <summary>
-    /// 插槽动画轨道：存储一个插槽在一段动画中的显示切换和颜色变化关键帧，控制角色部件的显示顺序和透明度。
+    /// Slot animation track: stores the display switching and color change key frames of a slot in an animation, and controls the display order and transparency of character parts.
+
     /// </summary>
     public sealed class DBLiteSlotTrack
     {
-        private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>(); // 显示切换关键帧列表，控制插槽在不同时间显示哪个图片
-        private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>(); // 颜色/透明度关键帧列表，控制插槽的淡入淡出
+        private readonly List<DBLiteDisplayFrame> displayFrames = new List<DBLiteDisplayFrame>(); // Display a switching keyframe list to control which picture the slot displays at different times
+
+        private readonly List<DBLiteColorFrame> colorFrames = new List<DBLiteColorFrame>(); // List of color/transparency keyframes to control the slot's fade
+
 
         /// <summary>
-        /// 从 JSON 解析插槽轨道的显示和颜色关键帧。
+        /// Parse slot track display and color keyframes from JSON.
+
         /// </summary>
         public static DBLiteSlotTrack Parse(Dictionary<string, object> dict)
         {
@@ -1126,7 +1286,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回指定帧激活的显示索引。
+        /// Returns the active display index for the specified frame.
+
         /// </summary>
         public int SampleDisplay(float frame)
         {
@@ -1148,7 +1309,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 返回指定帧激活的透明度乘数。
+        /// Returns the transparency multiplier activated for the specified frame.
+
         /// </summary>
         public float SampleAlpha(float frame)
         {
@@ -1171,46 +1333,60 @@ namespace mlp
     }
 
     /// <summary>
-    /// 插槽实例：代表角色身上的一个可显示部件（如手臂、武器），管理其图片精灵、颜色和显示顺序。
+    /// Slot instance: represents a displayable part (such as arm, weapon) on the character, and manages its picture sprite, color and display order.
+
     /// </summary>
     public sealed class DBLiteSlotInstance
     {
-        private readonly DBLiteSlotData slotData; // 插槽配置数据，记录名称、父骨骼和显示顺序
-        private readonly List<DBLiteDisplayData> displays; // 该插槽可显示的所有元素列表（图片或子骨架）
-        private readonly Transform slotTransform; // 插槽游戏对象的 Transform，作为显示元素的挂载点
-        private readonly DBLiteFactory factory; // 骨骼动画工厂引用，用于创建子骨架和获取纹理精灵
-        private GameObject currentDisplayObject; // 当前显示的 GameObject（图片精灵对象或子骨架对象）
-        private int currentDisplay = int.MinValue; // 当前显示的索引，int.MinValue 表示未设置
-        private float currentAlpha = 1f; // 当前透明度（0为完全透明，1为完全不透明）
+        private readonly DBLiteSlotData slotData; // Slot configuration data, recording name, parent bone and display order
 
-        public DBLiteArmature ChildArmature { get; private set; } // 当显示类型为子骨架时，引用其骨骼动画组件
+        private readonly List<DBLiteDisplayData> displays; // List of all elements (pictures or subskeletons) that this slot can display
+
+        private readonly Transform slotTransform; // The Transform of the slot game object, which serves as the mount point for the display element.
+
+        private readonly DBLiteFactory factory; // Skeleton animation factory reference, used to create sub-skeletons and obtain texture sprites
+        private GameObject currentDisplayObject; // The currently displayed GameObject (picture sprite object or child skeleton object)
+
+        private int currentDisplay = int.MinValue; // The currently displayed index, int.MinValue means not set
+
+        private float currentAlpha = 1f; // Current transparency (0 is fully transparent, 1 is fully opaque)
+
+
+        public DBLiteArmature ChildArmature { get; private set; } // When the display type is a sub-skeleton, reference its skeletal animation component
+
 
         /// <summary>
-        /// 创建管理当前显示对象和子骨架的插槽实例。
+        /// Creates a slot instance that manages the current display object and child skeletons.
+
         /// </summary>
         public DBLiteSlotInstance(DBLiteSlotData slotData, List<DBLiteDisplayData> displays, Transform slotTransform, DBLiteFactory factory)
         {
-            // 1. 保存插槽配置数据、可显示元素列表、挂载点变换和工厂引用
+            // 1. Save slot configuration data, displayable element list, mount point transformation and factory reference
+
             this.slotData = slotData;
             this.displays = displays ?? new List<DBLiteDisplayData>();
             this.slotTransform = slotTransform;
             this.factory = factory;
-            // 2. 根据初始显示索引，立即显示默认的内容（图片或子骨架）
+            // 2. Immediately display the default content (picture or sub-skeleton) according to the initial display index
+
             SetDisplay(slotData.DisplayIndex);
         }
 
         /// <summary>
-        /// 切换插槽以通过索引显示不同的内容（图片或子骨架）。
+        /// Switch slots to display different content (pictures or sub-skeletons) via index.
+
         /// </summary>
         public void SetDisplay(int index)
         {
-            // 1. 如果新索引和当前一样，不需要切换
+            // 1. If the new index is the same as the current one, there is no need to switch
+
             if (index == currentDisplay)
             {
                 return;
             }
 
-            // 2. 记录新索引，销毁旧的显示对象（编辑器下用 DestroyImmediate，运行时用 Destroy）
+            // 2. Record the new index and destroy the old display object (use DestroyImmediate in the editor and Destroy at runtime)
+
             currentDisplay = index;
             if (currentDisplayObject != null)
             {
@@ -1229,17 +1405,20 @@ namespace mlp
                 ChildArmature = null;
             }
 
-            // 3. 索引越界则不显示任何内容
+            // 3. If the index is out of bounds, no content will be displayed.
+
             if (index < 0 || index >= displays.Count)
             {
                 return;
             }
 
-            // 4. 根据显示类型创建子骨架或图片精灵
+            // 4. Create sub-skeletons or picture sprites based on display type
+
             var display = displays[index];
             if (display.Type == "armature")
             {
-                // 5. 类型为子骨架：递归构建一个完整的子骨骼动画
+                // 5. Type is sub-skeleton: recursively build a complete sub-skeleton animation
+
                 var child = factory.BuildArmature(display.Name, $"{slotData.Name}:{display.Name}");
                 if (child == null)
                 {
@@ -1253,7 +1432,8 @@ namespace mlp
             }
             else
             {
-                // 6. 类型为图片：创建精灵渲染器，从纹理图集中查找对应的图片
+                // 6. Type is picture: Create a sprite renderer and find the corresponding picture from the texture atlas
+
                 var go = new GameObject($"{slotData.Name}:{display.Name}");
                 go.transform.SetParent(slotTransform, false);
                 var renderer = go.AddComponent<SpriteRenderer>();
@@ -1263,12 +1443,14 @@ namespace mlp
                 ApplyDisplayTransform(go.transform, display.Transform);
             }
 
-            // 7. 保持当前的透明度设置
+            // 7. Keep current transparency settings
+
             ApplyAlphaToCurrentDisplay(currentAlpha);
         }
 
         /// <summary>
-        /// 设置当前显示对象的不透明度（0 = 不可见，1 = 完全可见）。
+        /// Sets the opacity of the currently displayed object (0 = invisible, 1 = fully visible).
+
         /// </summary>
         public void SetAlpha(float alpha)
         {
@@ -1283,7 +1465,8 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将插槽重置为初始显示索引和完全不透明。
+        /// Resets the slot to its initial display index and full opacity.
+
         /// </summary>
         public void ResetToSetupPose()
         {
@@ -1292,11 +1475,13 @@ namespace mlp
         }
 
         /// <summary>
-        /// 查找显示内容的精灵，球体剪辑插槽使用主题球精灵。
+        /// Find the sprite that displays the content, the sphere clip slot uses themed ball sprites.
+
         /// </summary>
         private Sprite FindTextureAtlasSprite(DBLiteDisplayData display)
         {
-            // 1. 特殊处理球体剪辑插槽：使用当前比赛的球体皮肤精灵
+            // 1. Special handling of the sphere clip slot: using the sphere skin sprite of the current game
+
             if (display != null && display.Name == ".Game/ball/BallClip")
             {
                 return mlpGameplaySpriteLoader.LoadMatchBallSprite(
@@ -1305,16 +1490,19 @@ namespace mlp
                     0.5f);
             }
 
-            // 2. 普通图片：通过反射获取父级骨架组件的私有数据字段
+            // 2. Ordinary pictures: Obtain the private data fields of the parent skeleton component through reflection
+
             var armature = slotTransform.GetComponentInParent<DBLiteArmature>();
             var dataField = typeof(DBLiteArmature).GetField("data", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var armatureData = dataField != null ? dataField.GetValue(armature) as DBLiteArmatureData : null;
-            // 3. 从骨架的纹理图集中查找并返回对应的精灵
+            // 3. Find and return the corresponding sprite from the skeleton's texture atlas
+
             return armatureData != null ? armatureData.TextureAtlas.Sprite(display.Name) : null;
         }
 
         /// <summary>
-        /// 将显示变换的位置、旋转和缩放应用到 GameObject。
+        /// Applies the display transform's position, rotation, and scale to the GameObject.
+
         /// </summary>
         private static void ApplyDisplayTransform(Transform transform, DBLiteTransform displayTransform)
         {
@@ -1326,24 +1514,27 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将透明度应用到当前显示对象的所有 SpriteRenderer，或切换子骨架的可见性。
+        /// Apply transparency to all SpriteRenderers of the currently displayed object, or toggle the visibility of child skeletons.
+
         /// </summary>
         private void ApplyAlphaToCurrentDisplay(float alpha)
         {
-            // 1. 没有显示对象则跳过
+            // 1. Skip if no object is displayed.
             if (currentDisplayObject == null)
             {
                 return;
             }
 
-            // 2. 如果是子骨架，通过激活/禁用整个对象来控制可见性
+            // 2. If it is a sub-skeleton, control visibility by activating/deactivating the entire object
+
             if (ChildArmature != null)
             {
                 currentDisplayObject.SetActive(alpha > 0.001f);
                 return;
             }
 
-            // 3. 如果是图片精灵，修改每个 SpriteRenderer 的颜色 alpha 值和启用状态
+            // 3. If it is a picture sprite, modify the color alpha value and enabled state of each SpriteRenderer
+
             var renderers = currentDisplayObject.GetComponentsInChildren<SpriteRenderer>(true);
             for (var i = 0; i < renderers.Length; i++)
             {
@@ -1356,45 +1547,53 @@ namespace mlp
                 var color = renderer.color;
                 color.a = alpha;
                 renderer.color = color;
-                // 4. alpha 极小时直接禁用渲染器（避免绘制不可见的物体浪费性能）
+                // 4. Directly disable the renderer when alpha is extremely small (to avoid wasting performance by drawing invisible objects)
                 renderer.enabled = alpha > 0.001f;
             }
         }
     }
 
-    /// <summary>骨骼数据：存储一根骨骼的名称、父骨骼名称和初始变换（位置、旋转）。</summary>
+    /// <summary>Bone data: stores the name of a bone, the name of the parent bone and the initial transformation (position, rotation). </summary>
     public sealed class DBLiteBoneData
     {
-        public string Name; // 骨骼名称
-        public string Parent; // 父骨骼名称，为空表示根骨骼
-        public DBLiteTransform Transform; // 骨骼的初始变换（位置、旋转、缩放）
+        public string Name; // Bone name
+
+        public string Parent; // The name of the parent bone. If empty, it indicates the root bone.
+        public DBLiteTransform Transform; // Initial transformation of the bone (position, rotation, scale)
     }
 
-    /// <summary>插槽数据：存储一个插槽的名称、父骨骼名称、当前显示索引和渲染顺序。</summary>
+    /// <summary>Slot data: stores the name of a slot, parent bone name, current display index and rendering order. </summary>
     public sealed class DBLiteSlotData
     {
-        public string Name; // 插槽名称
-        public string Parent; // 挂载的父骨骼名称
-        public int DisplayIndex; // 默认显示的图片/子骨架索引
-        public int Order; // 渲染排序值，值越大越靠前显示
+        public string Name; // Slot name
+        public string Parent; // Mounted parent bone name
+
+        public int DisplayIndex; // Default displayed image/sub-skeleton index
+
+        public int Order; // Render sorting value, the larger the value, the higher it is displayed.
     }
 
-    /// <summary>显示数据：存储插槽中一个可显示元素的名称、类型和初始变换。</summary>
+    /// <summary>Display data: The name, type and initial transformation of a displayable element in the storage slot. </summary>
     public sealed class DBLiteDisplayData
     {
-        public string Name; // 显示元素的名称（图片名或子骨架名）
-        public string Type; // 显示类型："image" 为图片精灵，"armature" 为子骨架
-        public DBLiteTransform Transform; // 显示元素相对于插槽的偏移变换
+        public string Name; // Display the name of the element (picture name or child skeleton name)
+
+        public string Type; // Display type: "image" is the image sprite, "armature" is the child skeleton
+        public DBLiteTransform Transform; // Displays the element's offset transformation relative to the slot
     }
 
-    /// <summary>变换数据：存储位置（X/Y）和旋转角度，用于骨骼和插槽的空间变换计算。</summary>
+    /// <summary>Transformation data: stores position (X/Y) and rotation angle, used for spatial transformation calculation of bones and slots. </summary>
     public struct DBLiteTransform
     {
-        public float X; // 水平位置
-        public float Y; // 垂直位置
-        public float Rotation; // 旋转角度（度数）
-        public float ScaleX; // 水平缩放（1为原始大小）
-        public float ScaleY; // 垂直缩放（1为原始大小）
+        public float X; // horizontal position
+        public float Y; // vertical position
+
+        public float Rotation; // Rotation angle (degrees)
+
+        public float ScaleX; // Horizontal scaling (1 is original size)
+
+        public float ScaleY; // Vertical scaling (1 is original size)
+
 
         public static DBLiteTransform Identity => new DBLiteTransform
         {
@@ -1406,7 +1605,8 @@ namespace mlp
         };
 
         /// <summary>
-        /// 从 JSON 字典解析变换数据（x、y、旋转、缩放）。
+        /// Parse transformation data (x, y, rotation, scale) from a JSON dictionary.
+
         /// </summary>
         public static DBLiteTransform FromJson(Dictionary<string, object> dict)
         {
@@ -1425,7 +1625,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 将此变换与动画变换合并：平移/旋转相加，缩放相乘。
+        /// Merge this transformation with the animation transformation: translation/rotation are additive, scale are multiplied.
         /// </summary>
         public DBLiteTransform Combine(DBLiteTransform animation)
         {
@@ -1440,7 +1640,7 @@ namespace mlp
         }
 
         /// <summary>
-        /// 根据帧类型（平移、旋转或缩放）在两个变换之间插值。
+        /// Interpolates between two transformations based on frame type (translation, rotation, or scale).
         /// </summary>
         public static DBLiteTransform Lerp(DBLiteTransform a, DBLiteTransform b, float t, FrameKind kind)
         {
@@ -1464,46 +1664,56 @@ namespace mlp
         }
     }
 
-    /// <summary>带时间的变换关键帧：记录某个时间点的变换值和是否使用补间动画。</summary>
+    /// <summary>Transformation keyframe with time: record the transformation value at a certain point in time and whether to use tweening animation. </summary>
     public struct DBLiteTimedTransform
     {
-        public float Start; // 关键帧的起始帧号
-        public float Duration; // 关键帧持续帧数
-        public bool Tween; // 是否使用补间动画（true为平滑过渡，false为瞬间切换）
-        public DBLiteTransform Transform; // 该关键帧的变换值
+        public float Start; // The starting frame number of the key frame
+        public float Duration; // Key frame duration number of frames
+
+        public bool Tween; // Whether to use tween animation (true means smooth transition, false means instant switching)
+
+        public DBLiteTransform Transform; // The transform value of this keyframe
     }
 
-    /// <summary>显示切换关键帧：记录在什么时间点切换到哪个显示元素。</summary>
+    /// <summary>Display switching keyframe: record which display element is switched to at what point in time. </summary>
     public struct DBLiteDisplayFrame
     {
-        public float Start; // 关键帧起始帧号
-        public float Duration; // 关键帧持续帧数
-        public int Value; // 要切换到的显示元素索引（对应 DisplaysBySlot 列表中的序号）
+        public float Start; // Key frame starting frame number
+
+        public float Duration; // Key frame duration number of frames
+
+        public int Value; // The index of the display element to switch to (corresponding to the serial number in the DisplaysBySlot list)
     }
 
-    /// <summary>颜色关键帧：记录在什么时间点的透明度变化，用于淡入淡出效果。</summary>
+    /// <summary>Color keyframe: records the transparency change at what point in time, used for fade-in and fade-out effects. </summary>
     public struct DBLiteColorFrame
     {
-        public float Start; // 关键帧起始帧号
-        public float Duration; // 关键帧持续帧数
-        public float Alpha; // 透明度乘数（0为完全透明，1为完全不透明）
+        public float Start; // Key frame starting frame number
+
+        public float Duration; // Key frame duration number of frames
+
+        public float Alpha; // Transparency multiplier (0 is fully transparent, 1 is fully opaque)
     }
 
-    /// <summary>子纹理数据：记录图集中一张小图的名称、位置（X/Y）和尺寸（宽/高）。</summary>
+    /// <summary>Sub-texture data: records the name, position (X/Y) and size (width/height) of a small image in the atlas. </summary>
     public struct DBLiteSubTexture
     {
-        public string Name; // 子纹理名称（对应图片名）
-        public float X; // 在大图中的水平像素坐标
-        public float Y; // 在大图中的垂直像素坐标
-        public float Width; // 子纹理宽度（像素）
-        public float Height; // 子纹理高度（像素）
+        public string Name; // Sub-texture name (corresponding to image name)
+
+        public float X; // Horizontal pixel coordinates in the large image
+
+        public float Y; // Vertical pixel coordinates in the large image
+        public float Width; // Subtexture width (pixels)
+        public float Height; // Subtexture height (pixels)
     }
 
-    /// <summary>关键帧类型：标识动画帧是骨骼变换帧、插槽显示帧还是颜色帧。</summary>
+    /// <summary>Keyframe type: Identifies whether the animation frame is a bone transformation frame, a slot display frame, or a color frame. </summary>
     public enum FrameKind
     {
-        Translate, // 平移动画关键帧
-        Rotate, // 旋转动画关键帧
-        Scale // 缩放动画关键帧
+        Translate, // Pan animation keyframes
+
+        Rotate, // Rotate animation keyframes
+
+        Scale // Zoom animation keyframes
     }
 }
