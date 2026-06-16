@@ -1,4 +1,4 @@
-// Tournament format data and match management/Complete process of managing a 4-player tournament: randomization, semi-finals, finals, recording the results of each game, calculating rankings and results. It is also responsible for saving and loading tournament progress, allowing players to quit midway and come back to continue.
+// Tournament format data and match management. Manages the final 8-player, 2-division season flow: regular-season rounds, semi-finals, third-place match, final, awards, rankings, and progress restoration.
 
 using System.Collections.Generic;
 using UnityEngine;

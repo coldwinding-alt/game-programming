@@ -8,12 +8,13 @@ Updated: `2026-06-16`
 - Entry scene: `Assets/Scenes/Main.unity`
 - Runtime boot: `mlpAutoBoot`
 - Playable roster: `8` custom Halloween characters
-- Supported modes: `QUICK MATCH`, `2 PLAYERS`, `TRAINING`, `TOURNAMENT`
+- Supported modes: `QUICK MATCH`, `ADVENTURE`, `TOURNAMENT`, `2 PLAYERS`, `TRAINING`, `TUTORIAL`
 
 ## Recent Verification
 
 | Date | Check | Result | Notes |
 | --- | --- | --- | --- |
+| 2026-06-16 | Windows build packaging and resizable-window check | Pass | Created the final Windows x86_64 build package, enabled resizable/maximizable window behavior with aspect-ratio letterboxing, kept `F11` as a windowed/borderless fullscreen toggle, and confirmed the staged executable stayed running during a short startup test. |
 | 2026-06-16 | Final project closeout | Pass | The project is complete, the current build is the finished coursework version, and no further code changes are planned. Presentation, asset, UI, and submission checks are complete for the final build. |
 | 2026-06-16 | Warning cleanup and provenance documentation audit | Pass | Removed the unused `mlpBallObject.upperSensorPassed` field/assignments after confirming score sequencing remains handled by `mlpMatchProcessor.ProcessSensor(...)`, refreshed provenance documentation links, ran `git diff --check`, and confirmed `mlp smoke test passed.` in Unity batch mode |
 | 2026-06-09 | Dunk animation feel tuning and repository cleanup | Pass | Rebuilt the runtime DragonBones skeleton with `Tools/Art/rebuild_runtime_dragonbones_skeleton.py`, confirmed the generated animation data and texture root name are consistent, ran `git diff --check`, and cleaned source-note wording plus document metadata before publishing the current mainline build |
@@ -37,7 +38,7 @@ Updated: `2026-06-16`
 | 2026-04-22 | Batch smoke after Halloween ball/hoop hookup (`mlpSmokeTest.Run`) | Pass | New `Resources/mlp/Images/Gameplay` textures resolved, gameplay booted in batch mode, and the match-scoped random ball theme code compiled successfully |
 | 2026-04-22 | Batch smoke (`mlpSmokeTest.Run`) | Pass | Project compiled and the current playable flow booted successfully after the latest roster/UI adjustments |
 | 2026-04-22 | Character-based selection flow | Pass | All player setup flows now read from the custom character roster instead of team/player combinations |
-| 2026-04-22 | Tournament bracket flow | Pass | Tournament remains a `4`-character single-elimination structure in the current build |
+| 2026-04-22 | Early tournament bracket flow | Pass | The earlier tournament bracket flow was validated at this stage; the final build later expanded Tournament into the current `8`-character, `2`-division season structure. |
 | 2026-04-22 | Character preview consistency | Pass | Preview scale and head/body offsets were tuned to reduce large height differences across the roster |
 | 2026-04-22 | Match HUD portrait slots | Pass | Scoreboard portrait windows now render active character head sprites instead of staying empty |
 

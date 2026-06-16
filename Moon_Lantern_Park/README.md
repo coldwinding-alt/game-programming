@@ -19,7 +19,7 @@ Current playable content includes:
 - Local 2-player keyboard matches
 - Tutorial and training flows
 - Adventure-style single-player progression
-- A `4`-character single-elimination tournament
+- An `8`-character tournament season with two divisions, regular-season rounds, semi-finals, a third-place match, a final, and awards
 - Halloween basketball skins
 - Character portraits, skill icons, match UI, audio feedback, and menu presentation
 
@@ -52,7 +52,7 @@ The current roster is:
 | --- | --- |
 | `Quick Match` | Choose a character, ball skin, and AI difficulty for a fast single-player match. |
 | `Adventure` | A single-player route with story presentation, map progression, themed opponents, and match results. |
-| `Tournament` | A 4-character single-elimination bracket with standings, match progression, and awards presentation. |
+| `Tournament` | An 8-character Moon Lantern Cup season with two divisions, regular-season standings, semi-finals, a third-place match, a final, and awards presentation. |
 | `2 Player` | Local keyboard versus mode for two human players. |
 | `Training` | Solo practice without an active opponent. |
 | `Tutorial` | Guided onboarding for movement, shooting, defense, and super-skill use. |
@@ -91,6 +91,7 @@ Match flow:
 - Dash: double-tap left or right
 - Pause / resume: `P` or `Esc`
 - Return to menu: pause the match, then choose `MENU`
+- Window display: the Windows build opens in a resizable window, supports maximize/window-edge resizing with aspect-ratio letterboxing, and uses `F11` to toggle windowed/borderless fullscreen display
 
 ## How To Run
 
