@@ -723,6 +723,11 @@ namespace mlp
                 fixedResolutionPresenter = gameObject.AddComponent<mlpFixedResolutionPresenter>();
             }
 
+            if (GetComponent<mlpDisplayModeManager>() == null)
+            {
+                gameObject.AddComponent<mlpDisplayModeManager>();
+            }
+
             mainCamera.rect = new Rect(0f, 0f, 1f, 1f);
             EnableNativeMenuPresentation();
 
