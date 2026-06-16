@@ -35,3 +35,7 @@ __pycache__/
 
 # Unity editor-only scripts
 Assets/**/Editor/
+!Assets/mlp/Scripts/Editor/
+Assets/mlp/Scripts/Editor/*
+!Assets/mlp/Scripts/Editor/mlpSmokeTest.cs
+!Assets/mlp/Scripts/Editor/mlpSmokeTest.cs.meta
