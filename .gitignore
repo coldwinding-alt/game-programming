@@ -39,6 +39,8 @@ unity-*.log
 _asset_backup_*/
 新图/
 tmp_*
+!**/Assets/TextMesh Pro/Shaders/TMP_*.shader
+!**/Assets/TextMesh Pro/Shaders/TMP_*.shader.meta
 Rim_Rush_Championship_Season/tmp/
 _smoke_*/
 gitshow_*.tmp
