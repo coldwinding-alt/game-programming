@@ -176,7 +176,7 @@ DOCS/IMAGE_ASSET_PROVENANCE.md
 DOCS/AI_AND_EXTERNAL_RESOURCE_DECLARATION.md
 DOCS/FONT_PROVENANCE.md
 DOCS/AUDIO_COPYRIGHT.md
-DOCS/SUBMISSION_REQUIREMENTS_SUMMARY.md
+DOCS/Moon_Lantern_Park_Project_Plan.md
 ```
 
 Project-specific game image assets were created from ChatGPT image generation and project-side editing, compositing, procedural export, packing, or Unity integration. Unity/TextMesh Pro default resources are documented separately and are not described as project-authored AI image assets.
