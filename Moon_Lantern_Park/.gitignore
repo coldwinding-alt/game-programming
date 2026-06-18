@@ -37,5 +37,7 @@ __pycache__/
 Assets/**/Editor/
 !Assets/mlp/Scripts/Editor/
 Assets/mlp/Scripts/Editor/*
+!Assets/mlp/Scripts/Editor/mlpBuildTools.cs
+!Assets/mlp/Scripts/Editor/mlpBuildTools.cs.meta
 !Assets/mlp/Scripts/Editor/mlpSmokeTest.cs
 !Assets/mlp/Scripts/Editor/mlpSmokeTest.cs.meta

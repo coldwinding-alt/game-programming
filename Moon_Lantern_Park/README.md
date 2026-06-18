@@ -91,16 +91,55 @@ Match flow:
 - Dash: double-tap left or right
 - Pause / resume: `P` or `Esc`
 - Return to menu: pause the match, then choose `MENU`
-- Window display: the Windows build opens in a resizable window, supports maximize/window-edge resizing with aspect-ratio letterboxing, and uses `F11` to toggle windowed/borderless fullscreen display
+- Window display: desktop builds open in a resizable window, support maximize/window-edge resizing with aspect-ratio letterboxing, and use `F11` to toggle windowed/borderless fullscreen display
+
+## Prebuilt macOS Release
+
+The GitHub Release includes a macOS runnable package:
+
+```text
+MoonLanternPark-macOS.zip
+```
+
+To run it on macOS:
+
+1. Download `MoonLanternPark-macOS.zip` from the latest GitHub Release.
+2. Unzip it.
+3. Open `Moon Lantern Park.app`.
+4. If macOS Gatekeeper blocks the unsigned app the first time, use Control-click > Open, or approve it from System Settings > Privacy & Security.
 
 ## How To Run
 
 1. Install Unity Editor `2022.3.62f3c1`.
-2. Open this repository folder in Unity Hub.
+2. Open `Moon_Lantern_Park/` in Unity Hub.
 3. Open `Assets/Scenes/Main.unity`.
 4. Press Play.
 
 The project uses `mlpAutoBoot`, so the game enters the main menu flow directly from the Unity editor.
+
+## Updating The macOS Build
+
+The macOS build entry point is:
+
+```text
+mlp.EditorTools.mlpBuildTools.BuildMacOS
+```
+
+From Windows with Unity macOS Build Support installed, rebuild with:
+
+```powershell
+& 'C:\Program Files\Unity\Hub\Editor\2022.3.62f3c1\Editor\Unity.exe' `
+  -batchmode -quit `
+  -projectPath '.\Moon_Lantern_Park' `
+  -executeMethod mlp.EditorTools.mlpBuildTools.BuildMacOS `
+  -logFile '.\Moon_Lantern_Park\unity-macos-build.log'
+```
+
+Then package `Moon_Lantern_Park/Builds/macOS/Moon Lantern Park.app` as `MoonLanternPark-macOS.zip` and replace the Release asset with:
+
+```powershell
+gh release upload <release-tag> .\MoonLanternPark-macOS.zip --clobber
+```
 
 ## Unity And Package Information
 

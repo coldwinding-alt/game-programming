@@ -19,6 +19,15 @@ The game focuses on a compact side-view basketball match: players move, jump, sh
 
 ## How To Run The Final Project
 
+Prebuilt macOS release:
+
+1. Open the latest GitHub Release for this repository.
+2. Download `MoonLanternPark-macOS.zip`.
+3. Unzip it on macOS and run `Moon Lantern Park.app`.
+4. If macOS blocks the unsigned app on first launch, use Control-click > Open, or allow it from System Settings > Privacy & Security.
+
+Unity editor run:
+
 1. Install Unity Editor `2022.3.62f3c1`.
 2. Open Unity Hub.
 3. Choose `Add project from disk`.
